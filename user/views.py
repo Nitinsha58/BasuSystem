@@ -1,6 +1,7 @@
 from django.contrib.auth import authenticate, login
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.contrib.auth import logout
 
 # Create your views here.
 def staff_login(request):
@@ -17,3 +18,7 @@ def staff_login(request):
     return render(request, "user/staff_login.html")
 
 
+def staff_logout(request):
+    logout(request)  # Log the user out
+    messages.success(request, "You have been logged out successfully.")  # Optional message
+    return redirect('staff_login')

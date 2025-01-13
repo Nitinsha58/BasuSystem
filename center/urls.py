@@ -9,8 +9,7 @@ from .views import (
     delete_template,
     create_question,
     update_question,
-    update_response
-    
+    update_response    
 )
 
 urlpatterns = [
