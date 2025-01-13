@@ -32,7 +32,8 @@
                 <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
                 <button class="btn btn-outline-success" type="submit">Search</button>
             </form> -->
-            <a href="{% url 'staff_logout' %}" class="btn btn-danger">Logout</a>
+            <a href="/admin" class="btn btn-success me-4 ">  Admin  </a>
+            <a href="{% url 'staff_logout' %}" class="btn btn-danger">  Logout  </a>
             <p class="pe-4 fs-4">{{request.user.first_name}} {{request.user.last_name}}</p>
             {% endif %}
         </div>
