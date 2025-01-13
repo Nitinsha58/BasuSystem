@@ -6,8 +6,7 @@ from .models import Student, Batch, Center
 class StudentRegistrationForm(forms.ModelForm):
     # Fields for the BaseUser model
     first_name = forms.CharField(max_length=255, required=True)
-    last_name = forms.CharField(max_length=255, required=True)
-    email = forms.EmailField()
+    last_name = forms.CharField(max_length=255, required=False)
     phone = forms.CharField(max_length=15, required=True)
     password = forms.CharField(widget=forms.PasswordInput, required=True)
 
@@ -17,18 +16,16 @@ class StudentRegistrationForm(forms.ModelForm):
 
     class Meta:
         model = Student
-        fields = ['first_name', 'last_name', 'email', 'phone', 'batches', 'center', 'password']
+        fields = ['first_name', 'last_name', 'phone', 'batches', 'center', 'password']
 
     def clean(self):
         cleaned_data = super().clean()
         
-        # Validate email or phone
-        email = cleaned_data.get('email')
         phone = cleaned_data.get('phone')
         batches = cleaned_data.get('batches')
 
         if not phone:
-            raise forms.ValidationError("Either email or phone must be provided.")
+            raise forms.ValidationError("Either phone must be provided.")
         
         if not batches:
             raise forms.ValidationError("At least one batch must be assigned.")
@@ -40,7 +37,6 @@ class StudentRegistrationForm(forms.ModelForm):
             user = BaseUser.objects.create_user(
                 first_name=self.cleaned_data['first_name'],
                 last_name=self.cleaned_data['last_name'],
-                email=self.cleaned_data['email'],
                 phone=self.cleaned_data['phone'],
                 password=self.cleaned_data['password']
             )
