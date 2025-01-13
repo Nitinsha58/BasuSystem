@@ -188,7 +188,7 @@ def create_response(request, batch_id, test_id, student_id=None, question_id = N
                 question = question,
                 student=student,
                 test=test,
-                marks_obtained = marks_obtained
+                marks_obtained = int(question.max_marks) - int(marks_obtained)
             )
 
             response.remark.set(Remark.objects.filter(id__in=remark_ids))
@@ -231,7 +231,7 @@ def update_response(request, batch_id, test_id, student_id, response_id):
         marks_obtained = request.POST.get("marks_obtained")
         remark_ids = request.POST.getlist("remark")
 
-        response.marks_obtained = marks_obtained
+        response.marks_obtained = int(response.question.max_marks) - int(marks_obtained)
         response.remark.set(Remark.objects.filter(id__in=remark_ids))
         response.save()
     

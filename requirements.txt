@@ -3,6 +3,7 @@ Django==5.1.4
 django-admin-interface==0.29.2
 django-colorfield==0.11.0
 django-environ==0.11.2
+django-mathfilters==1.0.0
 pillow==11.1.0
 psycopg2-binary==2.9.10
 python-dotenv==1.0.1
