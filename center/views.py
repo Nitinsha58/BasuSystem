@@ -5,13 +5,15 @@ from .forms import StudentRegistrationForm
 from .models import Batch, Center, Test, TestQuestion, Student, Remark, QuestionResponse
 from django.contrib import messages
 from datetime import date
+from django.contrib.auth.decorators import login_required
 
 # Create your views here.
 
+@login_required(login_url='staff_login')
 def staff_dashboard(request):
     return render(request, 'center/dashboard.html')
 
-
+@login_required(login_url='staff_login')
 def staff_student_registration(request):
     all_batches = Batch.objects.all()
     center = Center.objects.filter(name="Main Center").first()
@@ -56,7 +58,7 @@ def staff_student_registration(request):
 
     return render(request, 'center/staff_student_registration.html', {'batches': all_batches, 'center': center})
 
-
+@login_required(login_url='staff_login')
 def create_test_template(request, batch_id=None):
     all_batches = Batch.objects.all()
 
@@ -73,7 +75,7 @@ def create_test_template(request, batch_id=None):
 
     return render(request, 'center/create_test_template.html', {"batches": all_batches})
 
-
+@login_required(login_url='staff_login')
 def create_template(request, batch_id, test_id):
     batch = Batch.objects.filter(id=batch_id).first()
     test = Test.objects.filter(id=test_id).first()
@@ -92,7 +94,7 @@ def create_template(request, batch_id, test_id):
     
     return render(request,"center/create_template.html", {"batch":batch, "test":test, "questions": questions})
 
-
+@login_required(login_url='staff_login')
 def delete_template(request, batch_id, test_id):
     batch = Batch.objects.filter(id=batch_id).first()
     test = Test.objects.filter(id=test_id).first()
@@ -105,6 +107,8 @@ def delete_template(request, batch_id, test_id):
     
     return redirect("create_test_template")
 
+
+@login_required(login_url='staff_login')
 def create_question(request, batch_id, test_id):
     batch = Batch.objects.filter(id=batch_id).first()
     test = Test.objects.filter(id=test_id).first()
@@ -129,6 +133,8 @@ def create_question(request, batch_id, test_id):
         return redirect("create_template", batch_id=batch_id, test_id=test_id )
     return redirect("create_template", batch_id=batch_id, test_id=test_id )
     
+
+@login_required(login_url='staff_login')
 def update_question(request, batch_id, test_id, question_id):
     batch = Batch.objects.filter(id=batch_id).first()
     test = Test.objects.filter(id=test_id).first()
@@ -151,12 +157,12 @@ def update_question(request, batch_id, test_id, question_id):
         return redirect("create_template", batch_id=batch_id, test_id=test_id )
     return redirect("create_template", batch_id=batch_id, test_id=test_id )
     
-# batch, test, student
+@login_required(login_url='staff_login')
 def create_test_response(request):
     all_batches = Batch.objects.all()
     return render(request, "center/create_test_response.html", {"batches":all_batches})
 
-
+@login_required(login_url='staff_login')
 def create_response(request, batch_id, test_id, student_id=None, question_id = None):
     batch = Batch.objects.filter(id=batch_id).first()
     test = Test.objects.filter(id=test_id).first()
@@ -210,7 +216,7 @@ def create_response(request, batch_id, test_id, student_id=None, question_id = N
     })
 
 
-
+@login_required(login_url='staff_login')
 def update_response(request, batch_id, test_id, student_id, response_id):
     batch = Batch.objects.filter(id=batch_id).first()
     test = Test.objects.filter(id=test_id).first()
