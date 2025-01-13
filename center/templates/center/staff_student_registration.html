@@ -3,6 +3,10 @@
 
 {% block dashboard %}
 <div class="container-sm p-4">
+  <div class="container-sm mt-4 p-0">
+    <p class="h3 fw-normal"> Register Student </p>
+  </div>
+
   <form class="row g-3" method="post">
     {% csrf_token %}
     <div class="col-md-4">
@@ -23,7 +27,7 @@
     </div>
     <div class="col-md-3">
       <label for="validationDefault04" class="form-label">Batches</label>
-      <select class="form-select" name="batches" multiple size="{{batches.count}}" required>
+      <select class="form-select" name="batches" multiple size="{{batches.count}}">
         {% for batch in batches %}
         <option value="{{batch.id}}">{{batch}}</option>
         {% endfor %}
@@ -47,7 +51,7 @@
         <ul class="list-group">
           <li class="list-group-item bg-dark text-white border-dark">{{batch}}</li>
           {% for student in batch.student.all %}
-            <li class="list-group-item"> {{forloop.counter}}. {{student.user.first_name}} {{student.user.last_name}}</li>
+          <li class="list-group-item"> {{forloop.counter}}. {{student.user.first_name}} {{student.user.last_name}}</li>
           {% endfor %}
         </ul>
       </div>

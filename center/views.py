@@ -14,7 +14,11 @@ def staff_dashboard(request):
 
 def staff_student_registration(request):
     all_batches = Batch.objects.all()
-    center = Center.objects.get(name="Main Center")  
+    center = Center.objects.filter(name="Main Center").first()
+
+    if not center:
+        messages.error(request, "No Center Found.")
+        return redirect('staff_dashboard')
 
     if request.method == "POST":
         first_name = request.POST.get('first_name')
@@ -45,6 +49,7 @@ def staff_student_registration(request):
                 return HttpResponse(f"Error: {str(e)}", status=500)
 
         else:
+            messages.error(request, "Invalid Form")
             return render(request, 'center/staff_student_registration.html', {
                 'form': form,
                 'batches': all_batches,

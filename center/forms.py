@@ -7,7 +7,7 @@ class StudentRegistrationForm(forms.ModelForm):
     # Fields for the BaseUser model
     first_name = forms.CharField(max_length=255, required=True)
     last_name = forms.CharField(max_length=255, required=True)
-    email = forms.EmailField(required=True)
+    email = forms.EmailField()
     phone = forms.CharField(max_length=15, required=True)
     password = forms.CharField(widget=forms.PasswordInput, required=True)
 
@@ -27,7 +27,7 @@ class StudentRegistrationForm(forms.ModelForm):
         phone = cleaned_data.get('phone')
         batches = cleaned_data.get('batches')
 
-        if not email and not phone:
+        if not phone:
             raise forms.ValidationError("Either email or phone must be provided.")
         
         if not batches:
