@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block dashboard %}
+
+
+<div class="container">
+    <div class="w-75 m-2 p-2 mb-4">
+        <p class="h2 fw-normal">{{test}}</p>
+    </div>
+
+    <div class="d-flex g-4">
+        <div class="w-25 m-2 p-2">
+
+            <div class="card">
+                <ul class="list-group">
+                    <li class="list-group-item bg-dark text-white border-dark">{{batch}}</li>
+                    {% for stu in students %}
+                    <a href="{% url 'create_student_response' batch.id test.id stu.id %}" class="text-decoration-none">
+                        <li class="list-group-item {% if student.id == stu.id %} list-group-item-primary {% endif %} ">
+                            {{forloop.counter}}. {{stu.user.first_name|title}} {{stu.user.last_name|title}}</li>
+                    </a>
+                    {% endfor %}
+                </ul>
+            </div>
+
+        </div>
+
+        <div class="w-75 m-2 p-2 ps-4">
+            {% if student and question_response %}
+            <div class="">
+                <p class="h4 fw-normal text-center">{{student.user.first_name|title}} {{student.user.last_name|title}} -
+                    {{batch|title}}</p>
+            </div>
+
+            {% for item in question_response %}
+                {% if item.question %}
+                <div class="container-sm my-4">
+                    <div class="">
+                        <p class="h4 fw-normal">Q{{item.question.question_number}}. {{item.question.chapter_name}}</p>
+                    </div>
+                    <form class="row g-3 w-100 d-flex" action="{% url 'add_response' batch.id test.id student.id item.question.id %}"
+                        method="post">
+                        {% csrf_token %}
+                        <div class="col-md-4 w-auto">
+                            <label for="remark" class="form-label">Remark</label>
+                            <select class="form-select row row-cols-2" name="remark" multiple size="{{remarks.count}}"
+                                >
+                                {% for remark in remarks %}
+                                <option class="col col-sm-6" value="{{remark.id}}">{{remark.name}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="marks_obtained" class="form-label">Marks Obtained</label>
+                            <div class="d-flex align-items-center">
+                                <input type="text" class="form-control" id="marks_obtained" name="marks_obtained" required
+                                    value="{{item.question.max_marks}}">
+                                <p class="h4 ms-2 fw-normal">
+                                <p class="h3 fw-normal">/</p>{{item.question.max_marks}}</p>
+                            </div>
+                        </div>
+                        <div class="col d-flex justify-content-end mt-5">
+                            <button type="submit" class="btn btn-success" style="height: fit-content;">Add Marks</button>
+                        </div>
+                    </form>
+                </div>
+                {% else %}
+                <div class="container-sm my-4">
+                    <div class="">
+                        <p class="h4 fw-normal">Q{{item.response.question.question_number}}. {{item.response.question.chapter_name}}</p>
+                    </div>
+                    <form class="row g-3 w-100 d-flex" action="{% url 'update_response' batch.id test.id student.id item.response.id %}"
+                        method="post">
+                        {% csrf_token %}
+                        <div class="col-md-4 w-auto">
+                            <label for="remark" class="form-label">Remark</label>
+                            <select class="form-select row row-cols-2" name="remark" multiple size="{{ remarks.count }}" >
+                                {% for remark in remarks %}
+                                <option class="col col-sm-6" value="{{ remark.id }}"
+                                    {% if remark in item.response.remark.all %} selected {% endif %}>{{ remark.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="marks_obtained" class="form-label">Marks Obtained</label>
+                            <div class="d-flex align-items-center">
+                                <input type="text" class="form-control" id="marks_obtained" name="marks_obtained" required
+                                    value="{{item.response.marks_obtained}}">
+                                <p class="h4 ms-2 fw-normal">
+                                <p class="h3 fw-normal">/</p>{{item.response.question.max_marks}}</p>
+                            </div>
+                        </div>
+                        <div class="col d-flex justify-content-end mt-5">
+                            <button type="submit" class="btn btn-warning" style="height: fit-content;">Update Marks</button>
+                        </div>
+                    </form>
+                </div>
+                {% endif %}
+            {% endfor %}
+
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+
+{% endblock dashboard %}

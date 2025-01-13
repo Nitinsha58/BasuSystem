@@ -1,0 +1,122 @@
+{% load static %}
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BASU Classes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+
+    <style>
+        .notify-container {
+            z-index: 235;
+            position: absolute;
+            top: 132px;
+            right: 130px;
+            width: calc(100%-8rem);
+        }
+
+        .alert {
+            max-width: 100%;
+            padding: 5px 10px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            border-radius: 5px;
+            background-color: white;
+
+            font-weight: 600;
+            font-size: 16px;
+            border: 2px solid #1E283C;
+            color: #1E283C;
+        }
+
+
+        .msg {
+            margin: 5px 7px;
+        }
+
+
+        /***********Desktop View(1200px and 1400px)***********/
+        @media (min-width:1200px) and (max-width:1400px) {
+            .notify-container {
+                right: 60px;
+            }
+        }
+
+        /***********Desktop View(992px and 1199px)***********/
+        @media (max-width:1199px) {
+            .notify-container {
+                right: 40px;
+            }
+        }
+
+        @media (max-width:991px) {
+            .notify-container {
+                right: 16px;
+            }
+        }
+
+
+        /***********Mobile medium View(767px)***********/
+        @media (max-width:767px) {
+            .notify-container {
+                right: 16px;
+            }
+        }
+
+        /***********Mobile medium View(566px)***********/
+        @media (max-width:566px) {
+            .notify-container {
+                top: 80px;
+            }
+        }
+    </style>
+
+</head>
+
+<body>
+    {% include 'navbar.html' %}
+    
+    {% if messages %}
+    {% for message in messages %}
+    <div class="notify-container">
+        <div onclick="toggle()" class="alert show-alert">
+            <span class="msg">{{message}}</span>
+        </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% block dashboard %}
+    {% endblock dashboard %}
+
+    {% block login %}
+    {% endblock login %}
+
+    <script>
+        function toggle(){
+            let btn_list = document.getElementsByClassName('alert')
+
+            for (var i=0; i < btn_list.length; i++){
+                btn_list[i].style.display = 'none';
+            }
+        }
+        setTimeout(function (){
+            let btn_list = document.getElementsByClassName('alert')
+
+            for (var i=0; i < btn_list.length; i++){
+                btn_list[i].style.display = 'none';
+            }
+        }, 5000)
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>

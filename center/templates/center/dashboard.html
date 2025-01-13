@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block dashboard %}
+<div class="container-fluid p-4">
+  <div class="row m-2 row-cols-3">
+
+    <div class="col-sm-4 my-3 mb-sm-0">
+      <div class="card">
+        <div class="card-body">
+          <h3 class="card-title">Student Registration</h3>
+          <p class="card-text">Register Students and assign different batches and their details.</p>
+          <a href="{% url 'staff_student_registration' %}" class="btn btn-primary">Start Registration</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-4 my-3 mb-sm-0">
+      <div class="card">
+        <div class="card-body">
+          <h3 class="card-title">Create Test</h3>
+          <p class="card-text">Create Test Template for different batches of the class</p>
+          <a href="{% url 'create_test_template' %}" class="btn btn-primary">Create Test Template</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock dashboard %}

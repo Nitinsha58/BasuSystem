@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block dashboard %}
+
+<div class="container">
+    <div class="container-sm w-75 mt-4 mb-4">
+        <p class="h2 fw-normal"> Mock Test - {{ batch.test.all.count }} for {{batch}}</p>
+    </div>
+
+    <div class="container-sm w-75 mb-4">
+        <form class="row g-3" action="{% url 'create_template' batch.id test.id %}" method="post">
+            {% csrf_token %}
+            <div class="col-12 d-flex justify-content-end">
+                <a href="{% url 'delete_template' batch.id test.id %}"
+                    class="text-decoration-none btn btn-danger text-white me-4 ">Delete Test</a>
+                <button type="submit" class="btn btn-info">Save Test</button>
+            </div>
+            <div class="col-12">
+                <label for="test_name" class="form-label">Test Name</label>
+                <input type="text" class="form-control" id="test_name" name="test_name" value="{{test.name}}"
+                    placeholder="Mock Test 3..." required>
+            </div>
+        </form>
+    </div>
+    {% for question in questions %}
+    <div class="container-sm w-75 my-4 d-flex align-items-center">
+        <p class="h3 fw-normal d-block mb-4 me-4">{{question.question_number}}.</p>
+        <form class="row g-3 w-100" action="{% url 'update_question' batch.id test.id  question.id %}" method="post">
+            {% csrf_token %}
+            <div class="col-md-6">
+                <label for="chapter_name" class="form-label">Chapter Name</label>
+                <input type="text" class="form-control" id="chapter_name" name="chapter_name"
+                    value="{{question.chapter_name}}">
+            </div>
+            <div class="col-md-4">
+                <label for="chapter_no" class="form-label">Chapter No.</label>
+                <input type="text" class="form-control" id="chapter_no" name="chapter_no" required
+                    value="{{question.chapter_no}}">
+            </div>
+            <div class="col-md-2">
+                <label for="mark_marks" class="form-label">Max Marks</label>
+                <input type="text" class="form-control" id="max_marks" name="max_marks" required
+                    value="{{question.max_marks}}">
+            </div>
+            <div class="col-12 d-flex justify-content-end">
+                <button type="submit" class="btn btn-success">Update Question</button>
+            </div>
+        </form>
+    </div>
+    {% endfor %}
+
+    <div class="container-sm w-75">
+        <form class="row g-3" action="{% url 'create_question' batch.id test.id %}" method="post">
+            {% csrf_token %}
+            <div class="col-md-6">
+                <label for="chapter_name" class="form-label">Chapter Name</label>
+                <input type="text" class="form-control" id="chapter_name" name="chapter_name">
+            </div>
+            <div class="col-md-4">
+                <label for="chapter_no" class="form-label">Chapter No.</label>
+                <input type="text" class="form-control" id="chapter_no" name="chapter_no" required>
+            </div>
+            <div class="col-md-2">
+                <label for="mark_marks" class="form-label">Max Marks</label>
+                <input type="text" class="form-control" id="max_marks" name="max_marks" required>
+            </div>
+            <div class="col-12 d-flex justify-content-end">
+                <button type="submit" class="btn btn-success">Add Question</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js"
+    integrity="sha384-GNFwBvfVxBkLMJpYMOABq3c+d3KnQxudP/mGPkzpZSTYykLBNsZEnG2D9G/X/+7D" crossorigin="anonymous"
+    async></script>
+
+{% endblock dashboard %}
