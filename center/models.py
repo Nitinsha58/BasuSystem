@@ -53,7 +53,7 @@ class Student(models.Model):
 
     def __str__(self):
         full_name = f"{self.user.first_name} {self.user.last_name}".strip()
-        return f"{full_name or self.user.email or self.user.phone} - {self.center.name}"
+        return f"{full_name  or self.user.phone} - {self.center.name}"
 
 
 class Test(models.Model):

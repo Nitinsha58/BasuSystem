@@ -23,7 +23,6 @@ def staff_student_registration(request):
     if request.method == "POST":
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
-        email = request.POST.get('email')
         phone = request.POST.get('phone')
         batches_ids = request.POST.getlist('batches') 
         center_id = center.id
@@ -32,7 +31,6 @@ def staff_student_registration(request):
         form_data = {
             'first_name': first_name,
             'last_name': last_name,
-            'email': email,
             'phone': phone,
             'batches': Batch.objects.filter(id__in=batches_ids),
             'center': Center.objects.get(id=center_id),
