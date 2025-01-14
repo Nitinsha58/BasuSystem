@@ -4,31 +4,26 @@
 {% block dashboard %}
 <div class="container-sm p-4">
   <div class="container-sm mt-4 p-0">
-    <p class="h3 fw-normal"> Register Student </p>
+    <p class="h3 fw-normal"> Update Student </p>
   </div>
 
   <form class="row g-3" method="post">
     {% csrf_token %}
     <div class="col-md-4">
-      <label for="first_name" class="form-label">First name*</label>
-      <input {% if form.first_name.value %} value="{{form.first_name.value}}" {% endif %}  type="text" class="form-control" name="first_name" id="first_name" required>
+      <label for="validationDefault01" class="form-label">First name*</label>
+      <input type="text" class="form-control" name="first_name" id="validationDefault01" required>
     </div>
     <div class="col-md-4">
-      <label for="last_name" class="form-label">Last name</label>
-      <input {% if form.last_name.value %} value="{{form.last_name.value}}" {% endif %} type="text" class="form-control" name="last_name" id="last_name">
+      <label for="validationDefault02" class="form-label">Last name</label>
+      <input type="text" class="form-control" name="last_name" id="validationDefault02">
     </div>
     <div class="col-md-3">
-      <label for="phone" class="form-label">Phone*</label>
-      <input type="text" {% if form.phone.value %} value="{{form.phone.value}}" {% endif %} minlength="10" maxlength="10" class="form-control {% if form.errors.phone %} btn-outline-danger {% endif %} " name="phone" id="phone" required>
-      {% if form.errors.phone %}
-        <div class="text-danger">
-            {{ form.errors.phone|join:", " }}
-        </div>
-      {% endif %}
+      <label for="validationDefault03" class="form-label">Phone*</label>
+      <input type="text" class="form-control" name="phone" id="validationDefault03" required>
     </div>
     <div class="col-md-4">
-      <label for="batches" class="form-label">Batches*</label>
-      <select class="form-select" name="batches" id="batches" multiple size="{{batches.count}}" required>
+      <label for="validationDefault04" class="form-label">Batches*</label>
+      <select class="form-select" name="batches" multiple size="{{batches.count}}">
         {% for batch in batches %}
         <option value="{{batch.id}}">{{batch}}</option>
         {% endfor %}
@@ -63,19 +58,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js"
   integrity="sha384-GNFwBvfVxBkLMJpYMOABq3c+d3KnQxudP/mGPkzpZSTYykLBNsZEnG2D9G/X/+7D" crossorigin="anonymous"
-  async>
-</script>
-
-<script>
-  const phoneInput = document.getElementById('phone');
-
-  phoneInput.addEventListener('input', () => {
-      phoneInput.value = phoneInput.value.replace(/[^0-9]/g, '');
-
-      if (phoneInput.value.length > 10) {
-          phoneInput.value = phoneInput.value.slice(0, 10);
-      }
-  });
-</script>
+  async></script>
 
 {% endblock dashboard %}

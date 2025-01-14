@@ -46,15 +46,15 @@ def staff_student_registration(request):
                     student = form.save() 
                 return redirect('staff_student_registration')
             except Exception as e:
-                return HttpResponse(f"Error: {str(e)}", status=500)
+                messages.error(request, e)
+                return redirect('staff_student_registration')
 
-        else:
-            messages.error(request, "Invalid Form")
-            return render(request, 'center/staff_student_registration.html', {
-                'form': form,
-                'batches': all_batches,
-                'center': center
-            })
+
+        return render(request, 'center/staff_student_registration.html', {
+            'form': form,
+            'batches': all_batches,
+            'center': center
+        })
 
     return render(request, 'center/staff_student_registration.html', {'batches': all_batches, 'center': center})
 

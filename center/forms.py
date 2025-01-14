@@ -4,13 +4,11 @@ from user.models import BaseUser
 from .models import Student, Batch, Center
 
 class StudentRegistrationForm(forms.ModelForm):
-    # Fields for the BaseUser model
     first_name = forms.CharField(max_length=255, required=True)
     last_name = forms.CharField(max_length=255, required=False)
     phone = forms.CharField(max_length=15, required=True)
     password = forms.CharField(widget=forms.PasswordInput, required=True)
 
-    # Fields for the Student model
     batches = forms.ModelMultipleChoiceField(queryset=Batch.objects.all(), required=True)
     center = forms.ModelChoiceField(queryset=Center.objects.all(), required=True)
 
@@ -25,11 +23,14 @@ class StudentRegistrationForm(forms.ModelForm):
         batches = cleaned_data.get('batches')
 
         if not phone:
-            raise forms.ValidationError("Either phone must be provided.")
-        
-        if not batches:
-            raise forms.ValidationError("At least one batch must be assigned.")
+            self.add_error('phone', "Phone number is required.")
 
+        if not batches:
+            self.add_error('batches', "At least one batch must be assigned.")
+        
+        if phone and BaseUser.objects.filter(phone=phone).exists():
+            self.add_error('phone', "Phone number is already taken.")
+        
         return cleaned_data
 
     def save(self, commit=True):
