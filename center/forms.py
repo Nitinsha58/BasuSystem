@@ -23,13 +23,19 @@ class StudentRegistrationForm(forms.ModelForm):
         batches = cleaned_data.get('batches')
 
         if not phone:
-            self.add_error('phone', "Phone number is required.")
+            self.add_error('phone', "Phone is required.")
+        else:
+            if len(phone) != 10:
+                self.add_error('phone', "Phone must be exactly 10 digits.")
+
+            elif not phone.isdigit():
+                self.add_error('phone', "Phone must contain only digits.")
+
+            elif BaseUser.objects.filter(phone=phone).exists():
+                self.add_error('phone', "Phone is already taken.")
 
         if not batches:
             self.add_error('batches', "At least one batch must be assigned.")
-        
-        if phone and BaseUser.objects.filter(phone=phone).exists():
-            self.add_error('phone', "Phone number is already taken.")
         
         return cleaned_data
 

@@ -66,16 +66,4 @@
   async>
 </script>
 
-<script>
-  const phoneInput = document.getElementById('phone');
-
-  phoneInput.addEventListener('input', () => {
-      phoneInput.value = phoneInput.value.replace(/[^0-9]/g, '');
-
-      if (phoneInput.value.length > 10) {
-          phoneInput.value = phoneInput.value.slice(0, 10);
-      }
-  });
-</script>
-
 {% endblock dashboard %}
