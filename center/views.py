@@ -134,7 +134,7 @@ def create_template(request, batch_id, test_id):
 
         return redirect('create_test_template')
     
-    questions = TestQuestion.objects.filter(test = test)
+    questions = TestQuestion.objects.filter(test = test).order_by('question_number')
     
     return render(request,"center/create_template.html", {"batch":batch, "test":test, "questions": questions})
 
@@ -217,7 +217,7 @@ def create_response(request, batch_id, test_id, student_id=None, question_id = N
         return redirect("create_test_response")
 
     students = Student.objects.filter(batches=batch)
-    questions = TestQuestion.objects.filter(test=test)
+    questions = TestQuestion.objects.filter(test=test).order_by('question_number')
     remarks = Remark.objects.all()
 
     if student_id and Student.objects.filter(id=student_id).first():
