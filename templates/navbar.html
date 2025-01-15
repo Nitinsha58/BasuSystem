@@ -4,7 +4,7 @@
             aria-controls="navbarTogglerDemo01" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="collapse navbar-collapse" id="navbarTogglerDemo01">
+        <div class="collapse navbar-collapse d-flex align-items-center " id="navbarTogglerDemo01">
             <a class="navbar-brand" href="{% url 'staff_dashboard' %}">
                 <div class="text-center">
                     <img src="https://basueducation.com/static/images/BASU%20LOGO.5e3cc85845b7.svg" alt="logo"
@@ -32,9 +32,9 @@
                 <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
                 <button class="btn btn-outline-success" type="submit">Search</button>
             </form> -->
-            <a href="/admin" class="btn btn-success me-4 ">  Admin  </a>
+            <p class="m-0 mx-2 fs-4 d-block">{{request.user.first_name}} {{request.user.last_name}}</p>
+            <a href="/admin" class="btn btn-success me-2 ">  Admin  </a>
             <a href="{% url 'staff_logout' %}" class="btn btn-danger">  Logout  </a>
-            <p class="pe-4 fs-4">{{request.user.first_name}} {{request.user.last_name}}</p>
             {% endif %}
         </div>
     </div>
