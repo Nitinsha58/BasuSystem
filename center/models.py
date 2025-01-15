@@ -72,8 +72,6 @@ class TestQuestion(models.Model):
     chapter_name = models.CharField(max_length=255)
     max_marks = models.PositiveIntegerField()
 
-    class Meta:
-        unique_together = ('test', 'question_number')  # Ensures unique question numbers per test
 
     def __str__(self):
         return f"Q{self.question_number} - {self.chapter_name}"
