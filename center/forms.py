@@ -55,3 +55,47 @@ class StudentRegistrationForm(forms.ModelForm):
                 student.batches.set(self.cleaned_data['batches'])
 
             return student
+
+
+class StudentUpdateForm(forms.ModelForm):
+    first_name = forms.CharField(max_length=255, required=True)
+    last_name = forms.CharField(max_length=255, required=False)
+    phone = forms.CharField(max_length=15, required=True)
+    batches = forms.ModelMultipleChoiceField(queryset=Batch.objects.all(), required=True)
+
+    class Meta:
+        model = Student
+        fields = ['first_name', 'last_name', 'phone', 'batches']
+
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        phone = cleaned_data.get('phone')
+        batches = cleaned_data.get('batches')
+
+        if not phone:
+            self.add_error('phone', "Phone is required.")
+        else:
+            if len(phone) != 10:
+                self.add_error('phone', "Phone must be exactly 10 digits.")
+            elif not phone.isdigit():
+                self.add_error('phone', "Phone must contain only digits.")
+            elif BaseUser.objects.filter(phone=phone).exclude(id=self.instance.user.id).exists():
+                self.add_error('phone', "Phone is already taken.")
+
+        if not batches:
+            self.add_error('batches', "At least one batch must be assigned.")
+        
+        return cleaned_data
+
+    def save(self, commit=True):
+        student = super().save(commit=False)
+        if commit:
+            student.user.first_name = self.cleaned_data['first_name']
+            student.user.last_name = self.cleaned_data['last_name']
+            student.user.phone = self.cleaned_data['phone']
+            student.user.save()
+            student.batches.set(self.cleaned_data['batches'])
+            student.save()
+
+        return student

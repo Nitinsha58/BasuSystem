@@ -1,7 +1,7 @@
 from django.db import transaction
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
-from .forms import StudentRegistrationForm
+from .forms import StudentRegistrationForm, StudentUpdateForm
 from .models import Batch, Center, Test, TestQuestion, Student, Remark, QuestionResponse
 from django.contrib import messages
 from datetime import date
@@ -57,6 +57,50 @@ def staff_student_registration(request):
         })
 
     return render(request, 'center/staff_student_registration.html', {'batches': all_batches, 'center': center})
+
+@login_required(login_url='staff_login')
+def update_student(request, student_id):
+    student = Student.objects.get(id=student_id)
+    all_batches = Batch.objects.all()
+
+    if request.method == "POST":
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        phone = request.POST.get('phone')
+        batches_ids = request.POST.getlist('batches') 
+
+        form_data = {
+            'first_name': first_name,
+            'last_name': last_name,
+            'phone': phone,
+            'batches': Batch.objects.filter(id__in=batches_ids),
+        }
+
+        form = StudentUpdateForm(form_data, instance=student)
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    student = form.save()
+                messages.success(request, "Student details updated successfully!")
+                return redirect('staff_student_registration')
+            except Exception as e:
+                messages.error(request, f"An error occurred: {e}")
+                return redirect('update_student', student_id=student.id)
+
+        # In case form is not valid
+        messages.error(request, "There were errors in the form.")
+        return render(request, 'center/update_student.html', {
+            'form': form,
+            'batches': all_batches,
+        })
+
+    # If it's a GET request, display the existing student's data in the form
+    form = StudentUpdateForm(instance=student)
+    return render(request, 'center/update_student.html', {
+        'form': form,
+        'batches': all_batches,
+    })
+
 
 @login_required(login_url='staff_login')
 def create_test_template(request, batch_id=None):
