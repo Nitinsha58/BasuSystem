@@ -7,30 +7,39 @@
     <p class="h3 fw-normal"> Update Student </p>
   </div>
 
-  <form class="row g-3" method="post">
+  <form class="row g-3" method="post" >
     {% csrf_token %}
     <div class="col-md-4">
-      <label for="validationDefault01" class="form-label">First name*</label>
-      <input type="text" class="form-control" name="first_name" id="validationDefault01" required>
+      <label for="first_name" class="form-label">First name*</label>
+      <input {% if form.first_name.value %} value="{{form.first_name.value}}" {% endif %}  type="text" class="form-control" name="first_name" id="first_name" required>
     </div>
     <div class="col-md-4">
-      <label for="validationDefault02" class="form-label">Last name</label>
-      <input type="text" class="form-control" name="last_name" id="validationDefault02">
+      <label for="last_name" class="form-label">Last name</label>
+      <input {% if form.last_name.value %} value="{{form.last_name.value}}" {% endif %} type="text" class="form-control" name="last_name" id="last_name">
     </div>
     <div class="col-md-3">
-      <label for="validationDefault03" class="form-label">Phone*</label>
-      <input type="text" class="form-control" name="phone" id="validationDefault03" required>
+      <label for="phone" class="form-label">Phone*</label>
+      <input type="text" {% if form.phone.value %} value="{{form.phone.value}}" {% endif %} minlength="10" maxlength="10" class="form-control {% if form.errors.phone %} btn-outline-danger {% endif %} " name="phone" id="phone" required>
+      {% if form.errors.phone %}
+        <div class="text-danger">
+            {{ form.errors.phone|join:", " }}
+        </div>
+      {% endif %}
     </div>
     <div class="col-md-4">
-      <label for="validationDefault04" class="form-label">Batches*</label>
-      <select class="form-select" name="batches" multiple size="{{batches.count}}">
+      <label for="batches" class="form-label">Batches*</label>
+      <select class="form-select" name="batches" id="batches" multiple size="{{ batches.count }}" required>
         {% for batch in batches %}
-        <option value="{{batch.id}}">{{batch}}</option>
+        <option value="{{ batch.id }}" 
+                {% if batch.id in form.batches.value %}selected{% endif %}>
+          {{ batch }}
+        </option>
         {% endfor %}
       </select>
     </div>
     <div class="col-12">
-      <button class="btn btn-primary" type="submit">Create Student</button>
+      <button class="btn btn-warning" type="submit">Update Student</button>
+      <a class="btn btn-primary ms-2" href="{% url 'staff_student_registration' %}">Cancel</a>
     </div>
   </form>
 </div>
@@ -47,7 +56,11 @@
         <ul class="list-group">
           <li class="list-group-item bg-dark text-white border-dark">{{batch}}</li>
           {% for student in batch.student.all %}
-          <li class="list-group-item"> {{forloop.counter}}. {{student.user.first_name}} {{student.user.last_name}}</li>
+          <a class="text-decoration-none text-dark list-group-item" href="{% url 'staff_student_update' student.id %}">
+            <li class="list-style-none list-group"> 
+            {{forloop.counter}}. {{student.user.first_name}} {{student.user.last_name}}
+          </li>
+        </a>
           {% endfor %}
         </ul>
       </div>
@@ -58,6 +71,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js"
   integrity="sha384-GNFwBvfVxBkLMJpYMOABq3c+d3KnQxudP/mGPkzpZSTYykLBNsZEnG2D9G/X/+7D" crossorigin="anonymous"
-  async></script>
+  async>
+</script>
 
 {% endblock dashboard %}

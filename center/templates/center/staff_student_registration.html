@@ -52,7 +52,11 @@
         <ul class="list-group">
           <li class="list-group-item bg-dark text-white border-dark">{{batch}}</li>
           {% for student in batch.student.all %}
-          <li class="list-group-item"> {{forloop.counter}}. {{student.user.first_name}} {{student.user.last_name}}</li>
+          <a class="text-decoration-none text-dark list-group-item" href="{% url 'staff_student_update' student.id %}">
+              <li class="list-style-none list-group"> 
+              {{forloop.counter}}. {{student.user.first_name}} {{student.user.last_name}}
+            </li>
+          </a>
           {% endfor %}
         </ul>
       </div>

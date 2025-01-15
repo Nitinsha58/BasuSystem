@@ -59,7 +59,8 @@ def staff_student_registration(request):
     return render(request, 'center/staff_student_registration.html', {'batches': all_batches, 'center': center})
 
 @login_required(login_url='staff_login')
-def update_student(request, student_id):
+def staff_student_update(request, student_id):
+
     student = Student.objects.get(id=student_id)
     all_batches = Batch.objects.all()
 
@@ -85,18 +86,15 @@ def update_student(request, student_id):
                 return redirect('staff_student_registration')
             except Exception as e:
                 messages.error(request, f"An error occurred: {e}")
-                return redirect('update_student', student_id=student.id)
+                return redirect('staff_student_update', student_id=student.id)
 
-        # In case form is not valid
-        messages.error(request, "There were errors in the form.")
-        return render(request, 'center/update_student.html', {
+        return render(request, 'center/staff_student_update.html', {
             'form': form,
             'batches': all_batches,
         })
 
-    # If it's a GET request, display the existing student's data in the form
     form = StudentUpdateForm(instance=student)
-    return render(request, 'center/update_student.html', {
+    return render(request, 'center/staff_student_update.html', {
         'form': form,
         'batches': all_batches,
     })

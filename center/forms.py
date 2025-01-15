@@ -67,6 +67,16 @@ class StudentUpdateForm(forms.ModelForm):
         model = Student
         fields = ['first_name', 'last_name', 'phone', 'batches']
 
+    def __init__(self, *args, **kwargs):
+        student_instance = kwargs.get('instance')
+        if student_instance:
+            kwargs.update(initial={
+                'first_name': student_instance.user.first_name,
+                'last_name': student_instance.user.last_name,
+                'phone': student_instance.user.phone,
+            })
+        super().__init__(*args, **kwargs)
+
     def clean(self):
         cleaned_data = super().clean()
         
@@ -97,5 +107,4 @@ class StudentUpdateForm(forms.ModelForm):
             student.user.save()
             student.batches.set(self.cleaned_data['batches'])
             student.save()
-
         return student
