@@ -168,29 +168,33 @@ def create_question(request, batch_id, test_id):
         opt_chapter_no = request.POST.get('opt_chapter_no')
         opt_max_marks = request.POST.get('opt_max_marks')
 
-        question = TestQuestion.objects.create(
-            test = test,
-            question_number = TestQuestion.objects.filter(test=test).count() + 1,
-            chapter_no = int(chapter_no),
-            max_marks = max_marks,
-            chapter_name=chapter_name
-        )
-        question.save()
+        try:
+            with transaction.atomic():
+                question = TestQuestion.objects.create(
+                    test = test,
+                    question_number = TestQuestion.objects.filter(test=test).count() + 1,
+                    chapter_no = int(chapter_no),
+                    max_marks = max_marks,
+                    chapter_name=chapter_name
+                )
+                question.save()
 
-        if is_optional:
-            opt_question = TestQuestion.objects.create(
-                test = test,
-                is_main = False,
-                question_number = question.question_number,
-                chapter_no = int(opt_chapter_no),
-                max_marks = opt_max_marks,
-                chapter_name= opt_chapter_name
-            )
-            opt_question.save()
+                if is_optional:
+                    opt_question = TestQuestion.objects.create(
+                        test = test,
+                        is_main = False,
+                        question_number = question.question_number,
+                        chapter_no = int(opt_chapter_no),
+                        max_marks = opt_max_marks,
+                        chapter_name= opt_chapter_name
+                    )
+                    opt_question.save()
 
-            question.optional_question = opt_question
-            question.save()
+                    question.optional_question = opt_question
+                    question.save()
 
+        except Exception as e:
+            messages.error(request, "Invalid Input.")
 
         return redirect("create_template", batch_id=batch_id, test_id=test_id )
     return redirect("create_template", batch_id=batch_id, test_id=test_id )
@@ -270,12 +274,21 @@ def create_response(request, batch_id, test_id, student_id=None, question_id = N
 
         # Create a dictionary to map questions to their responses
         response_map = {response.question.id: response for response in responses}
+        question_nums = [response.question.question_number for response in responses]
 
         # Build the question_response list
-        question_response = [
-            {"response": response_map.get(question.id)} if question.id in response_map else {"question": question}
-            for question in questions
-        ]
+        # question_response = [
+        #     {"response": response_map.get(question.id)} if question.id in response_map else {"question": question}
+        #     for question in questions
+        # ]
+        question_response = []
+
+        for question in questions:
+            if question.id in response_map:
+                question_response.append({"response": response_map.get(question.id)})
+            elif question.is_main and question.question_number not in question_nums:
+                question_response.append({"question": question})
+    print(question_response)
 
     return render(request, "center/create_response.html", {
         "batch":batch, 
@@ -303,7 +316,7 @@ def update_response(request, batch_id, test_id, student_id, response_id):
         marks_obtained = request.POST.get("marks_obtained")
         remark_ids = request.POST.getlist("remark")
 
-        response.marks_obtained = int(response.question.max_marks) - int(marks_obtained)
+        response.marks_obtained = int(response.question.max_marks) - abs(int(marks_obtained))
         response.remark.set(Remark.objects.filter(id__in=remark_ids))
         response.save()
     

@@ -120,26 +120,25 @@
 </div>
 
 <script>
-    const optional = document.getElementById('optional');
-    optional.style.display = 'none';
+    window.onload = function() {
+        const optional = document.getElementById('optional');
+        const is_option = document.getElementById('is_option');
+        const opt_heading = document.getElementById('opt_heading');
 
-    const is_option_label = document.getElementById('is_option_label');
-    const opt_heading = document.getElementById('opt_heading');
-    opt_heading.style.display = 'none';
+        optional.style.display = 'none';
+        opt_heading.style.display = 'none';
 
+        is_option.addEventListener('change', function () {
+            if (is_option.checked) {
+                optional.style.display = 'flex';
+                opt_heading.style.display = 'block';
+            } else {
+                optional.style.display = 'none';
+                opt_heading.style.display = 'none';
 
-    const is_option = document.getElementById('is_option');
-    is_option.addEventListener('change', () => {
-        if (is_option.checked) {
-            optional.style.display = 'flex';
-            is_option_label.innerText = 'Remove Optional';
-            opt_heading.style.display = 'block';
-        } else {
-            optional.style.display = 'none';
-            is_option_label.innerText = 'Add Optional';
-            opt_heading.style.display = 'none';
-        }
-    });
+            }
+        });
+    };
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js"

@@ -35,46 +35,15 @@
             </div>
 
             {% for item in question_response %}
-                {% if item.question %}
-                <div class="container-sm my-4">
-                    <div class="">
-                        <p class="h4 fw-normal">Q{{item.question.question_number}}. {{item.question.chapter_name}}</p>
-                    </div>
-                    <form class="row g-3 w-100 d-flex" action="{% url 'add_response' batch.id test.id student.id item.question.id %}"
-                        method="post">
-                        {% csrf_token %}
-                        <div class="col-md-4 w-auto">
-                            <label for="remark" class="form-label">Remark</label>
-                            <select class="form-select row row-cols-2" name="remark" multiple size="{{remarks.count}}"
-                                >
-                                {% for remark in remarks %}
-                                <option class="col col-sm-6" value="{{remark.id}}">{{remark.name}}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="marks_obtained" class="form-label">Marks Deducted (Enter without sign)</label>
-                            <div class="d-flex align-items-center">
-                                <input type="text" class="form-control" id="marks_obtained" name="marks_obtained" required
-                                    value="0">
-                                <p class="h4 ms-2 fw-normal">
-                                <p class="h3 fw-normal">/</p>{{item.question.max_marks}}</p>
-                            </div>
-                        </div>
-                        <div class="col d-flex justify-content-end mt-5">
-                            <button type="submit" class="btn btn-success" style="height: fit-content;">Add Marks</button>
-                        </div>
-                    </form>
-                </div>
-                {% else %}
+                {% if item.response %}
                 <div class="container-sm my-4">
                     <div class="">
                         <p class="h4 fw-normal">Q{{item.response.question.question_number}}. {{item.response.question.chapter_name}}</p>
                     </div>
-                    <form class="row g-3 w-100 d-flex" action="{% url 'update_response' batch.id test.id student.id item.response.id %}"
+                    <form class="row g-3 w-100 d-flex justify-content-between ps-5" action="{% url 'update_response' batch.id test.id student.id item.response.id %}"
                         method="post">
                         {% csrf_token %}
-                        <div class="col-md-4 w-auto">
+                        <div class="col-md-4 w-40">
                             <label for="remark" class="form-label">Remark</label>
                             <select class="form-select row row-cols-2" name="remark" multiple size="{{ remarks.count }}" >
                                 {% for remark in remarks %}
@@ -83,19 +52,84 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-4">
-                            <label for="marks_obtained" class="form-label">Marks Deducted (Enter without sign)</label>
+                        <div class="col-md-4 w-35 d-flex flex-column">
+                            <label for="marks_obtained" class="form-label self-align-end">Marks Deducted</label>
                             <div class="d-flex align-items-center">
-                                <input type="text" class="form-control" id="marks_obtained" name="marks_obtained" required
-                                    value="{{ item.response.marks_obtained|sub:item.response.question.max_marks }}">
+                                <input type="text" class="form-control w-25" id="marks_obtained" name="marks_obtained" required
+                                value="{{ item.response.marks_obtained|sub:item.response.question.max_marks }}">
                                 <p class="h4 ms-2 fw-normal">
                                 <p class="h3 fw-normal">/</p>{{item.response.question.max_marks}}</p>
                             </div>
                         </div>
-                        <div class="col d-flex justify-content-end mt-5">
-                            <button type="submit" class="btn btn-warning" style="height: fit-content;">Update Marks</button>
+
+                        <div class="col-md-2 w-25 d-flex justify-content-end mt-5">
+                            <button type="submit" class="btn btn-warning w-100" style="height: fit-content;">Update Marks</button>
                         </div>
                     </form>
+                </div>
+
+                {% else  %}
+                <div class="container-sm my-4">
+                    <div class="">
+                        <p class="h4 fw-normal">Q{{item.question.question_number}}. {{item.question.chapter_name}} (Ch-{{item.question.chapter_no}})</p>
+                    </div>
+                    <form class="row g-3 w-100 d-flex justify-content-between ps-5" action="{% url 'add_response' batch.id test.id student.id item.question.id %}"
+                        method="post">
+                        {% csrf_token %}
+                        <div class="col-md-4 w-40">
+                            <label for="remark" class="form-label">Remark</label>
+                            <select class="form-select row row-cols-2" name="remark" multiple size="{{remarks.count}}">
+                                {% for remark in remarks %}
+                                <option class="col col-sm-6"  value="{{remark.id}}">{{remark.name}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4 w-35 d-flex flex-column">
+                            <label for="marks_obtained" class="form-label self-align-end">Marks Deducted</label>
+                            <div class="d-flex align-items-center">
+                                <input type="text" class="form-control w-25" id="marks_obtained" name="marks_obtained" required
+                                    value="0">
+                                <p class="h4 ms-2 fw-normal">
+                                <p class="h3 fw-normal">/</p>{{item.question.max_marks}}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2 w-25 d-flex justify-content-end mt-5">
+                            <button type="submit" class="btn btn-success w-100" style="height: fit-content;">Add Marks</button>
+                        </div>
+                    </form>
+                    {% if item.question.optional_question %}
+                    <div class="row g-3">
+                        <p class="h4 text-center fw-normal my-4">Optional Question</p>
+                    </div>
+                    <div class="">
+                        <p class="h4 fw-normal ms-5">{{item.question.optional_question.chapter_name}} (Ch-{{item.question.optional_question.chapter_no}})</p>
+                    </div>
+                    <form class="row g-3 w-100 d-flex justify-content-between ps-5" action="{% url 'add_response' batch.id test.id student.id item.question.optional_question.id %}"
+                        method="post">
+                        {% csrf_token %}
+                        <div class="col-md-4 w-40">
+                            <label for="remark" class="form-label">Remark</label>
+                            <select class="form-select row row-cols-2" name="remark" multiple size="{{remarks.count}}"
+                                >
+                                {% for remark in remarks %}
+                                <option class="col col-sm-6"  value="{{remark.id}}">{{remark.name}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4 w-35">
+                            <label for="marks_obtained" class="form-label">Marks Deducted</label>
+                            <div class="d-flex align-items-center">
+                                <input type="text" class="form-control w-25" id="marks_obtained" name="marks_obtained" required
+                                    value="0">
+                                <p class="h4 ms-2 fw-normal">
+                                <p class="h3 fw-normal">/</p>{{item.question.optional_question.max_marks}}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2 w-25 d-flex justify-content-end mt-5">
+                            <button type="submit" class="btn btn-success w-100" style="height: fit-content;">Add Marks</button>
+                        </div>
+                    </form>
+                    {% endif %}
                 </div>
                 {% endif %}
             {% endfor %}
