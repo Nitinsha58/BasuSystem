@@ -126,13 +126,13 @@ def create_template(request, batch_id, test_id):
         return redirect("create_test_template")
     
     if request.method == 'POST':
-        test_name = request.POST['test_name']
+        test_name = request.POST.get('test_name')
         test.name = test_name
         test.save()
 
         return redirect('create_test_template')
     
-    questions = TestQuestion.objects.filter(test = test).order_by('question_number')
+    questions = TestQuestion.objects.filter(test = test, is_main=True).order_by('question_number')
     
     return render(request,"center/create_template.html", {"batch":batch, "test":test, "questions": questions})
 
@@ -159,9 +159,14 @@ def create_question(request, batch_id, test_id):
         return redirect("create_test_template")
 
     if request.method == 'POST':
-        chapter_name = request.POST['chapter_name']
-        chapter_no = request.POST['chapter_no']
-        max_marks = request.POST['max_marks']
+        chapter_name = request.POST.get('chapter_name')
+        chapter_no = request.POST.get('chapter_no')
+        max_marks = request.POST.get('max_marks')
+
+        is_optional = request.POST.get('is_option')
+        opt_chapter_name = request.POST.get('opt_chapter_name')
+        opt_chapter_no = request.POST.get('opt_chapter_no')
+        opt_max_marks = request.POST.get('opt_max_marks')
 
         question = TestQuestion.objects.create(
             test = test,
@@ -171,6 +176,21 @@ def create_question(request, batch_id, test_id):
             chapter_name=chapter_name
         )
         question.save()
+
+        if is_optional:
+            opt_question = TestQuestion.objects.create(
+                test = test,
+                is_main = False,
+                question_number = question.question_number,
+                chapter_no = int(opt_chapter_no),
+                max_marks = opt_max_marks,
+                chapter_name= opt_chapter_name
+            )
+            opt_question.save()
+
+            question.optional_question = opt_question
+            question.save()
+
 
         return redirect("create_template", batch_id=batch_id, test_id=test_id )
     return redirect("create_template", batch_id=batch_id, test_id=test_id )
@@ -186,15 +206,25 @@ def update_question(request, batch_id, test_id, question_id):
         return redirect("create_test_template")
 
     if request.method == 'POST':
-        chapter_name = request.POST['chapter_name']
-        chapter_no = request.POST['chapter_no']
-        max_marks = request.POST['max_marks']
+        chapter_name = request.POST.get('chapter_name')
+        chapter_no = request.POST.get('chapter_no')
+        max_marks = request.POST.get('max_marks')
 
         question.chapter_no = chapter_no
         question.max_marks = max_marks
         question.chapter_name= chapter_name
-
         question.save()
+
+        if question.optional_question:
+            opt_question = question.optional_question
+            opt_chapter_name = request.POST.get('opt_chapter_name')
+            opt_chapter_no = request.POST.get('opt_chapter_no')
+            opt_max_marks = request.POST.get('opt_max_marks')
+
+            opt_question.chapter_no = opt_chapter_no
+            opt_question.max_marks = opt_max_marks
+            opt_question.chapter_name= opt_chapter_name
+            opt_question.save()
 
         return redirect("create_template", batch_id=batch_id, test_id=test_id )
     return redirect("create_template", batch_id=batch_id, test_id=test_id )

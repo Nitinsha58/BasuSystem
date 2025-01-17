@@ -68,6 +68,8 @@ class Test(models.Model):
 class TestQuestion(models.Model):
     test = models.ForeignKey(Test, on_delete=models.CASCADE, related_name='question')
     question_number = models.IntegerField()
+    is_main = models.BooleanField(default=True)
+    optional_question = models.OneToOneField('self', on_delete=models.CASCADE, null=True, blank=True, default=None, related_name='optional')
     chapter_no = models.IntegerField()
     chapter_name = models.CharField(max_length=255)
     max_marks = models.PositiveIntegerField()
