@@ -321,3 +321,32 @@ def update_response(request, batch_id, test_id, student_id, response_id):
         response.save()
     
     return redirect("create_student_response", batch_id=batch_id, test_id=test_id, student_id=student_id)
+
+@login_required(login_url='staff_login')
+def delete_response(request, batch_id, test_id, student_id, response_id):
+    try:
+        if not Batch.objects.filter(id=batch_id).exists():
+            messages.error(request, "Invalid batch ID.")
+            return redirect("create_student_response", batch_id=batch_id, test_id=test_id, student_id=student_id)
+
+        if not Test.objects.filter(id=test_id).exists():
+            messages.error(request, "Invalid test ID.")
+            return redirect("create_student_response", batch_id=batch_id, test_id=test_id, student_id=student_id)
+
+        if not Student.objects.filter(id=student_id).exists():
+            messages.error(request, "Invalid student ID.")
+            return redirect("create_student_response", batch_id=batch_id, test_id=test_id, student_id=student_id)
+
+        response = QuestionResponse.objects.get(id=response_id)
+
+        response.delete()
+        messages.success(request, "Response deleted.")
+
+    except QuestionResponse.DoesNotExist:
+
+        messages.error(request, "Response not found. Unable to delete.")
+    except Exception as e:
+        messages.error(request, f"An error occurred: {str(e)}")
+
+
+    return redirect("create_student_response", batch_id=batch_id, test_id=test_id, student_id=student_id)
