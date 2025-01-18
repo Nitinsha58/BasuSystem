@@ -147,16 +147,20 @@
 
 
 <script>
+    document.documentElement.style.scrollBehavior = 'auto'
     document.addEventListener("DOMContentLoaded", function () {
         const scrollPosition = sessionStorage.getItem("scrollPositionResponse");
         if (scrollPosition) {
-            window.scrollTo(0, parseInt(scrollPosition, 10));
+            window.scrollTo(0, parseInt(scrollPosition, 10) );
             sessionStorage.removeItem("scrollPositionResponse");
         }
         window.addEventListener("beforeunload", function () {
             sessionStorage.setItem("scrollPositionResponse", window.scrollY);
         });
     });
+    setTimeout(() => {
+        document.documentElement.style.scrollBehavior = 'smooth';
+    }, 1000);
 </script>
 
 

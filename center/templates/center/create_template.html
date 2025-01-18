@@ -122,22 +122,27 @@
 <div class="w-100" style="height: 35vh;"></div>
 
 <script>
+    document.documentElement.style.scrollBehavior = 'auto'
     document.addEventListener("DOMContentLoaded", function () {
-        const scrollPosition = sessionStorage.getItem("scrollPositionTemplate");
+        const scrollPosition = sessionStorage.getItem("scrollPositionResponse");
         if (scrollPosition) {
-            window.scrollTo(0, parseInt(scrollPosition, 10));
-            sessionStorage.removeItem("scrollPositionTemplate");
+            window.scrollTo(0, parseInt(scrollPosition, 10) );
+            sessionStorage.removeItem("scrollPositionResponse");
         }
         window.addEventListener("beforeunload", function () {
-            sessionStorage.setItem("scrollPositionTemplate", window.scrollY);
+            sessionStorage.setItem("scrollPositionResponse", window.scrollY);
         });
     });
+    setTimeout(() => {
+        document.documentElement.style.scrollBehavior = 'smooth';
+    }, 1000);
 </script>
 
 <script>
     window.onload = function() {
         const optional = document.getElementById('optional');
         const is_option = document.getElementById('is_option');
+        const is_option_label = document.getElementById('is_option_label');
         const opt_heading = document.getElementById('opt_heading');
 
         optional.style.display = 'none';
@@ -147,9 +152,11 @@
             if (is_option.checked) {
                 optional.style.display = 'flex';
                 opt_heading.style.display = 'block';
+                is_option_label.innerText = 'Remove Optional';
             } else {
                 optional.style.display = 'none';
                 opt_heading.style.display = 'none';
+                is_option_label.innerText = 'Add Optional';
 
             }
         });
