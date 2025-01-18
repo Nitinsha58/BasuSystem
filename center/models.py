@@ -105,7 +105,7 @@ class QuestionResponse(models.Model):
     question = models.ForeignKey(TestQuestion, on_delete=models.CASCADE, related_name='response')
     student = models.ForeignKey('Student', on_delete=models.CASCADE, related_name='question_response')
     test = models.ForeignKey(Test, on_delete=models.CASCADE, related_name='response')
-    marks_obtained = models.IntegerField()
+    marks_obtained = models.FloatField()
     remark = models.ManyToManyField('Remark', related_name='remark')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
