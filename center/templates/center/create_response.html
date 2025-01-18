@@ -146,4 +146,18 @@
 </div>
 
 
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const scrollPosition = sessionStorage.getItem("scrollPositionResponse");
+        if (scrollPosition) {
+            window.scrollTo(0, parseInt(scrollPosition, 10));
+            sessionStorage.removeItem("scrollPositionResponse");
+        }
+        window.addEventListener("beforeunload", function () {
+            sessionStorage.setItem("scrollPositionResponse", window.scrollY);
+        });
+    });
+</script>
+
+
 {% endblock dashboard %}

@@ -122,6 +122,19 @@
 <div class="w-100" style="height: 35vh;"></div>
 
 <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const scrollPosition = sessionStorage.getItem("scrollPositionTemplate");
+        if (scrollPosition) {
+            window.scrollTo(0, parseInt(scrollPosition, 10));
+            sessionStorage.removeItem("scrollPositionTemplate");
+        }
+        window.addEventListener("beforeunload", function () {
+            sessionStorage.setItem("scrollPositionTemplate", window.scrollY);
+        });
+    });
+</script>
+
+<script>
     window.onload = function() {
         const optional = document.getElementById('optional');
         const is_option = document.getElementById('is_option');
