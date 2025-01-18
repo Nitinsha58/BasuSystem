@@ -4,7 +4,6 @@ from django.http import HttpResponse
 from .forms import StudentRegistrationForm, StudentUpdateForm
 from .models import Batch, Center, Test, TestQuestion, Student, Remark, QuestionResponse
 from django.contrib import messages
-from datetime import date
 from django.contrib.auth.decorators import login_required
 
 # Create your views here.
@@ -110,7 +109,7 @@ def create_test_template(request, batch_id=None):
             return redirect('create_test_template')
         
         batch = Batch.objects.filter(id=batch_id).first()
-        test = Test.objects.create(batch=batch, date=date.today())
+        test = Test.objects.create(batch=batch)
         test.save()
 
         return redirect("create_template", batch_id=batch_id, test_id=test.id )
@@ -350,3 +349,118 @@ def delete_response(request, batch_id, test_id, student_id, response_id):
 
 
     return redirect("create_student_response", batch_id=batch_id, test_id=test_id, student_id=student_id)
+
+
+from django.db.models import Count
+
+def getQuery(request):
+    # result = (Remark.objects
+    #     .values('remark')
+    #     .annotate(dcount=Count('remark'))
+    #     .order_by()
+    # )
+    # print(result)
+
+    result = {}
+    responses = QuestionResponse.objects.all()
+
+    # for response in responses:
+    #     for remark in response.remark.all():
+    #         if result.get(remark):
+    #             result[remark]+=1
+    #         else:
+    #             result[remark] = 1
+    # print(result)
+
+    '''
+        1. Batchwise Marks 
+        2. Batchwise Remarks
+
+        pending
+        3. Chapterwise remarks
+        4. Chapterwise marks
+    '''
+
+    test = Test.objects.all()[0]
+    students = Student.objects.filter(batches=test.batch)
+    testwise_response = QuestionResponse.objects.filter(test=test)
+
+    result = []
+    for student in students:
+        student_responses = testwise_response.filter(student=student)
+        marks = 0
+        for response in student_responses:
+              marks += response.marks_obtained
+
+        result.append({
+                'student': student,
+                'marks' : marks
+            })        
+
+    print(  sorted(result, key=lambda d: d['marks'], reverse=True)   )
+
+    return HttpResponse()
+
+
+def batchwise_report(request, batch_id=None):
+    batches = Batch.objects.all()
+    
+    if batch_id:
+        try:
+            batch = Batch.objects.get(id=batch_id)
+        except Exception as e:
+            messages.error(request, "Invalid Batch")
+            return redirect('batchwise_report')
+        
+        remarks_count = {}
+        responses = QuestionResponse.objects.filter(test__batch=batch)
+
+        for response in responses:
+            for remark in response.remark.all():
+                if remarks_count.get(remark):
+                    remarks_count[remark]+=1
+                else:
+                    remarks_count[remark] = 1
+        
+        remarks_list = [r.name for r in remarks_count.keys()]
+        count_list = list(remarks_count.values()) 
+
+
+
+
+        test = Test.objects.all()[0]
+        students = Student.objects.filter(batches=test.batch)
+        testwise_response = QuestionResponse.objects.filter(test=test)
+
+        # print(testwise_response)
+        result = []
+
+        for student in students:
+            student_responses = testwise_response.filter(student=student)
+            marks = 0
+            for response in student_responses:
+                marks += response.marks_obtained
+
+            result.append({
+                    'student': student,
+                    'marks' : marks
+                })        
+
+        print(  sorted(result, key=lambda d: d['marks'], reverse=True)   )
+
+
+
+        remarks_count = dict(sorted(remarks_count.items(), key=lambda d: d[1], reverse=True))
+        print(remarks_count)
+        return render(request, "center/batchwise_report.html", {
+            'batches': batches,
+            'batch': batch,
+            'remarks_list':remarks_list,
+            'count_list':count_list,
+
+            'remarks_count': remarks_count,
+        })
+
+    return render(request, "center/batchwise_report.html", {
+        'batches': batches,
+    })

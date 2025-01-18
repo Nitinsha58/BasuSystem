@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% load mathfilters %}
+{% load static %}
+
+{% block dashboard %}
+
+
+<div class="mx-5 px-5">
+    <div class="w-75 m-2 p-2 mb-4">
+        <p class="h2 fw-normal">Batch Report</p>
+    </div>
+
+    <div class="d-flex g-4 w-100">
+        <div class="m-2 p-2" style="width: 15%">
+
+            <div class="card">
+                <ul class="list-group">
+                    <li class="list-group-item bg-dark text-white border-dark">Batches</li>
+                    {% for b in batches %}
+                    <a href="{% url 'batch_report' b.id %}" class="text-decoration-none">
+                        <li class="list-group-item {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
+                            {{b}}
+                        </li>
+                    </a>
+                    {% endfor %}
+                </ul>
+            </div>
+
+        </div>
+
+        <div class="m-2 p-2 ps-4" style="width: 85%;">
+            {% if batch %}
+            <div class="">
+                <p class="h4 fw-normal ">{{batch.class_name|title}}th {{batch.subject|title}} ({{batch.section}})</p>
+            </div>
+
+
+            <div class="container-md my-4 w-100">
+                <div class="">
+                    <p class="h4 fw-normal">Remarks Progress</p>
+                </div>
+                <div  class="g-3 d-flex justify-content-around">
+                    <canvas id="remarkProgress" class="w-50 h-auto"></canvas>
+                    <div class="m-2 p-2" style="width: 20%">
+
+                        <ul class="list-group">
+                            <li class="list-group-item bg-dark text-white border-dark">Remarks</li>
+                            {% for remark, count in remarks_count.items %}
+                            <li class="list-group-item d-flex justify-content-between {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
+                                <span class="">{{remark.name}}</span> <span style="height: 22px; width: 22px;" class="d-flex align-items-center justify-content-center bg-primary btn rounded-circle p-0 text-white" >{{count}}</span> 
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+
+
+
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if batch %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    const ctx = document.getElementById('remarkProgress');
+  
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: {{remarks_list|safe}},
+        datasets: [{
+          label: 'Remarks Progress',
+          data: {{count_list|safe}},
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              font: {
+                size: 14 // Set font size for y-axis labels
+              },
+              stepSize: 1 // Control the step size
+            }
+          },
+          x: {
+            ticks: {
+              font: {
+                size: 14 // Set font size for x-axis labels
+              }
+            }
+          }
+        },
+        plugins: {
+            legend: {
+                labels: {
+                    font: {
+                        size: 16 // Set font size for legend labels
+                    }
+                }
+            }
+        }
+      }
+    });
+</script>
+
+
+{% endif %}
+
+{% endblock dashboard %}
