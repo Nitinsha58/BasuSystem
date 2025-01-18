@@ -190,7 +190,7 @@ def create_question(request, batch_id, test_id):
             with transaction.atomic():
                 question = TestQuestion.objects.create(
                     test = test,
-                    question_number = TestQuestion.objects.filter(test=test).count() + 1,
+                    question_number = TestQuestion.objects.filter(test=test, is_main=True).count() + 1,
                     chapter_no = int(chapter_no),
                     max_marks = max_marks,
                     chapter_name=chapter_name
