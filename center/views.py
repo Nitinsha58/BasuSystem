@@ -2,7 +2,7 @@ from django.db import transaction
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from .forms import StudentRegistrationForm, StudentUpdateForm
-from .models import Batch, Center, Test, TestQuestion, Student, Remark, QuestionResponse
+from .models import Batch, Center, Test, TestQuestion, Student, Remark, QuestionResponse, ClassName
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 
@@ -13,9 +13,12 @@ def staff_dashboard(request):
     return render(request, 'center/dashboard.html')
 
 @login_required(login_url='staff_login')
-def staff_student_registration(request):
+def staff_student_registration(request, is_batch=None):
     all_batches = Batch.objects.all()
     center = Center.objects.filter(name="Main Center").first()
+    classes = ClassName.objects.all()
+
+    class_students = [{'class': cls.name, 'students': Student.objects.filter(batches__class_name=cls).distinct()} for cls in classes ]
 
     if not center:
         messages.error(request, "No Center Found.")
@@ -55,7 +58,7 @@ def staff_student_registration(request):
             'center': center
         })
 
-    return render(request, 'center/staff_student_registration.html', {'batches': all_batches, 'center': center})
+    return render(request, 'center/staff_student_registration.html', {'batches': all_batches, 'center': center, 'class_students': class_students, 'is_batch': is_batch})
 
 @login_required(login_url='staff_login')
 def staff_student_update(request, student_id):

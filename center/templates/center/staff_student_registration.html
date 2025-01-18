@@ -34,7 +34,7 @@
         {% endfor %}
       </select>
     </div>
-    <div class="col-12">
+    <div class="col-md-4 mt-5">
       <button class="btn btn-primary" type="submit">Create Student</button>
     </div>
   </form>
@@ -43,14 +43,18 @@
 
 
 
-<div class="container">
-  <div class="row shuffle" data-masonry='{"percentPosition": true }'>
-
+<div class="container p-4">
+  <div class="col-md-4 my-3">
+    <a href="{% url 'staff_student_registration' %}"  class="btn {% if not is_batch %} btn-primary {% else %} btn-outline-primary {% endif %} " >Classes Students</a>
+    <a href="{% url 'staff_student_registration' %}1" class="btn {% if is_batch %} btn-primary {% else %} btn-outline-primary  {% endif %}" >Batches Students</a>
+  </div>
+  {% if batches and is_batch %}
+  <div class="row shuffle" data-masonry='{"percentPosition": true }' id="batches">
     {% for batch in batches %}
     <div class="col-sm-6 col-md-4 col-lg-3 category shuffle-item shuffle-item--visible mb-4">
       <div class="card">
         <ul class="list-group">
-          <li class="list-group-item bg-dark text-white border-dark">{{batch}}</li>
+          <li class="list-group-item bg-dark text-white border-dark">{{forloop.counter}}. {{batch}}</li>
           {% for student in batch.student.all %}
           <a class="text-decoration-none text-dark list-group-item" href="{% url 'staff_student_update' student.id %}">
               <li class="list-style-none list-group"> 
@@ -63,7 +67,30 @@
     </div>
     {% endfor %}
   </div>
+  {% endif %}
+
+  {% if class_students %}
+  <div class="row shuffle" data-masonry='{"percentPosition": true }' id="batches">
+    {% for cls in class_students %}
+    <div class="col-sm-6 col-md-4 col-lg-3 category shuffle-item shuffle-item--visible mb-4">
+      <div class="card">
+        <ul class="list-group">
+          <li class="list-group-item bg-dark text-white border-dark"> {{forloop.counter}}. {{cls.class}}</li>
+          {% for student in cls.students %}
+          <a class="text-decoration-none text-dark list-group-item" href="{% url 'staff_student_update' student.id %}">
+              <li class="list-style-none list-group"> 
+              {{forloop.counter}}. {{student.user.first_name}} {{student.user.last_name}}
+            </li>
+          </a>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
 </div>
+
 
 <script src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js"
   integrity="sha384-GNFwBvfVxBkLMJpYMOABq3c+d3KnQxudP/mGPkzpZSTYykLBNsZEnG2D9G/X/+7D" crossorigin="anonymous"

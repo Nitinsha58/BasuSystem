@@ -23,6 +23,8 @@ urlpatterns = [
     path('getQuery/', getQuery),
     path('', staff_dashboard, name="staff_dashboard"),
     path('student-registration/', staff_student_registration, name="staff_student_registration"),
+    path('student-registration/<int:is_batch>', staff_student_registration, name="staff_student_registration_batch"),
+
     path('student-update/<int:student_id>/', staff_student_update, name="staff_student_update"),
     path('create-test-template/', create_test_template, name="create_test_template"),
     path('create-test-response/', create_test_response, name="create_test_response"),
