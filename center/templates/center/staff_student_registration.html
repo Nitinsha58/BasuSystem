@@ -54,7 +54,7 @@
     <div class="col-sm-6 col-md-4 col-lg-3 category shuffle-item shuffle-item--visible mb-4">
       <div class="card">
         <ul class="list-group">
-          <li class="list-group-item bg-dark text-white border-dark">{{batch}}</li>
+          <li class="list-group-item bg-dark text-white border-dark">{{batch}} - ( {{batch.student.all.count}} )</li>
           {% for student in batch.student.all %}
           <a class="text-decoration-none text-dark list-group-item" href="{% url 'staff_student_update' student.id %}">
               {{forloop.counter}}. {{student.user.first_name}} {{student.user.last_name}}
@@ -74,7 +74,7 @@
     <div class="col-sm-6 col-md-4 col-lg-3 category shuffle-item shuffle-item--visible mb-4">
       <div class="card">
         <ul class="list-group">
-          <li class="list-group-item bg-dark text-white list-group border-dark"> {{cls.class}}</li>
+          <li class="list-group-item bg-dark text-white list-group border-dark"> {{cls.class}} -  ( {{cls.students.count}} )</li>
           {% for student in cls.students %}
           <li class="list-group-item d-flex justify-content-between align-items-center">
             <a class="text-decoration-none text-dark" href="{% url 'staff_student_update' student.id %}">
