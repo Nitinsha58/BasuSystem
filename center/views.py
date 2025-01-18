@@ -5,6 +5,7 @@ from .forms import StudentRegistrationForm, StudentUpdateForm
 from .models import Batch, Center, Test, TestQuestion, Student, Remark, QuestionResponse, ClassName
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from user.models import BaseUser
 
 # Create your views here.
 
@@ -59,6 +60,21 @@ def staff_student_registration(request, is_batch=None):
         })
 
     return render(request, 'center/staff_student_registration.html', {'batches': all_batches, 'center': center, 'class_students': class_students, 'is_batch': is_batch})
+
+
+@login_required(login_url='staff_login')
+def staff_student_delete(request, user_id):
+    try:
+        user = BaseUser.objects.get(id=user_id)
+        user.delete()
+        messages.success(request, "Student deleted.")
+
+    except BaseUser.DoesNotExist:
+        messages.error(request, "Student not found")
+    except Exception as e:
+        messages.error(request, f"An error occurred: {str(e)}")
+    
+    return redirect('staff_student_registration')
 
 @login_required(login_url='staff_login')
 def staff_student_update(request, student_id):

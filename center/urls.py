@@ -1,6 +1,8 @@
 from django.urls import path
 from .views import ( 
     staff_student_registration,
+    staff_student_delete,
+
     staff_student_update,
     staff_dashboard,
     create_test_template,
@@ -24,6 +26,7 @@ urlpatterns = [
     path('', staff_dashboard, name="staff_dashboard"),
     path('student-registration/', staff_student_registration, name="staff_student_registration"),
     path('student-registration/<int:is_batch>', staff_student_registration, name="staff_student_registration_batch"),
+    path('student-delete/<int:user_id>', staff_student_delete, name="staff_student_delete"),
 
     path('student-update/<int:student_id>/', staff_student_update, name="staff_student_update"),
     path('create-test-template/', create_test_template, name="create_test_template"),
