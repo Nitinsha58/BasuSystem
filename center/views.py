@@ -6,6 +6,7 @@ from .models import Batch, Center, Test, TestQuestion, Student, Remark, Question
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from user.models import BaseUser
+from django.db import models
 
 # Create your views here.
 
@@ -306,7 +307,7 @@ def create_response(request, batch_id, test_id, student_id=None, question_id = N
                 question_response.append({"response": response_map.get(question.id)})
             elif question.is_main and question.question_number not in question_nums:
                 question_response.append({"question": question})
-    print(question_response)
+
 
     return render(request, "center/create_response.html", {
         "batch":batch, 
@@ -416,8 +417,6 @@ def getQuery(request):
                 'marks' : marks
             })        
 
-    print(  sorted(result, key=lambda d: d['marks'], reverse=True)   )
-
     return HttpResponse()
 
 
@@ -446,31 +445,51 @@ def batchwise_report(request, batch_id=None):
 
 
 
+        test_reports = []
 
-        test = Test.objects.all()[0]
-        students = Student.objects.filter(batches=test.batch)
-        testwise_response = QuestionResponse.objects.filter(test=test)
+        tests = Test.objects.filter(batch=batch)
 
-        # print(testwise_response)
-        result = []
+        for test in tests:
+            students = Student.objects.filter(batches=test.batch)
+            testwise_response = QuestionResponse.objects.filter(test=test)
 
-        for student in students:
-            student_responses = testwise_response.filter(student=student)
-            marks = 0
-            for response in student_responses:
-                marks += response.marks_obtained
+            remarks = {}
+            students_list = []
+            marks_list = []
+            total_marks = 0
+            total_max = 0
+            max_marks = test.question.aggregate(total=models.Sum('max_marks'))['total'] or 0
+            for student in students:
+                student_responses = testwise_response.filter(student=student)
+                marks = 0
+                for response in student_responses:
+                    marks += response.marks_obtained # count total marks
 
-            result.append({
-                    'student': student,
-                    'marks' : marks
-                })        
+                    #count remarks
+                    for remark in response.remark.all():
+                        if remarks.get(remark):
+                            remarks[remark]+=1
+                        else:
+                            remarks[remark] = 1
 
-        print(  sorted(result, key=lambda d: d['marks'], reverse=True)   )
+                students_list.append(f'{student.user.first_name} {student.user.last_name}')
+                marks_list.append(marks)
+                total_marks += marks
+                total_max += max_marks
+
+            test_reports.append({
+                'test' : test,
+                'students': students_list,
+                'marks' : marks_list,
+                'remarks': remarks,
+                'max_marks': max_marks,
+                'avg': (total_marks/(total_max or 1)) * 100 
+            })
+
 
 
 
         remarks_count = dict(sorted(remarks_count.items(), key=lambda d: d[1], reverse=True))
-        print(remarks_count)
         return render(request, "center/batchwise_report.html", {
             'batches': batches,
             'batch': batch,
@@ -478,6 +497,7 @@ def batchwise_report(request, batch_id=None):
             'count_list':count_list,
 
             'remarks_count': remarks_count,
+            'tests': test_reports,
         })
 
     return render(request, "center/batchwise_report.html", {

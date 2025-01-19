@@ -55,6 +55,28 @@
                 </div>
             </div>
 
+            {% for test in tests %}
+            <div class="container-md my-4 w-100">
+                <div class="">
+                  <p class="h4 fw-normal">{{test.test.name}}</p>
+                </div>
+                <div  class="g-3 d-flex justify-content-around">
+                  <canvas id="test_chart_{{forloop.counter}}" class="w-50 h-auto"></canvas>
+                  <div class="m-2 p-2" style="width: 20%">
+
+                    <ul class="list-group">
+                      <li class="list-group-item bg-dark text-white border-dark">Remarks - Avg: {{test.avg|floatformat:2}}%</li>
+                      {% for remark, count in test.remarks.items %}
+                      <li class="list-group-item d-flex justify-content-between {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
+                        <span class="">{{remark.name}}</span> <span style="height: 22px; width: 22px;" class="d-flex align-items-center justify-content-center bg-primary btn rounded-circle p-0 text-white" >{{count}}</span> 
+                      </li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                </div>
+            </div>
+            {% endfor %}
+
 
 
 
@@ -111,6 +133,43 @@
       }
     });
 </script>
+
+
+<script>
+  {% for report in tests %}
+  const ctx{{ forloop.counter }} = document.getElementById('test_chart_{{ forloop.counter }}').getContext('2d');
+  new Chart(ctx{{ forloop.counter }}, {
+      type: 'line',
+      data: {
+          labels: {{ report.students|safe }}, // Use the student names
+          datasets: [{
+              label: 'Marks out of {{ report.max_marks }}',
+              data: {{ report.marks|safe }}, // Use the marks
+              borderColor: 'rgba(54, 162, 235, 1)',
+              backgroundColor: 'rgba(54, 162, 235, 0.2)',
+              borderWidth: 2,
+              tension: 0.4
+          }]
+      },
+      options: {
+          responsive: true,
+          scales: {
+              y: {
+                  beginAtZero: true,
+                  ticks: {
+                      stepSize: 0
+                  },
+                  suggestedMax: {{ report.max_marks }} + 1,
+              }
+          }
+      }
+  });
+  {% endfor %}
+</script>
+
+
+
+
 
 
 {% endif %}
