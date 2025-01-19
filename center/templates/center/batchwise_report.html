@@ -3,7 +3,40 @@
 {% load static %}
 
 {% block dashboard %}
+<style>
+  .parent {
+    position: relative;
+    width: auto;
+    height: 24px;
+    background-color: whitesmoke;
+    margin: 15px 2rem;
+    border-radius: 7px;
+    overflow: hidden;
 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .child {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 50%;
+    background-color: rgba(74, 212, 231, 0.161);
+    justify-content: center;
+    align-items: center;
+    border-radius: 0 5px 5px 0;
+  }
+
+  .progress_text {
+    position: absolute;
+    color: #000000e7;
+    font-size: 14px;
+    margin: 0;
+  }
+</style>
 
 <div class="mx-5 px-5">
     <div class="w-75 m-2 p-2 mb-4">
@@ -60,10 +93,16 @@
                 <div class="">
                   <p class="h4 fw-normal">{{test.test.name}}</p>
                 </div>
-                <div  class="g-3 d-flex justify-content-around">
-                  <canvas id="test_chart_{{forloop.counter}}" class="w-50 h-auto"></canvas>
-                  <div class="m-2 p-2" style="width: 20%">
 
+                <div  class="g-3 d-flex justify-content-around">
+                  <div class="w-50 h-auto">
+                    <canvas id="test_chart_{{forloop.counter}}" class="w-100 h-auto"></canvas>
+                    <div class="parent ">
+                      <div class="child bg-warning" style="width: {{test.attempted}}%;"  ></div>
+                      <p class="progress_text">{{test.attempted}}% Students Attempted</p>
+                    </div>
+                  </div>
+                  <div class="m-2 p-2" style="width: 20%">
                     <ul class="list-group">
                       <li class="list-group-item bg-dark text-white border-dark">Remarks - Avg: {{test.avg|floatformat:2}}%</li>
                       {% for remark, count in test.remarks.items %}

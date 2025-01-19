@@ -453,11 +453,15 @@ def batchwise_report(request, batch_id=None):
             students = Student.objects.filter(batches=test.batch)
             testwise_response = QuestionResponse.objects.filter(test=test)
 
+            attempt_count = 0
+
             remarks = {}
             students_list = []
             marks_list = []
             total_marks = 0
             total_max = 0
+
+
             max_marks = test.question.aggregate(total=models.Sum('max_marks'))['total'] or 0
             for student in students:
                 student_responses = testwise_response.filter(student=student)
@@ -472,6 +476,10 @@ def batchwise_report(request, batch_id=None):
                         else:
                             remarks[remark] = 1
 
+                    
+                if student_responses:
+                    attempt_count += 1
+
                 students_list.append(f'{student.user.first_name} {student.user.last_name}')
                 marks_list.append(marks)
                 total_marks += marks
@@ -483,7 +491,8 @@ def batchwise_report(request, batch_id=None):
                 'marks' : marks_list,
                 'remarks': dict(sorted(remarks.items(), key=lambda d: d[1], reverse=True)),
                 'max_marks': max_marks,
-                'avg': (total_marks/(total_max or 1)) * 100 
+                'avg': (total_marks/(total_max or 1)) * 100,
+                'attempted': round( (attempt_count/students.count())*100  ,2),
             })
 
 
