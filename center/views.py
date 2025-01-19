@@ -481,7 +481,7 @@ def batchwise_report(request, batch_id=None):
                 'test' : test,
                 'students': students_list,
                 'marks' : marks_list,
-                'remarks': remarks,
+                'remarks': dict(sorted(remarks.items(), key=lambda d: d[1], reverse=True)),
                 'max_marks': max_marks,
                 'avg': (total_marks/(total_max or 1)) * 100 
             })

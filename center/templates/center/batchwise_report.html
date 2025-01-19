@@ -47,7 +47,7 @@
                             <li class="list-group-item bg-dark text-white border-dark">Remarks</li>
                             {% for remark, count in remarks_count.items %}
                             <li class="list-group-item d-flex justify-content-between {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
-                                <span class="">{{remark.name}}</span> <span style="height: 22px; width: 22px;" class="d-flex align-items-center justify-content-center bg-primary btn rounded-circle p-0 text-white" >{{count}}</span> 
+                                <span class="">{{remark.name}}</span> <span class="fw-normal" >{{count}}</span> 
                             </li>
                             {% endfor %}
                         </ul>
@@ -68,7 +68,7 @@
                       <li class="list-group-item bg-dark text-white border-dark">Remarks - Avg: {{test.avg|floatformat:2}}%</li>
                       {% for remark, count in test.remarks.items %}
                       <li class="list-group-item d-flex justify-content-between {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
-                        <span class="">{{remark.name}}</span> <span style="height: 22px; width: 22px;" class="d-flex align-items-center justify-content-center bg-primary btn rounded-circle p-0 text-white" >{{count}}</span> 
+                        <span class="">{{remark.name}}</span> <span class="fw-normal" >{{count}}</span> 
                       </li>
                       {% endfor %}
                     </ul>
