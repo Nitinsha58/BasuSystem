@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% load mathfilters %}
+{% load static %}
+
+{% block dashboard %}
+
+<style>
+    .dates-group {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+        overflow-x: auto;
+        display: flex;
+        gap: 2rem;
+    }
+</style>
+
+<div class="mx-5 px-5">
+    <div class="w-75 m-2 p-2 mb-4">
+        <p class="h2 fw-normal">Mocks Progress</p>
+    </div>
+
+    <div class="d-flex g-4 w-100 dates-group pb-3">
+        {% for date in dates %}
+        <div class="card date-card" style="min-width: 20rem; height: fit-content;" data-date="{{ date|date:'Y-m-d' }}">
+            <ul class="list-group">
+                <li class="list-group-item text-dark bg-light">{{ date|date:'d b Y ( l )'|title }}</li>
+
+                    <li class="list-group-item p-2 bg-light">
+                        <form class="d-flex flex-column gap-2 mb-2 input-form" method="post">
+                            {% csrf_token %}
+                            <input type="text" class="form-control" id="test" name="test" placeholder="Test Name" required>
+                            <select class="form-select" id="status" name="status" aria-label="select status" required>
+                                {% for status in test_status %}
+                                <option value="{{status.id}}">{{status.name}}</option>
+                                {% endfor %}
+                            </select>
+                            <input style="display: none;" type="date" class="form-control" id="date" name="date" value="{{date|date:'Y-m-d'}}" placeholder="Date" required>
+                            <div id="btn-group-{{forloop.counter}}" style="display: none;" class="btn-container w-100 justify-content-between">
+                                <button type="submit" class="btn btn-success px-4">Submit</button>
+                                <a href="" class="btn btn-primary px-4">Cancel</a>
+                            </div>
+                        </form>
+                    </li>
+
+                    {% for test in tests %}
+                        {% if date|date:'Y-m-d' == test.date|date:'Y-m-d' %}
+                        <li class="list-group-item p-2">
+                            <form class="d-flex flex-column gap-2 mb-2 update-form" method="post" action="{% url 'update_test_progress' test.id %}">
+                                {% csrf_token %}
+                                <input value="{{test.name}}" type="text" class="form-control" id="test" name="test" placeholder="Test Name" required>
+                                <select class="form-select" id="status" name="status"  {% if test.status.color %} style="background: {{test.status.color}}; " {% endif %} required>
+                                    {% for status in test_status %}
+                                    <option value="{{status.id}}" {% if test.status == status %} selected {% endif %}  >{{status.name}}</option>
+                                    {% endfor %}
+                                </select>
+                                <input style="display: none;" type="date" class="form-control" id="date" name="date" value="{{date|date:'Y-m-d'}}" placeholder="Date" required>
+                                <div id="update-btn-group" style="display: none;" class="btn-container w-100 justify-content-between">
+                                    <button type="submit" class="btn btn-warning px-4">Update</button>
+                                    <a href="{% url 'delete_test_progress' test.id %}" class="btn btn-danger px-4">Delete</a>
+                                </div>
+                            </form>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+
+            </ul>
+        </div>
+        {% endfor %}
+
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const today = new Date().toISOString().split('T')[0];
+        const dateCards = document.querySelectorAll(".date-card");
+        const gap = 32;
+        const container = document.querySelector(".dates-group");
+
+        const cardWidth = dateCards[0]?.offsetWidth || 0;
+
+        let scrollOffset = 0;
+
+        const scrollPosition = sessionStorage.getItem("scrollPositionTestProgress");
+        if (scrollPosition) {
+            container.scrollTo({
+                left: scrollPosition,
+            });
+
+            sessionStorage.removeItem("scrollPositionTestProgress");
+        }
+            window.addEventListener("beforeunload", function () {
+            sessionStorage.setItem("scrollPositionTestProgress", container.scrollLeft);
+        });
+
+        
+        for (let i = 0; i < dateCards.length; i++) {
+            if (dateCards[i].dataset.date === today) {
+                dateCards[i].querySelector('ul.list-group').children[0].innerText += " (Today)";
+                dateCards[i].querySelector('ul.list-group').children[0].classList.remove("text-dark", "bg-light");
+                dateCards[i].querySelector('ul.list-group').children[0].classList.add("bg-dark", "text-white", "border-dark");
+                break;
+            }
+            scrollOffset +=  gap + cardWidth;
+        }
+        scrollOffset -= gap*2 + cardWidth;
+
+        if (!scrollPosition) {
+            container.scrollTo({
+                left: scrollOffset,
+                // behavior: "smooth",
+            });
+        }
+    });
+
+
+
+    const forms = document.querySelectorAll(".input-form");
+    forms.forEach((form, index) => {
+        const inputs = form.querySelectorAll("input, select");
+        const btnContainer = document.getElementById(`btn-group-${index + 1}`);
+
+        // Add event listeners for focus and blur
+        inputs.forEach(input => {
+            input.addEventListener("focus", () => {
+                btnContainer.style.display = "flex"; // Show the buttons
+            });
+
+            input.addEventListener("blur", () => {
+                // Check if any input is still focused
+                setTimeout(() => {
+                    const isActive = Array.from(inputs).some(inp => inp === document.activeElement);
+                    if (!isActive) {
+                        // btnContainer.style.display = "none"; // Hide the buttons
+                    }
+                }, 100); // Delay to ensure blur doesn't hide buttons immediately when switching between inputs
+            });
+        });
+    });
+
+
+    const updateForms = document.querySelectorAll(".update-form");
+    updateForms.forEach((form, index) => {
+        const inputs = form.querySelectorAll("input, select");
+        const btnContainer = form.querySelector("#update-btn-group");
+
+        inputs.forEach(input => {
+            input.addEventListener("focus", () => {
+                btnContainer.style.display = "flex"; // Show the buttons
+            });
+
+            input.addEventListener("blur", () => {
+                setTimeout(() => {
+                    const isActive = Array.from(inputs).some(inp => inp === document.activeElement);
+                    if (!isActive) {
+                        // btnContainer.style.display = "none"; // Hide the buttons if no field is focused
+                    }
+                }, 100);
+            });
+        });
+    });
+
+
+
+</script>
+
+
+{% endblock dashboard %}

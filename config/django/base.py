@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     'center.apps.CenterConfig',
     'user.apps.UserConfig',
     'mathfilters',
+    'testprogress.apps.TestprogressConfig',
 ]
 
 MIDDLEWARE = [
