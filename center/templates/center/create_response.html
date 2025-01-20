@@ -48,10 +48,10 @@
                         {% csrf_token %}
                         <div class="col-md-4 w-40">
                             <label for="remark" class="form-label">Remark</label>
-                            <select class="form-select row row-cols-2" name="remark" multiple size="{{ remarks.count }}" >
+                            <select class="form-select row row-cols-2" name="remark"  size="{{ remarks.count }}" >
                                 {% for remark in remarks %}
                                 <option class="col col-sm-6" value="{{ remark.id }}"
-                                    {% if remark in item.response.remark.all %} selected {% endif %}>{{ remark.name }}</option>
+                                    {% if remark == item.response.remark %} selected {% endif %}>{{ remark.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -87,7 +87,7 @@
                         {% csrf_token %}
                         <div class="col-md-4 w-40">
                             <label for="remark" class="form-label">Remark</label>
-                            <select class="form-select row row-cols-2" name="remark" multiple size="{{remarks.count}}">
+                            <select class="form-select row row-cols-2" name="remark"  size="{{remarks.count}}">
                                 {% for remark in remarks %}
                                 <option class="col col-sm-6"  value="{{remark.id}}">{{remark.name}}</option>
                                 {% endfor %}
@@ -118,7 +118,7 @@
                         {% csrf_token %}
                         <div class="col-md-4 w-40">
                             <label for="remark" class="form-label">Remark</label>
-                            <select class="form-select row row-cols-2" name="remark" multiple size="{{remarks.count}}"
+                            <select class="form-select row row-cols-2" name="remark"  size="{{remarks.count}}"
                                 >
                                 {% for remark in remarks %}
                                 <option class="col col-sm-6"  value="{{remark.id}}">{{remark.name}}</option>

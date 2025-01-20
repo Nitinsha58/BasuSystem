@@ -278,16 +278,17 @@ def create_response(request, batch_id, test_id, student_id=None, question_id = N
 
         if request.method == 'POST' and question:
             marks_obtained = request.POST.get("marks_obtained")
-            remark_ids = request.POST.getlist("remark")
+            remark_id = request.POST.get("remark")
 
             response = QuestionResponse.objects.create(
                 question = question,
                 student=student,
                 test=test,
-                marks_obtained = float(question.max_marks) - float(marks_obtained)
+                marks_obtained = float(question.max_marks) - float(marks_obtained),
+                remark = Remark.objects.get(id=remark_id)
             )
+            response.save()
 
-            response.remark.set(Remark.objects.filter(id__in=remark_ids))
             return redirect("create_student_response", batch_id=batch_id, test_id=test_id, student_id=student_id)
         
         responses = QuestionResponse.objects.filter(student=student, test=test).select_related("question")
@@ -361,10 +362,10 @@ def update_response(request, batch_id, test_id, student_id, response_id):
     
     if request.method == 'POST':
         marks_obtained = request.POST.get("marks_obtained")
-        remark_ids = request.POST.getlist("remark")
+        remark_id = request.POST.get("remark")
 
         response.marks_obtained = float(response.question.max_marks) - abs(float(marks_obtained))
-        response.remark.set(Remark.objects.filter(id__in=remark_ids))
+        response.remark = Remark.objects.get(id=remark_id)
         response.save()
     
     return redirect("create_student_response", batch_id=batch_id, test_id=test_id, student_id=student_id)
