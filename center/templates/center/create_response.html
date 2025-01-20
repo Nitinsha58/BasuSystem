@@ -34,6 +34,9 @@
                     {{batch|title}}</p>
             </div>
 
+            <div class="d-flex justify-content-end">
+                <a href="{% url 'create_all_pending_response' batch.id test.id student.id %}" class="btn bg-success-subtle">Add All Pending</a>
+            </div>
             {% for item in question_response %}
                 {% if item.response %}
                 <div class="container-sm my-4">

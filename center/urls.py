@@ -14,6 +14,7 @@ from .views import (
     update_question,
     update_response,
     delete_response,
+    create_all_pending_response,
     
     batchwise_report,
     
@@ -37,6 +38,7 @@ urlpatterns = [
     path('create-test-response/<int:batch_id>/<int:test_id>/<int:student_id>/<int:question_id>', create_response, name="add_response"),
     path('update-test-response/<int:batch_id>/<int:test_id>/<int:student_id>/<int:response_id>', update_response, name="update_response"),
     path('delete-test-response/<int:batch_id>/<int:test_id>/<int:student_id>/<int:response_id>', delete_response, name="delete_response"),
+    path('create-all-test-response/<int:batch_id>/<int:test_id>/<int:student_id>', create_all_pending_response, name="create_all_pending_response"),
 
     path('create-test-template/<int:batch_id>/', create_test_template, name="create_test_template"),
     path('create-template/<int:batch_id>/<int:test_id>/', create_template, name="create_template"),

@@ -321,6 +321,33 @@ def create_response(request, batch_id, test_id, student_id=None, question_id = N
 
 
 @login_required(login_url='staff_login')
+def create_all_pending_response(request, batch_id, test_id, student_id):
+    test = Test.objects.filter(id=test_id).first()
+    student = Student.objects.filter(id=student_id).first()
+
+    if not student or not test:
+        messages.error(request, "Invalid Student or Test")
+        return redirect("create_student_response", batch_id=batch_id, test_id=test_id, student_id=student_id)
+
+    unanswered_questions = TestQuestion.objects.filter(
+        test=test
+    ).exclude(
+        response__student=student
+    )
+
+    for question in unanswered_questions:
+        obj = QuestionResponse.objects.create(
+            question=question,
+            student=student,
+            test=test,
+            marks_obtained=question.max_marks,  # Default marks
+        )
+        obj.save()
+
+    return redirect("create_student_response", batch_id=batch_id, test_id=test_id, student_id=student_id)
+
+
+@login_required(login_url='staff_login')
 def update_response(request, batch_id, test_id, student_id, response_id):
     batch = Batch.objects.filter(id=batch_id).first()
     test = Test.objects.filter(id=test_id).first()
