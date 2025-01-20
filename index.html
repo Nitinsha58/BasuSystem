@@ -3,82 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multiple Line Charts</title>
+    <title>Stacked Bar Chart</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <div style="width: 80%; margin: auto;">
-        <h3>Dynamic Line Charts Example</h3>
-        <div id="charts-container"></div>
-    </div>
-
+    <canvas id="stackedBarChart" width="400" height="200"></canvas>
     <script>
-        // Example data for three charts
-        const chartData = [
-            {
-                id: 'chart1',
-                title: 'Chart 1 - Sales Data',
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                data: [10, 20, 30, 40, 50, 60]
+        const ctx = document.getElementById('stackedBarChart').getContext('2d');
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['January', 'February', 'March', 'April', 'May'], // X-axis labels
+                datasets: [
+                    {
+                        label: 'Product A',
+                        data: [10, 20, 30, 40, 50],
+                        backgroundColor: 'rgba(255, 99, 132, 0.8)', // Red
+                    },
+                    {
+                        label: 'Product B',
+                        data: [15, 25, 35, 45, 55],
+                        backgroundColor: 'rgba(54, 162, 235, 0.8)', // Blue
+                    },
+                    {
+                        label: 'Product C',
+                        data: [20, 30, 40, 50, 60],
+                        backgroundColor: 'rgba(75, 192, 192, 0.8)', // Green
+                    }
+                ]
             },
-            {
-                id: 'chart2',
-                title: 'Chart 2 - Revenue Data',
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                data: [15, 25, 35, 45, 55, 65]
-            },
-            {
-                id: 'chart3',
-                title: 'Chart 3 - Profit Data',
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                data: [5, 15, 25, 35, 45, 55]
-            }
-        ];
-
-        const container = document.getElementById('charts-container');
-
-        chartData.forEach(chart => {
-            // Create a canvas for each chart
-            const canvas = document.createElement('canvas');
-            canvas.id = chart.id;
-            canvas.style.marginBottom = '40px';
-            container.appendChild(canvas);
-
-            // Generate the chart
-            new Chart(canvas.getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: chart.labels,
-                    datasets: [{
-                        label: chart.title,
-                        data: chart.data,
-                        borderColor: 'rgba(75, 192, 192, 1)',
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        borderWidth: 2,
-                        tension: 0.4 // Smoothness
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                stepSize: 10
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: {
+                                size: 14
                             }
                         }
                     },
-                    plugins: {
-                        legend: {
-                            labels: {
-                                font: {
-                                    size: 14
-                                }
+                    tooltip: {
+                        enabled: true
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: true, // Enable stacking on the X-axis
+                        title: {
+                            display: true,
+                            text: 'Months',
+                            font: {
+                                size: 16
+                            }
+                        }
+                    },
+                    y: {
+                        stacked: true, // Enable stacking on the Y-axis
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 20 // Set custom step size
+                        },
+                        title: {
+                            display: true,
+                            text: 'Sales',
+                            font: {
+                                size: 16
                             }
                         }
                     }
                 }
-            });
+            }
         });
     </script>
 </body>
