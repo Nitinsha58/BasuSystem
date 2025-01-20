@@ -17,6 +17,7 @@ from .views import (
     create_all_pending_response,
     
     batchwise_report,
+    chapterwise_report,
     
     
     getQuery
@@ -48,4 +49,7 @@ urlpatterns = [
 
     path('batchwise_report/', batchwise_report, name="batchwise_report"),
     path('batchwise_report/<int:batch_id>/', batchwise_report, name="batch_report"),
+
+    path('chapterwise_report/', chapterwise_report, name="chapterwise_report"),
+    path('chapterwise_report/<int:batch_id>', chapterwise_report, name="chapter_batch_report"),
 ]

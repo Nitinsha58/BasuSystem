@@ -41,7 +41,7 @@
                 {% if item.response %}
                 <div class="container-sm my-4">
                     <div class="">
-                        <p class="h4 fw-normal">Q{{item.response.question.question_number}}. {{item.response.question.chapter_name}}</p>
+                        <p class="h4 fw-normal">Q{{item.response.question.question_number}}. {{item.response.question.chapter_name}} (Ch-{{item.response.question.chapter_no}})</p>
                     </div>
                     <form class="row g-3 w-100 d-flex justify-content-between ps-5" action="{% url 'update_response' batch.id test.id student.id item.response.id %}"
                         method="post">

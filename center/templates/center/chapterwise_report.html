@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+{% load mathfilters %}
+{% load static %}
+
+{% block dashboard %}
+<style>
+  .parent {
+    position: relative;
+    width: auto;
+    height: 24px;
+    background-color: whitesmoke;
+    margin: 15px 2rem;
+    border-radius: 7px;
+    overflow: hidden;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .child {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 50%;
+    background-color: rgba(74, 212, 231, 0.161);
+    justify-content: center;
+    align-items: center;
+    border-radius: 0 5px 5px 0;
+  }
+
+  .progress_text {
+    position: absolute;
+    color: #000000e7;
+    font-size: 14px;
+    margin: 0;
+  }
+</style>
+
+<div class="mx-5 px-5">
+    <div class="w-75 m-2 p-2 mb-4">
+        <p class="h2 fw-normal">Chapterwise Batch Report</p>
+    </div>
+
+    <div class="d-flex g-4 w-100">
+        <div class="m-2 p-2" style="width: 15%">
+
+            <div class="card">
+                <ul class="list-group">
+                    <li class="list-group-item bg-dark text-white border-dark">Batches</li>
+                    {% for b in batches %}
+                    <a href="{% url 'chapter_batch_report' b.id %}" class="text-decoration-none">
+                        <li class="list-group-item {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
+                            {{b}}
+                        </li>
+                    </a>
+                    {% endfor %}
+                </ul>
+            </div>
+
+        </div>
+
+        <div class="m-2 p-2 ps-4" style="width: 85%;">
+            {% if batch %}
+            <div class="">
+                <p class="h4 fw-normal ">{{batch.class_name|title}}th {{batch.subject|title}} ({{batch.section}})</p>
+            </div>
+
+
+            <div class="container-md my-4 w-100">
+                <div class="">
+                    <p class="h4 fw-normal">Remarks Progress</p>
+                </div>
+                <div  class="g-3 d-flex justify-content-around">
+                    <canvas id="remarkProgress" class="w-50 h-auto"></canvas>
+                    <div class="m-2 p-2" style="width: 20%">
+
+                        <ul class="list-group">
+                            <li class="list-group-item bg-dark text-white border-dark">Remarks</li>
+                            {% for remark, count in remarks_count.items %}
+                            <li class="list-group-item d-flex justify-content-between {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
+                                <span class="">{{remark.name}}</span> <span class="fw-normal" >{{count}}</span> 
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            {% for test in tests %}
+            <div class="container-md my-4 w-100">
+                <div class="">
+                  <p class="h4 fw-normal">{{test.test.name}}</p>
+                </div>
+
+                <div  class="g-3 d-flex justify-content-around">
+                  <div class="w-50 h-auto">
+                    <canvas id="test_chart_{{forloop.counter}}" class="w-100 h-auto"></canvas>
+                    <div class="parent ">
+                      <div class="child bg-warning" style="width: {{test.attempted}}%;"  ></div>
+                      <p class="progress_text">{{test.attempted}}% Students Attempted</p>
+                    </div>
+                  </div>
+                  <div class="m-2 p-2" style="width: 20%">
+                    <ul class="list-group">
+                      <li class="list-group-item bg-dark text-white border-dark">Remarks - Avg: {{test.avg|floatformat:2}}%</li>
+                      {% for remark, count in test.remarks.items %}
+                      <li class="list-group-item d-flex justify-content-between {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
+                        <span class="">{{remark.name}}</span> <span class="fw-normal" >{{count}}</span> 
+                      </li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                </div>
+            </div>
+            {% endfor %}
+
+
+
+
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if batch %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    const ctx = document.getElementById('remarkProgress');
+  
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: [{% for ch_no, ch_name in chapters.items %} '{{ch_name}} - {{ch_no}}', {% endfor %}],
+        datasets: [
+            {% for remark, counts in chapter_wise_remarks.items %}
+            {
+                label: '{{remark}}',
+                data: {{counts}},
+                borderWidth: 1
+            },
+            {% endfor %}
+        
+        ]
+      },
+      options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        enabled: true
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: true, // Enable stacking on the X-axis
+                        title: {
+                            display: true,
+                            text: 'Chapters',
+                            font: {
+                                size: 16
+                            }
+                        }
+                    },
+                    y: {
+                        stacked: true, // Enable stacking on the Y-axis
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 10 // Set custom step size
+                        },
+                        title: {
+                            display: true,
+                            text: 'Remarks count',
+                            font: {
+                                size: 16
+                            }
+                        }
+                    }
+                }
+            }
+    });
+</script>
+
+
+<script>
+  {% for report in tests %}
+  const ctx{{ forloop.counter }} = document.getElementById('test_chart_{{ forloop.counter }}').getContext('2d');
+  new Chart(ctx{{ forloop.counter }}, {
+      type: 'line',
+      data: {
+          labels: {{ report.students|safe }}, // Use the student names
+          datasets: [{
+              label: 'Marks out of {{ report.max_marks }}',
+              data: {{ report.marks|safe }}, // Use the marks
+              borderColor: 'rgba(54, 162, 235, 1)',
+              backgroundColor: 'rgba(54, 162, 235, 0.2)',
+              borderWidth: 2,
+              tension: 0.4
+          }]
+      },
+      options: {
+          responsive: true,
+          scales: {
+              y: {
+                  beginAtZero: true,
+                  ticks: {
+                      stepSize: 0
+                  },
+                  suggestedMax: {{ report.max_marks }} + 1,
+              }
+          }
+      }
+  });
+  {% endfor %}
+</script>
+
+
+
+
+
+
+{% endif %}
+
+{% endblock dashboard %}
