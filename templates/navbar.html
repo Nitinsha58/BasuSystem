@@ -54,9 +54,14 @@
             </ul>
             {% endif %}
             {% if request.user.is_authenticated %}
-            <p class="m-0 mx-2 fs-4 d-block">{{request.user.first_name}} {{request.user.last_name}}</p>
-            <a href="/admin" class="btn btn-success me-2 ">  Admin  </a>
-            <a href="{% url 'logout' %}" class="btn btn-danger">  Logout  </a>
+                {% if request.user.student %}
+                <p class="m-0 mx-2 fs-4 d-block">Stu - {{request.user.first_name}} {{request.user.last_name}}</p>
+                {% elif request.user.teacher %}
+                <p class="m-0 mx-2 fs-4 d-block">Teach - {{request.user.first_name}} {{request.user.last_name}}</p>
+                {% elif request.user.is_superuser %}
+                <a href="/admin" class="btn btn-success me-2 ">  Admin  </a>
+                {% endif %}
+                <a href="{% url 'logout' %}" class="btn btn-danger">  Logout  </a>
             {% endif %}
         </div>
     </div>
