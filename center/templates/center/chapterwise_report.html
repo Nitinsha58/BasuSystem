@@ -36,6 +36,9 @@
     font-size: 14px;
     margin: 0;
   }
+  canvas {
+
+  }
 </style>
 
 <div class="mx-5 px-5">
@@ -73,14 +76,14 @@
                     <p class="h4 fw-normal">Remarks Progress</p>
                 </div>
                 <div  class="g-3 d-flex justify-content-around">
-                    <canvas id="remarkProgress" class="w-50 h-auto"></canvas>
+                    <canvas id="remarkProgress" class="w-75 h-auto"></canvas>
                     <div class="m-2 p-2" style="width: 20%">
 
                         <ul class="list-group">
                             <li class="list-group-item bg-dark text-white border-dark">Remarks</li>
                             {% for remark, count in remarks_count.items %}
                             <li class="list-group-item d-flex justify-content-between {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
-                                <span class="">{{remark.name}}</span> <span class="fw-normal" >{{count}}</span> 
+                                <span class="">{{remark.name}}</span> <span class="fw-normal" >{{count}} %</span> 
                             </li>
                             {% endfor %}
                         </ul>
@@ -95,7 +98,7 @@
                 </div>
 
                 <div  class="g-3 d-flex justify-content-around">
-                  <div class="w-50 h-auto">
+                  <div class="w-75 h-auto">
                     <canvas id="test_chart_{{forloop.counter}}" class="w-100 h-auto"></canvas>
                     <div class="parent ">
                       <div class="child bg-warning" style="width: {{test.attempted}}%;"  ></div>
@@ -107,7 +110,7 @@
                       <li class="list-group-item bg-dark text-white border-dark">Remarks - Avg: {{test.avg|floatformat:2}}%</li>
                       {% for remark, count in test.remarks.items %}
                       <li class="list-group-item d-flex justify-content-between {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
-                        <span class="">{{remark.name}}</span> <span class="fw-normal" >{{count}}</span> 
+                        <span class="">{{remark.name}}</span> <span class="fw-normal" >{{count}} %</span> 
                       </li>
                       {% endfor %}
                     </ul>
@@ -197,15 +200,25 @@
   new Chart(ctx{{ forloop.counter }}, {
       type: 'line',
       data: {
-          labels: {{ report.students|safe }}, // Use the student names
-          datasets: [{
-              label: 'Marks out of {{ report.max_marks }}',
-              data: {{ report.marks|safe }}, // Use the marks
-              borderColor: 'rgba(54, 162, 235, 1)',
-              backgroundColor: 'rgba(54, 162, 235, 0.2)',
+          labels: [{% for ch_no, ch_name in chapters.items %} '{{ch_name}} - {{ch_no}}', {% endfor %}], // Use the student names
+          datasets: [
+            {
+              label: 'Chatper Max Marks',
+              data: {{ report.marks_total|safe }}, // Use the marks
+              borderColor: '#f2c222',
+              backgroundColor: '#f2c222',
               borderWidth: 2,
               tension: 0.4
-          }]
+            },
+            {
+              label: 'Chapter Marks Obtained',
+              data: {{ report.marks_obtained|safe }}, // Use the marks
+              borderColor: '#4aaa70',
+              backgroundColor: '#4aaa70',
+              borderWidth: 2,
+              tension: 0.4
+            }
+        ]
       },
       options: {
           responsive: true,

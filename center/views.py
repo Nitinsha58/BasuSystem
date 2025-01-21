@@ -467,10 +467,8 @@ def batchwise_report(request, batch_id=None):
         
         remarks_count = {}
         responses = QuestionResponse.objects.prefetch_related('test', 'question', 'test__batch','remark').filter(test__batch__id=batch_id)
-        print(responses)
         for response in responses:
             remark = response.remark
-            print(remark)
             if not remark:
                 continue
             if remarks_count.get(remark):
@@ -485,11 +483,11 @@ def batchwise_report(request, batch_id=None):
 
         test_reports = []
 
-        tests = Test.objects.filter(batch=batch)
+        tests = Test.objects.prefetch_related('question','response__remark', 'batch').filter(batch=batch)
 
         for test in tests:
-            students = Student.objects.filter(batches=test.batch)
-            testwise_response = QuestionResponse.objects.filter(test=test)
+            students = Student.objects.prefetch_related('batches').filter(batches=test.batch)
+            testwise_response = QuestionResponse.objects.prefetch_related('remark').filter(test=test)
 
             attempt_count = 0
 
@@ -566,9 +564,9 @@ def chapterwise_report(request, batch_id=None):
 
         chapters = {
             question.chapter_no: question.chapter_name
-            for question in TestQuestion.objects.filter(test__batch=batch).order_by('chapter_no')
+            for question in TestQuestion.objects.prefetch_related('test__batch').filter(test__batch=batch).order_by('chapter_no')
         }
-        question_responses = QuestionResponse.objects.filter(test__batch=batch).select_related('question')
+        question_responses = QuestionResponse.objects.prefetch_related('remark', 'question').filter(test__batch=batch).select_related('question')
 
         chapter_wise_remarks = defaultdict(lambda: [0] * len(chapters))
         remarks_count = defaultdict(int)
@@ -583,71 +581,54 @@ def chapterwise_report(request, batch_id=None):
             chapter_wise_remarks[remark][chapter_index] += 1 * (response.question.max_marks - response.marks_obtained)
             remarks_count[remark] += 1 * (response.question.max_marks - response.marks_obtained)
 
+        total_remarks_sum = sum(remarks_count.values())
+        if total_remarks_sum:
+            remarks_count = {key: round((value/total_remarks_sum)*100, 1) for key, value in remarks_count.items()}
         # Convert defaultdict to a normal dict if needed
         chapter_wise_remarks = dict(chapter_wise_remarks)
         remarks_count = dict(remarks_count)
 
 
-        # test_reports = []
-        # tests = Test.objects.filter(batch=batch)
+        test_reports = []
+        tests = Test.objects.filter(batch=batch)
 
-        # for test in tests:
-        #     testwise_response = QuestionResponse.objects.filter(test=test)
+        for test in tests:
+            testwise_response = QuestionResponse.objects.prefetch_related('question', 'remark').filter(test=test)
 
-        #     total_marks = defaultdict(int)
-        #     marks_obtained = defaultdict(int)
-        #     chapter_remarks_count = defaultdict(lambda: defaultdict(int))
+            max_marks = 0
+            total_marks = []
+            marks_obtained = []
+            remarks = defaultdict(float)
 
-        #     for response in testwise_response:
-        #         test = response.question.test
-        #         ch_no = response.question.chapter_no
+            for ch_no in chapters:
+                total_test_marks = 0
+                total_marks_obtained = 0
+                for response in testwise_response.filter(question__chapter_no=ch_no):
 
-        #         # Add to total marks
-        #         total_marks[ch_no] += response.question.max_marks
+                    total_test_marks += response.question.max_marks
+                    total_marks_obtained += response.marks_obtained
+                    if response.remark:
+                        remarks[response.remark] += 1 * (response.question.max_marks - response.marks_obtained)
+            
+                if total_test_marks > max_marks:
+                    max_marks = total_test_marks
+                total_marks.append(total_test_marks)
+                marks_obtained.append(total_marks_obtained)
 
-        #         # Add marks obtained (if your QuestionResponse model has marks or score field)
-        #         marks_obtained[ch_no] += response.marks_obtained
-        #         # Count remarks chapter-wise
-        #         for remark in response.remark.all():
-        #             chapter_remarks_count[ch_no][remark] += 1
+            remarks_sum = sum(remarks.values())
+            if remarks_sum:
+                remarks = {key: round((value/remarks_sum)*100, 1) for key, value in remarks.items()}
 
-        #     attempt_count = 0
-        #     remarks = {}
-        #     students_list = []
-        #     marks_list = []
-        #     total_marks = 0
-        #     total_max = 0
-
-
-        #     max_marks = test.question.aggregate(total=models.Sum('max_marks'))['total'] or 0
-        #     # for student in students:
-        #     #     student_responses = testwise_response.filter(student=student)
-        #     #     marks = 0
-        #     #     for response in student_responses:
-        #     #         marks += response.marks_obtained # count total marks
-
-        #     #         #count remarks
-        #     #         for remark in response.remark.all():
-        #     #             if remarks.get(remark):
-        #     #                 remarks[remark]+=1
-        #     #             else:
-        #     #                 remarks[remark] = 1
-        #     #     if student_responses:
-        #     #         attempt_count += 1
-        #     #     students_list.append(f'{student.user.first_name} {student.user.last_name}')
-        #     #     marks_list.append(marks)
-        #     #     total_marks += marks
-        #     #     total_max += max_marks
-
-        #     test_reports.append({
-        #         'test' : test,
-        #         'students': students_list,
-        #         'marks' : marks_list,
-        #         'remarks': dict(sorted(remarks.items(), key=lambda d: d[1], reverse=True)),
-        #         'max_marks': max_marks,
-        #         'avg': (total_marks/(total_max or 1)) * 100,
-        #         # 'attempted': round( (attempt_count/students.count())*100  ,2),
-        #     })
+            test_reports.append({
+                'test' : test,
+                'chapters': chapters,
+                'marks_total' : total_marks,
+                'marks_obtained' : marks_obtained,
+                'remarks': dict(sorted(remarks.items(), key=lambda d: d[1], reverse=True)),
+                'max_marks': max_marks,
+                # 'avg': (total_marks/(total_max or 1)) * 100,
+                # 'attempted': round( (attempt_count/students.count())*100  ,2),
+            })
 
 
         remarks_count = dict(sorted(remarks_count.items(), key=lambda d: d[1], reverse=True))
@@ -658,7 +639,7 @@ def chapterwise_report(request, batch_id=None):
             'chapters': chapters,
 
             'remarks_count': remarks_count,
-            # 'tests': test_reports,
+            'tests': test_reports,
         })
 
     return render(request, "center/chapterwise_report.html", {
