@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block dashboard %}
-<div class="container-sm p-4">
+<div class="container-sm p-4 bg-warning-subtle">
   <div class="container-sm mt-4 p-0">
     <p class="h3 fw-normal"> Register Student </p>
   </div>
@@ -43,7 +43,7 @@
 
 
 
-<div class="container p-4">
+<div class="container p-4 bg-warning-subtle">
   <div class="col-md-4 my-3">
     <a href="{% url 'staff_student_registration' %}"  class="btn {% if not is_batch %} btn-primary {% else %} btn-outline-primary {% endif %} " >Classes Students</a>
     <a href="{% url 'staff_student_registration' %}1" class="btn {% if is_batch %} btn-primary {% else %} btn-outline-primary  {% endif %}" >Batches Students</a>
@@ -69,7 +69,7 @@
   {% endif %}
 
   {% if class_students and not is_batch %}
-  <div class="row shuffle" data-masonry='{"percentPosition": true }' id="batches">
+  <div class="row shuffle bg-warning-subtle" data-masonry='{"percentPosition": true }' id="batches">
     {% for cls in class_students %}
     <div class="col-sm-6 col-md-4 col-lg-3 category shuffle-item shuffle-item--visible mb-4">
       <div class="card">
