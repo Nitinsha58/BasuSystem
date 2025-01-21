@@ -13,6 +13,7 @@
             </a>
             {% if request.user.is_authenticated %}
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                {% if request.user.is_superuser %}
                 <li class="nav-item">
                     <a class="nav-link active" aria-current="page" href="{% url 'staff_dashboard' %}">Dashboard</a>
                 </li>
@@ -28,6 +29,7 @@
                 <li class="nav-item">
                     <a class="nav-link active" aria-current="page" href="{% url 'create_test_response' %}">Add Test Result</a>
                 </li>
+
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle text-dark" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                       Reports
@@ -35,20 +37,23 @@
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" aria-current="page" href="{% url 'batchwise_report' %}">Batch Report</a></li>
                         <li><a class="dropdown-item" href="{% url 'chapterwise_report' %}">Chapter Report</a></li>
-                        <!-- <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#">Something else here</a></li> -->
                     </ul>
                   </li>
+                
                 <li class="nav-item">
                     <a class="nav-link active" aria-current="page" href="{% url 'test_progress' %}">Test Progress</a>
                 </li>
+                {% elif request.user.student or request.user.teacher %}
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="{% url 'batchwise_report' %}">Batchwise Report</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="{% url 'chapterwise_report' %}">Chapterwise Report</a>
+                    </li>
+                {% endif %}
             </ul>
             {% endif %}
             {% if request.user.is_authenticated %}
-            <!-- <form class="d-flex" role="search">
-                <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-                <button class="btn btn-outline-success" type="submit">Search</button>
-            </form> -->
             <p class="m-0 mx-2 fs-4 d-block">{{request.user.first_name}} {{request.user.last_name}}</p>
             <a href="/admin" class="btn btn-success me-2 ">  Admin  </a>
             <a href="{% url 'logout' %}" class="btn btn-danger">  Logout  </a>

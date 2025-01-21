@@ -51,14 +51,32 @@
 
             <div class="card">
                 <ul class="list-group">
-                    <li class="list-group-item bg-dark text-white border-dark">Batches - ( {{batches.count}} )</li>
-                    {% for b in batches %}
-                    <a href="{% url 'chapter_batch_report' b.id %}" class="text-decoration-none">
-                        <li class="list-group-item {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
-                            {{b}}
-                        </li>
-                    </a>
-                    {% endfor %}
+                    <li class="list-group-item bg-dark text-white border-dark">Batches</li>
+                        {% if request.user.is_superuser %}
+                        {% for b in batches %}
+                        <a href="{% url 'chapter_batch_report' b.id %}" class="text-decoration-none">
+                            <li class="list-group-item {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
+                                {{b}}
+                            </li>
+                        </a>
+                        {% endfor %}
+                        {% elif request.user.student %}
+                        {% for b in request.user.student.batches.all %}
+                        <a href="{% url 'chapter_batch_report' b.id %}" class="text-decoration-none">
+                            <li class="list-group-item {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
+                                {{b}}
+                            </li>
+                        </a>
+                        {% endfor %}
+                        {% elif request.user.teacher %}
+                        {% for b in request.user.teacher.batches.all %}
+                        <a href="{% url 'chapter_batch_report' b.id %}" class="text-decoration-none">
+                            <li class="list-group-item {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
+                                {{b}}
+                            </li>
+                        </a>
+                        {% endfor %}
+                        {% endif %}
                 </ul>
             </div>
 

@@ -520,7 +520,7 @@ def getQuery(request):
 
     return HttpResponse()
 
-
+@login_required(login_url='login')
 def batchwise_report(request, batch_id=None):
     batches = Batch.objects.all()
     
@@ -620,7 +620,7 @@ def batchwise_report(request, batch_id=None):
         'batches': batches,
     })
 
-
+@login_required(login_url='login')
 def chapterwise_report(request, batch_id=None):
     batches = Batch.objects.all()
     

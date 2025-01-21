@@ -4,8 +4,9 @@
 {% block dashboard %}
 <div class="container-fluid p-4">
   <div class="row m-2 row-cols-3">
-
-    <div class="col-sm-4 my-3 mb-sm-0">
+    
+    {% if request.user.is_authenticated and request.user.is_superuser %}
+    <div class="col-sm-3 my-3 mb-sm-0">
       <div class="card">
         <div class="card-body">
           <h3 class="card-title">Student Registration</h3>
@@ -15,7 +16,7 @@
       </div>
     </div>
 
-    <div class="col-sm-4 my-3 mb-sm-0">
+    <div class="col-sm-3 my-3 mb-sm-0">
       <div class="card">
         <div class="card-body">
           <h3 class="card-title">Create Test</h3>
@@ -24,6 +25,30 @@
         </div>
       </div>
     </div>
+
+    {% elif request.user.is_authenticated and request.user.teacher or request.user.is_authenticated and  request.user.student  %}
+
+    <div class="col-sm-3 my-3 mb-sm-0">
+      <div class="card">
+        <div class="card-body">
+          <h3 class="card-title">Batchwise Report</h3>
+          <p class="card-text">Combined batchwise report for all mocks and Mockwise report.</p>
+          <a href="{% url 'batchwise_report' %}" class="btn btn-success">Batchwise Report</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-3 my-3 mb-sm-0">
+      <div class="card">
+        <div class="card-body">
+          <h3 class="card-title">Chapterwise Report</h3>
+          <p class="card-text">Combined batch chapterwise report and Mockwise report </p>
+          <a href="{% url 'chapterwise_report' %}" class="btn btn-warning">Chapterwise Report</a>
+        </div>
+      </div>
+    </div>
+
+    {% endif %}
 
   </div>
 </div>
