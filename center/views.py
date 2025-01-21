@@ -405,50 +405,7 @@ def getQuery(request):
     batch = Batch.objects.all().first()
 
 
-    all_remarks = Remark.objects.all()
-    chapters = {}
-    questions = TestQuestion.objects.filter(test__batch=batch).order_by('chapter_no')
-    for question in questions:
-        ch_no = question.chapter_no
-        ch_name = question.chapter_name
 
-        chapters.setdefault(ch_no, set()).add(ch_name)
-    
-    remarks_count = {}
-    for remark in all_remarks:
-        for ch_no in chapters:
-            r_count = QuestionResponse.objects.filter(question__chapter_no=ch_no, remark=remark).count()
-            remarks_count.setdefault(remark, []).append(r_count)
-    
-
-
-
-
-
-
-    # for chapter_no in chapters:
-    #     chapter_responses = QuestionResponse.objects.filter(question__chapter_no=chapter_no)
-    #     # for response in chapter_responses:
-    #         # remark_ctr.update(response.remark.all())
-
-    #     chapter_wise_response.setdefault(chapter_no, []).extend(chapter_responses)
-    # chapter_wise_remark = {}
-
-    # for no, resps in chapter_wise_response.items():
-    #     remark_ctr = Counter([])
-    #     for res in resps:
-    #         remark_ctr.update(res.remark.all())
-    #     chapter_wise_remark[no] = dict(remark_ctr)
-    
-
-    '''
-        1. Batchwise Marks 
-        2. Batchwise Remarks
-
-        pending
-        3. Chapterwise remarks
-        4. Chapterwise marks
-    '''
 
 
 
@@ -479,7 +436,10 @@ def batchwise_report(request, batch_id=None):
         remarks_list = [r.name for r in remarks_count.keys()]
         count_list = list(remarks_count.values()) 
 
-
+        remarks_sum = sum(remarks_count.values())
+        if remarks_sum:
+            remarks_count = {key: round((value/remarks_sum)*100, 1) for key, value in remarks_count.items()}
+            
 
         test_reports = []
 
@@ -514,6 +474,9 @@ def batchwise_report(request, batch_id=None):
                     else:
                         remarks[remark] = 1
 
+                remarks_sum = sum(remarks.values())
+                if remarks_sum:
+                    remarks = {key: round((value/remarks_sum)*100, 1) for key, value in remarks.items()}
                     
                 if student_responses:
                     attempt_count += 1
@@ -532,9 +495,6 @@ def batchwise_report(request, batch_id=None):
                 'avg': (total_marks/(total_max or 1)) * 100,
                 'attempted': round( (attempt_count/students.count())*100  ,2),
             })
-
-
-
 
         remarks_count = dict(sorted(remarks_count.items(), key=lambda d: d[1], reverse=True))
         return render(request, "center/batchwise_report.html", {
@@ -584,7 +544,7 @@ def chapterwise_report(request, batch_id=None):
         total_remarks_sum = sum(remarks_count.values())
         if total_remarks_sum:
             remarks_count = {key: round((value/total_remarks_sum)*100, 1) for key, value in remarks_count.items()}
-        # Convert defaultdict to a normal dict if needed
+        
         chapter_wise_remarks = dict(chapter_wise_remarks)
         remarks_count = dict(remarks_count)
 
@@ -592,8 +552,14 @@ def chapterwise_report(request, batch_id=None):
         test_reports = []
         tests = Test.objects.filter(batch=batch)
 
+        students = Student.objects.prefetch_related('batches__test', 'batches').filter(batches=batch)
+        total_students = students.count()
+
+
         for test in tests:
             testwise_response = QuestionResponse.objects.prefetch_related('question', 'remark').filter(test=test)
+        
+            attempted_students = students.filter(id__in=testwise_response.values_list('student', flat=True)).count()
 
             max_marks = 0
             total_marks = []
@@ -626,8 +592,8 @@ def chapterwise_report(request, batch_id=None):
                 'marks_obtained' : marks_obtained,
                 'remarks': dict(sorted(remarks.items(), key=lambda d: d[1], reverse=True)),
                 'max_marks': max_marks,
-                # 'avg': (total_marks/(total_max or 1)) * 100,
-                # 'attempted': round( (attempt_count/students.count())*100  ,2),
+                'avg': (sum(marks_obtained)/(sum(total_marks) or 1)) * 100,
+                'attempted': round( (attempted_students/total_students)*100  ,2),
             })
 
 

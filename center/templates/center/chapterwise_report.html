@@ -51,7 +51,7 @@
 
             <div class="card">
                 <ul class="list-group">
-                    <li class="list-group-item bg-dark text-white border-dark">Batches</li>
+                    <li class="list-group-item bg-dark text-white border-dark">Batches - ( {{batches.count}} )</li>
                     {% for b in batches %}
                     <a href="{% url 'chapter_batch_report' b.id %}" class="text-decoration-none">
                         <li class="list-group-item {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
