@@ -8,7 +8,7 @@ urlpatterns = [
     path('__debug__/', include(debug_toolbar.urls)),
     path('admin/', admin.site.urls),
     path("", include("center.urls")),
-    path("staff/", include("user.urls")),
+    path("user/", include("user.urls")),
     path("mock-progress/", include("testprogress.urls")),
 
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

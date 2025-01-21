@@ -20,6 +20,9 @@
                     <a class="nav-link active" aria-current="page" href="{% url 'staff_student_registration' %}">Student Registration</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" href="{% url 'staff_teacher_registration' %}">Teacher Registration</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link active" aria-current="page" href="{% url 'create_test_template' %}">Mock Tests</a>
                 </li>
                 <li class="nav-item">
@@ -48,7 +51,7 @@
             </form> -->
             <p class="m-0 mx-2 fs-4 d-block">{{request.user.first_name}} {{request.user.last_name}}</p>
             <a href="/admin" class="btn btn-success me-2 ">  Admin  </a>
-            <a href="{% url 'staff_logout' %}" class="btn btn-danger">  Logout  </a>
+            <a href="{% url 'logout' %}" class="btn btn-danger">  Logout  </a>
             {% endif %}
         </div>
     </div>

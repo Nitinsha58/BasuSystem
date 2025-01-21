@@ -68,6 +68,17 @@ class Student(models.Model):
         full_name = f"{self.user.first_name} {self.user.last_name}".strip()
         return f"{full_name  or self.user.phone} - {self.center.name}"
 
+class Teacher(models.Model):
+    user = models.OneToOneField(BaseUser, on_delete=models.CASCADE, related_name="teacher")
+    batches = models.ManyToManyField('Batch', related_name='teacher')
+    center = models.ForeignKey(Center, on_delete=models.CASCADE, related_name="teacher")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        full_name = f"{self.user.first_name} {self.user.last_name}".strip()
+        return f"{full_name  or self.user.phone} - {self.center.name}"
+
 
 class Test(models.Model):
     name = models.CharField(max_length=255)

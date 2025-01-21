@@ -1,10 +1,15 @@
 from django.urls import path
 from .views import ( 
+    staff_dashboard,
     staff_student_registration,
     staff_student_delete,
-
     staff_student_update,
-    staff_dashboard,
+
+    staff_teacher_registration,
+    staff_teacher_update,
+    staff_teacher_delete,
+
+
     create_test_template,
     create_test_response,
     create_response,
@@ -29,8 +34,13 @@ urlpatterns = [
     path('student-registration/', staff_student_registration, name="staff_student_registration"),
     path('student-registration/<int:is_batch>', staff_student_registration, name="staff_student_registration_batch"),
     path('student-delete/<int:user_id>', staff_student_delete, name="staff_student_delete"),
-
     path('student-update/<int:student_id>/', staff_student_update, name="staff_student_update"),
+    
+    path('teacher-registration/', staff_teacher_registration, name="staff_teacher_registration"),
+    path('teacher-registration/<int:is_batch>', staff_teacher_registration, name="staff_teacher_registration_batch"),
+    path('teacher-delete/<int:user_id>', staff_teacher_delete, name="staff_teacher_delete"),
+    path('teacher-update/<int:teacher_id>/', staff_teacher_update, name="staff_teacher_update"),
+
     path('create-test-template/', create_test_template, name="create_test_template"),
     path('create-test-response/', create_test_response, name="create_test_response"),
 

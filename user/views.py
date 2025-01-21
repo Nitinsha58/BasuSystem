@@ -5,7 +5,7 @@ from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 
 
-def staff_login(request):
+def login_user(request):
     if request.user.is_authenticated:
         return redirect('staff_dashboard')
     if request.method == "POST":
@@ -18,10 +18,10 @@ def staff_login(request):
             return redirect("staff_dashboard")
         else:
             messages.error(request, "Invalid credentials")
-    return render(request, "user/staff_login.html")
+    return render(request, "user/login.html")
 
-@login_required(login_url='staff_login')
-def staff_logout(request):
+@login_required(login_url='login')
+def logout_user(request):
     logout(request)  # Log the user out
     messages.success(request, "You have been logged out successfully.")  # Optional message
-    return redirect('staff_login')
+    return redirect('logout')

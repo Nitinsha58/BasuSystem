@@ -1,8 +1,8 @@
 from django.db import transaction
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
-from .forms import StudentRegistrationForm, StudentUpdateForm
-from .models import Batch, Center, Test, TestQuestion, Student, Remark, QuestionResponse, ClassName
+from .forms import StudentRegistrationForm, StudentUpdateForm, TeacherRegistrationForm, TeacherUpdateForm
+from .models import Batch, Center, Test, TestQuestion, Student, Remark, QuestionResponse, ClassName, Teacher
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from user.models import BaseUser
@@ -11,11 +11,11 @@ from django.db.models import Count
 from collections import Counter, defaultdict
 # Create your views here.
 
-@login_required(login_url='staff_login')
+@login_required(login_url='login')
 def staff_dashboard(request):
     return render(request, 'center/dashboard.html')
 
-@login_required(login_url='staff_login')
+@login_required(login_url='login')
 def staff_student_registration(request, is_batch=None):
     all_batches = Batch.objects.all()
     center = Center.objects.filter(name="Main Center").first()
@@ -64,7 +64,7 @@ def staff_student_registration(request, is_batch=None):
     return render(request, 'center/staff_student_registration.html', {'batches': all_batches, 'center': center, 'class_students': class_students, 'is_batch': is_batch})
 
 
-@login_required(login_url='staff_login')
+@login_required(login_url='login')
 def staff_student_delete(request, user_id):
     try:
         user = BaseUser.objects.get(id=user_id)
@@ -78,11 +78,15 @@ def staff_student_delete(request, user_id):
     
     return redirect('staff_student_registration')
 
-@login_required(login_url='staff_login')
+@login_required(login_url='login')
 def staff_student_update(request, student_id):
 
-    student = Student.objects.get(id=student_id)
+    student = Student.objects.filter(id=student_id).first()
     all_batches = Batch.objects.all()
+
+    if not student:
+        messages.error(request, "Invalid Student.")
+        return redirect('staff_student_registration')
 
     if request.method == "POST":
         first_name = request.POST.get('first_name')
@@ -119,8 +123,115 @@ def staff_student_update(request, student_id):
         'batches': all_batches,
     })
 
+@login_required(login_url='login')
+def staff_teacher_registration(request, is_batch=None):
+    all_batches = Batch.objects.all()
+    center = Center.objects.filter(name="Main Center").first()
+    classes = ClassName.objects.all()
 
-@login_required(login_url='staff_login')
+    class_teachers = [{'class': cls.name, 'teachers': Teacher.objects.filter(batches__class_name=cls).distinct()} for cls in classes ]
+
+    if not center:
+        messages.error(request, "No Center Found.")
+        return redirect('staff_dashboard')
+
+    if request.method == "POST":
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        phone = request.POST.get('phone')
+        batches_ids = request.POST.getlist('batches') 
+        center_id = center.id
+        password = 'basu@123'
+
+        form_data = {
+            'first_name': first_name,
+            'last_name': last_name,
+            'phone': phone,
+            'batches': Batch.objects.filter(id__in=batches_ids),
+            'center': Center.objects.get(id=center_id),
+            'password': password
+        }
+
+        form = TeacherRegistrationForm(form_data)
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    teacher = form.save() 
+                return redirect('staff_teacher_registration')
+            except Exception as e:
+                messages.error(request, e)
+                return redirect('staff_teacher_registration')
+
+
+        return render(request, 'center/staff_teacher_registration.html', {
+            'form': form,
+            'batches': all_batches,
+            'center': center
+        })
+
+    return render(request, 'center/staff_teacher_registration.html', {'batches': all_batches, 'center': center, 'class_teachers': class_teachers, 'is_batch': is_batch})
+
+@login_required(login_url='login')
+def staff_teacher_delete(request, user_id):
+    try:
+        user = BaseUser.objects.get(id=user_id)
+        user.delete()
+        messages.success(request, "Teacher deleted.")
+
+    except BaseUser.DoesNotExist:
+        messages.error(request, "Teacher not found")
+    except Exception as e:
+        messages.error(request, f"An error occurred: {str(e)}")
+    
+    return redirect('staff_teacher_registration')
+
+@login_required(login_url='login')
+def staff_teacher_update(request, teacher_id):
+
+    teacher = Teacher.objects.filter(id=teacher_id).first()
+    all_batches = Batch.objects.all()
+
+    if not teacher:
+        messages.error(request, "Invalid Teacher.")
+        return redirect('staff_teacher_registration')
+
+    if request.method == "POST":
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        phone = request.POST.get('phone')
+        batches_ids = request.POST.getlist('batches') 
+
+        form_data = {
+            'first_name': first_name,
+            'last_name': last_name,
+            'phone': phone,
+            'batches': Batch.objects.filter(id__in=batches_ids),
+        }
+
+        form = TeacherUpdateForm(form_data, instance=teacher)
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    teacher = form.save()
+                messages.success(request, "Teacher details updated successfully!")
+                return redirect('staff_teacher_registration')
+            except Exception as e:
+                messages.error(request, f"An error occurred: {e}")
+                return redirect('staff_teacher_update', teacher_id=teacher.id)
+
+        return render(request, 'center/staff_teacher_update.html', {
+            'form': form,
+            'batches': all_batches,
+        })
+
+    form = TeacherUpdateForm(instance=teacher)
+    return render(request, 'center/staff_teacher_update.html', {
+        'form': form,
+        'batches': all_batches,
+    })
+
+
+@login_required(login_url='login')
 def create_test_template(request, batch_id=None):
     all_batches = Batch.objects.all()
 
@@ -137,7 +248,7 @@ def create_test_template(request, batch_id=None):
 
     return render(request, 'center/create_test_template.html', {"batches": all_batches})
 
-@login_required(login_url='staff_login')
+@login_required(login_url='login')
 def create_template(request, batch_id, test_id):
     batch = Batch.objects.filter(id=batch_id).first()
     test = Test.objects.filter(id=test_id).first()
@@ -156,7 +267,7 @@ def create_template(request, batch_id, test_id):
     
     return render(request,"center/create_template.html", {"batch":batch, "test":test, "questions": questions})
 
-@login_required(login_url='staff_login')
+@login_required(login_url='login')
 def delete_template(request, batch_id, test_id):
     batch = Batch.objects.filter(id=batch_id).first()
     test = Test.objects.filter(id=test_id).first()
@@ -170,7 +281,7 @@ def delete_template(request, batch_id, test_id):
     return redirect("create_test_template")
 
 
-@login_required(login_url='staff_login')
+@login_required(login_url='login')
 def create_question(request, batch_id, test_id):
     batch = Batch.objects.filter(id=batch_id).first()
     test = Test.objects.filter(id=test_id).first()
@@ -220,7 +331,7 @@ def create_question(request, batch_id, test_id):
     return redirect("create_template", batch_id=batch_id, test_id=test_id )
     
 
-@login_required(login_url='staff_login')
+@login_required(login_url='login')
 def update_question(request, batch_id, test_id, question_id):
     batch = Batch.objects.filter(id=batch_id).first()
     test = Test.objects.filter(id=test_id).first()
@@ -253,12 +364,12 @@ def update_question(request, batch_id, test_id, question_id):
         return redirect("create_template", batch_id=batch_id, test_id=test_id )
     return redirect("create_template", batch_id=batch_id, test_id=test_id )
     
-@login_required(login_url='staff_login')
+@login_required(login_url='login')
 def create_test_response(request):
     all_batches = Batch.objects.all()
     return render(request, "center/create_test_response.html", {"batches":all_batches})
 
-@login_required(login_url='staff_login')
+@login_required(login_url='login')
 def create_response(request, batch_id, test_id, student_id=None, question_id = None):
     batch = Batch.objects.filter(id=batch_id).first()
     test = Test.objects.filter(id=test_id).first()
@@ -323,7 +434,7 @@ def create_response(request, batch_id, test_id, student_id=None, question_id = N
     })
 
 
-@login_required(login_url='staff_login')
+@login_required(login_url='login')
 def create_all_pending_response(request, batch_id, test_id, student_id):
     test = Test.objects.filter(id=test_id).first()
     student = Student.objects.filter(id=student_id).first()
@@ -350,7 +461,7 @@ def create_all_pending_response(request, batch_id, test_id, student_id):
     return redirect("create_student_response", batch_id=batch_id, test_id=test_id, student_id=student_id)
 
 
-@login_required(login_url='staff_login')
+@login_required(login_url='login')
 def update_response(request, batch_id, test_id, student_id, response_id):
     batch = Batch.objects.filter(id=batch_id).first()
     test = Test.objects.filter(id=test_id).first()
@@ -373,7 +484,7 @@ def update_response(request, batch_id, test_id, student_id, response_id):
     
     return redirect("create_student_response", batch_id=batch_id, test_id=test_id, student_id=student_id)
 
-@login_required(login_url='staff_login')
+@login_required(login_url='login')
 def delete_response(request, batch_id, test_id, student_id, response_id):
     try:
         if not Batch.objects.filter(id=batch_id).exists():
@@ -406,11 +517,6 @@ def delete_response(request, batch_id, test_id, student_id, response_id):
 def getQuery(request):
 
     batch = Batch.objects.all().first()
-
-
-
-
-
 
     return HttpResponse()
 
