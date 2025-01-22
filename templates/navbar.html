@@ -50,6 +50,11 @@
                     <li class="nav-item">
                         <a class="nav-link active" aria-current="page" href="{% url 'chapterwise_report' %}">Chapterwise Report</a>
                     </li>
+                    {% endif %}
+                {% if request.user.student %}
+                    <li class="nav-item">
+                        <a class="nav-link active bg-success-subtle rounded" aria-current="page" href="{% url 'chapterwise_personal_report' %}">Personal Report</a>
+                    </li>
                 {% endif %}
             </ul>
             {% endif %}
