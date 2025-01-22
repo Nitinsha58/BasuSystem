@@ -786,7 +786,6 @@ def chapterwise_personal_report(request, batch_id=None):
                     continue
                 chapter_index = list(test_chapters.keys()).index(ch_no)
                 chapter_wise_test_remarks[remark][chapter_index] += 1 * (response.question.max_marks - response.marks_obtained)
-                remarks_count[remark] += 1 * (response.question.max_marks - response.marks_obtained)
 
             chapter_wise_test_remarks = dict(chapter_wise_test_remarks)
 
@@ -828,9 +827,7 @@ def chapterwise_personal_report(request, batch_id=None):
                     'percentage': (sum(marks_obtained)/(sum(total_marks) or 1)) * 100,
                     'obtained_marks': sum(marks_obtained),
                     'max_marks': sum(total_marks),
-
                     },
-
                 'chapter_wise_test_remarks': chapter_wise_test_remarks,
             })
 
