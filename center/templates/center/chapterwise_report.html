@@ -218,7 +218,7 @@
   new Chart(ctx{{ forloop.counter }}, {
       type: 'line',
       data: {
-          labels: [{% for ch_no, ch_name in chapters.items %} '{{ch_name}} - {{ch_no}}', {% endfor %}], // Use the student names
+          labels: [{% for ch_no, ch_name in report.chapters.items %} '{{ch_name}} - {{ch_no}}', {% endfor %}], // Use the student names
           datasets: [
             {
               label: 'Chatper Max Marks',

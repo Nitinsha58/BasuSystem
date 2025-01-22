@@ -450,6 +450,9 @@ def create_all_pending_response(request, batch_id, test_id, student_id):
     )
 
     for question in unanswered_questions:
+        if question.optional_question or question.is_main==False:
+            messages.error(request, "Set Optional Questions Manually.")
+            continue
         obj = QuestionResponse.objects.create(
             question=question,
             student=student,
@@ -666,6 +669,11 @@ def chapterwise_report(request, batch_id=None):
 
 
         for test in tests:
+            testwise_questions = TestQuestion.objects.prefetch_related('test__batch', 'test').filter(test__batch=batch, test=test).order_by('chapter_no')
+            test_chapters = {
+                question.chapter_no: question.chapter_name
+                for question in testwise_questions
+            }
             testwise_response = QuestionResponse.objects.prefetch_related('question', 'remark').filter(test=test)
         
             attempted_students = students.filter(id__in=testwise_response.values_list('student', flat=True)).count()
@@ -675,7 +683,7 @@ def chapterwise_report(request, batch_id=None):
             marks_obtained = []
             remarks = defaultdict(float)
 
-            for ch_no in chapters:
+            for ch_no in test_chapters:
                 total_test_marks = 0
                 total_marks_obtained = 0
                 for response in testwise_response.filter(question__chapter_no=ch_no):
@@ -696,7 +704,7 @@ def chapterwise_report(request, batch_id=None):
 
             test_reports.append({
                 'test' : test,
-                'chapters': chapters,
+                'chapters': test_chapters,
                 'marks_total' : total_marks,
                 'marks_obtained' : marks_obtained,
                 'remarks': dict(sorted(remarks.items(), key=lambda d: d[1], reverse=True)),
