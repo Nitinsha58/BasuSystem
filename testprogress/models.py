@@ -7,7 +7,6 @@ class TestStatus(models.Model):
     Example statuses: 'Scheduled', 'Completed', 'Postponed', etc.
     """
     name = models.CharField(max_length=50, unique=True, help_text="Status name (e.g., Scheduled, Completed)")
-    description = models.TextField(blank=True, help_text="Optional description of the status")
     color = ColorField(null=True, blank=True, verbose_name='Color')
     def __str__(self):
         return self.name
@@ -25,6 +24,7 @@ class Test(models.Model):
         related_name="tests",
         help_text="Current status of the test"
     )
+    description = models.TextField(blank=True, null=True, default='')
     date = models.DateField(help_text="Date of the test (can include future dates)")
     created_at = models.DateTimeField(auto_now_add=True, help_text="Timestamp when the test was created")
     updated_at = models.DateTimeField(auto_now=True, help_text="Timestamp when the test was last updated")

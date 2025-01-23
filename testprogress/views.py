@@ -16,6 +16,7 @@ def index(request):
         test = request.POST.get('test')
         status_id = request.POST.get('status')
         date_str = request.POST.get('date')
+        desc = request.POST.get('description')
         date = datetime.strptime(date_str, "%Y-%m-%d")
 
         if not test or not status_id or not date_str:
@@ -25,7 +26,7 @@ def index(request):
         if not status:
             return redirect('test_progress')
 
-        obj = Test.objects.create(name=test, status=status, date=date)
+        obj = Test.objects.create(name=test, status=status, date=date, description=desc)
         obj.save()
         return redirect('test_progress')
 
@@ -48,6 +49,7 @@ def update_test_progress(request, test_id):
         test_name = request.POST.get('test')
         status_id = request.POST.get('status')
         date_str = request.POST.get('date')
+        description = request.POST.get('description')
 
         # Validate the input
         if not test_name or not status_id or not date_str:
@@ -70,6 +72,8 @@ def update_test_progress(request, test_id):
         test.name = test_name
         test.status = status
         test.date = test_date
+        if description:
+            test.description = description
         test.save()
 
         messages.success(request, "Updated Successful!")
