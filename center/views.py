@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from user.models import BaseUser
 from django.db import models
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, F, ExpressionWrapper, FloatField
 from collections import Counter, defaultdict
 # Create your views here.
 
@@ -866,29 +866,32 @@ def chapterwise_student_report(request, batch_id=None, student_id=None):
 
     if batch_id and batches.filter(id=batch_id).exists():
         batch = batches.get(id=batch_id)
-        students = Student.objects.filter(batches=batch)
+        students = set(Student.objects.filter(batches=batch))
 
-        # Precompute max_marks for the entire batch
-        student_questions = TestQuestion.objects.filter(test__batch=batch)
-        batch_max_marks = student_questions.aggregate(total=Sum('max_marks'))['total'] or 1
-
-        # Fetch all responses for the batch in a single query
         std_responses = (
             QuestionResponse.objects.filter(test__batch=batch)
             .values('student')  # Group by student
-            .annotate(total_marks_obtained=Sum('marks_obtained'))  # Sum marks per student
+            .annotate(
+                total_marks_obtained=Sum('marks_obtained'),
+                max_test_marks=Sum('question__max_marks'),
+            )
         )
 
         # Create a mapping of student IDs to marks obtained
         student_marks_map = {
-            response['student']: response['total_marks_obtained'] or 0
+            response['student']: (response['total_marks_obtained'] or 0, response['max_test_marks'] or 0)
             for response in std_responses
         }
 
         # Calculate percentages for all students
         for stu in students:
-            marks_obtd = student_marks_map.get(stu.id, 0)
-            pct = (marks_obtd / batch_max_marks) * 100
+            stu_progress = student_marks_map.get(stu.id, 0)
+            if stu_progress:
+                marks_obtd = student_marks_map.get(stu.id, 0)[0]
+                max_test_marks = student_marks_map.get(stu.id, 0)[1]
+                pct = (marks_obtd / max_test_marks) * 100
+            else:
+                pct = 0 # (marks_obtd / max_test_marks) * 100
             students_list[stu] = round(pct, 1)
 
         students_list = dict(sorted(students_list.items(), key=lambda item: item[1], reverse=True))
