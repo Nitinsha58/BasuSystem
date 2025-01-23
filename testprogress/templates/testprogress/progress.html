@@ -23,7 +23,7 @@
     <div class="d-flex g-4 w-100 dates-group pb-3">
         {% for date in dates %}
         <div class="card date-card" style="min-width: 20rem; height: fit-content;" data-date="{{ date|date:'Y-m-d' }}">
-            <ul class="list-group">
+            <ul class="list-group bg-light">
                 <li class="list-group-item text-dark bg-light">{{ date|date:'d b Y ( l )'|title }}</li>
 
                     <li class="list-group-item p-2 bg-light">
@@ -47,17 +47,17 @@
 
                     {% for test in tests %}
                         {% if date|date:'Y-m-d' == test.date|date:'Y-m-d' %}
-                        <li class="list-group-item p-2">
+                        <li class="list-group-item p-2 m-2 rounded bg-light-subtle ">
                             <form class="d-flex flex-column gap-2 mb-2 update-form" method="post" action="{% url 'update_test_progress' test.id %}">
                                 {% csrf_token %}
-                                <input value="{{test.name}}" type="text" class="form-control" id="test" name="test" placeholder="Test Name" required>
+                                <input value="{{test.name|title}}" type="text" class="form-control" id="test" name="test" placeholder="Test Name" required>
                                 <select class="form-select" id="status" name="status"  {% if test.status.color %} style="background: {{test.status.color}}; " {% endif %} required>
                                     {% for status in test_status %}
                                     <option value="{{status.id}}" {% if test.status == status %} selected {% endif %}  >{{status.name}}</option>
                                     {% endfor %}
                                 </select>
                                 {% if test.description %}
-                                    <input value="{{test.description}}" type="text" class="form-control" id="description" name="description" placeholder="Test Description">
+                                    <input value="{{test.description|title}}" type="text" class="form-control" id="description" name="description" placeholder="Test Description">
                                 {% else %}
                                     <input style="display: none;" type="text" class="form-control" id="update-description" name="description" placeholder="Test Description">
                                 {% endif %}

@@ -5,7 +5,7 @@ from django.contrib import messages
 
 def index(request):
     today = datetime.today()
-    start_date = today - timedelta(days=10)
+    start_date = today - timedelta(days=20)
 
     dates = [start_date + timedelta(days=i) for i in range(31)]
 
