@@ -25,6 +25,7 @@ from .views import (
     chapterwise_report,
     
     chapterwise_personal_report,
+    chapterwise_student_report,
     
     getQuery
 )
@@ -64,7 +65,12 @@ urlpatterns = [
     path('chapterwise_report/', chapterwise_report, name="chapterwise_report"),
     path('chapterwise_report/<int:batch_id>', chapterwise_report, name="chapter_batch_report"),
 
-    #student
+    #student personal
     path('chapterwise_personal_report/', chapterwise_personal_report, name="chapterwise_personal_report"),
     path('chapterwise_personal_report/<int:batch_id>', chapterwise_personal_report, name="chapter_personal_batch_report"),
+ 
+    #student
+    path('chapterwise_student_report/', chapterwise_student_report, name="chapterwise_student_report"),
+    path('chapterwise_student_report/<int:batch_id>/', chapterwise_student_report, name="chapter_student_batch_report"),
+    path('chapterwise_student_report/<int:batch_id>/<int:student_id>', chapterwise_student_report, name="chapter_student_batch_report_progress"),
 ]

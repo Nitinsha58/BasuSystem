@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from user.models import BaseUser
 from django.db import models
-from django.db.models import Count
+from django.db.models import Count, Sum
 from collections import Counter, defaultdict
 # Create your views here.
 
@@ -853,6 +853,169 @@ def chapterwise_personal_report(request, batch_id=None):
 
     return render(request, "center/chapterwise_personal_report.html", {
         'batches': batches,
+    })
+
+
+@login_required(login_url='login')
+def chapterwise_student_report(request, batch_id=None, student_id=None):
+    batches = Batch.objects.all()
+    batch = None
+    students = None
+    student = None
+    students_list = {}
+
+    if batch_id and batches.filter(id=batch_id).exists():
+        batch = batches.get(id=batch_id)
+        students = Student.objects.filter(batches=batch)
+
+        # Precompute max_marks for the entire batch
+        student_questions = TestQuestion.objects.filter(test__batch=batch)
+        batch_max_marks = student_questions.aggregate(total=Sum('max_marks'))['total'] or 1
+
+        # Fetch all responses for the batch in a single query
+        std_responses = (
+            QuestionResponse.objects.filter(test__batch=batch)
+            .values('student')  # Group by student
+            .annotate(total_marks_obtained=Sum('marks_obtained'))  # Sum marks per student
+        )
+
+        # Create a mapping of student IDs to marks obtained
+        student_marks_map = {
+            response['student']: response['total_marks_obtained'] or 0
+            for response in std_responses
+        }
+
+        # Calculate percentages for all students
+        for stu in students:
+            marks_obtd = student_marks_map.get(stu.id, 0)
+            pct = (marks_obtd / batch_max_marks) * 100
+            students_list[stu] = round(pct, 1)
+
+        students_list = dict(sorted(students_list.items(), key=lambda item: item[1], reverse=True))
+
+    if student_id and Student.objects.filter(batches=batch).first():
+        student = Student.objects.get(id=student_id)
+
+    if batch and student:
+
+        chapters = {
+            question.chapter_no: question.chapter_name
+            for question in TestQuestion.objects.prefetch_related('test__batch').filter(test__batch=batch).order_by('chapter_no')
+        }
+        question_responses = QuestionResponse.objects.prefetch_related('remark', 'question').filter(test__batch=batch, student=student).select_related('question')
+
+        chapter_wise_remarks = defaultdict(lambda: [0] * len(chapters))
+        remarks_count = defaultdict(int)
+
+        # Populate counts
+        for response in question_responses:
+            ch_no = response.question.chapter_no
+            remark = response.remark
+            if not remark:
+                continue
+            chapter_index = list(chapters.keys()).index(ch_no)
+            chapter_wise_remarks[remark][chapter_index] += 1 * (response.question.max_marks - response.marks_obtained)
+            remarks_count[remark] += 1 * (response.question.max_marks - response.marks_obtained)
+
+        total_remarks_sum = sum(remarks_count.values())
+        if total_remarks_sum:
+            remarks_count = {key: round((value/total_remarks_sum)*100, 1) for key, value in remarks_count.items()}
+        
+        chapter_wise_remarks = dict(chapter_wise_remarks)
+        remarks_count = dict(remarks_count)
+
+
+        test_reports = []
+        tests = Test.objects.filter(batch=batch)
+
+        students = Student.objects.prefetch_related('batches__test', 'batches').filter(batches=batch)
+
+        for test in tests:
+            testwise_questions = TestQuestion.objects.prefetch_related('test__batch', 'test').filter(test__batch=batch, test=test).order_by('chapter_no')
+            test_chapters = {
+                question.chapter_no: question.chapter_name
+                for question in testwise_questions
+            }
+            testwise_responses = QuestionResponse.objects.prefetch_related('question', 'remark').filter(test=test, student=student)
+
+            chapter_wise_test_remarks = defaultdict(lambda: [0] * len(test_chapters))
+            
+
+
+            for response in testwise_responses:
+                ch_no = response.question.chapter_no
+                remark = response.remark
+                if not remark:
+                    continue
+                chapter_index = list(test_chapters.keys()).index(ch_no)
+                chapter_wise_test_remarks[remark][chapter_index] += 1 * (response.question.max_marks - response.marks_obtained)
+
+            chapter_wise_test_remarks = dict(chapter_wise_test_remarks)
+
+
+            attempted_students = students.filter(id__in=testwise_responses.values_list('student', flat=True)).count()
+
+            max_marks = 0
+            total_marks = []
+            marks_obtained = []
+            remarks = defaultdict(float)
+
+            for ch_no in test_chapters:
+                total_test_marks = 0
+                total_marks_obtained = 0
+                for response in testwise_responses.filter(question__chapter_no=ch_no):
+
+                    total_test_marks += response.question.max_marks
+                    total_marks_obtained += response.marks_obtained
+                    if response.remark:
+                        remarks[response.remark] += 1 * (response.question.max_marks - response.marks_obtained)
+            
+                if total_test_marks > max_marks:
+                    max_marks = total_test_marks
+                total_marks.append(total_test_marks)
+                marks_obtained.append(total_marks_obtained)
+
+            remarks_sum = sum(remarks.values())
+            if remarks_sum:
+                remarks = {key: round((value/remarks_sum)*100, 1) for key, value in remarks.items()}
+
+            test_reports.append({
+                'test' : test,
+                'chapters': test_chapters,
+                'marks_total' : total_marks,
+                'marks_obtained' : marks_obtained,
+                'remarks': dict(sorted(remarks.items(), key=lambda d: d[1], reverse=True)),
+                'max_marks': max_marks,
+                'marks': {
+                    'percentage': (sum(marks_obtained)/(sum(total_marks) or 1)) * 100,
+                    'obtained_marks': sum(marks_obtained),
+                    'max_marks': sum(total_marks),
+                    },
+                'chapter_wise_test_remarks': chapter_wise_test_remarks,
+            })
+
+
+        remarks_count = dict(sorted(remarks_count.items(), key=lambda d: d[1], reverse=True))
+        return render(request, "center/chapterwise_student_report.html", {
+            'batches': batches,
+            'batch': batch,
+            'chapter_wise_remarks': chapter_wise_remarks,
+            'chapters': chapters,
+
+            'remarks_count': remarks_count,
+            'tests': test_reports,
+
+            'student': student,
+            'students': students,
+            'students_list': students_list
+        })
+
+    return render(request, "center/chapterwise_student_report.html", {
+        'batches': batches,
+        'batch': batch,
+        'students': students,
+        'student': student,
+        'students_list':students_list
     })
 
 
