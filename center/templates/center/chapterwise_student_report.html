@@ -91,7 +91,12 @@
                         {% for stu, prct in students_list.items %}
                         <a href="{% url 'chapter_student_batch_report_progress' batch.id stu.id %}" class="text-decoration-none">
                             <li class="list-group-item d-flex justify-content-between {% if stu.id == student.id %} list-group-item-primary {% endif %}" style="font-size: 12px;">
-                                <span class="">{{stu.user.first_name}} {{stu.user.last_name}}</span> <span class="fw-normal" > {{prct}}%</span> 
+                                <span class="">{{stu.user.first_name}} {{stu.user.last_name}}</span> 
+                                {% if prct == 0 %}
+                                <span class="fw-normal btn bg-danger-subtle px-2 py-1" style="font-size: 12px;" >Absent</span> 
+                                {% else %}
+                                <span class="fw-normal" > {{prct}}%</span> 
+                                {% endif %}
                             </li>
                         </a>
 
