@@ -26,6 +26,8 @@ from .views import (
     
     chapterwise_personal_report,
     chapterwise_student_report,
+
+    compare_progres,
     
     getQuery
 )
@@ -73,4 +75,7 @@ urlpatterns = [
     path('chapterwise_student_report/', chapterwise_student_report, name="chapterwise_student_report"),
     path('chapterwise_student_report/<int:batch_id>/', chapterwise_student_report, name="chapter_student_batch_report"),
     path('chapterwise_student_report/<int:batch_id>/<int:student_id>', chapterwise_student_report, name="chapter_student_batch_report_progress"),
+    
+    path('compare_progress/', compare_progres, name="compare_progress"),
+    path('compare_progress/<int:batch_id>', compare_progres, name="compare_batch_progress"),
 ]
