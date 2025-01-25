@@ -9,7 +9,9 @@ from .models import (Center,
                      ClassName,
                      Section,
                      Subject, 
-                     QuestionResponse, Remark
+                     QuestionResponse, Remark,
+
+                     TestResult, RemarkCount
                      )
 
 
@@ -26,4 +28,7 @@ admin.site.register(Section, )
 admin.site.register(Subject, )
 admin.site.register(QuestionResponse, )
 admin.site.register(Remark, )
+
+admin.site.register(TestResult )
+admin.site.register(RemarkCount )
  

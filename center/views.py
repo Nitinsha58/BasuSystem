@@ -1107,3 +1107,66 @@ def compare_progres(request, batch_id = None):
         'batch': batch,
     })
 
+from django.db.models import Sum, Count
+from .models import TestResult, RemarkCount
+
+def update_test_result_remark_count():
+    all_responses = QuestionResponse.objects.all()
+    all_tests = Test.objects.all()
+    all_students = Student.objects.all()
+    student_ids = all_responses.values_list('student', flat=True).distinct()
+    test_ids = all_responses.values_list('test', flat=True).distinct()
+
+    for stu_id in student_ids:
+        for test_id in test_ids:
+            test = all_tests.get(id = test_id)
+            student = all_students.get(id=stu_id)
+
+            question_responses = QuestionResponse.objects.filter(student=student, test=test)
+    
+            no_of_questions_attempted = question_responses.count()
+            total_marks_obtained = question_responses.aggregate(total=Sum('marks_obtained'))['total'] or 0
+            total_max_marks = test.total_max_marks or 0
+            
+            # Calculate percentage
+            percentage = (total_marks_obtained / total_max_marks) * 100 if total_max_marks > 0 else 0
+
+            # Get or create the TestResult object
+            test_result, created = TestResult.objects.get_or_create(
+                student=student,
+                test=test,
+                defaults={
+                    'no_of_questions_attempted': no_of_questions_attempted,
+                    'total_marks_obtained': total_marks_obtained,
+                    'total_max_marks': total_max_marks,
+                    'percentage': percentage
+                }
+            )
+
+            # If the TestResult already exists, update its fields
+            if not created:
+                test_result.no_of_questions_attempted = no_of_questions_attempted
+                test_result.total_marks_obtained = total_marks_obtained
+                test_result.total_max_marks = total_max_marks
+                test_result.percentage = percentage
+                test_result.save()
+            
+            remarks = question_responses.exclude(remark=None).values('remark').annotate(count=Count('remark'))
+            for remark_data in remarks:
+                remark = Remark.objects.get(id=remark_data['remark'])
+                count = remark_data['count']
+
+                # Get or create RemarkCount for the specific remark
+                if remark:  # Avoid processing empty or None remarks
+                    remark_count, remark_created = RemarkCount.objects.get_or_create(
+                        test=test,
+                        student=student,
+                        remark=remark,
+                        defaults={'count': count}
+                    )
+                    if not remark_created:
+                        remark_count.count = count  # Update with the aggregated count
+                        remark_count.save()
+
+            print("TestResult Added. for ", student.user.first_name, test.name)
+    print("Process Completed.")
