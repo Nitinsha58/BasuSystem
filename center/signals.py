@@ -62,7 +62,7 @@ def result_post_update(sender, instance, created, *args, **kwargs):
     if created:
         test_result.no_of_questions_attempted += 1
         test_result.total_marks_obtained += instance.marks_obtained
-        test_result.percentage = (test_result.total_marks_obtained / test_result.total_max_marks) / 100
+        test_result.percentage = (test_result.total_marks_obtained / test_result.total_max_marks) * 100
 
         if remark:
             test_remark, remark_created = RemarkCount.objects.get_or_create(
@@ -80,7 +80,7 @@ def result_post_update(sender, instance, created, *args, **kwargs):
         _old_remark = getattr(instance, '_old_remark', '')
         test_result.total_marks_obtained -= _old_marks_obtained
         test_result.total_marks_obtained += instance.marks_obtained
-        test_result.percentage = (test_result.total_marks_obtained / test_result.total_max_marks) / 100
+        test_result.percentage = (test_result.total_marks_obtained / test_result.total_max_marks) * 100
 
 
         if _old_remark and _old_remark != remark:
@@ -118,7 +118,7 @@ def result_post_delete(sender, instance, **kwargs):
     if test_result:
         test_result.no_of_questions_attempted -= 1
         test_result.total_marks_obtained -= instance.marks_obtained
-        test_result.percentage = (test_result.total_marks_obtained / test_result.total_max_marks) / 100
+        test_result.percentage = (test_result.total_marks_obtained / test_result.total_max_marks) * 100
 
         test_result.save()
 
