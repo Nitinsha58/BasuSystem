@@ -9,6 +9,7 @@ from user.models import BaseUser
 from django.db import models
 from django.db.models import Count, Sum, F, ExpressionWrapper, FloatField
 from collections import Counter, defaultdict
+from .models import TestResult, RemarkCount
 # Create your views here.
 
 @login_required(login_url='login')
@@ -1031,75 +1032,56 @@ def compare_progres(request, batch_id = None):
         batch = batches.get(id=batch_id)
         test_options = Test.objects.filter(batch=batch).order_by('name')
         students = Student.objects.filter(batches=batch)
-        students_list = {}
+        students_list = []
 
         test1_id = 0
         test2_id = 0
-        test_options = []
+        tests = []
 
-        # if request.method == "POST":
-        #     test1_id = request.POST.get('test1')
-        #     test2_id = request.POST.get('test2')
+        if request.method == "POST":
+            test1_id = request.POST.get('test1')
+            test2_id = request.POST.get('test2')
 
-        #     test1 = test_options.get(id=test1_id)
-        #     test2 = test_options.get(id=test2_id)
+            test1 = test_options.get(id=test1_id)
+            test2 = test_options.get(id=test2_id)
 
-        #     tests = test_options.filter(name__range=(test1.name, test2.name))
+            tests = test_options.filter(name__range=(test1.name, test2.name))
 
-            # for stu_index, stu in enumerate(students):
-            #     students_list[stu] = {}
-            #     for test_index, test in enumerate(tests):
-            #         std_responses = (
-            #             QuestionResponse.objects.filter(test__batch=batch, test=test, student=stu)
-            #             .annotate(
-            #                 total_marks_obtained=Sum('marks_obtained'),
-            #                 max_test_marks=Sum('question__max_marks'),
-            #             )
-            #         )
-            #         # students_list[stu][test_index] = std_responses['total_marks_obtained'] or 0
+            for stu in students:
+                stu_obj = {}
+                total_marks_obtained = 0
+                total_max_marks = 0
+
+                for test in tests:
+                    result = TestResult.objects.filter(student=stu, test=test).first()
+                    # print(result)
+                    if not result:
+                        stu_obj[test] = -1
+                        continue
+                    total_marks_obtained += result.total_marks_obtained
+                    total_max_marks += result.total_max_marks
+                    stu_obj[test] = round( result.percentage, 1)
                 
-            #         print(std_responses)
-            #         print()
+                stu_obj['student'] = {
+                    'stu': stu,
+                    'percentage': round((total_marks_obtained / (total_max_marks or 1)) * 100, 1)
+                    }
+            
+                students_list.append(stu_obj)
 
-        # students = set(Student.objects.filter(batches=batch))
 
-        # std_responses = (
-        #     QuestionResponse.objects.filter(test__batch=batch)
-        #     .values('student')  # Group by student
-        #     .annotate(
-        #         total_marks_obtained=Sum('marks_obtained'),
-        #         max_test_marks=Sum('question__max_marks'),
-        #     )
-        # )
-
-        # # Create a mapping of student IDs to marks obtained
-        # student_marks_map = {
-        #     response['student']: (response['total_marks_obtained'] or 0, response['max_test_marks'] or 0)
-        #     for response in std_responses
-        # }
-
-        # # Calculate percentages for all students
-        # for stu in students:
-        #     stu_progress = student_marks_map.get(stu.id, 0)
-        #     if stu_progress:
-        #         marks_obtd = student_marks_map.get(stu.id, 0)[0]
-        #         max_test_marks = student_marks_map.get(stu.id, 0)[1]
-        #         pct = (marks_obtd / max_test_marks) * 100
-        #     else:
-        #         pct = 0 # (marks_obtd / max_test_marks) * 100
-        #     students_list[stu] = round(pct, 1)
-
-        # students_list = dict(sorted(students_list.items(), key=lambda item: item[1], reverse=True))
+        students_list = list(sorted(students_list, key=lambda item: item['student']['percentage'], reverse=True))
 
         return render(request, "center/compare_progress.html", {
             'batches': batches,
             'batch': batch,
             'students': students,
-            # 'students_list':students_list,
+            'students_list':students_list,
             'test_options': test_options,
 
             'test1_id': int(test1_id),
             'test2_id':int(test2_id),
+            'tests': tests
         })
 
     return render(request, "center/compare_progress.html", {
@@ -1107,8 +1089,6 @@ def compare_progres(request, batch_id = None):
         'batch': batch,
     })
 
-from django.db.models import Sum, Count
-from .models import TestResult, RemarkCount
 
 def update_test_result_remark_count():
     all_responses = QuestionResponse.objects.all()
