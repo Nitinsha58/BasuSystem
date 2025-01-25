@@ -1,13 +1,12 @@
 {% extends 'base.html' %}
 {% load static %}
-
 {% block dashboard %}
-<div class="container-fluid p-4">
-  <div class="row m-2 row-cols-3">
+<div class="container-fluid p-0 p-sm-2 p-xl-4">
+  <div class="row m-0 m-sm-2 row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
     {% if request.user.is_authenticated %}
       {% if request.user.is_superuser %}
-      <div class="col-sm-3 my-3 mb-sm-0">
-        <div class="card">
+      <div class="col">
+        <div class="card h-100">
           <div class="card-body">
             <h3 class="card-title">Student Registration</h3>
             <p class="card-text">Register Students and assign different batches and their details.</p>
@@ -16,8 +15,8 @@
         </div>
       </div>
 
-      <div class="col-sm-3 my-3 mb-sm-0">
-        <div class="card">
+      <div class="col">
+        <div class="card h-100">
           <div class="card-body">
             <h3 class="card-title">Create Test</h3>
             <p class="card-text">Create Test Template for different batches of the class</p>
@@ -26,10 +25,9 @@
         </div>
       </div>
 
-      {% elif request.user.teacher or request.user.student  %}
-
-      <div class="col-sm-3 my-3 mb-sm-0">
-        <div class="card">
+      {% elif request.user.teacher %}
+      <div class="col">
+        <div class="card h-100">
           <div class="card-body">
             <h3 class="card-title">Batchwise Report</h3>
             <p class="card-text">Combined batchwise report for all mocks and Mockwise report.</p>
@@ -38,11 +36,11 @@
         </div>
       </div>
 
-      <div class="col-sm-3 my-3 mb-sm-0">
-        <div class="card">
+      <div class="col">
+        <div class="card h-100">
           <div class="card-body">
             <h3 class="card-title">Chapterwise Report</h3>
-            <p class="card-text">Combined batch chapterwise report and Mockwise report </p>
+            <p class="card-text">Combined batch chapterwise report and Mockwise report</p>
             <a href="{% url 'chapterwise_report' %}" class="btn btn-warning">Chapterwise Report</a>
           </div>
         </div>
@@ -50,19 +48,17 @@
       {% endif %}
 
       {% if request.user.student %}
-        <div class="col-sm-3 my-3 mb-sm-0">
-          <div class="card">
-            <div class="card-body">
-              <h3 class="card-title">Personal Report</h3>
-              <p class="card-text">Combined batch chapterwise report and Mockwise report </p>
-              <a href="{% url 'chapterwise_personal_report' %}" class="btn btn-danger">Personal Report</a>
-            </div>
+      <div class="col">
+        <div class="card h-100">
+          <div class="card-body">
+            <h3 class="card-title">Personal Report</h3>
+            <p class="card-text">Combined batch chapterwise report and Mockwise report</p>
+            <a href="{% url 'chapterwise_personal_report' %}" class="btn btn-warning">Personal Report</a>
           </div>
         </div>
+      </div>
       {% endif %}
     {% endif %}
-
   </div>
 </div>
-
 {% endblock dashboard %}

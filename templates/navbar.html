@@ -1,79 +1,93 @@
 <nav class="navbar navbar-expand-lg bg-body-tertiary">
     <div class="container-fluid">
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarTogglerDemo01"
-            aria-controls="navbarTogglerDemo01" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
+        
+        <!-- Brand Logo -->
+        <a class="navbar-brand" href="{% url 'staff_dashboard' %}">
+            <img src="https://basueducation.com/static/images/BASU%20LOGO.5e3cc85845b7.svg" alt="logo" width="100">
+        </a>
+
+        <!-- Toggler for smaller screens -->
+        <button class="navbar-toggler p-1 px-2" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+            aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" viewBox="0 0 20 20" fill="none">
+                <path fill="#000000" fill-rule="evenodd" d="M19 4a1 1 0 01-1 1H2a1 1 0 010-2h16a1 1 0 011 1zm0 6a1 1 0 01-1 1H2a1 1 0 110-2h16a1 1 0 011 1zm-1 7a1 1 0 100-2H2a1 1 0 100 2h16z"/>
+              </svg>
         </button>
-        <div class="collapse navbar-collapse d-flex align-items-center " id="navbarTogglerDemo01">
-            <a class="navbar-brand" href="{% url 'staff_dashboard' %}">
-                <div class="text-center">
-                    <img src="https://basueducation.com/static/images/BASU%20LOGO.5e3cc85845b7.svg" alt="logo"
-                        width="100">
-                </div>
-            </a>
+    
+        <!-- Navbar content -->
+        <div class="collapse navbar-collapse" id="navbarContent">
             {% if request.user.is_authenticated %}
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <!-- Superuser-specific links -->
                 {% if request.user.is_superuser %}
                 <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" href="{% url 'staff_dashboard' %}">Dashboard</a>
+                    <a class="nav-link" href="{% url 'staff_dashboard' %}">Dashboard</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" href="{% url 'staff_student_registration' %}">Student Registration</a>
+                    <a class="nav-link" href="{% url 'staff_student_registration' %}">Student Registration</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" href="{% url 'staff_teacher_registration' %}">Teacher Registration</a>
+                    <a class="nav-link" href="{% url 'staff_teacher_registration' %}">Teacher Registration</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" href="{% url 'create_test_template' %}">Mock Tests</a>
+                    <a class="nav-link" href="{% url 'create_test_template' %}">Mock Tests</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" href="{% url 'create_test_response' %}">Add Test Result</a>
+                    <a class="nav-link" href="{% url 'create_test_response' %}">Add Test Result</a>
                 </li>
-
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle text-dark" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                      Reports
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Reports
                     </a>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" aria-current="page" href="{% url 'batchwise_report' %}">Batch Report</a></li>
+                        <li><a class="dropdown-item" href="{% url 'batchwise_report' %}">Batch Report</a></li>
                         <li><a class="dropdown-item" href="{% url 'chapterwise_report' %}">Chapter Report</a></li>
                     </ul>
-                  </li>
-                
-                <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" href="{% url 'test_progress' %}">Test Progress</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" href="{% url 'chapterwise_student_report' %}">Student Report</a>
+                    <a class="nav-link" href="{% url 'test_progress' %}">Test Progress</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" href="{% url 'compare_progress' %}">Compare Progress</a>
+                    <a class="nav-link" href="{% url 'chapterwise_student_report' %}">Student Report</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'compare_progress' %}">Compare Progress</a>
                 </li>
 
-                {% elif request.user.student or request.user.teacher %}
-                    <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="{% url 'batchwise_report' %}">Batchwise Report</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="{% url 'chapterwise_report' %}">Chapterwise Report</a>
-                    </li>
-                    {% endif %}
+                <!-- Teacher-specific links -->
+                {% elif request.user.teacher %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'batchwise_report' %}">Batchwise Report</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'chapterwise_report' %}">Chapterwise Report</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'chapterwise_student_report' %}">Student Report</a>
+                </li>
+                {% endif %}
+
+                <!-- Student-specific links -->
                 {% if request.user.student %}
-                    <li class="nav-item">
-                        <a class="nav-link active bg-success-subtle rounded" aria-current="page" href="{% url 'chapterwise_personal_report' %}">Personal Report</a>
-                    </li>
+                <li class="nav-item m-2">
+                    <a class="nav-link bg-success-subtle rounded d-inline px-3 p-2 m-1" href="{% url 'chapterwise_personal_report' %}">
+                        Personal Report
+                    </a>
+                </li>
                 {% endif %}
             </ul>
-            {% endif %}
-            {% if request.user.is_authenticated %}
+
+            <!-- User role display and action buttons -->
+            <div class="d-flex align-items-center">
                 {% if request.user.student %}
-                <p class="m-0 mx-2 fs-4 d-block">Stu - {{request.user.first_name}} {{request.user.last_name}}</p>
+                <p class="m-0 mx-2 fs-6">Stu - {{ request.user.first_name }} {{ request.user.last_name }}</p>
                 {% elif request.user.teacher %}
-                <p class="m-0 mx-2 fs-4 d-block">Teach - {{request.user.first_name}} {{request.user.last_name}}</p>
+                <p class="m-0 mx-2 fs-6">Teach - {{ request.user.first_name }} {{ request.user.last_name }}</p>
                 {% elif request.user.is_superuser %}
-                <a href="/admin" class="btn btn-success me-2 ">  Admin  </a>
+                <a href="/admin" class="btn btn-success me-2">Admin</a>
                 {% endif %}
-                <a href="{% url 'logout' %}" class="btn btn-danger">  Logout  </a>
+                <a href="{% url 'logout' %}" class="btn btn-danger">Logout</a>
+            </div>
             {% endif %}
         </div>
     </div>

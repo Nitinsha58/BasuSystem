@@ -49,10 +49,6 @@
 </style>
 
 <div class="mx-5 px-5">
-    <div class="w-75 m-2">
-        <p class="h2 fw-normal">Chapterwise Student Report</p>
-    </div>
-
     <div class="d-flex g-4 w-100">
         <div class="m-2 p-2" style="width: 15%">
 
@@ -80,6 +76,14 @@
                                 </li>
                             </a>
                             {% endfor %}
+                        {% elif request.user.teacher %}
+                            {% for b in request.user.teacher.batches.all %}
+                            <a href="{% url 'chapter_student_batch_report' b.id %}" class="text-decoration-none" style="font-size: 12px;">
+                                <li class="list-group-item {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
+                                    {{b}}
+                                </li>
+                            </a>
+                            {% endfor %}
                         {% endif %}
                     </div>
                 </ul>
@@ -87,21 +91,19 @@
 
             <ul class="list-group mt-4">
                 <li class="list-group-item bg-dark text-white border-dark">Students</li>
-                    {% if request.user.is_superuser %}
-                        {% for stu, prct in students_list.items %}
-                        <a href="{% url 'chapter_student_batch_report_progress' batch.id stu.id %}" class="text-decoration-none">
-                            <li class="list-group-item d-flex justify-content-between {% if stu.id == student.id %} list-group-item-primary {% endif %}" style="font-size: 12px;">
-                                <span class="">{{stu.user.first_name}} {{stu.user.last_name}}</span> 
-                                {% if prct == 0 %}
-                                <span class="fw-normal btn bg-danger-subtle px-2 py-1" style="font-size: 12px;" >Absent</span> 
-                                {% else %}
-                                <span class="fw-normal" > {{prct}}%</span> 
-                                {% endif %}
-                            </li>
-                        </a>
+                    {% for stu, prct in students_list.items %}
+                    <a href="{% url 'chapter_student_batch_report_progress' batch.id stu.id %}" class="text-decoration-none">
+                        <li class="list-group-item d-flex justify-content-between {% if stu.id == student.id %} list-group-item-primary {% endif %}" style="font-size: 12px;">
+                            <span class="">{{stu.user.first_name}} {{stu.user.last_name}}</span> 
+                            {% if prct == 0 %}
+                            <span class="fw-normal btn bg-danger-subtle px-2 py-1" style="font-size: 12px;" >Absent</span> 
+                            {% else %}
+                            <span class="fw-normal" > {{prct}}%</span> 
+                            {% endif %}
+                        </li>
+                    </a>
 
-                        {% endfor %}
-                    {% endif %}
+                    {% endfor %}
             </ul>
 
         </div>
@@ -109,7 +111,9 @@
         <div class="m-2 p-2 ps-4" style="width: 85%;">
             
             <div class="">
+                {% if student %}
                 <p class="h3 m-0"> {{student.user.first_name}} {{student.user.last_name}}'s Progress</p>
+                {% endif %}
             </div>
 
             {% if batch %}

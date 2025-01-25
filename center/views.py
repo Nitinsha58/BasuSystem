@@ -1055,7 +1055,7 @@ def compare_progres(request, batch_id = None):
                 for test in tests:
                     result = TestResult.objects.filter(student=stu, test=test).first()
                     # print(result)
-                    if not result:
+                    if not result or result and result.percentage == 0:
                         stu_obj[test] = -1
                         continue
                     total_marks_obtained += result.total_marks_obtained
