@@ -234,6 +234,8 @@
                     }
                 },
                 scales: {
+                    responsive: false,
+                    maintainAspectRatio: true,
                     x: {
                         stacked: true, // Enable stacking on the X-axis
                         ticks: {
@@ -284,9 +286,9 @@
       },
       options: {
           responsive: false,
+          maintainAspectRatio: true,
           scales: {
               x: {
-                stacked: true, // Enable stacking on the X-axis
                 ticks: {
                     autoSkip: false,
                     maxRotation: 0,
@@ -297,7 +299,6 @@
                 },
             },
             y: {
-                stacked: true, // Enable stacking on the Y-axis
                 beginAtZero: true,
                 ticks: {
                     font: {
