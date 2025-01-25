@@ -64,15 +64,16 @@ def result_post_update(sender, instance, created, *args, **kwargs):
         test_result.total_marks_obtained += instance.marks_obtained
         test_result.percentage = (test_result.total_marks_obtained / test_result.total_max_marks) / 100
 
-        test_remark, remark_created = RemarkCount.objects.get_or_create(
-            test=test,
-            student=student,
-            remark=remark,
-            defaults={'count': 1}
-        )
-        if not remark_created:
-            test_remark.count += 1
-            test_remark.save()
+        if remark:
+            test_remark, remark_created = RemarkCount.objects.get_or_create(
+                test=test,
+                student=student,
+                remark=remark,
+                defaults={'count': 1}
+            )
+            if not remark_created:
+                test_remark.count += 1
+                test_remark.save()
         
     else:
         _old_marks_obtained = getattr(instance, '_old_marks_obtained', 0)
