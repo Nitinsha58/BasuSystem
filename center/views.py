@@ -773,10 +773,6 @@ def chapterwise_personal_report(request, batch_id=None):
         test_reports = []
         tests = Test.objects.filter(batch=batch)
 
-        students = Student.objects.prefetch_related('batches__test', 'batches').filter(batches=batch)
-        total_students = students.count()
-
-
         for test in tests:
             testwise_questions = TestQuestion.objects.prefetch_related('test__batch', 'test').filter(test__batch=batch, test=test).order_by('chapter_no')
             test_chapters = {
@@ -786,8 +782,6 @@ def chapterwise_personal_report(request, batch_id=None):
             testwise_responses = QuestionResponse.objects.prefetch_related('question', 'remark').filter(test=test, student=request.user.student)
 
             chapter_wise_test_remarks = defaultdict(lambda: [0] * len(test_chapters))
-            
-
 
             for response in testwise_responses:
                 ch_no = response.question.chapter_no
@@ -798,9 +792,6 @@ def chapterwise_personal_report(request, batch_id=None):
                 chapter_wise_test_remarks[remark][chapter_index] += 1 * (response.question.max_marks - response.marks_obtained)
 
             chapter_wise_test_remarks = dict(chapter_wise_test_remarks)
-
-
-            attempted_students = students.filter(id__in=testwise_responses.values_list('student', flat=True)).count()
 
             max_marks = 0
             total_marks = []
@@ -843,6 +834,12 @@ def chapterwise_personal_report(request, batch_id=None):
 
 
         remarks_count = dict(sorted(remarks_count.items(), key=lambda d: d[1], reverse=True))
+        marks_progress = {result.test : result.percentage for result in TestResult.objects.filter(student=request.user.student, test__batch=batch)}
+        print(marks_progress)
+
+
+
+
         return render(request, "center/chapterwise_personal_report.html", {
             'batches': batches,
             'batch': batch,
@@ -851,6 +848,8 @@ def chapterwise_personal_report(request, batch_id=None):
 
             'remarks_count': remarks_count,
             'tests': test_reports,
+            'all_tests': sorted(tests, key=lambda test: test.name),
+            'marks_progress': marks_progress
         })
 
     return render(request, "center/chapterwise_personal_report.html", {

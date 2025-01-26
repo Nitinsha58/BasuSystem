@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load mathfilters %}
+{% load center_filters %}
 {% load static %}
 
 {% block dashboard %}
@@ -36,6 +37,13 @@
     font-size: 14px;
     margin: 0;
   }
+
+  @media (min-width: 991px) {
+    .remarks-container {
+        width: 25%;
+        max-width: 25%;
+    }
+}
 
 
 </style>
@@ -81,18 +89,19 @@
                 <div class="">
                     <p class="h4 fw-normal">Personal Progress</p>
                   </div>
-                <div  class="g-3 d-flex justify-content-around" style="overflow-x: auto;">
+                <div  class="g-3 relative" style="overflow-x: auto;">
                     <canvas id="remarkProgress" class="w-100 h-auto" style="min-width: 700px;" ></canvas>
-                    <!-- <div class="m-2 p-2" style="width: 20%">
-                        <ul class="list-group">
-                            <li class="list-group-item bg-dark text-white border-dark">Remarks</li>
-                            {% for remark, count in remarks_count.items %}
-                            <li class="list-group-item d-flex justify-content-between {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
-                                <span class="">{{remark.name}}</span> <span class="fw-normal" >{{count}} %</span> 
-                            </li>
-                            {% endfor %}
-                        </ul>
-                    </div> -->
+                    <canvas id="marksProgress" class="w-100 h-auto" style="min-width: 700px;" ></canvas>
+                </div>
+                <div class="m-sm-2 p-sm-2 absolute w-100 w-sm-25 remarks-container">
+                    <ul class="list-group">
+                        <li class="list-group-item bg-dark text-white border-dark">Remarks</li>
+                        {% for remark, count in remarks_count.items %}
+                        <li class="list-group-item d-flex justify-content-between {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
+                            <span class="">{{remark.name}}</span> <span class="fw-normal" >{{count}} %</span> 
+                        </li>
+                        {% endfor %}
+                    </ul>
                 </div>
             </div>
 
@@ -102,7 +111,7 @@
                   <p class="h4 fw-normal">{{test.test.name}}</p>
                 </div>
 
-                <div  class="g-3 d-flex justify-content-around my-4 p-0 w-100">
+                <div  class="g-3 my-4 p-0 w-100">
                   <div class="w-100 h-auto" style="overflow-x: auto;">
                     <canvas id="test_chart_1{{forloop.counter}}" class="w-100 h-auto" style="min-width: 700px;" ></canvas>
                     <canvas id="test_chart_2{{forloop.counter}}" class="w-100 h-auto" style="min-width: 700px;" ></canvas>
@@ -111,7 +120,7 @@
                       <p class="progress_text">{{test.attempted}}% Students Attempted</p>
                     </div> -->
                   </div>
-                  <!-- <div class="m-2 p-2" style="width: 20%">
+                  <div class="m-sm-2 p-sm-2 remarks-container">
                     <ul class="list-group">
                       <li class="list-group-item bg-dark text-white border-dark">Remarks -  ( {{test.marks.obtained_marks|floatformat:1}}/{{test.marks.max_marks|floatformat:1}} )  {{test.marks.percentage|floatformat:2}}%</li>
                       {% for remark, count in test.remarks.items %}
@@ -120,7 +129,7 @@
                       </li>
                       {% endfor %}
                     </ul>
-                  </div> -->
+                  </div>
 
                 </div>
             </div>
@@ -139,6 +148,7 @@
 
 <script>
     const ctx = document.getElementById('remarkProgress');
+    const ctx_line = document.getElementById('marksProgress');
   
     new Chart(ctx, {
       type: 'bar',
@@ -188,6 +198,74 @@
                     beginAtZero: true,
                     ticks: {
                         stepSize: 2, // Set custom step size
+                        font: {
+                            size: 10
+                        }
+                    }
+                }
+            }
+        }
+
+    });
+
+    new Chart(ctx_line, {
+      type: 'line',
+      data: {
+        labels: [{% for test in all_tests %} '{{test.name}}', {% endfor %}].map(label => label.split(' ')),
+        datasets: [
+            {
+                // label: [{% for result in marks_progress %}  {% endfor %}],
+                data: [
+                    {% for test in all_tests %} 
+                        {% if marks_progress|get_item:test == '-' or marks_progress|get_item:test == 0 %}
+                            null,
+                        {% else %}
+                            {{ marks_progress|get_item:test }}, 
+                        {% endif %}
+                    {% endfor %}
+                ],
+
+                label: 'Mocks Progress',
+                borderColor: '#4aaa70',
+                backgroundColor: '#4aaa70',
+                borderWidth: 2,
+                tension: 0.4
+            },
+        
+        ]
+      },
+      options: {
+            responsive: false, // To ensure responsiveness (set to true)
+            maintainAspectRatio: true, // Adjusts based on container size, if needed
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    enabled: true
+                }
+            },
+            scales: {
+                x: {
+                    stacked: true, // Enable stacking on the X-axis
+                    ticks: {
+                        autoSkip: false,
+                        maxRotation: 0, // Rotation of the tick labels on Y-axis
+                        minRotation: 0,
+                        font: {
+                            size: 10
+                        }
+                    },
+                },
+                y: {
+                    stacked: true, // Enable stacking on the Y-axis
+                    beginAtZero: true,
+                    ticks: {
                         font: {
                             size: 10
                         }
@@ -262,7 +340,7 @@
 
   const ctx2{{ forloop.counter }} = document.getElementById('test_chart_2{{ forloop.counter }}').getContext('2d');
   new Chart(ctx2{{ forloop.counter }}, {
-      type: 'line',
+      type: 'bar',
       data: {
           labels: [{% for ch_no, ch_name in chapters.items %} '{{ch_name}} {{ch_no}}', {% endfor %}].map(label => label.split(' ')),
           datasets: [
@@ -289,6 +367,7 @@
           maintainAspectRatio: true,
           scales: {
               x: {
+                beginAtZero: true,
                 ticks: {
                     autoSkip: false,
                     maxRotation: 0,
