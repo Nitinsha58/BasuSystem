@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from user.models import BaseUser
 from django.db import models
-from django.db.models import Count, Sum, F, ExpressionWrapper, FloatField
+from django.db.models import Count, Sum, F, ExpressionWrapper, FloatField, Avg
 from collections import Counter, defaultdict
 from .models import TestResult, RemarkCount
 # Create your views here.
@@ -995,6 +995,9 @@ def chapterwise_student_report(request, batch_id=None, student_id=None):
 
 
         remarks_count = dict(sorted(remarks_count.items(), key=lambda d: d[1], reverse=True))
+        marks_progress = {result.test : result.percentage for result in TestResult.objects.filter(student=student, test__batch=batch)}
+
+
         return render(request, "center/chapterwise_student_report.html", {
             'batches': batches,
             'batch': batch,
@@ -1006,7 +1009,9 @@ def chapterwise_student_report(request, batch_id=None, student_id=None):
 
             'student': student,
             'students': students,
-            'students_list': students_list
+            'students_list': students_list,
+            'all_tests': sorted(tests, key=lambda test: test.name),
+            'marks_progress': marks_progress,
         })
 
     return render(request, "center/chapterwise_student_report.html", {

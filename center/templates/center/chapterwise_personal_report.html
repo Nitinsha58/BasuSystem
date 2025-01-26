@@ -97,7 +97,7 @@
                     <ul class="list-group">
                         <li class="list-group-item bg-dark text-white border-dark">Remarks</li>
                         {% for remark, count in remarks_count.items %}
-                        <li class="list-group-item d-flex justify-content-between {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
+                        <li class="list-group-item d-flex justify-content-between">
                             <span class="">{{remark.name}}</span> <span class="fw-normal" >{{count}} %</span> 
                         </li>
                         {% endfor %}
@@ -124,7 +124,7 @@
                     <ul class="list-group">
                       <li class="list-group-item bg-dark text-white border-dark">Remarks -  ( {{test.marks.obtained_marks|floatformat:1}}/{{test.marks.max_marks|floatformat:1}} )  {{test.marks.percentage|floatformat:2}}%</li>
                       {% for remark, count in test.remarks.items %}
-                      <li class="list-group-item d-flex justify-content-between {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
+                      <li class="list-group-item d-flex justify-content-between">
                         <span class="">{{remark.name}}</span> <span class="fw-normal" >{{count}} %</span> 
                       </li>
                       {% endfor %}
@@ -229,7 +229,8 @@
                 borderColor: '#4aaa70',
                 backgroundColor: '#4aaa70',
                 borderWidth: 2,
-                tension: 0.4
+                tension: 0.4,
+                spanGaps: true,
             },
         
         ]
@@ -358,7 +359,7 @@
               borderColor: '#4aaa70',
               backgroundColor: '#4aaa70',
               borderWidth: 2,
-              tension: 0.4
+              tension: 0.4,
             }
         ]
       },
