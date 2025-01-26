@@ -306,7 +306,7 @@ def create_question(request, batch_id, test_id):
                     test = test,
                     question_number = TestQuestion.objects.filter(test=test, is_main=True).count() + 1,
                     chapter_no = int(chapter_no),
-                    max_marks = max_marks,
+                    max_marks=float(max_marks),  # Convert to float here
                     chapter_name=chapter_name
                 )
                 question.save()
@@ -317,7 +317,7 @@ def create_question(request, batch_id, test_id):
                         is_main = False,
                         question_number = question.question_number,
                         chapter_no = int(opt_chapter_no),
-                        max_marks = opt_max_marks,
+                        max_marks=float(max_marks),  # Convert to float here
                         chapter_name= opt_chapter_name
                     )
                     opt_question.save()
@@ -326,6 +326,7 @@ def create_question(request, batch_id, test_id):
                     question.save()
 
         except Exception as e:
+            print(e)
             messages.error(request, "Invalid Input.")
 
         return redirect("create_template", batch_id=batch_id, test_id=test_id )
@@ -347,7 +348,7 @@ def update_question(request, batch_id, test_id, question_id):
         max_marks = request.POST.get('max_marks')
 
         question.chapter_no = chapter_no
-        question.max_marks = max_marks
+        question.max_marks = float(max_marks)
         question.chapter_name= chapter_name
         question.save()
 
@@ -358,7 +359,7 @@ def update_question(request, batch_id, test_id, question_id):
             opt_max_marks = request.POST.get('opt_max_marks')
 
             opt_question.chapter_no = opt_chapter_no
-            opt_question.max_marks = opt_max_marks
+            opt_question.max_marks = float(opt_max_marks)
             opt_question.chapter_name= opt_chapter_name
             opt_question.save()
 
