@@ -12,8 +12,9 @@
         <form class="row g-3" action="{% url 'create_template' batch.id test.id %}" method="post">
             {% csrf_token %}
             <div class="col-12 d-flex justify-content-end">
-                <a href="{% url 'delete_template' batch.id test.id %}"
-                    class="text-decoration-none btn btn-danger text-white me-4 ">Delete Test</a>
+                <a href=""
+                    data-batch_id="{{batch.id}}" data-test_id="{{test.id}}"
+                    class="delete-link text-decoration-none btn btn-danger text-white me-4 ">Delete Test</a>
                 <button type="submit" class="btn btn-info">Save Test</button>
             </div>
             <div class="col-12">
@@ -120,6 +121,42 @@
 
 </div>
 <div class="w-100" style="height: 35vh;"></div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const deleteLinks = document.querySelectorAll(".delete-link");
+      const modal = document.getElementById("deleteConfirmationModal");
+      const confirmButton = document.getElementById("confirmDeleteButton");
+      const cancelButton = document.getElementById("cancelButton");
+  
+      let deleteUrl = "";
+  
+      deleteLinks.forEach(link => {
+        link.addEventListener("click", function (event) {
+          event.preventDefault();
+          document.getElementsByTagName('html')[0].style.overflow = 'hidden';
+          document.getElementsByTagName('body')[0].style.overflow = 'hidden';
+          deleteUrl = `/delete-template/${this.dataset.batch_id}/${this.dataset.test_id}`; // Construct the delete URL
+
+          const scrollPosition = window.scrollY || document.documentElement.scrollTop;
+          modal.style.top = `${scrollPosition}px`;
+          modal.classList.remove('d-none');
+        });
+      });
+  
+      confirmButton.addEventListener("click", function () {
+        if (deleteUrl) {
+          window.location.href = deleteUrl; // Redirect to the delete URL
+        }
+      });
+  
+      cancelButton.addEventListener("click", function () {
+        modal.classList.add("d-none");
+        document.getElementsByTagName('html')[0].style.overflow = 'auto';
+        document.getElementsByTagName('body')[0].style.overflow = 'auto';
+      });
+    });
+  </script>
 
 <script>
     document.documentElement.style.scrollBehavior = 'auto'

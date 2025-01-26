@@ -326,7 +326,6 @@ def create_question(request, batch_id, test_id):
                     question.save()
 
         except Exception as e:
-            print(e)
             messages.error(request, "Invalid Input.")
 
         return redirect("create_template", batch_id=batch_id, test_id=test_id )
@@ -835,10 +834,6 @@ def chapterwise_personal_report(request, batch_id=None):
 
         remarks_count = dict(sorted(remarks_count.items(), key=lambda d: d[1], reverse=True))
         marks_progress = {result.test : result.percentage for result in TestResult.objects.filter(student=request.user.student, test__batch=batch)}
-        print(marks_progress)
-
-
-
 
         return render(request, "center/chapterwise_personal_report.html", {
             'batches': batches,
@@ -1054,7 +1049,6 @@ def compare_progres(request, batch_id = None):
 
                 for test in tests:
                     result = TestResult.objects.filter(student=stu, test=test).first()
-                    # print(result)
                     if not result or result and result.percentage == 0:
                         stu_obj[test] = -1
                         continue
