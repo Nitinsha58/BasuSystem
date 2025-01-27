@@ -95,7 +95,13 @@
                     </div>
                 </ul>
                 <ul class="list-group mt-4">
-                    <li class="list-group-item bg-dark text-white border-dark">Students</li>
+                    <li class="list-group-item bg-dark text-white border-dark d-flex justify-content-between align-items-center">
+                        <p class="m-0">Students</p>
+                        <svg onclick="" id="students-arrow" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-caret-right-fill m-0 h3 arrow rotated" role="button" viewBox="0 0 16 16">
+                            <path d="m12.14 8.753-5.482 4.796c-.646.566-1.658.106-1.658-.753V3.204a1 1 0 0 1 1.659-.753l5.48 4.796a1 1 0 0 1 0 1.506z"/>
+                        </svg>
+                    </li>
+                    <div id="students" class="">
                         {% for stu, prct in students_list.items %}
                         <a href="{% url 'chapter_student_batch_report_progress' batch.id stu.id %}" class="text-decoration-none">
                             <li class="list-group-item d-flex justify-content-between {% if stu.id == student.id %} list-group-item-primary {% endif %}" style="font-size: 12px;">
@@ -109,6 +115,8 @@
                         </a>
     
                         {% endfor %}
+                    </div>
+
                 </ul>
             </div>
 
@@ -179,11 +187,28 @@
     const arrow = document.getElementById('arrow');
     const batches = document.getElementById('batches');
     
+    const stu_arrow = document.getElementById('students-arrow');
+    const students = document.getElementById('students');
+    
     {% if batch %}
         batches.style.display = 'none';
         arrow.classList.toggle('rotated');
     {% endif %}
 
+
+    // students.style.display = 'none';
+    // stu_arrow.classList.toggle('rotated');
+
+
+    // stu_arrow.addEventListener('click', ()=>{
+    //     if (students.style.display === 'none') {
+    //         students.style.display = 'block';
+    //         stu_arrow.classList.toggle('rotated');  
+    //     } else {
+    //         students.style.display = 'none';
+    //         stu_arrow.classList.toggle('rotated');
+    //     }
+    // })
 
     arrow.addEventListener('click', ()=>{
         if (batches.style.display === 'none') {
@@ -279,7 +304,7 @@
     });
 
     new Chart(ctx_line, {
-      type: 'line',
+      type: 'bar',
       data: {
         labels: [{% for test in all_tests %} '{{test.name}}', {% endfor %}].map(label => label.split(' ')),
         datasets: [
