@@ -28,6 +28,7 @@
         </div>
 
         <div class="w-75 m-2 p-2 ps-4">
+
             {% if student and question_response %}
             <div class="">
                 <p class="h4 fw-normal text-center">{{student.user.first_name|title}} {{student.user.last_name|title}} -
@@ -37,6 +38,7 @@
             <div class="d-flex justify-content-end">
                 <a href="{% url 'create_all_pending_response' batch.id test.id student.id %}" class="btn bg-success-subtle">Add All Pending</a>
             </div>
+
             {% for item in question_response %}
                 {% if item.response %}
                 <div class="container-sm my-4">
@@ -142,6 +144,22 @@
                 </div>
                 {% endif %}
             {% endfor %}
+
+            {% elif student %}
+
+            <div class="container-sm w-75 mb-4">
+                <form class="row g-3" action="{% url 'create_marks_obtained' batch.id test.id student.id %}" method="post">
+                    {% csrf_token %}
+                    <div class="d-flex align-items-end ">
+                        <div class="col-3">
+                            <label for="total_marks_obtained" class="form-label">Marks Obtained</label>
+                            <input type="text" class="form-control" id="total_marks_obtained" name="total_marks_obtained" value="{{result.total_marks_obtained}}"> 
+                            <span class="position-absolute mt-1 ms-1">out of {{test.total_max_marks}} </span>
+                        </div>
+                        <button type="submit" class="ms-2 text-decoration-none btn btn-success me-4 ">Save</button>
+                    </div>
+                </form>
+            </div>
 
             {% endif %}
         </div>

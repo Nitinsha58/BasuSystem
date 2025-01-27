@@ -28,6 +28,8 @@ from .views import (
     chapterwise_student_report,
 
     compare_progres,
+    calculate_total_marks,
+    create_marks_obtained,
     
     getQuery
 )
@@ -54,12 +56,16 @@ urlpatterns = [
     path('update-test-response/<int:batch_id>/<int:test_id>/<int:student_id>/<int:response_id>', update_response, name="update_response"),
     path('delete-test-response/<int:batch_id>/<int:test_id>/<int:student_id>/<int:response_id>', delete_response, name="delete_response"),
     path('create-all-test-response/<int:batch_id>/<int:test_id>/<int:student_id>', create_all_pending_response, name="create_all_pending_response"),
+    
+    path('create-marks-obtained/<int:batch_id>/<int:test_id>/<int:student_id>/', create_marks_obtained, name="create_marks_obtained"),
 
     path('create-test-template/<int:batch_id>/', create_test_template, name="create_test_template"),
     path('create-template/<int:batch_id>/<int:test_id>/', create_template, name="create_template"),
     path('delete-template/<int:batch_id>/<int:test_id>/', delete_template, name="delete_template"),
     path('create-question/<int:batch_id>/<int:test_id>/', create_question, name="create_question"),
     path('update-question/<int:batch_id>/<int:test_id>/<int:question_id>', update_question, name="update_question"),
+
+    path('calculate_total_marks/<int:batch_id>/<int:test_id>/', calculate_total_marks, name="calculate_total_marks"),
 
     path('batchwise_report/', batchwise_report, name="batchwise_report"),
     path('batchwise_report/<int:batch_id>/', batchwise_report, name="batch_report"),
@@ -69,7 +75,7 @@ urlpatterns = [
 
     #student personal
     path('chapterwise_personal_report/', chapterwise_personal_report, name="chapterwise_personal_report"),
-    path('chapterwise_personal_report/<int:batch_id>', chapterwise_personal_report, name="chapter_personal_batch_report"),
+    path('chapterwise-personal-report/<int:batch_id>', chapterwise_personal_report, name="chapter_personal_batch_report"),
  
     #student
     path('chapterwise_student_report/', chapterwise_student_report, name="chapterwise_student_report"),

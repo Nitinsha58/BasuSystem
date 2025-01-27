@@ -259,7 +259,11 @@ def create_template(request, batch_id, test_id):
     
     if request.method == 'POST':
         test_name = request.POST.get('test_name')
+        total_marks = request.POST.get('total_marks')
         test.name = test_name
+        if total_marks:
+            test.total_max_marks = float(total_marks)
+
         test.save()
 
         return redirect('create_test_template')
@@ -376,9 +380,12 @@ def create_response(request, batch_id, test_id, student_id=None, question_id = N
     test = Test.objects.filter(id=test_id).first()
     student = None
     question_response = None
+    result = None
+    
     if not batch or not test:
         messages.error(request, "Invalid Batch or Test")
         return redirect("create_test_response")
+
 
     students = Student.objects.filter(batches=batch)
     questions = TestQuestion.objects.filter(test=test).order_by('question_number')
@@ -387,6 +394,8 @@ def create_response(request, batch_id, test_id, student_id=None, question_id = N
     if student_id and Student.objects.filter(id=student_id).first():
         student = Student.objects.filter(id=student_id).first()
         question = TestQuestion.objects.filter(id=question_id).first()
+
+        result = TestResult.objects.filter(test=test, student=student).first()
 
         if request.method == 'POST' and question:
             marks_obtained = request.POST.get("marks_obtained")
@@ -431,9 +440,38 @@ def create_response(request, batch_id, test_id, student_id=None, question_id = N
         "questions": questions,
         "student":student,
         "remarks":remarks,
-        "question_response": question_response
+        "question_response": question_response,
+        "result":result,
     })
 
+
+@login_required(login_url='login')
+def create_marks_obtained(request, batch_id, test_id, student_id):
+    batch = Batch.objects.filter(id=batch_id).first()
+    test = Test.objects.filter(id=test_id).first()
+    student = None
+
+    if not batch or not test:
+        messages.error(request, "Invalid Batch or Test")
+        return redirect("create_test_response")
+
+    student = Student.objects.filter(id=student_id).first()
+    if not student:
+        messages.error(request, "Invalid Student")
+        return redirect("create_response", batch_id=batch_id, test_id=test_id)
+
+    if request.method == 'POST':
+        print(request.POST.get('total_marks_obtained'))
+        total_marks_obtained = request.POST.get('total_marks_obtained')
+        result, created = TestResult.objects.get_or_create(student=student,test=test)
+        result.total_marks_obtained = float(total_marks_obtained)
+        result.total_max_marks = test.total_max_marks
+        result.percentage = (float(total_marks_obtained) / test.total_max_marks or 1) * 100
+        result.save()
+        return redirect("create_student_response", batch_id=batch_id, test_id=test_id, student_id=student.id)
+
+    return redirect("create_response", batch_id=batch_id, test_id=test_id)
+    
 
 @login_required(login_url='login')
 def create_all_pending_response(request, batch_id, test_id, student_id):
@@ -1149,3 +1187,14 @@ def update_test_result_remark_count():
 
             print("TestResult Added. for ", student.user.first_name, test.name)
     print("Process Completed.")
+
+
+@login_required(login_url='login')
+def calculate_total_marks(request, batch_id, test_id):
+    batch = Batch.objects.filter(id=batch_id).first()
+    test = Test.objects.filter(id=test_id).first()
+    if not batch or not test:
+        messages.error(request, "Invalid Batch or Test")
+        return redirect("create_test_template")
+    test.calculate_total_max_marks()
+    return redirect("create_template", batch_id=batch_id, test_id=test_id )
