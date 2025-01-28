@@ -93,7 +93,7 @@
                     
                     <div class="m-sm-2 p-sm-2 absolute w-100 w-sm-25 remarks-container">
                         <ul class="list-group">
-                            <li class="list-group-item bg-dark text-white border-dark">Remarks</li>
+                            <li class="list-group-item bg-dark text-white border-dark">Batch Remarks</li>
                             {% for remark, count in remarks_count.items %}
                             <li class="list-group-item d-flex justify-content-between {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
                                 <span class="">{{remark.name}}</span> <span class="fw-normal" >{{count}}%</span> 
@@ -122,7 +122,7 @@
 
                   <div class="m-sm-2 p-sm-2 absolute w-100 w-sm-25 remarks-container">
                     <ul class="list-group">
-                      <li class="list-group-item bg-dark text-white border-dark">Remarks - Avg: {{test.avg|floatformat:2}}%</li>
+                      <li class="list-group-item bg-dark text-white border-dark">Mock Remarks - Avg: {{test.avg|floatformat:2}}%</li>
                       {% for remark, count in test.remarks.items %}
                       <li class="list-group-item d-flex justify-content-between {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
                         <span class="">{{remark.name}}</span> <span class="fw-normal" >{{count}} %</span> 
