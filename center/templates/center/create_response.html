@@ -16,10 +16,14 @@
             <div class="card">
                 <ul class="list-group">
                     <li class="list-group-item bg-dark text-white border-dark">{{batch}}</li>
-                    {% for stu in students %}
+                    {% for stu, result in students.items %}
                     <a href="{% url 'create_student_response' batch.id test.id stu.id %}" class="text-decoration-none">
-                        <li class="list-group-item {% if student.id == stu.id %} list-group-item-primary {% endif %} ">
-                            {{forloop.counter}}. {{stu.user.first_name|title}} {{stu.user.last_name|title}}</li>
+                        <li class="list-group-item d-flex justify-content-between {% if student.id == stu.id %} list-group-item-primary {% endif %} ">
+                            <p class="m-0 p-0">{{forloop.counter}}. {{stu.user.first_name|title}} {{stu.user.last_name|title}}</p>
+                            {% if result.percentage %}
+                            <span class="m-0 p-0" style="font-size: 14px;">{{result.percentage|floatformat:1}}%</span>
+                            {% endif %}
+                        </li>
                     </a>
                     {% endfor %}
                 </ul>
@@ -35,7 +39,7 @@
                     {{batch|title}}</p>
 
                 <div class="d-flex align-items-end ">
-                    <label for="total_marks_obtained" class="form-label">{{result.total_marks_obtained}} / {{test.total_max_marks}}</label>
+                    <label for="total_marks_obtained" class="form-label">{{result.total_marks_obtained}} / {{test.total_max_marks}}  ({{result.percentage|floatformat:1}}%)</label>
                 </div>
             </div>
 

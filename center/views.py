@@ -387,7 +387,7 @@ def create_response(request, batch_id, test_id, student_id=None, question_id = N
         return redirect("create_test_response")
 
 
-    students = Student.objects.filter(batches=batch)
+    
     questions = TestQuestion.objects.filter(test=test).order_by('question_number')
     remarks = Remark.objects.all()
 
@@ -419,11 +419,6 @@ def create_response(request, batch_id, test_id, student_id=None, question_id = N
         response_map = {response.question.id: response for response in responses}
         question_nums = [response.question.question_number for response in responses]
 
-        # Build the question_response list
-        # question_response = [
-        #     {"response": response_map.get(question.id)} if question.id in response_map else {"question": question}
-        #     for question in questions
-        # ]
         question_response = []
 
         for question in questions:
@@ -431,12 +426,14 @@ def create_response(request, batch_id, test_id, student_id=None, question_id = N
                 question_response.append({"response": response_map.get(question.id)})
             elif question.is_main and question.question_number not in question_nums:
                 question_response.append({"question": question})
-
+    
+    students = Student.objects.filter(batches=batch)
+    students_map = {student : TestResult.objects.filter(test=test, student=student).first() or 0 for student in students}
 
     return render(request, "center/create_response.html", {
         "batch":batch, 
         "test":test,
-        "students": students,
+        "students": students_map,
         "questions": questions,
         "student":student,
         "remarks":remarks,
@@ -609,33 +606,36 @@ def batchwise_report(request, batch_id=None):
             total_max = 0
 
 
-            max_marks = test.question.aggregate(total=models.Sum('max_marks'))['total'] or 0
+            max_marks = test.total_max_marks
             for student in students:
                 student_responses = testwise_response.filter(student=student)
                 marks = 0
-                for response in student_responses:
-                    marks += response.marks_obtained # count total marks
 
-                    #count remarks
-                    remark = response.remark
-                    if not remark:
-                        continue
-                    if remarks.get(remark):
-                        remarks[remark]+=1
-                    else:
-                        remarks[remark] = 1
+                # for response in student_responses:
+                #     marks += response.marks_obtained # count total marks
+
+                #     #count remarks
+                #     remark = response.remark
+                #     if not remark:
+                #         continue
+                #     if remarks.get(remark):
+                #         remarks[remark]+=1
+                #     else:
+                #         remarks[remark] = 1
 
                 remarks_sum = sum(remarks.values())
                 if remarks_sum:
                     remarks = {key: round((value/remarks_sum)*100, 1) for key, value in remarks.items()}
                     
-                if student_responses:
-                    attempt_count += 1
 
                 students_list.append(f'{student.user.first_name} {student.user.last_name}')
-                marks_list.append(marks)
-                total_marks += marks
-                total_max += max_marks
+                result = TestResult.objects.filter(test=test, student=student).first()
+                marks_list.append(result and result.total_marks_obtained or 0)
+                total_marks += result and result.total_marks_obtained or 0
+                total_max += result and result.total_max_marks or 0
+
+                if result:
+                    attempt_count += 1
 
             test_reports.append({
                 'test' : test,
