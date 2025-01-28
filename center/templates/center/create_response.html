@@ -30,9 +30,13 @@
         <div class="w-75 m-2 p-2 ps-4">
 
             {% if student and question_response %}
-            <div class="">
+            <div class="d-flex justify-content-between w-100">
                 <p class="h4 fw-normal text-center">{{student.user.first_name|title}} {{student.user.last_name|title}} -
                     {{batch|title}}</p>
+
+                <div class="d-flex align-items-end ">
+                    <label for="total_marks_obtained" class="form-label">{{result.total_marks_obtained}} / {{test.total_max_marks}}</label>
+                </div>
             </div>
 
             <div class="d-flex justify-content-end">
