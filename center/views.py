@@ -911,24 +911,20 @@ def chapterwise_student_report(request, batch_id=None, student_id=None):
             )
         )
 
-        # Create a mapping of student IDs to marks obtained
-        student_marks_map = {
-            response['student']: (response['total_marks_obtained'] or 0, response['max_test_marks'] or 0)
-            for response in std_responses
-        }
+        results = TestResult.objects.filter(test__batch=batch).values('student').annotate(total_obtained=Sum('total_marks_obtained'),total_possible=Sum('total_max_marks'))
+        results_list = {}
 
-        # Calculate percentages for all students
+        for result in results:
+            results_list[Student.objects.get(id=result['student'])] = (result['total_obtained'] / result['total_possible'] )* 100
+
         for stu in students:
-            stu_progress = student_marks_map.get(stu.id, 0)
-            if stu_progress:
-                marks_obtd = student_marks_map.get(stu.id, 0)[0]
-                max_test_marks = student_marks_map.get(stu.id, 0)[1]
-                pct = (marks_obtd / max_test_marks) * 100
+            if stu in results_list:
+                students_list[stu] = results_list[stu]
             else:
-                pct = 0 # (marks_obtd / max_test_marks) * 100
-            students_list[stu] = round(pct, 1)
+                students_list[stu] = 0
 
         students_list = dict(sorted(students_list.items(), key=lambda item: item[1], reverse=True))
+
 
     if student_id and Student.objects.filter(batches=batch).first():
         student = Student.objects.get(id=student_id)

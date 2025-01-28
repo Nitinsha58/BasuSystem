@@ -109,7 +109,7 @@
                                 {% if prct == 0 %}
                                 <span class="fw-normal btn bg-danger-subtle px-2 py-1" style="font-size: 12px;" >Absent</span> 
                                 {% else %}
-                                <span class="fw-normal" > {{prct}}%</span> 
+                                <span class="fw-normal" > {{prct|floatformat:1}}%</span> 
                                 {% endif %}
                             </li>
                         </a>

@@ -36,91 +36,91 @@
     font-size: 14px;
     margin: 0;
   }
+
+  @media (min-width: 991px) {
+    .remarks-container {
+        width: 20%;
+        max-width: 20%;
+    }
+}
 </style>
 
-<div class="mx-5 px-5">
-    <div class="w-75 m-2 p-2 mb-4">
-        <p class="h2 fw-normal">Batch Report</p>
-    </div>
+<div class="p-1 p-sm-2 p-xl-4">
+  <div class="g-4 w-100 m-0 m-sm-2 d-flex">
+      <div class="m-0 p-0 w-sm-25">
 
-    <div class="d-flex g-4 w-100">
-        <div class="m-2 p-2" style="width: 15%">
-
-            <div class="card">
-                <ul class="list-group">
-                    <li class="list-group-item bg-dark text-white border-dark">Batches</li>
-                    {% if request.user.is_superuser %}
-                      {% for b in batches %}
-                      <a href="{% url 'batch_report' b.id %}" class="text-decoration-none">
-                          <li class="list-group-item {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
-                              {{b}}
-                          </li>
-                      </a>
-                      {% endfor %}
-                    {% elif request.user.student %}
-                      {% for b in request.user.student.batches.all %}
-                      <a href="{% url 'batch_report' b.id %}" class="text-decoration-none">
-                          <li class="list-group-item {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
-                              {{b}}
-                          </li>
-                      </a>
-                      {% endfor %}
-                    {% elif request.user.teacher %}
-                      {% for b in request.user.teacher.batches.all %}
-                      <a href="{% url 'batch_report' b.id %}" class="text-decoration-none">
-                          <li class="list-group-item {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
-                              {{b}}
-                          </li>
-                      </a>
-                      {% endfor %}
-                    {% endif %}
-                </ul>
-            </div>
-
+        <div class="card" style="width: fit-content;">
+            <ul class="list-group" style="width: fit-content;">
+                <li class="list-group-item bg-dark text-white border-dark">Batches</li>
+                {% if request.user.is_superuser %}
+                  {% for b in batches %}
+                  <a href="{% url 'batch_report' b.id %}" class="text-decoration-none" style="font-size: 12px;">
+                      <li class="list-group-item {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
+                          {{b}}
+                      </li>
+                  </a>
+                  {% endfor %}
+                {% elif request.user.student %}
+                  {% for b in request.user.student.batches.all %}
+                  <a href="{% url 'batch_report' b.id %}" class="text-decoration-none" style="font-size: 12px;">
+                      <li class="list-group-item {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
+                          {{b}}
+                      </li>
+                  </a>
+                  {% endfor %}
+                {% elif request.user.teacher %}
+                  {% for b in request.user.teacher.batches.all %}
+                  <a href="{% url 'batch_report' b.id %}" class="text-decoration-none" style="font-size: 12px;">
+                      <li class="list-group-item {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
+                          {{b}}
+                      </li>
+                  </a>
+                  {% endfor %}
+                {% endif %}
+            </ul>
         </div>
 
-        <div class="m-2 p-2 ps-4" style="width: 85%;">
+      </div>
+
+      <div class="m-2 p-2 ps-2" style="width: 85%;">
             {% if batch %}
-            <div class="">
-                <p class="h4 fw-normal ">{{batch.class_name|title}}th {{batch.subject|title}} ({{batch.section}})</p>
-            </div>
-
-
-            <div class="container-md my-4 w-100">
+            <div class="container-md my-4">
                 <div class="">
                     <p class="h4 fw-normal">Remarks Progress</p>
                 </div>
-                <div  class="g-3 d-flex justify-content-around">
-                    <canvas id="remarkProgress" class="w-50 h-auto"></canvas>
-                    <div class="m-2 p-2" style="width: 20%">
-
+                <div class="container my-4 p-0 w-100 d-lg-flex justify-content-around overflow-x-auto">
+                    <canvas id="remarkProgress" class="w-100 h-auto" style="min-width: 700px;" ></canvas>
+                    
+                    <div class="m-sm-2 p-sm-2 absolute w-100 w-sm-25 remarks-container">
                         <ul class="list-group">
                             <li class="list-group-item bg-dark text-white border-dark">Remarks</li>
                             {% for remark, count in remarks_count.items %}
                             <li class="list-group-item d-flex justify-content-between {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
-                                <span class="">{{remark.name}}</span> <span class="fw-normal" >{{count}} %</span> 
+                                <span class="">{{remark.name}}</span> <span class="fw-normal" >{{count}}%</span> 
                             </li>
                             {% endfor %}
                         </ul>
                     </div>
+
                 </div>
             </div>
 
             {% for test in tests %}
-            <div class="container-md my-4 w-100">
+            <div class="">
                 <div class="">
                   <p class="h4 fw-normal">{{test.test.name}}</p>
                 </div>
 
-                <div  class="g-3 d-flex justify-content-around">
-                  <div class="w-50 h-auto">
-                    <canvas id="test_chart_{{forloop.counter}}" class="w-100 h-auto"></canvas>
+                <div class="container-md my-4 w-100 d-md-flex justify-content-around">
+                  <div  class="g-3 relative" style="overflow-x: auto;">
+                      <canvas id="test_chart_{{forloop.counter}}" class="w-100 h-auto" style="min-width: 700px;" ></canvas>
                     <div class="parent ">
                       <div class="child bg-warning" style="width: {{test.attempted}}%;"  ></div>
                       <p class="progress_text">{{test.attempted}}% Students Attempted</p>
                     </div>
                   </div>
-                  <div class="m-2 p-2" style="width: 20%">
+
+                  <div class="m-sm-2 p-sm-2 absolute w-100 w-sm-25 remarks-container">
                     <ul class="list-group">
                       <li class="list-group-item bg-dark text-white border-dark">Remarks - Avg: {{test.avg|floatformat:2}}%</li>
                       {% for remark, count in test.remarks.items %}
@@ -159,35 +159,44 @@
         }]
       },
       options: {
-        responsive: false,
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              font: {
-                size: 14 // Set font size for y-axis labels
-              },
-              stepSize: 1 // Control the step size
-            }
-          },
-          x: {
-            ticks: {
-              font: {
-                size: 14 // Set font size for x-axis labels
-              }
-            }
-          }
-        },
-        plugins: {
-            legend: {
-                labels: {
-                    font: {
-                        size: 16 // Set font size for legend labels
+            responsive: false, // To ensure responsiveness (set to true)
+            maintainAspectRatio: true, // Adjusts based on container size, if needed
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    enabled: true
+                }
+            },
+            scales: {
+                x: {
+                    stacked: true, // Enable stacking on the X-axis
+                    ticks: {
+                        autoSkip: false,
+                        maxRotation: 0, // Rotation of the tick labels on Y-axis
+                        minRotation: 0,
+                        font: {
+                            size: 10
+                        }
+                    },
+                },
+                y: {
+                    stacked: true, // Enable stacking on the Y-axis
+                    beginAtZero: true,
+                    ticks: {
+                        font: {
+                            size: 10
+                        }
                     }
                 }
             }
         }
-      }
     });
 </script>
 
@@ -209,6 +218,8 @@
           }]
       },
       options: {
+          responsive: false, // To ensure responsiveness (set to true)
+          maintainAspectRatio: true, // Adjusts based on container size, if needed
           responsive: false,
           scales: {
               y: {
@@ -217,8 +228,16 @@
                       stepSize: 0
                   },
                   suggestedMax: {{ report.max_marks }} + 1,
+              },
+              x: {
+                ticks: {
+                  maxRotation: 90,
+                  minRotation: 90,
+                }
               }
           }
+
+
       }
   });
   {% endfor %}
