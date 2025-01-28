@@ -346,21 +346,21 @@
           labels: [{% for ch_no, ch_name in chapters.items %} '{{ch_name}} {{ch_no}}', {% endfor %}].map(label => label.split(' ')),
           datasets: [
             {
-              label: 'Chatper Max Marks',
-              data: {{ report.marks_total|safe }}, // Use the marks
-              borderColor: '#f2c222',
-              backgroundColor: '#f2c222',
-              borderWidth: 2,
-              tension: 0.4
-            },
-            {
               label: 'Chapter Marks Obtained',
               data: {{ report.marks_obtained|safe }}, // Use the marks
               borderColor: '#4aaa70',
               backgroundColor: '#4aaa70',
               borderWidth: 2,
               tension: 0.4,
-            }
+            },
+            {
+              label: 'Deducted Marks',
+              data: {{ report.marks_total|safe }}, // Use the marks
+              borderColor: '#FF5B61',
+              backgroundColor: '#FF5B61',
+              borderWidth: 2,
+              tension: 0.4
+            },
         ]
       },
       options: {
@@ -368,6 +368,7 @@
           maintainAspectRatio: true,
           scales: {
               x: {
+                stacked: true,
                 beginAtZero: true,
                 ticks: {
                     autoSkip: false,
@@ -379,6 +380,7 @@
                 },
             },
             y: {
+                stacked: true,
                 beginAtZero: true,
                 ticks: {
                     font: {

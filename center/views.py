@@ -847,7 +847,7 @@ def chapterwise_personal_report(request, batch_id=None):
             
                 if total_test_marks > max_marks:
                     max_marks = total_test_marks
-                total_marks.append(total_test_marks)
+                total_marks.append(total_test_marks - total_marks_obtained)
                 marks_obtained.append(total_marks_obtained)
 
             remarks_sum = sum(remarks.values())
@@ -985,9 +985,6 @@ def chapterwise_student_report(request, batch_id=None, student_id=None):
 
             chapter_wise_test_remarks = dict(chapter_wise_test_remarks)
 
-
-            attempted_students = students.filter(id__in=testwise_responses.values_list('student', flat=True)).count()
-
             max_marks = 0
             total_marks = []
             marks_obtained = []
@@ -1005,7 +1002,7 @@ def chapterwise_student_report(request, batch_id=None, student_id=None):
             
                 if total_test_marks > max_marks:
                     max_marks = total_test_marks
-                total_marks.append(total_test_marks)
+                total_marks.append(total_test_marks-total_marks_obtained)
                 marks_obtained.append(total_marks_obtained)
 
             remarks_sum = sum(remarks.values())
