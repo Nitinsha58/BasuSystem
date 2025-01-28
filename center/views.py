@@ -833,6 +833,7 @@ def chapterwise_personal_report(request, batch_id=None):
             max_marks = 0
             total_marks = []
             marks_obtained = []
+            marks_deducted = []
             remarks = defaultdict(float)
 
             for ch_no in test_chapters:
@@ -847,7 +848,8 @@ def chapterwise_personal_report(request, batch_id=None):
             
                 if total_test_marks > max_marks:
                     max_marks = total_test_marks
-                total_marks.append(total_test_marks - total_marks_obtained)
+                total_marks.append(total_test_marks)
+                marks_deducted.append(total_test_marks - total_marks_obtained)
                 marks_obtained.append(total_marks_obtained)
 
             remarks_sum = sum(remarks.values())
@@ -858,6 +860,7 @@ def chapterwise_personal_report(request, batch_id=None):
                 'test' : test,
                 'chapters': test_chapters,
                 'marks_total' : total_marks,
+                'marks_deducted' : marks_deducted,
                 'marks_obtained' : marks_obtained,
                 'remarks': dict(sorted(remarks.items(), key=lambda d: d[1], reverse=True)),
                 'max_marks': max_marks,
@@ -987,6 +990,7 @@ def chapterwise_student_report(request, batch_id=None, student_id=None):
 
             max_marks = 0
             total_marks = []
+            marks_deducted = []
             marks_obtained = []
             remarks = defaultdict(float)
 
@@ -1002,7 +1006,8 @@ def chapterwise_student_report(request, batch_id=None, student_id=None):
             
                 if total_test_marks > max_marks:
                     max_marks = total_test_marks
-                total_marks.append(total_test_marks-total_marks_obtained)
+                total_marks.append(total_test_marks)
+                marks_deducted.append(total_test_marks-total_marks_obtained)
                 marks_obtained.append(total_marks_obtained)
 
             remarks_sum = sum(remarks.values())
@@ -1013,6 +1018,7 @@ def chapterwise_student_report(request, batch_id=None, student_id=None):
                 'test' : test,
                 'chapters': test_chapters,
                 'marks_total' : total_marks,
+                'marks_deducated' : marks_deducted,
                 'marks_obtained' : marks_obtained,
                 'remarks': dict(sorted(remarks.items(), key=lambda d: d[1], reverse=True)),
                 'max_marks': max_marks,
