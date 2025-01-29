@@ -77,7 +77,7 @@
           <li class="list-group-item bg-dark text-white list-group border-dark"> {{cls.class}} -  ( {{cls.students.count}} )</li>
           {% for student in cls.students %}
           <li class="list-group-item d-flex justify-content-between align-items-center">
-            <a class="text-decoration-none text-dark" href="{% url 'personal_student_report' student.id %}">
+            <a class="text-decoration-none text-dark" target="_blank" href="{% url 'personal_student_report' student.id %}">
               <span class="">{{forloop.counter}}. {{student.user.first_name}} {{student.user.last_name}}</span>
             </a>
             <div class="d-flex">
