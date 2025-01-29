@@ -75,7 +75,10 @@ urlpatterns = [
 
     #student personal
     path('chapterwise_personal_report/', chapterwise_personal_report, name="chapterwise_personal_report"),
-    path('chapterwise-personal-report/<int:batch_id>', chapterwise_personal_report, name="chapter_personal_batch_report"),
+    path('chapterwise_personal-report/<int:batch_id>', chapterwise_personal_report, name="chapter_personal_batch_report"),
+
+    path('personal_student_report/<int:student_id>', chapterwise_personal_report, name="personal_student_report"),
+    path('personal_student_report/<int:batch_id>/<int:student_id>', chapterwise_personal_report, name="personal_student_batch_report"),
  
     #student
     path('chapterwise_student_report/', chapterwise_student_report, name="chapterwise_student_report"),

@@ -486,7 +486,6 @@ def create_marks_obtained(request, batch_id, test_id, student_id):
         return redirect("create_response", batch_id=batch_id, test_id=test_id)
 
     if request.method == 'POST':
-        print(request.POST.get('total_marks_obtained'))
         total_marks_obtained = request.POST.get('total_marks_obtained')
         result, created = TestResult.objects.get_or_create(student=student,test=test)
         result.total_marks_obtained = float(total_marks_obtained)
@@ -794,21 +793,30 @@ def chapterwise_report(request, batch_id=None):
 
 
 @login_required(login_url='login')
-def chapterwise_personal_report(request, batch_id=None):
+def chapterwise_personal_report(request, batch_id=None, student_id=None):
     batches = Batch.objects.all()
+
+    if student_id:
+        try:
+            current_student = Student.objects.get(id=student_id)
+        except Exception as e:
+            messages.error("Invalid Student")
+            return redirect('staff_dashboard')
+    else:
+        current_student = request.user.student
 
     if batch_id:
         try:
             batch = Batch.objects.get(id=batch_id)
         except Exception as e:
             messages.error(request, "Invalid Batch")
-            return redirect('batchwise_report')
-
+            return redirect('staff_dashboard')
+        
         chapters = {
             question.chapter_no: question.chapter_name
             for question in TestQuestion.objects.prefetch_related('test__batch').filter(test__batch=batch).order_by('chapter_no')
         }
-        question_responses = QuestionResponse.objects.prefetch_related('remark', 'question').filter(test__batch=batch, student=request.user.student).select_related('question')
+        question_responses = QuestionResponse.objects.prefetch_related('remark', 'question').filter(test__batch=batch, student=current_student).select_related('question')
 
         chapter_wise_remarks = defaultdict(lambda: [0] * len(chapters))
         remarks_count = defaultdict(int)
@@ -840,7 +848,7 @@ def chapterwise_personal_report(request, batch_id=None):
                 question.chapter_no: question.chapter_name
                 for question in testwise_questions
             }
-            testwise_responses = QuestionResponse.objects.prefetch_related('question', 'remark').filter(test=test, student=request.user.student)
+            testwise_responses = QuestionResponse.objects.prefetch_related('question', 'remark').filter(test=test, student=current_student)
 
             chapter_wise_test_remarks = defaultdict(lambda: [0] * len(test_chapters))
 
@@ -894,11 +902,12 @@ def chapterwise_personal_report(request, batch_id=None):
                     'max_marks': sum(total_marks),
                     },
                 'chapter_wise_test_remarks': chapter_wise_test_remarks,
+                'current_student': current_student,
             })
 
 
         remarks_count = dict(sorted(remarks_count.items(), key=lambda d: d[1], reverse=True))
-        marks_progress = {result.test : result.percentage for result in TestResult.objects.filter(student=request.user.student, test__batch=batch)}
+        marks_progress = {result.test : result.percentage for result in TestResult.objects.filter(student=current_student, test__batch=batch)}
 
         return render(request, "center/chapterwise_personal_report.html", {
             'batches': batches,
@@ -909,10 +918,12 @@ def chapterwise_personal_report(request, batch_id=None):
             'remarks_count': remarks_count,
             'tests': test_reports,
             'all_tests': sorted(tests, key=lambda test: test.name),
-            'marks_progress': marks_progress
+            'marks_progress': marks_progress,
+            'current_student': current_student,
         })
 
     return render(request, "center/chapterwise_personal_report.html", {
+        'current_student': current_student,
         'batches': batches,
     })
 

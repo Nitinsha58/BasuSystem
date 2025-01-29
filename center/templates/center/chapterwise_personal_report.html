@@ -55,24 +55,8 @@
                 <ul class="list-group" style="min-width: fit-content;">
                     <li class="list-group-item bg-dark text-white border-dark">Batches</li>
                     {% if request.user.is_superuser %}
-                    {% for b in batches %}
-                    <a href="{% url 'chapter_batch_report' b.id %}" class="text-decoration-none">
-                        <li class="list-group-item {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
-                            {{b}}
-                        </li>
-                    </a>
-                    {% endfor %}
-                    {% elif request.user.student %}
-                    {% for b in request.user.student.batches.all %}
-                    <a href="{% url 'chapter_personal_batch_report' b.id %}" class="text-decoration-none">
-                        <li class="list-group-item {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
-                            {{b}}
-                        </li>
-                    </a>
-                    {% endfor %}
-                    {% elif request.user.teacher %}
-                    {% for b in request.user.teacher.batches.all %}
-                    <a href="{% url 'chapter_batch_report' b.id %}" class="text-decoration-none">
+                    {% for b in current_student.batches.all %}
+                    <a href="{% url 'personal_student_batch_report' b.id current_student.id %}" class="text-decoration-none">
                         <li class="list-group-item {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
                             {{b}}
                         </li>
@@ -85,8 +69,12 @@
 
         <div class="m-0 p-0 w-100">
             {% if batch %}
-            <div class="">
+            <div class="mt-4">
+                {% if request.user.is_superuser %}
+                <p class="h4 fw-normal">{{current_student.user.first_name}} {{current_student.user.last_name}}</p>
+                {% else %}
                 <p class="h4 fw-normal">Personal Progress</p>
+                {% endif %}
             </div>
             <div class="container my-4 p-0 w-100 d-lg-flex justify-content-around">
                 <div  class="g-3 relative flex-1 w-100" style="overflow-x: auto;">
