@@ -595,7 +595,6 @@ def batchwise_report(request, batch_id=None):
 
         for test in tests:
             students = Student.objects.prefetch_related('batches').filter(batches=test.batch)
-            testwise_response = QuestionResponse.objects.prefetch_related('remark').filter(test=test)
 
             attempt_count = 0
 
@@ -608,21 +607,6 @@ def batchwise_report(request, batch_id=None):
 
             max_marks = test.total_max_marks
             for student in students:
-                student_responses = testwise_response.filter(student=student)
-                marks = 0
-
-                # for response in student_responses:
-                #     marks += response.marks_obtained # count total marks
-
-                #     #count remarks
-                #     remark = response.remark
-                #     if not remark:
-                #         continue
-                #     if remarks.get(remark):
-                #         remarks[remark]+=1
-                #     else:
-                #         remarks[remark] = 1
-
                 remarks_sum = sum(remarks.values())
                 if remarks_sum:
                     remarks = {key: round((value/remarks_sum)*100, 1) for key, value in remarks.items()}
@@ -634,7 +618,7 @@ def batchwise_report(request, batch_id=None):
                 total_marks += result and result.total_marks_obtained or 0
                 total_max += result and result.total_max_marks or 0
 
-                if result:
+                if result and result.percentage != 0:
                     attempt_count += 1
 
             test_reports.append({
