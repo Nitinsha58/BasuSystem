@@ -20,21 +20,28 @@
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <!-- Superuser-specific links -->
                 {% if request.user.is_superuser %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'staff_dashboard' %}">Dashboard</a>
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Admin
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li class="nav-item">
+                            <a class="dropdown-item" href="{% url 'staff_student_registration' %}">Student Registration</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="dropdown-item" href="{% url 'staff_teacher_registration' %}">Teacher Registration</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="dropdown-item" href="{% url 'create_test_template' %}">Mock Tests</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="dropdown-item" href="{% url 'create_test_response' %}">Add Test Result</a>
+                        </li>
+                    </ul>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'staff_student_registration' %}">Student Registration</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'staff_teacher_registration' %}">Teacher Registration</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'create_test_template' %}">Mock Tests</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'create_test_response' %}">Add Test Result</a>
-                </li>
+
+
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Reports
