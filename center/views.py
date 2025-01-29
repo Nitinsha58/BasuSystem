@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from user.models import BaseUser
 from django.db import models
-from django.db.models import Count, Sum, F, ExpressionWrapper, FloatField, Avg
+from django.db.models import Count, Sum, F, ExpressionWrapper, FloatField, Avg, Q
 from collections import Counter, defaultdict
 from .models import TestResult, RemarkCount
 # Create your views here.
@@ -1238,3 +1238,26 @@ def calculate_total_marks(request, batch_id, test_id):
         return redirect("create_test_template")
     test.calculate_total_max_marks()
     return redirect("create_template", batch_id=batch_id, test_id=test_id )
+
+def search_students(request):
+    search_term = request.GET.get('search', '').strip()
+    if search_term:
+        students = Student.objects.filter(
+            Q(user__first_name__icontains=search_term) |
+            Q(user__last_name__icontains=search_term) |
+            Q(user__phone__icontains=search_term)
+        ).select_related('user').prefetch_related('batches')[:10]
+        student_list = [
+            {   "id": student.id,
+                "name": f"{student.user.first_name} {student.user.last_name}",
+                "phone": student.user.phone,
+                "class": student.batches.first().class_name.name if student.batches.exists() else "N/A",
+                "subjects": ", ".join(batch.subject.name for batch in student.batches.all())
+            }
+            for student in students
+        ]
+    else:
+        student_list = []
+    return render(request, 'center/students_results.html', {'students': student_list})
+    
+    

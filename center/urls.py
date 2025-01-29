@@ -31,6 +31,8 @@ from .views import (
     calculate_total_marks,
     create_marks_obtained,
     
+    #search
+    search_students,
     getQuery
 )
 
@@ -87,4 +89,7 @@ urlpatterns = [
     
     path('compare_progress/', compare_progres, name="compare_progress"),
     path('compare_progress/<int:batch_id>', compare_progres, name="compare_batch_progress"),
+
+    #search
+    path('search/', search_students, name='search_students'),
 ]

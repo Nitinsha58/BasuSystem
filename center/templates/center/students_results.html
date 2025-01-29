@@ -1,0 +1,20 @@
+{% if students %}
+    {% for student in students %}
+    <li class="list-group-item m-2 rounded p-2 bg-light">
+        <a href="{% url 'personal_student_report' student.id %}" class="nav-link">
+            <div class="d-flex justify-content-between">
+                <div class="" style="font-size: 16px;">{{student.name}}</div>
+                <span>{{student.phone}}</span>
+            </div>
+            <small class="text-muted">{{student.class}} | Subjects: {{student.subjects}}</small>
+        </a>
+    </li>
+    {% endfor %}
+
+{% else %}
+<li class="list-group-item m-2 rounded p-2 bg-light">
+    <div class="d-flex justify-content-between">
+        <div class="" style="font-size: 16px;">No Student Found</div>
+    </div>
+</li>
+{% endif %}
