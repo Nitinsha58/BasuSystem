@@ -18,6 +18,8 @@ def staff_dashboard(request):
 
 @login_required(login_url='login')
 def staff_student_registration(request, is_batch=None):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
     all_batches = Batch.objects.all()
     center = Center.objects.filter(name="Main Center").first()
     classes = ClassName.objects.all()
@@ -67,6 +69,8 @@ def staff_student_registration(request, is_batch=None):
 
 @login_required(login_url='login')
 def staff_student_delete(request, user_id):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
     try:
         user = BaseUser.objects.get(id=user_id)
         user.delete()
@@ -81,6 +85,8 @@ def staff_student_delete(request, user_id):
 
 @login_required(login_url='login')
 def staff_student_update(request, student_id):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
 
     student = Student.objects.filter(id=student_id).first()
     all_batches = Batch.objects.all()
@@ -126,6 +132,8 @@ def staff_student_update(request, student_id):
 
 @login_required(login_url='login')
 def staff_teacher_registration(request, is_batch=None):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
     all_batches = Batch.objects.all()
     center = Center.objects.filter(name="Main Center").first()
     classes = ClassName.objects.all()
@@ -174,6 +182,8 @@ def staff_teacher_registration(request, is_batch=None):
 
 @login_required(login_url='login')
 def staff_teacher_delete(request, user_id):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
     try:
         user = BaseUser.objects.get(id=user_id)
         user.delete()
@@ -188,6 +198,8 @@ def staff_teacher_delete(request, user_id):
 
 @login_required(login_url='login')
 def staff_teacher_update(request, teacher_id):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
 
     teacher = Teacher.objects.filter(id=teacher_id).first()
     all_batches = Batch.objects.all()
@@ -234,6 +246,8 @@ def staff_teacher_update(request, teacher_id):
 
 @login_required(login_url='login')
 def create_test_template(request, batch_id=None):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
     all_batches = Batch.objects.all()
 
     if batch_id and request.method == "POST":
@@ -251,6 +265,8 @@ def create_test_template(request, batch_id=None):
 
 @login_required(login_url='login')
 def create_template(request, batch_id, test_id):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
     batch = Batch.objects.filter(id=batch_id).first()
     test = Test.objects.filter(id=test_id).first()
     if not batch or not test:
@@ -274,6 +290,8 @@ def create_template(request, batch_id, test_id):
 
 @login_required(login_url='login')
 def delete_template(request, batch_id, test_id):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
     batch = Batch.objects.filter(id=batch_id).first()
     test = Test.objects.filter(id=test_id).first()
     if not batch or not test:
@@ -288,6 +306,8 @@ def delete_template(request, batch_id, test_id):
 
 @login_required(login_url='login')
 def create_question(request, batch_id, test_id):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
     batch = Batch.objects.filter(id=batch_id).first()
     test = Test.objects.filter(id=test_id).first()
     if not batch or not test:
@@ -338,6 +358,8 @@ def create_question(request, batch_id, test_id):
 
 @login_required(login_url='login')
 def update_question(request, batch_id, test_id, question_id):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
     batch = Batch.objects.filter(id=batch_id).first()
     test = Test.objects.filter(id=test_id).first()
     question = TestQuestion.objects.filter(id=question_id).first()
@@ -371,11 +393,15 @@ def update_question(request, batch_id, test_id, question_id):
     
 @login_required(login_url='login')
 def create_test_response(request):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
     all_batches = Batch.objects.all()
     return render(request, "center/create_test_response.html", {"batches":all_batches})
 
 @login_required(login_url='login')
 def create_response(request, batch_id, test_id, student_id=None, question_id = None):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
     batch = Batch.objects.filter(id=batch_id).first()
     test = Test.objects.filter(id=test_id).first()
     student = None
@@ -444,6 +470,8 @@ def create_response(request, batch_id, test_id, student_id=None, question_id = N
 
 @login_required(login_url='login')
 def create_marks_obtained(request, batch_id, test_id, student_id):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
     batch = Batch.objects.filter(id=batch_id).first()
     test = Test.objects.filter(id=test_id).first()
     student = None
@@ -472,6 +500,8 @@ def create_marks_obtained(request, batch_id, test_id, student_id):
 
 @login_required(login_url='login')
 def create_all_pending_response(request, batch_id, test_id, student_id):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
     test = Test.objects.filter(id=test_id).first()
     student = Student.objects.filter(id=student_id).first()
 
@@ -502,6 +532,8 @@ def create_all_pending_response(request, batch_id, test_id, student_id):
 
 @login_required(login_url='login')
 def update_response(request, batch_id, test_id, student_id, response_id):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
     batch = Batch.objects.filter(id=batch_id).first()
     test = Test.objects.filter(id=test_id).first()
     student = Student.objects.filter(id=student_id).first()
@@ -525,6 +557,8 @@ def update_response(request, batch_id, test_id, student_id, response_id):
 
 @login_required(login_url='login')
 def delete_response(request, batch_id, test_id, student_id, response_id):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
     try:
         if not Batch.objects.filter(id=batch_id).exists():
             messages.error(request, "Invalid batch ID.")
@@ -555,7 +589,13 @@ def delete_response(request, batch_id, test_id, student_id, response_id):
 
 def getQuery(request):
 
-    batch = Batch.objects.all().first()
+    results = TestResult.objects.filter(percentage = 0).distinct('student').distinct('test__batch')
+    # total_students = Student.objects.all().count()
+    empty_results = TestResult.objects.filter(percentage=0, total_marks_obtained=0, no_of_questions_attempted=0).order_by('test__batch')
+    print(empty_results.count())
+    # for result in empty_results:
+    #     result.delete()
+
 
     return HttpResponse()
 
@@ -1046,6 +1086,8 @@ def chapterwise_student_report(request, batch_id=None, student_id=None):
 
 @login_required(login_url='login')
 def compare_progres(request, batch_id = None):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
     batches = Batch.objects.all()
     batch = None
 
@@ -1123,6 +1165,8 @@ def update_test_result_remark_count():
             student = all_students.get(id=stu_id)
 
             question_responses = QuestionResponse.objects.filter(student=student, test=test)
+            if not question_responses:
+                continue
     
             no_of_questions_attempted = question_responses.count()
             total_marks_obtained = question_responses.aggregate(total=Sum('marks_obtained'))['total'] or 0
@@ -1174,6 +1218,8 @@ def update_test_result_remark_count():
 
 @login_required(login_url='login')
 def calculate_total_marks(request, batch_id, test_id):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
     batch = Batch.objects.filter(id=batch_id).first()
     test = Test.objects.filter(id=test_id).first()
     if not batch or not test:
