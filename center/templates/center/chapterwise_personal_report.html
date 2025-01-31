@@ -54,7 +54,6 @@
             <div class="card" style="width: fit-content;">
                 <ul class="list-group" style="min-width: fit-content;">
                     <li class="list-group-item bg-dark text-white border-dark">Batches</li>
-                    {% if request.user.is_superuser %}
                     {% for b in current_student.batches.all %}
                     <a href="{% url 'personal_student_batch_report' b.id current_student.id %}" class="text-decoration-none">
                         <li class="list-group-item {% if b.id == batch.id %} list-group-item-primary {% endif %} ">
@@ -62,7 +61,6 @@
                         </li>
                     </a>
                     {% endfor %}
-                    {% endif %}
                 </ul>
             </div>
         </div>
