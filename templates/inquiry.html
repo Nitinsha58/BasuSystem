@@ -10,6 +10,25 @@
             --color-clifford: #da373d;
             }
         </style>
+        <style>
+            #phone-wrapper {
+              position: relative;
+            }
+            #phone-wrapper::before {
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              content: '+91';
+              position: absolute;
+              left: 10px;
+              top: 0;
+              bottom: 0;
+              /* background-color: #1E283C; */
+              transform-origin: bottom right;
+              transition: transform 0.25s ease-out;
+              font-size: 14px;
+            }
+        </style>
     </head>
   <body>
     <nav class="bg-gray-100">
@@ -29,64 +48,81 @@
     </nav>
 
     <div class="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-3 sm:py-6 lg:py-8">
-        <div class="max-w-sm mx-auto">
+        <div class="w-fit mx-auto">
             <h1 class="mb-4 text-2xl font-semibold leading-none tracking-tight text-gray-900">Get In Touch With Us.</h1>
         </div>
-        <form class="max-w-sm mx-auto">
-            <div class="mb-5">
-                <label for="student-name" class="block mb-2 text-sm font-medium text-gray-900">Student Name</label>
-                <input required type="text" id="student-name" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"  />
+        <form class="w-full grid grid-cols-1 md:grid-cols-2 gap-4 auto-rows-auto" method="post">
+          {% csrf_token %}
+        
+          <div class="">
+            <label for="student-name" class="block mb-2 text-sm font-medium text-gray-900">Student Name</label>
+            <input required type="text" id="student-name" name="student-name" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" />
+          </div>
+        
+          <div class="">
+            <label for="school-name" class="block mb-2 text-sm font-medium text-gray-900">School</label>
+            <input type="text" required id="school-name" name="school-name" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" />
+          </div>
+        
+          <div class="">
+            <label for="classes" class="block mb-2 text-sm font-medium text-gray-900">Select Class</label>
+            <select required id="classes" multiple size="{{classes.count}}" name="classes" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+              {% for cls in classes %}
+              <option value="{{cls.id}}">{{cls.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+        
+          <div class="">
+            <label for="subjects" class="block mb-2 text-sm font-medium text-gray-900">Select Subjects</label>
+            <select required id="subjects" multiple size="{{subjects.count}}" name="subjects" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+              {% for subject in subjects %}
+              <option value="{{subject.id}}">{{subject.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+        
+          <div class="">
+            <label for="address" class="block mb-2 text-sm font-medium text-gray-900">Address</label>
+            <input type="text" required id="address" name="address" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" />
+          </div>
+        
+          <div class="">
+            <label for="phone" class="block mb-2 text-sm font-medium text-gray-900">Phone</label>
+            
+            <div id="phone-wrapper">
+              <input type="text" required id="phone" name="phone" minlength="10" maxlength="10" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5" />
             </div>
-            <div class="mb-5">
-                <label for="classes" class="block mb-2 text-sm font-medium text-gray-900">Select Class</label>
-                <select required id="classes" multiple size="6" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                  <option value="7">Class 7th</option>
-                  <option value="8">Class 8th</option>
-                  <option value="9">Class 9th</option>
-                  <option value="10">Class 10th</option>
-                  <option value="11">Class 11th</option>
-                  <option value="12">Class 12th</option>
-                </select>
-            </div>
-            <div class="mb-5">
-                <label for="classes" class="block mb-2 text-sm font-medium text-gray-900">Select Subjects</label>
-                <select required id="classes" multiple size="6" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                  <option value="7">Math</option>
-                  <option value="8">Science</option>
-                  <option value="9">Physics</option>
-                  <option value="10">Chemistry</option>
-                  <option value="11">Economics</option>
-                  <option value="12">Accounts</option>
-                </select>
-            </div>
-            <div class="mb-5">
-              <label for="school-name" class="block mb-2 text-sm font-medium text-gray-900">School </label>
-              <input type="text" id="school-name" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" />
-            </div>
-            <div class="mb-5">
-              <label for="address" class="block mb-2 text-sm font-medium text-gray-900">Address</label>
-              <input type="text" required id="address" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"  />
-            </div>
-            <div class="mb-5">
-              <label for="phone" class="block mb-2 text-sm font-medium text-gray-900">Phone</label>
-              <input type="text" required id="phone" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"  />
-            </div>
-
-            <div class="mb-5">
-              <label for="referal" class="block mb-2 text-sm font-medium text-gray-900">Where did you hear about us?</label>
-              <select id="referal" required size="3" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                <option value="7">Coaching Website</option>
-                <option value="8">Friend/Family</option>
-                <option value="9">Flyer/Brochure</option>
-              </select>
-            </div>
-
-            <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center">Submit</button>
+          </div>
+        
+          <div class="">
+            <label for="referral" class="block mb-2 text-sm font-medium text-gray-900">Where did you hear about us?</label>
+            <select id="referral" required size="{{referrals.count}}" name="referral" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+              {% for referral in referrals %}
+              <option value="{{referral.id}}">{{referral.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+        
+          <!-- Full-width Submit Button -->
+          <div class="md:col-span-2 flex justify-center">
+            <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center">
+              Send Query
+            </button>
+          </div>
+        
         </form>
+        
         
     </div>
 
+    <script>
+      const input = document.getElementById('phone');
 
+      input.addEventListener("input", function () {
+          this.value = this.value.replace(/\D/g, "").slice(0, 10); // Remove non-digits and limit to 10
+      });
+    </script>
       
   </body>
 </html>

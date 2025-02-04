@@ -1,6 +1,6 @@
 from django.urls import path
-from .views import index
+from .views import create_inquiry
 
 urlpatterns = [
-    path('', index, name='inquiry_home')
+    path('', create_inquiry, name='create_inquiry')
 ]
