@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'user.apps.UserConfig',
     'mathfilters',
     'testprogress.apps.TestprogressConfig',
+    'inquiry_followup.apps.InquiryFollowupConfig',
 ]
 
 MIDDLEWARE = [

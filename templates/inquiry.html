@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    
+        <style type="text/tailwindcss">
+            @theme {
+            --color-clifford: #da373d;
+            }
+        </style>
+    </head>
+  <body>
+    <nav class="bg-gray-100">
+        <div class="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
+          <div class="relative flex h-16 items-center justify-between">
+            <div class="flex flex-1 items-center sm:items-stretch sm:justify-start">
+
+              <div class="flex shrink-0 items-center">
+                <a href="https://basueducation.com" class="">
+                    <img class="h-8 w-auto" src="https://basueducation.com/static/images/BASU%20LOGO.5e3cc85845b7.svg" alt="Your Company">
+                </a>
+              </div>
+
+            </div>
+          </div>
+        </div>
+    </nav>
+
+    <div class="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-3 sm:py-6 lg:py-8">
+        <div class="max-w-sm mx-auto">
+            <h1 class="mb-4 text-2xl font-semibold leading-none tracking-tight text-gray-900">Get In Touch With Us.</h1>
+        </div>
+        <form class="max-w-sm mx-auto">
+            <div class="mb-5">
+                <label for="student-name" class="block mb-2 text-sm font-medium text-gray-900">Student Name</label>
+                <input required type="text" id="student-name" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"  />
+            </div>
+            <div class="mb-5">
+                <label for="classes" class="block mb-2 text-sm font-medium text-gray-900">Select Class</label>
+                <select required id="classes" multiple size="6" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                  <option value="7">Class 7th</option>
+                  <option value="8">Class 8th</option>
+                  <option value="9">Class 9th</option>
+                  <option value="10">Class 10th</option>
+                  <option value="11">Class 11th</option>
+                  <option value="12">Class 12th</option>
+                </select>
+            </div>
+            <div class="mb-5">
+                <label for="classes" class="block mb-2 text-sm font-medium text-gray-900">Select Subjects</label>
+                <select required id="classes" multiple size="6" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                  <option value="7">Math</option>
+                  <option value="8">Science</option>
+                  <option value="9">Physics</option>
+                  <option value="10">Chemistry</option>
+                  <option value="11">Economics</option>
+                  <option value="12">Accounts</option>
+                </select>
+            </div>
+            <div class="mb-5">
+              <label for="school-name" class="block mb-2 text-sm font-medium text-gray-900">School </label>
+              <input type="text" id="school-name" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" />
+            </div>
+            <div class="mb-5">
+              <label for="address" class="block mb-2 text-sm font-medium text-gray-900">Address</label>
+              <input type="text" required id="address" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"  />
+            </div>
+            <div class="mb-5">
+              <label for="phone" class="block mb-2 text-sm font-medium text-gray-900">Phone</label>
+              <input type="text" required id="phone" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"  />
+            </div>
+
+            <div class="mb-5">
+              <label for="referal" class="block mb-2 text-sm font-medium text-gray-900">Where did you hear about us?</label>
+              <select id="referal" required size="3" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                <option value="7">Coaching Website</option>
+                <option value="8">Friend/Family</option>
+                <option value="9">Flyer/Brochure</option>
+              </select>
+            </div>
+
+            <button type="submit" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center">Submit</button>
+        </form>
+        
+    </div>
+
+
+      
+  </body>
+</html>
