@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% load mathfilters %}
+{% load static %}
+
+{% block dashboard %}
+
+<style>
+    .dates-group {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+        overflow-x: auto;
+        display: flex;
+        gap: 2rem;
+    }
+</style>
+
+<div class="mx-4 px-4">
+    <div class="w-75 my-2 py-2">
+        <div class="d-flex justify-content-between">
+            <p class="h2">{{inquiry.student_name}}</p>
+            <a href="{% url 'delete_inquiry' inquiry.id %}" class="btn btn-danger px-4 py-2" style="height: fit-content;">Delete Inquiry</a>
+        </div>
+        <p class="m-0 mb-1">
+
+
+            {% with classes=inquiry.classes.all|join:", " subjects=inquiry.subjects.all|join:", " %}
+                {{ classes|title }} - {{ subjects|title }}
+            {% endwith %}
+        </p>
+        <div class="d-flex gap-4">
+            <p class="my-1"><span class="fw-semibold">Phone: </span> {{inquiry.phone}}</p>
+            <p class="my-1"><span class="fw-semibold">School: </span> {{inquiry.school}}</p>
+            <p class="my-1"><span class="fw-semibold">Address: </span> {{inquiry.address}}</p>
+            <p class="my-1"><span class="fw-semibold">Referral: </span> {{inquiry.referral}}</p>
+        </div>
+    </div>
+
+    <div class="d-flex g-4 w-100 dates-group pb-3">
+        {% for status, followup_list in followups.items %}
+        <div class="card date-card" style="min-width: 20rem; height: fit-content; border: none;" data-date="{{ date|date:'Y-m-d' }}">
+            <ul class="list-group" style="border: none;">
+                <li class="list-group-item text-dark rounded"  style="background: {{status.color}};">{{ status.name |title }}</li>
+
+                    <li class="list-group-item p-2 bg-light rounded my-2 border-1">
+                        <form class="d-flex flex-column gap-2 mb-2 input-form" method="post" action="{% url 'create_followup' inquiry.id %}">
+                            {% csrf_token %}
+                            <select hidden class="form-select" id="status" name="status" aria-label="select status" required>
+                                {% for sts in followup_status %}
+                                <option value="{{sts.id}}" {% if sts == status %} selected {% endif %} >{{sts.name}}</option>
+                                {% endfor %}
+                            </select>
+                            <textarea type="text" class="form-control" id="description-{{forloop.counter}}" name="description" placeholder="Test Description" rows="2"></textarea>
+                            <div id="btn-group-{{forloop.counter}}" style="display: none;" class="btn-container w-100 justify-content-between">
+                                <button type="submit" class="btn btn-success px-4">Submit</button>
+                                <a href="" class="btn btn-primary px-4">Cancel</a>
+                            </div>
+                        </form>
+                    </li>
+
+                    {% for followup in followup_list %}
+                        <li class="list-group-item p-2 my-2 border-1 rounded bg-light-subtle ">
+                            <form class=" d-flex flex-column gap-2 mb-2 update-form" method="post" action="{% url 'update_followup' followup.inquiry.id followup.id %}">
+                                {% csrf_token %}
+                                <select class="form-select" id="status" name="status"  {% if followup.status.color %} style="background: {{followup.status.color}}; width: fit-content;" {% endif %} required>
+                                    {% for status in followup_status %}
+                                    <option value="{{status.id}}" {% if followup.status == status %} selected {% endif %}  >{{status.name}}</option>
+                                    {% endfor %}
+                                </select>
+                                {% if followup.description %}
+                                    <textarea type="text" class="form-control" id="description" name="description" placeholder="Followup Description" rows="2">{{followup.description|title}}</textarea>
+                                {% else %}
+                                    <textarea style="display: none;" type="text" class="form-control" id="update-description" name="description" placeholder="Followup Description" rows="2"></textarea>
+                                {% endif %}
+                                <div id="update-btn-group" style="display: none;" class="btn-container w-100 justify-content-between">
+                                    <button type="submit" class="btn btn-warning px-4">Update</button>
+                                    <a href="{% url 'delete_followup' followup.inquiry.id followup.id %}" class="btn btn-danger px-4">Delete</a>
+                                </div>
+                            </form>
+                            {% if followup.admission_counsellor %}
+                                <p class="m-0 me-2 mt-2 position-absolute end-0 top-0" style="font-size: 14px;">{{followup.admission_counsellor.user.first_name}} {{followup.admission_counsellor.user.last_name}}</p>
+                            {% endif %}
+                        </li>
+
+                    {% endfor %}
+
+            </ul>
+        </div>
+        {% endfor %}
+
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const today = new Date().toISOString().split('T')[0];
+        const dateCards = document.querySelectorAll(".date-card");
+        const gap = 32;
+        const container = document.querySelector(".dates-group");
+
+        const cardWidth = dateCards[0]?.offsetWidth || 0;
+
+        let scrollOffset = 0;
+
+        const scrollPosition = sessionStorage.getItem("individualInquiryPosition");
+        if (scrollPosition) {
+            container.scrollTo({
+                left: scrollPosition,
+            });
+
+            sessionStorage.removeItem("individualInquiryPosition");
+        }
+            window.addEventListener("beforeunload", function () {
+            sessionStorage.setItem("individualInquiryPosition", container.scrollLeft);
+        });
+
+        
+        for (let i = 0; i < dateCards.length; i++) {
+            if (dateCards[i].dataset.date === today) {
+                dateCards[i].querySelector('ul.list-group').children[0].innerText += "";
+                dateCards[i].querySelector('ul.list-group').children[0].classList.remove("text-dark", "bg-light");
+                dateCards[i].querySelector('ul.list-group').children[0].classList.add("bg-dark", "text-white", "border-dark");
+                break;
+            }
+            scrollOffset +=  gap + cardWidth;
+        }
+        scrollOffset -= gap*2 + cardWidth;
+
+        if (!scrollPosition) {
+            container.scrollTo({
+                left: scrollOffset,
+                // behavior: "smooth",
+            });
+        }
+    });
+
+
+
+    const forms = document.querySelectorAll(".input-form");
+    forms.forEach((form, index) => {
+        const inputs = form.querySelectorAll("input, select, textarea");
+        const btnContainer = document.getElementById(`btn-group-${index + 1}`);
+        const description = form.querySelector(`#description-${index+1}`);
+
+
+        // Add event listeners for focus and blur
+        inputs.forEach(input => {
+            input.addEventListener("focus", () => {
+                btnContainer.style.display = "flex"; // Show the buttons 
+                description.style.display = "block";
+            });
+
+            input.addEventListener("blur", () => {
+                // Check if any input is still focused
+                setTimeout(() => {
+                    const isActive = Array.from(inputs).some(inp => inp === document.activeElement);
+                    if (!isActive) {
+                        // btnContainer.style.display = "none"; // Hide the buttons
+                    }
+                }, 100); // Delay to ensure blur doesn't hide buttons immediately when switching between inputs
+            });
+        });
+    });
+
+
+    const updateForms = document.querySelectorAll(".update-form");
+    updateForms.forEach((form, index) => {
+        const inputs = form.querySelectorAll("input, select, textarea");
+        const btnContainer = form.querySelector("#update-btn-group");
+        const update_description = form.querySelector("#update-description");
+
+        inputs.forEach(input => {
+            input.addEventListener("focus", () => {
+                btnContainer.style.display = "flex"; // Show the buttons
+                update_description.style.display = "block";
+            });
+
+            input.addEventListener("blur", () => {
+                setTimeout(() => {
+                    const isActive = Array.from(inputs).some(inp => inp === document.activeElement);
+                    if (!isActive) {
+                        // btnContainer.style.display = "none"; // Hide the buttons if no field is focused
+                    }
+                }, 100);
+            });
+        });
+    });
+
+
+
+</script>
+
+
+{% endblock dashboard %}

@@ -85,6 +85,15 @@
                     </a>
                 </li>
                 {% endif %}
+                
+                {% if request.user.admissioncounsellor or request.user.is_superuser %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'inquiries' %}">Inquiries</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'create_inquiry' %}">Create Inquiry</a>
+                </li>
+                {% endif %}
             </ul>
 
             <!-- User role display and action buttons -->

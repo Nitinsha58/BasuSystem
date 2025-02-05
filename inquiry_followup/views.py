@@ -1,9 +1,131 @@
 from django.shortcuts import render, redirect
-from .models import Inquiry, ClassName, Subject, Referral
+from .models import Inquiry, ClassName, Subject, Referral, FollowUp, FollowUpStatus, AdmissionCounselor
+from datetime import datetime, timedelta
+from collections import defaultdict
+from django.db.models import Max
+from django.contrib import messages
 
 
-def index(request):
-    return render(request, 'inquiry.html')
+
+def inquiries(request):
+    today = datetime.today()
+    start_date = today - timedelta(days=20)
+
+    dates = [start_date + timedelta(days=i) for i in range(31)]
+
+
+    latest_followups = FollowUp.objects.select_related('inquiry').order_by('inquiry', '-created_at').distinct('inquiry')
+    inquiry_followup_dict = defaultdict(list)
+
+    for followup in latest_followups:
+        created_date = followup.inquiry.created_at.date()
+        inquiry_followup_dict[created_date].append(followup)
+
+    merged_dict = {date.date(): inquiry_followup_dict.get(date.date(), []) for date in dates}
+    
+    return render(request, 'inquiry_followup/inquiries.html', {
+        'dates': merged_dict,
+        'followup_status': FollowUpStatus.objects.all()
+    })
+
+def inquiry(request, inquiry_id):
+    inquiry_obj = Inquiry.objects.filter(id=inquiry_id).first()
+    if not inquiry_obj:
+        messages.error(request, 'Invalid Inquiry')
+        return redirect('inquiries')
+    
+    followups = FollowUp.objects.filter(inquiry_id=inquiry_id).select_related('status')
+
+    # Fetch all statuses in order
+    statuses = FollowUpStatus.objects.all().order_by('order')  # Change 'id' if there's a custom ordering field
+
+    # Initialize dictionary with statuses in order
+    followup_status_dict = {status: [] for status in statuses}
+
+    # Fill dictionary with follow-ups
+    for followup in followups:
+        status = followup.status if followup.status else "No Status"
+        followup_status_dict.setdefault(status, []).append(followup)
+
+
+    return render(request, 'inquiry_followup/inquiry.html', {
+        'inquiry': inquiry_obj,
+        'followups': dict(followup_status_dict),
+        'followup_status': FollowUpStatus.objects.all()
+    })
+
+def create_followup(request, inquiry_id):
+    inquiry_obj = Inquiry.objects.filter(id=inquiry_id).first()
+
+    if not inquiry_obj:
+        messages.error(request, "Invalid inquiry")
+        return redirect('inquiries')
+    
+    if request.method == 'POST':
+        status_id = request.POST.get('status')
+        desc = request.POST.get('description')
+
+        counsellor = AdmissionCounselor.objects.filter(user=request.user).first()
+
+        if not counsellor:
+            messages.error(request, "Invalid Counsellor.")
+            return redirect("inquiries")
+
+
+        followup = FollowUp.objects.create(
+            inquiry = inquiry_obj,
+            status = FollowUpStatus.objects.get(id=status_id),
+            description = desc,
+            admission_counsellor = counsellor
+        )
+        followup.save()
+
+    return redirect('inquiry', inquiry_id=inquiry_id)
+
+
+def delete_inquiry(request, inquiry_id):
+    inquiry_obj = Inquiry.objects.filter(id=inquiry_id).first()
+
+    if not inquiry_obj:
+        messages.error(request, "Invalid inquiry")
+        return redirect('inquiries')
+    
+    inquiry_obj.delete()
+    messages.success(request, "Deleted Inquiry.")
+    return redirect('inquiries')
+
+
+def delete_followup(request, inquiry_id, followup_id):
+    followup = FollowUp.objects.filter(id=followup_id).first()
+    inquiry_obj = Inquiry.objects.filter(id=inquiry_id).first()
+
+    if not followup and not inquiry_obj:
+        messages.error(request, "Invalid Followup or inquiry")
+        return redirect('inquiries')
+    
+    followup.delete()
+    messages.success(request, "Deleted Followup")
+    
+    return redirect('inquiry', inquiry_id=inquiry_id)
+
+def update_followup(request, inquiry_id, followup_id):
+    followup = FollowUp.objects.filter(id=followup_id).first()
+    inquiry_obj = Inquiry.objects.filter(id=inquiry_id).first()
+
+    if not followup and not inquiry_obj:
+        messages.error(request, "Invalid Followup or inquiry")
+        return redirect('inquiries')
+    
+    if request.method == 'POST':
+        status_id = request.POST.get('status')
+        desc = request.POST.get('description')
+
+        followup.status = FollowUpStatus.objects.get(id=status_id)
+        followup.description = desc
+
+        followup.save()
+
+        return redirect('inquiry', inquiry_id=inquiry_id)
 
 
 def create_inquiry(request):
@@ -32,6 +154,10 @@ def create_inquiry(request):
         inquiry.subjects.set(selected_subjects)
         inquiry.save()
 
+        if request.user and AdmissionCounselor.objects.filter(user=request.user).first():
+            messages.success(request, "Inquiry Created.")
+            return redirect('inquiries')
+        
         return render(request, 'success-page.html')
 
     return render(request, 'inquiry.html', {

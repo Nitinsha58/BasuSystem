@@ -10,6 +10,6 @@ urlpatterns = [
     path("", include("center.urls")),
     path("user/", include("user.urls")),
     path("mock-progress/", include("testprogress.urls")),
-    path("inquiry/", include("inquiry_followup.urls")),
+    path("", include("inquiry_followup.urls")),
 
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

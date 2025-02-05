@@ -19,12 +19,16 @@ class FollowUpStatus(models.Model):
     name = models.CharField(max_length=255)
     order = models.IntegerField(unique=True)
     color = ColorField(null=True, blank=True, verbose_name='Color')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
 
 class Referral(models.Model):
     name = models.CharField(max_length=255, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
@@ -37,6 +41,8 @@ class Inquiry(models.Model):
     address = models.TextField()
     phone = models.CharField(max_length=15)
     referral = models.ForeignKey(Referral, on_delete=models.SET_NULL, null=True, blank=True, related_name='inquiry')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.student_name}"
@@ -46,6 +52,8 @@ class FollowUp(models.Model):
     status = models.ForeignKey(FollowUpStatus, on_delete=models.SET_NULL, null=True, blank=True, related_name='followup')
     admission_counsellor = models.ForeignKey(AdmissionCounselor, on_delete=models.SET_NULL, null=True, blank=True)
     description = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Follow-up for {self.inquiry.student_name}"
+        return f"{self.inquiry.student_name}-{self.status.name}"
