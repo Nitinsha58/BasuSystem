@@ -80,7 +80,8 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        const today = new Date().toISOString().split('T')[0];
+        const options = { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' };
+        const today = new Date().toLocaleDateString('en-CA', options);
         const dateCards = document.querySelectorAll(".date-card");
         const gap = 32;
         const container = document.querySelector(".dates-group");

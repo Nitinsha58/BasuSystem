@@ -7,22 +7,24 @@ from django.contrib import messages
 
 
 
+from django.utils import timezone
+
 def inquiries(request):
-    today = datetime.today()
+    today = timezone.now()
     start_date = today - timedelta(days=20)
 
     dates = [start_date + timedelta(days=i) for i in range(31)]
 
-
     latest_followups = FollowUp.objects.select_related('inquiry').order_by('inquiry', '-created_at').distinct('inquiry')
+
     inquiry_followup_dict = defaultdict(list)
 
     for followup in latest_followups:
-        created_date = followup.inquiry.created_at.date()
+        created_date = followup.inquiry.created_at.astimezone(timezone.get_current_timezone()).date()
         inquiry_followup_dict[created_date].append(followup)
 
-    merged_dict = {date.date(): inquiry_followup_dict.get(date.date(), []) for date in dates}
-    
+    merged_dict = {date.date(): inquiry_followup_dict[date.date()] for date in dates}
+
     return render(request, 'inquiry_followup/inquiries.html', {
         'dates': merged_dict,
         'followup_status': FollowUpStatus.objects.all()
