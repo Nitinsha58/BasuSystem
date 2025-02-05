@@ -50,7 +50,7 @@
                                 <option value="{{sts.id}}" {% if sts == status %} selected {% endif %} >{{sts.name}}</option>
                                 {% endfor %}
                             </select>
-                            <textarea type="text" class="form-control" id="description-{{forloop.counter}}" name="description" placeholder="Test Description" rows="2"></textarea>
+                            <textarea type="text" class="form-control" id="description-{{forloop.counter}}" name="description" placeholder="Followup details..." rows="2"></textarea>
                             <div id="btn-group-{{forloop.counter}}" style="display: none;" class="btn-container w-100 justify-content-between">
                                 <button type="submit" class="btn btn-success px-4">Submit</button>
                                 <a href="" class="btn btn-primary px-4">Cancel</a>
@@ -68,9 +68,9 @@
                                     {% endfor %}
                                 </select>
                                 {% if followup.description %}
-                                    <textarea type="text" class="form-control" id="description" name="description" placeholder="Followup Description" rows="2">{{followup.description|title}}</textarea>
+                                    <textarea type="text" class="form-control" id="update-description" name="description" placeholder="Followup details..." rows="2">{{followup.description|title}}</textarea>
                                 {% else %}
-                                    <textarea style="display: none;" type="text" class="form-control" id="update-description" name="description" placeholder="Followup Description" rows="2"></textarea>
+                                    <textarea style="display: none;" type="text" class="form-control" id="update-description" name="description" placeholder="Followup details..." rows="2"></textarea>
                                 {% endif %}
                                 <div id="update-btn-group" style="display: none;" class="btn-container w-100 justify-content-between">
                                     <button type="submit" class="btn btn-warning px-4">Update</button>
