@@ -22,6 +22,7 @@
         }
 
         .alert {
+            width: fit-content;
             max-width: 100%;
             padding: 5px 10px;
             display: flex;
@@ -85,13 +86,13 @@
     {% include 'navbar.html' %}
     
     {% if messages %}
-    {% for message in messages %}
-    <div class="notify-container">
-        <div onclick="toggle()" class="alert show-alert">
-            <span class="msg">{{message}}</span>
+        <div class="notify-container">
+            {% for message in messages %}
+            <div onclick="toggle()" class="alert show-alert">
+                <span class="msg">{{message}}</span>
+            </div>
+            {% endfor %}
         </div>
-    </div>
-    {% endfor %}
     {% endif %}
 
     {% block dashboard %}

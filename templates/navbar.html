@@ -44,24 +44,24 @@
 
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Reports
+                        Mocks Reports
                     </a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="{% url 'batchwise_report' %}">Batch Report</a></li>
                         <li><a class="dropdown-item" href="{% url 'chapterwise_report' %}">Chapter Report</a></li>
+                        <li class="nav-item">
+                            <a class="dropdown-item" href="{% url 'test_progress' %}">Test Progress</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="dropdown-item" href="{% url 'chapterwise_student_report' %}">Student Report</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="dropdown-item" href="{% url 'compare_progress' %}">Compare Progress</a>
+                        </li>
+                        <li class="nav-item">
+                            <p id="searchBtn dropdown-item" class="px-2 m-0 mx-2 nav-link btn bg-success-subtle btn-outline-success">Search Student</p>
+                        </li>
                     </ul>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'test_progress' %}">Test Progress</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'chapterwise_student_report' %}">Student Report</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'compare_progress' %}">Compare Progress</a>
-                </li>
-                <li class="nav-item">
-                    <p id="searchBtn" class="px-2 m-0 mx-2 nav-link btn bg-success-subtle btn-outline-success">Search Student</p>
                 </li>
 
                 <!-- Teacher-specific links -->
@@ -92,6 +92,12 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'create_inquiry' %}">Create Inquiry</a>
+                </li>
+                <li class="nav-item m-2">
+                    <a class="nav-link bg-warning-subtle rounded d-inline px-3 p-2 m-1" href="{% url 'student_registration' %}">New Registration</a>
+                </li>
+                <li class="nav-item text-dark">
+                    <a class="nav-link" href="{% url 'students_list' %}">New Students</a>
                 </li>
                 {% endif %}
             </ul>

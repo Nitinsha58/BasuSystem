@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'mathfilters',
     'testprogress.apps.TestprogressConfig',
     'inquiry_followup.apps.InquiryFollowupConfig',
+    'registration.apps.RegistrationConfig',
 ]
 
 MIDDLEWARE = [
