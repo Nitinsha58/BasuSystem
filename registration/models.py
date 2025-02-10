@@ -46,13 +46,13 @@ class FeeDetails(models.Model):
     fee_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
     student = models.OneToOneField(Student, on_delete=models.CASCADE, related_name='fees')
-    book_fees = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    uniform_fees = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    cab_fees = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    book_fees = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True, blank=True)
+    uniform_fees = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True, blank=True)
+    cab_fees = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True, blank=True)
     tuition_fees = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     total_fees = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    remaining_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    remaining_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

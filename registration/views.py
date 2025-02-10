@@ -1,8 +1,9 @@
 from django.shortcuts import render, redirect
 from .models import Student, ParentDetails, FeeDetails, Installment, TransportDetails
-from .forms import StudentRegistrationForm, StudentUpdateForm, ParentDetailsForm
+from .forms import StudentRegistrationForm, StudentUpdateForm, ParentDetailsForm, FeeDetailsForm
 from center.models import Subject, ClassName
 from django.contrib import messages
+from django.db import transaction
 
 def student_registration(request):
     form_data = {}
@@ -136,13 +137,56 @@ def student_parent_details(request, stu_id):
     })
 
 def student_fees_details(request, stu_id):
-
-    if stu_id and not Student.objects.filter(stu_id=stu_id):
+    student = Student.objects.filter(stu_id=stu_id).first()
+    if not student:
         messages.error(request, "Invalid Student")
         return redirect('student_registration')
-    
+
+    fees_details = FeeDetails.objects.filter(student__stu_id=stu_id).first()
+
+    if request.method == 'POST':
+        form_data = {
+            "book_fees": request.POST.get("book_fees") or 0,
+            "uniform_fees": request.POST.get("uniform_fees") or 0,
+            "cab_fees": request.POST.get("cab_fees") or 0,
+            "tuition_fees": request.POST.get("tuition_fees") or 0,
+            "num_installments": request.POST.get("num_installments") or 1,
+            "installments": []
+        }
+
+        try:
+            with transaction.atomic():
+                fees_details, created = FeeDetails.objects.get_or_create(student=student)
+
+                fees_details.total_fees = request.POST.get("total_fees") or 0
+                fees_details.book_fees = request.POST.get("book_fees") or 0
+                fees_details.uniform_fees = request.POST.get("uniform_fees") or 0
+                fees_details.cab_fees = request.POST.get("cab_fees") or 0
+                fees_details.tuition_fees = request.POST.get("tuition_fees") or 0
+                
+                fees_details.save()
+
+                # Delete existing installments
+                Installment.objects.filter(fee_details=fees_details).delete()
+
+                for ins in range(1, int(request.POST.get("num_installments") or 1) + 1):
+                    installment = Installment(
+                        fee_details=fees_details,
+                        student=student,
+                        amount=request.POST.get(f'installment_amount_{ins}'),
+                        due_date=request.POST.get(f'installment_due_date_{ins}'),
+                        paid=request.POST.get(f'paid_{ins}') == 'on'
+                    )
+                    installment.save()
+        except Exception as e:
+            messages.error(request, "Invalid Data or form.")
+            return redirect('student_fees_details', stu_id=stu_id)
+
+
+
     return render(request, "registration/student_fees_details.html", {
-        'student': Student.objects.filter(stu_id=stu_id).first()
+        'student': student,
+        'fees_details': fees_details,
     })
 
 def student_transport_details(request, stu_id):
