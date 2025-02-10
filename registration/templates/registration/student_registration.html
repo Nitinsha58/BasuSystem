@@ -14,104 +14,118 @@
         <h2 class="fw-normal text-dark"> Register Student </h2>
     </div>
 
-    <form class="row g-3 bg-light rounded p-2 pb-3" method="post">
+    <form class="g-3 bg-light rounded p-2 pb-3" method="post">
         {% csrf_token %}
-        <div class="col-md-4">
-          <label for="first_name" class="form-label">First name*</label>
-          <input type="text" class="form-control" {% if form %} value="{{form.first_name}}" {% endif %}  name="first_name" id="first_name" required>
-        </div>
-        <div class="col-md-4">
-          <label for="last_name" class="form-label">Last name</label>
-          <input type="text" class="form-control" {% if form %} value="{{form.last_name}}" {% endif %} name="last_name" id="last_name">
-        </div>
-    
-        <div class="col-md-3">
-          <label for="phone" class="form-label">Phone*</label>
-          <input type="text" minlength="10" maxlength="10" class="form-control" {% if form %} value="{{form.phone}}" {% endif %} name="phone" id="phone" required>
-        </div>
-    
-        <div class="col-md-4">
-            <label for="email" class="form-label">Email</label>
-            <input type="email" class="form-control" name="email" {% if form %} value="{{form.email}}" {% endif %} id="email">
-        </div>
-    
-        <div class="col-md-4">
-          <label for="dob" class="form-label">Date of Birth*</label>
-          <input type="date" class="form-control" name="dob" id="dob" {% if form %} value="{{form.dob}}" {% endif %} required>
-        </div>
-    
-        <div class="col-md-4">
-          <label for="doj" class="form-label">Date of Joining*</label>
-          <input type="date" class="form-control" name="doj" id="doj" {% if form %} value="{{form.doj}}" {% endif %} required>
-        </div>
-    
-        <div class="col-md-4">
-          <label for="school_name" class="form-label">School Name*</label>
-          <input type="text" class="form-control" name="school_name" {% if form %} value="{{form.school_name}}" {% endif %} id="school_name" required>
-        </div>
-    
-        <div class="col-md-4">
-          <label for="class_enrolled" class="form-label">Class Enrolled*</label>
-          <select class="form-select" name="class_enrolled" id="class_enrolled" required>
-            {% for cls in classes %}
-            <option value="{{cls.id}}" {% if form and cls.id == form.class_enrolled.id %} selected {% endif %} >{{cls.name}}</option>
-            {% endfor %}
-          </select>
-        </div>
-        
-        <div class="col-md-4">
-          <label for="subjects" class="form-label">Subjects</label>
-          <select class="form-control" name="subjects" id="subjects" multiple required>
-            {% for subject in subjects %}
-            <option value="{{subject.id}}" {% if form and subject.id|stringformat:"s" in form.subjects %} selected {% endif %} >{{subject.name}}</option>
-            {% endfor %}
-          </select>
-        </div>
-    
-        <div class="col-md-4">
-          <label for="marksheet_submitted" class="form-label">Marksheet Submitted</label>
-          <select class="form-select" name="marksheet_submitted" id="marksheet_submitted" required>
-            <option value="no" {% if form and form.markssheet_submitted == False %} selected {% endif %} >No</option>
-            <option value="yes" {% if form and form.markssheet_submitted == True %} selected {% endif %}>Yes</option>
-          </select>
-        </div>
-    
-        <div class="col-md-4">
-          <label for="sat_score" class="form-label">SAT Score</label>
-          <input type="number" class="form-control" {% if form %} value="{{form.sat_score}}" {% endif %} name="sat_score" id="sat_score">
-        </div>
-    
-        <div class="col-md-4">
-          <label for="remarks" class="form-label">Remarks</label>
-          <textarea class="form-control" name="remarks" id="remarks">{% if form %}{{form.remarks}}{% endif %} </textarea>
-        </div>
-    
-        <div class="col-md-4">
-          <label for="address" class="form-label">Address</label>
-          <textarea class="form-control" name="address" id="address" required>{% if form %}{{form.address}}{% endif %}</textarea>
-        </div>
-    
-        <div class="col-md-4">
-          <label for="last_year_marks_details" class="form-label">Last Year Marks Details</label>
-          <textarea class="form-control" name="last_year_marks_details" id="last_year_marks_details">{% if form %}{{form.last_year_marks_details}}{% endif %}</textarea>
-        </div>
-    
-        <div class="col-md-4">
-          <label for="aadhar_card_number" class="form-label">Aadhar Card Number</label>
-          <input type="text" class="form-control" name="aadhar_card_number" {% if form %} value="{{form.aadhar_card_number}}" {% endif %} id="aadhar_card_number">
-        </div>
-    
-        <div class="col-md-4">
-          <label for="gender" class="form-label">Gender</label>
-          <select class="form-select" name="gender" id="gender">
-            <option value="Male" {% if form and form.gender == 'Male' %} selected {% endif %}>Male</option>
-            <option value="Female" {% if form and form.gender == 'Female' %} selected {% endif %} >Female</option>
-            <option value="Other" {% if form and form.gender == 'Other' %} selected {% endif %}>Other</option>
-          </select>
+        <div class="row justify-content-evenly mt-3">
+          <div class="col-md-3">
+            <label for="first_name" class="form-label">First name*</label>
+            <input type="text" class="form-control" {% if form %} value="{{form.first_name}}" {% endif %}  name="first_name" id="first_name" required>
+          </div>
+          <div class="col-md-3">
+            <label for="last_name" class="form-label">Last name</label>
+            <input type="text" class="form-control" {% if form %} value="{{form.last_name}}" {% endif %} name="last_name" id="last_name">
+          </div>
+      
+          <div class="col-md-3">
+            <label for="phone" class="form-label">Phone*</label>
+            <input type="text" minlength="10" maxlength="10" class="form-control" {% if form %} value="{{form.phone}}" {% endif %} name="phone" id="phone" required>
+          </div>
         </div>
 
-        <div class="col-md-4 mt-5">
-          <button class="btn btn-primary" type="submit">Create Student</button>
+        <div class="row justify-content-evenly mt-3">
+          <div class="col-md-3">
+              <label for="email" class="form-label">Email</label>
+              <input type="email" class="form-control" name="email" {% if form %} value="{{form.email}}" {% endif %} id="email">
+          </div>
+      
+          <div class="col-md-3">
+            <label for="dob" class="form-label">Date of Birth*</label>
+            <input type="date" class="form-control" name="dob" id="dob" {% if form %} value="{{form.dob}}" {% endif %} required>
+          </div>
+      
+          <div class="col-md-3">
+            <label for="doj" class="form-label">Date of Joining*</label>
+            <input type="date" class="form-control" name="doj" id="doj" {% if form %} value="{{form.doj}}" {% endif %} required>
+          </div>
+        </div>
+
+        <div class="row justify-content-evenly mt-3">
+          <div class="col-md-3">
+            <label for="school_name" class="form-label">School Name*</label>
+            <input type="text" class="form-control" name="school_name" {% if form %} value="{{form.school_name}}" {% endif %} id="school_name" required>
+          </div>
+      
+          <div class="col-md-3">
+            <label for="class_enrolled" class="form-label">Class Enrolled*</label>
+            <select class="form-select" name="class_enrolled" id="class_enrolled" required>
+              {% for cls in classes %}
+              <option value="{{cls.id}}" {% if form and cls.id == form.class_enrolled.id %} selected {% endif %} >{{cls.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div class="col-md-3">
+            <label for="subjects" class="form-label">Subjects</label>
+            <select class="form-control" name="subjects" id="subjects" multiple required>
+              {% for subject in subjects %}
+              <option value="{{subject.id}}" {% if form and subject.id|stringformat:"s" in form.subjects %} selected {% endif %} >{{subject.name}}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+    
+        <div class="row justify-content-evenly mt-3">
+          <div class="col-md-3">
+            <label for="marksheet_submitted" class="form-label">Marksheet Submitted</label>
+            <select class="form-select" name="marksheet_submitted" id="marksheet_submitted" required>
+              <option value="no" {% if form and form.markssheet_submitted == False %} selected {% endif %} >No</option>
+              <option value="yes" {% if form and form.markssheet_submitted == True %} selected {% endif %}>Yes</option>
+            </select>
+          </div>
+      
+          <div class="col-md-3">
+            <label for="sat_score" class="form-label">SAT Score</label>
+            <input type="number" class="form-control" {% if form %} value="{{form.sat_score}}" {% endif %} name="sat_score" id="sat_score">
+          </div>
+      
+          <div class="col-md-3">
+            <label for="remarks" class="form-label">Remarks</label>
+            <textarea class="form-control" name="remarks" id="remarks">{% if form %}{{form.remarks}}{% endif %} </textarea>
+          </div>
+        </div>
+
+        <div class="row justify-content-evenly mt-3">
+          <div class="col-md-3">
+            <label for="address" class="form-label">Address</label>
+            <textarea class="form-control" name="address" id="address" required>{% if form %}{{form.address}}{% endif %}</textarea>
+          </div>
+      
+          <div class="col-md-3">
+            <label for="last_year_marks_details" class="form-label">Last Year Marks Details</label>
+            <textarea class="form-control" name="last_year_marks_details" id="last_year_marks_details">{% if form %}{{form.last_year_marks_details}}{% endif %}</textarea>
+          </div>
+      
+          <div class="col-md-3">
+            <label for="aadhar_card_number" class="form-label">Aadhar Card Number</label>
+            <input type="text" class="form-control" name="aadhar_card_number" {% if form %} value="{{form.aadhar_card_number}}" {% endif %} id="aadhar_card_number">
+          </div>
+        </div>
+
+        <div class="row justify-content-evenly mt-3">
+          <div class="col-md-3">
+            <label for="gender" class="form-label">Gender</label>
+            <select class="form-select" name="gender" id="gender">
+              <option value="Male" {% if form and form.gender == 'Male' %} selected {% endif %}>Male</option>
+              <option value="Female" {% if form and form.gender == 'Female' %} selected {% endif %} >Female</option>
+              <option value="Other" {% if form and form.gender == 'Other' %} selected {% endif %}>Other</option>
+            </select>
+          </div>
+
+          <div class="col-md-3 mt-4">
+            <button class="btn btn-primary" type="submit">Create Student</button>
+          </div>
+
+          <div class="col-md-3"></div>
         </div>
       </form>
 </div>
