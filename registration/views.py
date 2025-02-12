@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from .models import Student, ParentDetails, FeeDetails, Installment, TransportDetails
-from .forms import StudentRegistrationForm, StudentUpdateForm, ParentDetailsForm, FeeDetailsForm
+from .forms import StudentRegistrationForm, StudentUpdateForm, ParentDetailsForm, TransportDetailsForm
 from center.models import Subject, ClassName
 from django.contrib import messages
 from django.db import transaction
@@ -193,6 +193,24 @@ def student_transport_details(request, stu_id):
     if stu_id and not Student.objects.filter(stu_id=stu_id):
         messages.error(request, "Invalid Student")
         return redirect('student_registration')
+    
+    student = Student.objects.filter(stu_id=stu_id).first()
+    form_data = {}
+
+    if request.method == "POST":
+        form_data = {
+            "address": request.POST.get("address"),
+        }
+        form = TransportDetailsForm(form_data)
+
+        if form.is_valid():
+            form.save(student)
+            messages.success(request, "Location Saved.")
+            return redirect("student_transport_details", stu_id=student.stu_id)
+        
+        for field, error_list in form.errors.items():
+            for error in error_list:
+                messages.error(request, f"{field}: {error}")
     
     return render(request, "registration/student_transport_details.html", {
         'student': Student.objects.filter(stu_id=stu_id).first()

@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.hashers import make_password
 from django.db import transaction
-from .models import Student, BaseUser, ParentDetails, FeeDetails, Installment
+from .models import Student, BaseUser, ParentDetails, FeeDetails, Installment, TransportDetails
 from center.models import Subject
 from django.core.exceptions import ValidationError
 
@@ -182,43 +182,17 @@ class ParentDetailsForm(forms.ModelForm):
             if commit:
                 parent_details.save()
         return parent_details
-    
-class FeeDetailsForm(forms.ModelForm):
+
+class TransportDetailsForm(forms.ModelForm):
+    address = forms.CharField(max_length=255, required=True)
     class Meta:
-        model = FeeDetails
-        fields = ['total_fees', 'book_fees', 'uniform_fees', 'cab_fees', 'tuition_fees']
+        model = TransportDetails
+        fields = ["address"]
 
-    # num_installments = forms.IntegerField(min_value=1, initial=2, widget=forms.NumberInput(attrs={'readonly': 'readonly'}))
-
-    def __init__(self, *args, **kwargs):
-        self.student = kwargs.pop('student', None)
-        self.fee_details = kwargs.pop('fee_details', None)
-        super().__init__(*args, **kwargs)
-        self.installment_forms = []
-
-    def add_installments(self, count, data=None):
-        # self.num_installments.initial = count
-        # for i in range(count):
-        #     self.installment_forms.append(installment_form)
-        pass
-
-    # def is_valid(self):
-    #     if not super().is_valid():
-    #         return False
-    #     return all(form.is_valid() for form in self.installment_forms)
-
-    def save(self, commit=True):
-        fee_details = super().save(commit=False)
-        fee_details.student = self.student
-        if commit:
-            with transaction.atomic():
-                fee_details.save()
-                for form in self.installment_forms:
-                    if form.is_valid():
-                        installment = form.save(commit=False)
-                        installment.fee_details = fee_details
-                        installment.student = self.student
-                        installment.save()
-                    else:
-                        print(form.errors)
-        return fee_details
+    def save(self, student, commit=True):
+        with transaction.atomic():
+            transport_details, created = TransportDetails.objects.get_or_create(student=student)
+            transport_details.address = self.cleaned_data["address"]
+            if commit:
+                transport_details.save()
+        return transport_details
