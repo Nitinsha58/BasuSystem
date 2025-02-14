@@ -7,12 +7,38 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>BASU Classes</title>
-    <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4"
+        integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"
+        crossorigin="anonymous"></script>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 
     <style>
+        @media print {
+            * {
+                overflow: visible !important;
+                white-space: normal !important;
+                word-wrap: break-word !important;
+            }
+
+            body::after {
+                content: "BASU EDUCATION";
+                /* Change to your watermark text */
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) rotate(45deg);
+                font-size: 110px;
+                font-weight: bold;
+                color: rgba(0, 0, 0, 0.1);
+                /* Light gray transparency */
+                z-index: -1;
+                white-space: nowrap;
+                pointer-events: none;
+            }
+        }
+
         .notify-container {
             z-index: 235;
             position: absolute;
@@ -77,22 +103,21 @@
                 top: 80px;
             }
         }
-
     </style>
 
 </head>
 
 <body>
     {% include 'navbar.html' %}
-    
+
     {% if messages %}
-        <div class="notify-container">
-            {% for message in messages %}
-            <div onclick="toggle()" class="alert show-alert">
-                <span class="msg">{{message}}</span>
-            </div>
-            {% endfor %}
+    <div class="notify-container">
+        {% for message in messages %}
+        <div onclick="toggle()" class="alert show-alert">
+            <span class="msg">{{message}}</span>
         </div>
+        {% endfor %}
+    </div>
     {% endif %}
 
     {% block dashboard %}
@@ -102,7 +127,8 @@
     {% endblock login %}
 
 
-    <div id="deleteConfirmationModal" class="d-none position-absolute start-0 w-100 vh-100 position-absolute d-flex items-center align-items-center justify-content-center bg-black bg-opacity-50">
+    <div id="deleteConfirmationModal"
+        class="d-none position-absolute start-0 w-100 vh-100 position-absolute d-flex items-center align-items-center justify-content-center bg-black bg-opacity-50">
         <div class="bg-white rounded-lg shadow-lg p-4 rounded">
             <h3 class="text-xl font-semibold mb-1 text-danger">Confirm Deletion</h3>
             <p class="mb-4">Are you sure you want to delete this?</p>
@@ -113,24 +139,19 @@
         </div>
     </div>
 
-    <div id="searchModal" style="background: rgba(255, 255, 255, 0.85);" class="d-none position-absolute start-0 w-100 vh-100 position-absolute d-flex items-center justify-content-center">
+    <div id="searchModal" style="background: rgba(255, 255, 255, 0.85);"
+        class="d-none position-absolute start-0 w-100 vh-100 position-absolute d-flex items-center justify-content-center">
         <div id="cancel-box" class="cancel-box position-absolute w-100 h-100 " style="opacity: 20%;">
         </div>
-        <div class="rounded-lg rounded mt-5 w-100 bg-white shadow-md"  style="height: fit-content; max-width: 400px; z-index: 2355;">
-            <div  class="search-form ">
-                <input type="text" class="form-control search-input p-2 fs-5" 
-                    id="search-input" 
-                    maxlength="60" 
-                    placeholder="Search students..."
-                    autocomplete="off"
-                    name="search"
-                    hx-get="/search?search={value}"
-                    hx-trigger="keyup changed delay:500ms, search" 
-                    hx-target="#search-students" 
-                    hx-indicator=".htmx-indicator"
-                    >
+        <div class="rounded-lg rounded mt-5 w-100 bg-white shadow-md"
+            style="height: fit-content; max-width: 400px; z-index: 2355;">
+            <div class="search-form ">
+                <input type="text" class="form-control search-input p-2 fs-5" id="search-input" maxlength="60"
+                    placeholder="Search students..." autocomplete="off" name="search" hx-get="/search?search={value}"
+                    hx-trigger="keyup changed delay:500ms, search" hx-target="#search-students"
+                    hx-indicator=".htmx-indicator">
                 <ul class="search-students p-0" id="search-students" style="max-height: 70%;">
-                    
+
                 </ul>
             </div>
         </div>
@@ -146,17 +167,17 @@
             const searchInput = document.getElementById('search-input');
 
 
-            searchBtn.addEventListener('click', ()=>{
+            searchBtn.addEventListener('click', () => {
                 console.log("Search Btn clicked.")
-                
+
                 document.getElementsByTagName('html')[0].style.overflow = 'hidden';
                 document.getElementsByTagName('body')[0].style.overflow = 'hidden';
-                
+
                 const scrollPosition = window.scrollY || document.documentElement.scrollTop;
                 searchModal.style.top = `${scrollPosition}px`;
                 searchModal.classList.remove('d-none');
             })
-            cancelBox.addEventListener('click', ()=>{
+            cancelBox.addEventListener('click', () => {
                 document.getElementsByTagName('html')[0].style.overflow = 'auto';
                 document.getElementsByTagName('body')[0].style.overflow = 'auto';
                 searchModal.classList.add('d-none');
@@ -171,17 +192,17 @@
 
 
     <script>
-        function toggle(){
+        function toggle() {
             let btn_list = document.getElementsByClassName('alert')
 
-            for (var i=0; i < btn_list.length; i++){
+            for (var i = 0; i < btn_list.length; i++) {
                 btn_list[i].style.display = 'none';
             }
         }
-        setTimeout(function (){
+        setTimeout(function () {
             let btn_list = document.getElementsByClassName('alert')
 
-            for (var i=0; i < btn_list.length; i++){
+            for (var i = 0; i < btn_list.length; i++) {
                 btn_list[i].style.display = 'none';
             }
         }, 5000)

@@ -5,7 +5,8 @@ from .views import (
     student_parent_details, 
     student_transport_details,
     student_update,
-    students_list
+    students_list,
+    student_reg_doc
     )
 
 
@@ -16,4 +17,5 @@ urlpatterns = [
     path('<uuid:stu_id>/parent', student_parent_details, name='student_parent_details'),
     path('<uuid:stu_id>/fees', student_fees_details, name='student_fees_details'),
     path('<uuid:stu_id>/transport', student_transport_details, name='student_transport_details'),
+    path('<uuid:stu_id>/registration_document', student_reg_doc, name='student_reg_doc'),
 ]

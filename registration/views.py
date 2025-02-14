@@ -216,3 +216,12 @@ def student_transport_details(request, stu_id):
         'student': Student.objects.filter(stu_id=stu_id).first()
     })
     
+def student_reg_doc(request, stu_id):
+    if stu_id and not Student.objects.filter(stu_id=stu_id):
+        messages.error(request, "Invalid Student")
+        return redirect('student_registration')
+    
+    return render(request, "registration/student_reg_doc.html", {
+        'student': Student.objects.filter(stu_id=stu_id).first()
+    })
+    
