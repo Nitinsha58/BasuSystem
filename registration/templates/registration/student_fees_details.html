@@ -54,35 +54,64 @@
               {% if not fees_details %}
               <button id="decrement-btn" class="btn bg-danger-subtle m-0 " type="button">-</button>
               {% endif %}
-                <input id="count-input" name="num_installments" readonly class="m-0 border-0 rounded d-flex justify-content-center align-items-center" style="width: 40px; height: 40px; padding: 7px; text-align: center;"
-                 {% if fees_details %} value="{{fees_details.installments.all.count}}" {% else %} value="1" {% endif %}>
-                {% if not fees_details %}
-                <button id="increment-btn" class="btn bg-success-subtle m-0 " type="button">+</button>
-                {% endif %}
+              <input id="count-input" name="num_installments" readonly class="m-0 border-0 rounded d-flex justify-content-center align-items-center" style="width: 40px; height: 40px; padding: 7px; text-align: center;"
+                {% if fees_details %} value="{{fees_details.installments.all.count}}" {% else %} value="1" {% endif %}>
+              <button id="increment-btn" class="btn bg-success-subtle m-0 " type="button">+</button>
             </div>
           </div>
       </div>
 
       <div class="installments rounded p-2 my-2" style="background-color: white;">
+        <div class="d-flex justify-content-end w-100">
+          Total : <span class="fw-normal" id="installment-total-amt">0</span>
+        </div>
+        {% if fees_details.installments %}
+        {% for installment in fees_details.installments.all %}
+          <div class="row installment m-0 justify-content-evenly">
+            <div class="col-10 col-md-8 rounded p-2 d-flex flex-column align-items-end">
+              <div class="d-flex justify-content-between w-100">
+                <p class="m-0 h4 fw-normal">{{forloop.counter}}. Installment </p>
+                <div class="">
+                  <input type="number" name="installment_amount_{{forloop.counter}}" class="rounded p-1 px-2" value="{{installment.amount}}" style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-amt-{{forloop.counter}}">
+                  <input type="date" name="installment_due_date_{{forloop.counter}}" value="{{installment.due_date|date:'Y-m-d'}}" class="mt-1 rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-date-{{forloop.counter}}">
+                  
+                  {% if not installment.paid %}
+                  <button type="button" data-stu_id="{{student.stu_id}}" data-installment_id="{{installment.id}}" style="height: fit-content;" class="delete-link px-2 py-1 ms-2 btn btn-outline-danger fw-semibold text-decoration-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                      <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"></path>
+                      <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
+                    </svg>
+                  </button>
+                  {% endif  %}
 
-        <div class="row installment m-0 justify-content-evenly">
-          {% for installment in fees_details.installments.all %}
-          <div class="col-10 col-md-8 rounded p-2 d-flex flex-column align-items-end">
-            <div class="d-flex justify-content-between w-100">
-              <p class="m-0 h4 fw-normal">{{forloop.counter}}. Installment </p>
-              <div class="">
-                <input type="number" name="installment_amount_{{forloop.counter}}" class="rounded p-1 px-2" value="{{installment.amount}}" style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-amt-1">
-                <input type="date" name="installment_due_date_{{forloop.counter}}" value="{{installment.due_date|date:'Y-m-d'}}" class="mt-1 rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-date-1">
+                </div>
+              </div>
+              <div class="form-check form-switch mt-2">
+                <label class="form-check-label" for="isPaid_{{forloop.counter}}">Paid</label>
+                <input class="form-check-input w-4 h-4" type="checkbox" name="paid_{{forloop.counter}}" {% if installment.paid %} checked {% endif %} role="switch" id="isPaid_{{forloop.counter}}">
               </div>
             </div>
-            <div class="form-check form-switch mt-2">
-              <label class="form-check-label" for="flexSwitchCheckChecked">Paid</label>
-              <input class="form-check-input w-4 h-4" type="checkbox" name="paid_{{forloop.counter}}" {% if installment.paid %} checked {% endif %} role="switch" id="flexSwitchCheckChecked">
+          </div>
+            {% endfor %}
+          {% else %}
+          <div class="row installment m-0 justify-content-evenly">
+            <div class="col-10 col-md-8 rounded p-2 d-flex flex-column align-items-end">
+              <div class="d-flex justify-content-between w-100">
+                <p class="m-0 h4 fw-normal">1. Installment </p>
+                <div class="">
+                  <input type="number" name="installment_amount_1" class="rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-amt-1" required>
+                  <input type="date" name="installment_due_date_1" value="" class="mt-1 rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-date-1">
+                </div>
+              </div>
+              <div class="form-check form-switch mt-2">
+                <label class="form-check-label" for="flexSwitchCheckChecked">Paid</label>
+                <input class="form-check-input w-4 h-4" type="checkbox" name="paid_1" {% if installment.paid %} checked {% endif %} role="switch" id="flexSwitchCheckChecked">
+              </div>
             </div>
           </div>
-          {% endfor %}
+          {% endif %}
 
-        </div>
+        
       </div>
 
       <div class="d-flex justify-content-center mt-3">
@@ -105,6 +134,8 @@
     const feeInputs = document.querySelectorAll("#book_fees, #uniform_fees, #cab_fees, #tuition_fees");
     today = new Date().toISOString().split('T')[0];
 
+    first_installment_date = document.getElementById("installment-date-1");
+    first_installment_date.value = today;
 
     function calculateTotalFees() {
         let totalFees = 0;
@@ -113,44 +144,6 @@
         });
         totalFeesElement.textContent = totalFees.toLocaleString();
         totalFeesInput.value = totalFees;
-        
-        {% if not fees_details %}
-        updateInstallments(totalFees);
-        {% endif %}
-    }
-
-    function updateInstallments(totalFees) {
-        let numInstallments = parseInt(countInput.value, 10);
-        let baseInstallment = Math.floor(totalFees / numInstallments);
-        let remainder = totalFees % numInstallments;
-        
-        installmentContainer.innerHTML = ""; // Clear previous installments
-
-        for (let i = 0; i < numInstallments; i++) {
-            let installmentAmount = baseInstallment + (i === 0 ? remainder : 0); // Adjust remainder in the first installment
-
-            let installmentDiv = document.createElement("div");
-            installmentDiv.classList.add("row", "installment","m-0", "justify-content-evenly");
-
-            installmentDiv.innerHTML = `
-              <div class="col-10 col-md-8  rounded p-2 d-flex flex-column align-items-end">
-                <div class="d-flex justify-content-between w-100">
-                  <p class="m-0 h4 fw-normal text-dark">${i + 1}. Installment </p>
-                  <div class="">
-                    <input type="number" name="installment_amount_${i+1}" value=${installmentAmount} class="rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-amt-${i + 1}" required>
-                    <input type="date" name="installment_due_date_${i+1}" value=${today} class="mt-1 rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-date-${i + 1}" required>
-                  </div>
-                </div>
-
-                <div class="form-check form-switch mt-2">
-                  <label class="form-check-label" for="paid_${i+1}">Paid</label>
-                  <input class="form-check-input w-4 h-4" type="checkbox" role="switch" name="paid_${i+1}" id="paid_${i+1}">
-                </div>
-              </div>
-            `;
-
-            installmentContainer.appendChild(installmentDiv);
-        }
     }
 
     feeInputs.forEach(input => {
@@ -160,23 +153,125 @@
         });
     });
 
+    function updateTotalInstallmentAmt(){
+      let installments = document.querySelectorAll(".installment");
+      let installment_total_amt = document.getElementById("installment-total-amt");
+      let total = 0;
+      installments.forEach((installment, index) => {
+        let installmentAmtInput = installment.querySelector(`#installment-amt-${index + 1}`);
+        total += parseInt(installmentAmtInput.value || 0, 10);
+      });
+      installment_total_amt.textContent = total.toLocaleString();
+    }
+
+    updateTotalInstallmentAmt();
+
+    document.querySelectorAll(".installment input[type=number]").forEach((input) => {
+      input.addEventListener("input", updateTotalInstallmentAmt);
+    });
+
+    window.deleteInstallment = function (count){
+      let installment = document.querySelector(`#installment-amt-${count}`).closest(".installment");
+      installment.remove();
+    }
+    
+    function addInstallment(count){
+      let installmentDiv = document.createElement("div");
+      installmentDiv.classList.add("row", "installment","m-0", "justify-content-evenly");
+
+      installmentDiv.innerHTML = `
+        <div class="col-10 col-md-8  rounded p-2 d-flex flex-column align-items-end">
+          <div class="d-flex justify-content-between w-100">
+            <p class="m-0 h4 fw-normal text-dark">${count}. Installment </p>
+            <div class="">
+              <input type="number" name="installment_amount_${count}" class="rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-amt-${count}" required>
+              <input type="date" name="installment_due_date_${count}" value=${today} class="mt-1 rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-date-${count}" required>
+
+              <button type="button" onclick="deleteInstallment(${count})" id="delete-btn-${count}" style="height: fit-content;" class="px-2 py-1 ms-2 btn btn-outline-danger fw-semibold text-decoration-none">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                  <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"></path>
+                  <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
+                </svg>
+              </button>
+
+            </div>
+          </div>
+
+          <div class="form-check form-switch mt-2">
+            <label class="form-check-label" for="paid_${count}">Paid</label>
+            <input class="form-check-input w-4 h-4" type="checkbox" role="switch" name="paid_${count}" id="paid_${count}">
+          </div>
+        </div>
+      `;
+      installmentContainer.appendChild(installmentDiv);
+
+      installmentDiv.addEventListener("input", updateTotalInstallmentAmt);
+    }
+
+    function removeLastInstallment(){
+      let installments = document.querySelectorAll(".installment");
+      let lastInstallment = installments[installments.length - 1];
+      lastInstallment.remove();
+    }
+
+
+    {% if not fees_details %}
     decrementBtn.addEventListener("click", function () {
         let count = parseInt(countInput.value, 10);
         if (count > 1) {
             countInput.value = count - 1;
-            calculateTotalFees();
+            // calculateTotalFees();
+            removeLastInstallment()
         }
     });
+
+    {% endif %}
 
     incrementBtn.addEventListener("click", function () {
         let count = parseInt(countInput.value, 10);
-        if (count < 12) {
+        if (count <= 15) {
             countInput.value = count + 1;
-            calculateTotalFees();
+            // calculateTotalFees();
+            addInstallment(count+1);
         }
     });
 
-    calculateTotalFees(); // Initialize on page load
+    calculateTotalFees();
+  });
+
+  
+  document.addEventListener("DOMContentLoaded", function () {
+    const deleteLinks = document.querySelectorAll(".delete-link");
+    const modal = document.getElementById("deleteConfirmationModal");
+    const confirmButton = document.getElementById("confirmDeleteButton");
+    const cancelButton = document.getElementById("cancelButton");
+
+    let deleteUrl = "";
+
+    deleteLinks.forEach(link => {
+      link.addEventListener("click", function (event) {
+        event.preventDefault();
+        document.getElementsByTagName('html')[0].style.overflow = 'hidden';
+        document.getElementsByTagName('body')[0].style.overflow = 'hidden';
+        deleteUrl = `/student/delete_installment/${this.dataset.stu_id}/${this.dataset.installment_id}`;
+
+        const scrollPosition = window.scrollY || document.documentElement.scrollTop;
+        modal.style.top = `${scrollPosition}px`;
+        modal.classList.remove('d-none');
+      });
+    });
+
+    confirmButton.addEventListener("click", function () {
+      if (deleteUrl) {
+        window.location.href = deleteUrl; // Redirect to the delete URL
+      }
+    });
+
+    cancelButton.addEventListener("click", function () {
+      modal.classList.add("d-none");
+      document.getElementsByTagName('html')[0].style.overflow = 'auto';
+      document.getElementsByTagName('body')[0].style.overflow = 'auto';
+    });
   });
 </script>
 

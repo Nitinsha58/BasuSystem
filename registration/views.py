@@ -216,6 +216,18 @@ def student_transport_details(request, stu_id):
         'student': Student.objects.filter(stu_id=stu_id).first()
     })
     
+
+def delete_installment(request, stu_id, ins_id):
+    if stu_id and not Student.objects.filter(stu_id=stu_id):
+        messages.error(request, "Invalid Student")
+        return redirect('student_registration')
+    
+    student = Student.objects.filter(stu_id=stu_id).first()
+    
+    Installment.objects.filter(id=ins_id).delete()
+    messages.success(request, "Installment Deleted.")
+    return redirect('student_fees_details', stu_id=student.stu_id)
+
 def student_reg_doc(request, stu_id):
     if stu_id and not Student.objects.filter(stu_id=stu_id):
         messages.error(request, "Invalid Student")
