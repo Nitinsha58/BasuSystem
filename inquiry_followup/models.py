@@ -52,6 +52,7 @@ class FollowUp(models.Model):
     status = models.ForeignKey(FollowUpStatus, on_delete=models.SET_NULL, null=True, blank=True, related_name='followup')
     admission_counsellor = models.ForeignKey(AdmissionCounselor, on_delete=models.SET_NULL, null=True, blank=True)
     description = models.TextField()
+    followup_date = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

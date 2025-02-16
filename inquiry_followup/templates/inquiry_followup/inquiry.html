@@ -50,7 +50,16 @@
                                 <option value="{{sts.id}}" {% if sts == status %} selected {% endif %} >{{sts.name}}</option>
                                 {% endfor %}
                             </select>
-                            <textarea type="text" class="form-control" id="description-{{forloop.counter}}" name="description" placeholder="Followup details..." rows="2"></textarea>
+                            <textarea type="text" class="form-control" id="description-{{forloop.counter}}" name="description" placeholder="Followup details..." rows="2" required></textarea>
+                            <div class="d-flex justify-content-between align-items-center" id="followup-gap-group-{{forloop.counter}}">
+                                <p id="next-followup-label-{{forloop.counter}}" class="m-0">Next followup on<br> <span class="" id="next-followup-date-{{forloop.counter}}">20 Feb 25</span></p>
+                                <div class="d-flex ms-auto p-1 px-2 rounded m-0" style="width: fit-content; background-color: white;">
+                                    <button id="decrement-btn-{{forloop.counter}}" class="btn bg-danger-subtle m-0 " type="button">-</button>
+                                    <input id="count-input-{{forloop.counter}}" name="followup_days_gap" readonly class="m-0 border-0 rounded d-flex justify-content-center align-items-center" style="width: 40px; height: 40px; padding: 7px; text-align: center;" value="0">
+                                    <button id="increment-btn-{{forloop.counter}}" class="btn bg-success-subtle m-0 " type="button">+</button>
+                                </div>
+                            </div>
+
                             <div id="btn-group-{{forloop.counter}}" style="display: none;" class="btn-container w-100 justify-content-between">
                                 <button type="submit" class="btn btn-success px-4">Submit</button>
                                 <a href="" class="btn btn-primary px-4">Cancel</a>
@@ -71,6 +80,10 @@
                                     <textarea type="text" class="form-control" id="update-description" name="description" placeholder="Followup details..." rows="2">{{followup.description|title}}</textarea>
                                 {% else %}
                                     <textarea style="display: none;" type="text" class="form-control" id="update-description" name="description" placeholder="Followup details..." rows="2"></textarea>
+                                {% endif %}
+
+                                {% if followup.followup_date %}
+                                <p class="m-0">Next followup on <span class="fw-semibold" id="next-followup-date-{{forloop.counter}}">{{followup.followup_date|date:'d M Y'}}</span></p>
                                 {% endif %}
                                 <div id="update-btn-group" style="display: none;" class="btn-container w-100 justify-content-between">
                                     <button type="submit" class="btn btn-warning px-4">Update</button>
@@ -141,6 +154,60 @@
         const inputs = form.querySelectorAll("input, select, textarea");
         const btnContainer = document.getElementById(`btn-group-${index + 1}`);
         const description = form.querySelector(`#description-${index+1}`);
+
+        const countInput = form.querySelector(`#count-input-${index + 1}`);
+        const nextFollowupDate = form.querySelector(`#next-followup-date-${index + 1}`);
+
+        const nextFollowupLabel = form.querySelector(`#next-followup-label-${index + 1}`);
+
+        const decrementBtn = form.querySelector(`#decrement-btn-${index + 1}`);
+        const incrementBtn = form.querySelector(`#increment-btn-${index + 1}`);
+
+        const addDays = (date, days) => {
+            const result = new Date(date);
+            result.setDate(result.getDate() + days);
+            return result;
+        }
+
+        if (parseInt(countInput.value, 10) === 0) {
+            nextFollowupLabel.style.display = "none";
+        }
+        decrementBtn.addEventListener("click", function () {
+            let count = parseInt(countInput.value, 10);
+            if (count >= 1) {
+                countInput.value = count - 1;
+
+                const nextDate = addDays(new Date(), count - 1);
+                nextFollowupDate.innerText = nextDate.toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                }).replace(/ /g, ' ').slice(0, 11);
+            }
+
+            if (count - 1 === 0) {
+                nextFollowupLabel.style.display = "none";
+            }
+        });
+
+
+        incrementBtn.addEventListener("click", function () {
+            let count = parseInt(countInput.value, 10);
+
+            if (count <= 15) {
+                countInput.value = count + 1;
+
+                const nextDate = addDays(new Date(), count + 1);
+                nextFollowupDate.innerText = nextDate.toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                }).replace(/ /g, ' ').slice(0, 11);
+            }
+            if (count === 0) {
+                nextFollowupLabel.style.display = "block";
+            }
+        });
 
 
         // Add event listeners for focus and blur

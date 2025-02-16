@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 from django.db.models import Max
 from django.contrib import messages
+from django.utils.timezone import localtime, now
 
 
 
@@ -20,8 +21,12 @@ def inquiries(request):
     inquiry_followup_dict = defaultdict(list)
 
     for followup in latest_followups:
-        created_date = followup.inquiry.created_at.astimezone(timezone.get_current_timezone()).date()
-        inquiry_followup_dict[created_date].append(followup)
+        created_date = followup.inquiry.created_at.date()
+        followup_date = followup.followup_date
+        if followup_date:
+            inquiry_followup_dict[followup_date].append(followup)
+        else:
+            inquiry_followup_dict[created_date].append(followup)
 
     merged_dict = {date.date(): inquiry_followup_dict[date.date()] for date in dates}
 
@@ -66,6 +71,8 @@ def create_followup(request, inquiry_id):
     if request.method == 'POST':
         status_id = request.POST.get('status')
         desc = request.POST.get('description')
+        followup_days_gap = request.POST.get('followup_days_gap')
+        followup_date = timezone.now() + timedelta(days=int(followup_days_gap))
 
         counsellor = AdmissionCounselor.objects.filter(user=request.user).first()
 
@@ -78,7 +85,8 @@ def create_followup(request, inquiry_id):
             inquiry = inquiry_obj,
             status = FollowUpStatus.objects.get(id=status_id),
             description = desc,
-            admission_counsellor = counsellor
+            admission_counsellor = counsellor,
+            followup_date = followup_date if followup_days_gap.isdigit() and int(followup_days_gap) != 0 else None
         )
         followup.save()
 

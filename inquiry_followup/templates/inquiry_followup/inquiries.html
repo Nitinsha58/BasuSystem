@@ -27,7 +27,8 @@
                 <li class="list-group-item text-dark bg-light rounded">{{ date|date:'d b Y ( l )'|title }}</li>
 
                 {% for followup in followups %}
-                    <li class="list-group-item p-2 my-2 rounded bg-light-subtle border-1">
+                    <li class="list-group-item p-2 my-2 rounded bg-light-subtle" {% if followup.followup_date %} style="box-shadow: -3px -3px 12px #39299410, 6px 6px 12px #39299420;
+                        border: 2px solid #392994;" {% endif %}>
                         <a href="{% url 'inquiry' followup.inquiry.id %}" class="text-decoration-none  text-dark">
                             <p class="fs-5 m-0 mb-1" >{{followup.inquiry.student_name|title}}</p>
                             <div class="d-flex justify-content-between">
