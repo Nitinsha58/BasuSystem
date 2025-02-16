@@ -5,6 +5,8 @@ from center.models import Subject, ClassName
 from django.contrib import messages
 from django.db import transaction
 
+from django.db.models import Q
+
 def student_registration(request):
     form_data = {}
     if request.method == "POST":
@@ -236,4 +238,27 @@ def student_reg_doc(request, stu_id):
     return render(request, "registration/student_reg_doc.html", {
         'student': Student.objects.filter(stu_id=stu_id).first()
     })
+    
+
+def search_students(request):
+    search_term = request.GET.get('search', '').strip()
+    if search_term:
+        students = Student.objects.filter(
+            Q(user__first_name__icontains=search_term) |
+            Q(user__last_name__icontains=search_term) |
+            Q(user__phone__icontains=search_term)
+        ).select_related('user')[:10]
+        student_list = [
+            {   "stu_id": student.stu_id,
+                "name": f"{student.user.first_name} {student.user.last_name}",
+                "phone": student.user.phone,
+                "class": student.class_enrolled if student.class_enrolled else "N/A",
+                "subjects": ", ".join(subject.name for subject in student.subjects.all())
+            }
+            for student in students
+        ]
+    else:
+        student_list = []
+    return render(request, 'registration/students_results.html', {'students': student_list})
+    
     

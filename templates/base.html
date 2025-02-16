@@ -158,35 +158,35 @@
     </div>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            const searchBtn = document.getElementById('searchBtn');
-            const searchModal = document.getElementById("searchModal");
-            const cancelBox = document.getElementById("cancel-box");
+        // document.addEventListener("DOMContentLoaded", function () {
+        //     const searchBtn = document.getElementById('searchBtn');
+        //     const searchModal = document.getElementById("searchModal");
+        //     const cancelBox = document.getElementById("cancel-box");
 
-            const searchStudents = document.getElementById('search-students');
-            const searchInput = document.getElementById('search-input');
+        //     const searchStudents = document.getElementById('search-students');
+        //     const searchInput = document.getElementById('search-input');
 
 
-            searchBtn.addEventListener('click', () => {
-                console.log("Search Btn clicked.")
+        //     searchBtn.addEventListener('click', () => {
+        //         console.log("Search Btn clicked.")
 
-                document.getElementsByTagName('html')[0].style.overflow = 'hidden';
-                document.getElementsByTagName('body')[0].style.overflow = 'hidden';
+        //         document.getElementsByTagName('html')[0].style.overflow = 'hidden';
+        //         document.getElementsByTagName('body')[0].style.overflow = 'hidden';
 
-                const scrollPosition = window.scrollY || document.documentElement.scrollTop;
-                searchModal.style.top = `${scrollPosition}px`;
-                searchModal.classList.remove('d-none');
-            })
-            cancelBox.addEventListener('click', () => {
-                document.getElementsByTagName('html')[0].style.overflow = 'auto';
-                document.getElementsByTagName('body')[0].style.overflow = 'auto';
-                searchModal.classList.add('d-none');
-            })
-            searchInput.addEventListener("click", () => {
-                searchStudents.style.display = 'block';
-            });
+        //         const scrollPosition = window.scrollY || document.documentElement.scrollTop;
+        //         searchModal.style.top = `${scrollPosition}px`;
+        //         searchModal.classList.remove('d-none');
+        //     })
+        //     cancelBox.addEventListener('click', () => {
+        //         document.getElementsByTagName('html')[0].style.overflow = 'auto';
+        //         document.getElementsByTagName('body')[0].style.overflow = 'auto';
+        //         searchModal.classList.add('d-none');
+        //     })
+        //     searchInput.addEventListener("click", () => {
+        //         searchStudents.style.display = 'block';
+        //     });
 
-        });
+        // });
 
     </script>
 

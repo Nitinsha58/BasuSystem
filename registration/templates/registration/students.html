@@ -3,6 +3,25 @@
 
 {% block dashboard %}
 
+<div id="searchStuModal" style="background: rgba(255, 255, 255, 0.85);"
+  class="d-none position-absolute start-0 w-100 vh-100 position-absolute d-flex items-center justify-content-center">
+  <div id="cancel-stu-box" class="cancel-box position-absolute w-100 h-100 " style="opacity: 20%;">
+  </div>
+  <div class="rounded-lg rounded mt-5 w-100 bg-white shadow-md"
+    style="height: fit-content; max-width: 400px; z-index: 2355;">
+    <div class="search-form ">
+      <input type="text" class="form-control search-input p-2 fs-5" id="search-stu-input" maxlength="60"
+        placeholder="Search students..." autocomplete="off" 
+        name="search" 
+        hx-get="/student/search-students?search={value}"
+        hx-trigger="keyup changed delay:500ms, search" hx-target="#search-students-list">
+      <ul class="search-students p-0" id="search-students-list" style="max-height: 70%;">
+
+      </ul>
+    </div>
+  </div>
+</div>
+
 <div class="container p-4 bg-warning-subtle">
   {% if class_students %}
   <div class="row shuffle bg-warning-subtle" data-masonry='{"percentPosition": true }' id="batches">
@@ -10,7 +29,8 @@
     <div class="col-sm-6 col-md-4 col-lg-3 category shuffle-item shuffle-item--visible mb-4">
       <div class="card">
         <ul class="list-group">
-          <li class="list-group-item bg-dark text-white list-group border-dark"> {{cls.class}} -  ( {{cls.students.count}} )</li>
+          <li class="list-group-item bg-dark text-white list-group border-dark"> {{cls.class}} - (
+            {{cls.students.count}} )</li>
           {% for student in cls.students %}
           <li class="list-group-item d-flex justify-content-between align-items-center">
             <a class="text-decoration-none text-dark" target="_blank" href="{% url 'student_update' student.stu_id %}">
@@ -26,45 +46,39 @@
   {% endif %}
 </div>
 <script>
-//   document.addEventListener("DOMContentLoaded", function () {
-//     const deleteLinks = document.querySelectorAll(".delete-link");
-//     const modal = document.getElementById("deleteConfirmationModal");
-//     const confirmButton = document.getElementById("confirmDeleteButton");
-//     const cancelButton = document.getElementById("cancelButton");
+  document.addEventListener("DOMContentLoaded", function () {
+    const searchBtn = document.getElementById('searchStuBtn');
+    const searchModal = document.getElementById("searchStuModal");
+    const cancelBox = document.getElementById("cancel-stu-box");
 
-//     let deleteUrl = "";
+    const searchStudents = document.getElementById('search-students-list');
+    const searchInput = document.getElementById('search-stu-input');
 
-//     deleteLinks.forEach(link => {
-//       link.addEventListener("click", function (event) {
-//         event.preventDefault();
-//         document.getElementsByTagName('html')[0].style.overflow = 'hidden';
-//         document.getElementsByTagName('body')[0].style.overflow = 'hidden';
-//         deleteUrl = `/student-delete/${this.dataset.user_id}`;
 
-//         const scrollPosition = window.scrollY || document.documentElement.scrollTop;
-//         modal.style.top = `${scrollPosition}px`;
-//         modal.classList.remove('d-none');
-//       });
-//     });
+    searchBtn.addEventListener('click', () => {
+      console.log("Search Btn clicked.")
 
-//     confirmButton.addEventListener("click", function () {
-//       if (deleteUrl) {
-//         window.location.href = deleteUrl; // Redirect to the delete URL
-//       }
-//     });
+      document.getElementsByTagName('html')[0].style.overflow = 'hidden';
+      document.getElementsByTagName('body')[0].style.overflow = 'hidden';
 
-//     cancelButton.addEventListener("click", function () {
-//       modal.classList.add("d-none");
-//       document.getElementsByTagName('html')[0].style.overflow = 'auto';
-//       document.getElementsByTagName('body')[0].style.overflow = 'auto';
-//     });
-//   });
+      const scrollPosition = window.scrollY || document.documentElement.scrollTop;
+      searchModal.style.top = `${scrollPosition}px`;
+      searchModal.classList.remove('d-none');
+    })
+    cancelBox.addEventListener('click', () => {
+      document.getElementsByTagName('html')[0].style.overflow = 'auto';
+      document.getElementsByTagName('body')[0].style.overflow = 'auto';
+      searchModal.classList.add('d-none');
+    })
+    searchInput.addEventListener("click", () => {
+      searchStudents.style.display = 'block';
+    });
+  });
 </script>
 
 
 <script src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js"
-  integrity="sha384-GNFwBvfVxBkLMJpYMOABq3c+d3KnQxudP/mGPkzpZSTYykLBNsZEnG2D9G/X/+7D" crossorigin="anonymous"
-  async>
-</script>
+  integrity="sha384-GNFwBvfVxBkLMJpYMOABq3c+d3KnQxudP/mGPkzpZSTYykLBNsZEnG2D9G/X/+7D" crossorigin="anonymous" async>
+  </script>
 
 {% endblock dashboard %}

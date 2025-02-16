@@ -6,7 +6,6 @@ from .models import Batch, Center, Test, TestQuestion, Student, Remark, Question
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from user.models import BaseUser
-from django.db import models
 from django.db.models import Count, Sum, F, ExpressionWrapper, FloatField, Avg, Q
 from collections import Counter, defaultdict
 from .models import TestResult, RemarkCount

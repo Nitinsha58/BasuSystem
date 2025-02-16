@@ -8,11 +8,13 @@ from .views import (
     students_list,
     student_reg_doc,
     delete_installment,
+    search_students,
     )
 
 
 urlpatterns = [
     path('', students_list, name='students_list'),
+    path('search-students/', search_students, name='search_students'),
     path('registration', student_registration, name='student_registration'),
     path('<uuid:stu_id>', student_update, name='student_update'),
     path('<uuid:stu_id>/parent', student_parent_details, name='student_parent_details'),
