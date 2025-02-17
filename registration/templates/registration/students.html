@@ -3,11 +3,8 @@
 
 {% block dashboard %}
 
-<div id="searchStuModal" style="background: rgba(255, 255, 255, 0.85);"
-  class="d-none position-absolute start-0 w-100 vh-100 position-absolute d-flex items-center justify-content-center">
-  <div id="cancel-stu-box" class="cancel-box position-absolute w-100 h-100 " style="opacity: 20%;">
-  </div>
-  <div class="rounded-lg rounded mt-5 w-100 bg-white shadow-md"
+<div id="searchStuModal" class="start-0 d-flex items-center justify-content-center">
+  <div class="position-relative rounded-lg rounded my-2 w-100 bg-white shadow-md"
     style="height: fit-content; max-width: 400px; z-index: 2355;">
     <div class="search-form ">
       <input type="text" class="form-control search-input p-2 fs-5" id="search-stu-input" maxlength="60"
@@ -15,7 +12,7 @@
         name="search" 
         hx-get="/student/search-students?search={value}"
         hx-trigger="keyup changed delay:500ms, search" hx-target="#search-students-list">
-      <ul class="search-students p-0" id="search-students-list" style="max-height: 70%;">
+      <ul class="position-absolute search-students p-2 mt-2 top-2 w-100 rounded" id="search-students-list">
 
       </ul>
     </div>
@@ -45,36 +42,6 @@
   </div>
   {% endif %}
 </div>
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const searchBtn = document.getElementById('searchStuBtn');
-    const searchModal = document.getElementById("searchStuModal");
-    const cancelBox = document.getElementById("cancel-stu-box");
-
-    const searchStudents = document.getElementById('search-students-list');
-    const searchInput = document.getElementById('search-stu-input');
-
-
-    searchBtn.addEventListener('click', () => {
-      console.log("Search Btn clicked.")
-
-      document.getElementsByTagName('html')[0].style.overflow = 'hidden';
-      document.getElementsByTagName('body')[0].style.overflow = 'hidden';
-
-      const scrollPosition = window.scrollY || document.documentElement.scrollTop;
-      searchModal.style.top = `${scrollPosition}px`;
-      searchModal.classList.remove('d-none');
-    })
-    cancelBox.addEventListener('click', () => {
-      document.getElementsByTagName('html')[0].style.overflow = 'auto';
-      document.getElementsByTagName('body')[0].style.overflow = 'auto';
-      searchModal.classList.add('d-none');
-    })
-    searchInput.addEventListener("click", () => {
-      searchStudents.style.display = 'block';
-    });
-  });
-</script>
 
 
 <script src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js"
