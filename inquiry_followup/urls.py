@@ -1,7 +1,8 @@
 from django.urls import path
-from .views import create_inquiry, inquiries,inquiry, update_followup, create_followup, delete_followup, delete_inquiry
+from .views import create_inquiry, inquiries,inquiry, update_followup, create_followup, delete_followup, delete_inquiry, search_inquiries
 
 urlpatterns = [
+    path('search-inquiries/', search_inquiries, name='search_inquiries'),
     path('inquiry', create_inquiry, name='create_inquiry'),
     path('inquiries', inquiries, name='inquiries'),
     path('inquiries/<int:inquiry_id>', inquiry, name='inquiry'),

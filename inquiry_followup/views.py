@@ -2,9 +2,10 @@ from django.shortcuts import render, redirect
 from .models import Inquiry, ClassName, Subject, Referral, FollowUp, FollowUpStatus, AdmissionCounselor
 from datetime import datetime, timedelta
 from collections import defaultdict
-from django.db.models import Max
+from django.db.models import Max, Q
 from django.contrib import messages
 from django.utils.timezone import localtime, now
+
 
 
 
@@ -175,3 +176,27 @@ def create_inquiry(request):
         'subjects':subjects,
         'referrals': referrals
         })
+
+def search_inquiries(request):
+    search_term = request.GET.get('search', '').strip()
+    if search_term:
+        inquiries = Inquiry.objects.filter(
+            Q(student_name__icontains=search_term) |
+            Q(school__icontains=search_term) |
+            Q(phone__icontains=search_term)
+        )[:10]
+        inquiry_list = [
+            {   "id": inquiry.id,
+                "name": f"{inquiry.student_name}",
+                "phone": inquiry.phone,
+                "classes": ", ".join(cls.name for cls in inquiry.classes.all()),
+                "subjects": ", ".join(subject.name for subject in inquiry.subjects.all()),
+                "address": inquiry.address,
+            }
+            for inquiry in inquiries
+        ]
+    else:
+        inquiry_list = []
+    return render(request, 'inquiry_followup/inquiries_results.html', {'inquiries': inquiry_list})
+    
+    

@@ -105,50 +105,6 @@
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const today = new Date().toISOString().split('T')[0];
-        const dateCards = document.querySelectorAll(".date-card");
-        const gap = 32;
-        const container = document.querySelector(".dates-group");
-
-        const cardWidth = dateCards[0]?.offsetWidth || 0;
-
-        let scrollOffset = 0;
-
-        const scrollPosition = sessionStorage.getItem("individualInquiryPosition");
-        if (scrollPosition) {
-            container.scrollTo({
-                left: scrollPosition,
-            });
-
-            sessionStorage.removeItem("individualInquiryPosition");
-        }
-            window.addEventListener("beforeunload", function () {
-            sessionStorage.setItem("individualInquiryPosition", container.scrollLeft);
-        });
-
-        
-        for (let i = 0; i < dateCards.length; i++) {
-            if (dateCards[i].dataset.date === today) {
-                dateCards[i].querySelector('ul.list-group').children[0].innerText += "";
-                dateCards[i].querySelector('ul.list-group').children[0].classList.remove("text-dark", "bg-light");
-                dateCards[i].querySelector('ul.list-group').children[0].classList.add("bg-dark", "text-white", "border-dark");
-                break;
-            }
-            scrollOffset +=  gap + cardWidth;
-        }
-        scrollOffset -= gap*2 + cardWidth;
-
-        if (!scrollPosition) {
-            container.scrollTo({
-                left: scrollOffset,
-                // behavior: "smooth",
-            });
-        }
-    });
-
-
-
     const forms = document.querySelectorAll(".input-form");
     forms.forEach((form, index) => {
         const inputs = form.querySelectorAll("input, select, textarea");

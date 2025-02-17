@@ -1,0 +1,19 @@
+{% if inquiries %}
+    {% for inquiry in inquiries %}
+    <li class="list-group-item m-2 rounded p-2 bg-light">
+        <a href="{% url 'inquiry' inquiry.id %}" class="nav-link">
+            <div class="d-flex justify-content-between">
+                <div class="" style="font-size: 16px;">{{inquiry.name}}</div>
+                <span>{{inquiry.phone}}</span>
+            </div>
+            <small class="text-muted">{{inquiry.classes}} | Subjects: {{inquiry.subjects}}</small>
+        </a>
+    </li>
+    {% endfor %}
+{% else %}
+<li class="list-group-item m-2 rounded p-2 bg-light">
+    <div class="d-flex justify-content-between">
+        <div class="" style="font-size: 16px;">No Inquiry Found</div>
+    </div>
+</li>
+{% endif %}
