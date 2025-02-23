@@ -165,7 +165,7 @@ def create_inquiry(request):
         inquiry.subjects.set(selected_subjects)
         inquiry.save()
 
-        if request.user and AdmissionCounselor.objects.filter(user=request.user).first():
+        if request.user and request.user.is_authenticated and AdmissionCounselor.objects.filter(user=request.user).first():
             messages.success(request, "Inquiry Created.")
             return redirect('inquiries')
         

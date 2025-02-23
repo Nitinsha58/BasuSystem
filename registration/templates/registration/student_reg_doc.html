@@ -26,7 +26,7 @@
 
     <div class="g-3 bg-light rounded p-2 pb-3 container-sm p-4" id="student_reg_doc">
         <div class="navbar-brand d-flex justify-content-center">
-            <img src="https://basueducation.com/static/images/BASU%20LOGO.5e3cc85845b7.svg" alt="logo" width="150">
+            <img src="https://basueducation.com/static/images/BASU%20LOGO.5e3cc85845b7.svg" alt="logo" width="125">
         </div>
         <div class="navbar-brand d-flex flex-column align-items-center justify-content-center p-3" style="width: 100%;">
             <h3 class="fw-normal">Student Registration</h3>
@@ -291,7 +291,7 @@
                 {% for installment in student.fees.installments.all %}
                 <div class="d-flex justify-content-between">
                     <div class="">
-                        <p class="fw-semibold text-dark m-0">Installment {{forloop.counter}}</p>
+                        <p class="fw-semibold text-dark m-0">{{forloop.counter}}. Installment</p>
                         <p class="">{{ installment.due_date|date:"d M Y" }}</p>
                     </div>
                     <p class="">₹ {{installment.amount}}</p>
@@ -307,7 +307,7 @@
         </div>
 
         <div class="navbar-brand d-flex justify-content-center flex-column align-items-center" style="page-break-before: always;">
-            <img src="https://basueducation.com/static/images/BASU%20LOGO.5e3cc85845b7.svg" alt="logo" width="150">
+            <img src="https://basueducation.com/static/images/BASU%20LOGO.5e3cc85845b7.svg" alt="logo" width="125">
             <div class="mt-2">
                 <h3 class="term-heading">Terms & Conditions</h3>
             </div>
@@ -425,12 +425,11 @@
                         {% endif %}
                         
                         parent/guardian of {{student.user.first_name}} {{student.user.last_name}}, have read, understood, and agree to abide by the above terms and conditions.</p>
-                    <p style="margin: 5px;">Student's Signature: ___________________ </p>
                     <p style="margin: 5px;">Parent/Guardian's Signature: ______________ </p>
                     <p style="margin: 5px;">Institute's Representative: ________________</p>
+                    <p style="margin: 5px;">Academic Head: ________________</p>
                 </div>
-                
-        
+
             </div>
         </div>
     
