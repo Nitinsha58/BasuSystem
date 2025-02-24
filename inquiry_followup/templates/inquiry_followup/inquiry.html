@@ -15,20 +15,18 @@
     }
 </style>
 
-<div class="mx-4 px-4">
-    <div class="w-75 my-2 py-2">
-        <div class="d-flex justify-content-between">
+<div class="container-sm">
+    <div class="w-md-75 my-2 py-2">
+        <div class="d-flex justify-content-between ">
             <p class="h2">{{inquiry.student_name}}</p>
             <a href="{% url 'delete_inquiry' inquiry.id %}" class="btn btn-danger px-4 py-2" style="height: fit-content;">Delete Inquiry</a>
         </div>
         <p class="m-0 mb-1">
-
-
             {% with classes=inquiry.classes.all|join:", " subjects=inquiry.subjects.all|join:", " %}
                 {{ classes|title }} - {{ subjects|title }}
             {% endwith %}
         </p>
-        <div class="d-flex gap-4">
+        <div class="d-md-flex gap-4">
             <p class="my-1"><span class="fw-semibold">Phone: </span> {{inquiry.phone}}</p>
             <p class="my-1"><span class="fw-semibold">School: </span> {{inquiry.school}}</p>
             <p class="my-1"><span class="fw-semibold">Address: </span> {{inquiry.address}}</p>
