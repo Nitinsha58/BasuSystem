@@ -4,6 +4,7 @@ from .forms import StudentRegistrationForm, StudentUpdateForm, ParentDetailsForm
 from center.models import Subject, ClassName
 from django.contrib import messages
 from django.db import transaction
+from datetime import datetime
 
 from django.db.models import Q
 
@@ -242,6 +243,16 @@ def student_reg_doc(request, stu_id):
         'student': Student.objects.filter(stu_id=stu_id).first()
     })
     
+def print_receipt(request, stu_id):
+    if stu_id and not Student.objects.filter(stu_id=stu_id):
+        messages.error(request, "Invalid Student")
+        return redirect('student_registration')
+    
+    return render(request, "registration/receipt.html", {
+        'student': Student.objects.filter(stu_id=stu_id).first(),
+        'today': datetime.now()
+    })
+
 
 def search_students(request):
     search_term = request.GET.get('search', '').strip()
