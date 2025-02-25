@@ -68,13 +68,20 @@
         {% if fees_details.installments %}
         {% for installment in fees_details.installments.all %}
           <div class="row installment m-0 justify-content-evenly">
-            <div class="col-10 col-md-8 rounded p-2 d-flex flex-column align-items-end">
+            <div class="col-10 col-md-10 rounded p-2 d-flex flex-column align-items-end">
               <div class="d-flex justify-content-between w-100">
-                <p class="m-0 h4 fw-normal">{{forloop.counter}}. Installment </p>
                 <div class="">
-                  <input type="number" name="installment_amount_{{forloop.counter}}" class="rounded p-1 px-2" value="{{installment.amount}}" style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-amt-{{forloop.counter}}">
+                  <span class="m-0 h4 fw-normal">{{forloop.counter}}. </span>
+                  <input type="text" name="installment_label_{{forloop.counter}}" value="{{installment.label}}" class="rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" required>
+                </div>
+                <div class="d-flex gap-2">
+                  <input type="number" name="installment_amount_{{forloop.counter}}" class="mt-1 rounded p-1 px-2" value="{{installment.amount}}" style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-amt-{{forloop.counter}}">
                   <input type="date" name="installment_due_date_{{forloop.counter}}" value="{{installment.due_date|date:'Y-m-d'}}" class="mt-1 rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-date-{{forloop.counter}}">
-                  
+                  <select class="form-select mt-1 rounded p-1 px-2" style="width: fit-content;" name="payment_type_{{forloop.counter}}" id="payment_type_{{forloop.counter}}">
+                    {% for option in payment_options %}
+                    <option value="{{option.0}}" {% if option.0 == installment.payment_type %} selected {% endif %}>{{option.1}}</option>
+                    {% endfor %}
+                  </select>
                   {% if not installment.paid %}
                   <button type="button" data-stu_id="{{student.stu_id}}" data-installment_id="{{installment.id}}" style="height: fit-content;" class="delete-link px-2 py-1 ms-2 btn btn-outline-danger fw-semibold text-decoration-none">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
@@ -83,7 +90,6 @@
                     </svg>
                   </button>
                   {% endif  %}
-
                 </div>
               </div>
               <div class="form-check form-switch mt-2">
@@ -95,12 +101,21 @@
             {% endfor %}
           {% else %}
           <div class="row installment m-0 justify-content-evenly">
-            <div class="col-10 col-md-8 rounded p-2 d-flex flex-column align-items-end">
+            <div class="col-10 col-md-10 rounded p-2 d-flex flex-column align-items-end">
               <div class="d-flex justify-content-between w-100">
-                <p class="m-0 h4 fw-normal">1. Installment </p>
                 <div class="">
-                  <input type="number" name="installment_amount_1" class="rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-amt-1" required>
+                  <span class="m-0 h4 fw-normal">1. </span>
+                  <input type="text" name="installment_label_1" value="Installment" class="rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" required>
+                </div>
+
+                <div class="d-flex gap-2">
+                  <input type="number" name="installment_amount_1" placeholder="amount" class="mt-1 rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-amt-1" required>
                   <input type="date" name="installment_due_date_1" value="" class="mt-1 rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-date-1">
+                  <select class="form-select mt-1 rounded p-1 px-2" style="width: fit-content;" name="payment_type_1" id="payment_type_1">
+                    {% for option in payment_options %}
+                    <option value="{{option.0}}">{{option.1}}</option>
+                    {% endfor %}
+                  </select>
                 </div>
               </div>
               <div class="form-check form-switch mt-2">
@@ -173,6 +188,8 @@
     window.deleteInstallment = function (count){
       let installment = document.querySelector(`#installment-amt-${count}`).closest(".installment");
       installment.remove();
+      countInput.value = parseInt(countInput.value, 10) - 1;
+      updateTotalInstallmentAmt();
     }
     
     function addInstallment(count){
@@ -180,12 +197,20 @@
       installmentDiv.classList.add("row", "installment","m-0", "justify-content-evenly");
 
       installmentDiv.innerHTML = `
-        <div class="col-10 col-md-8  rounded p-2 d-flex flex-column align-items-end">
+        <div class="col-10 col-md-10 rounded p-2 d-flex flex-column align-items-end">
           <div class="d-flex justify-content-between w-100">
-            <p class="m-0 h4 fw-normal text-dark">${count}. Installment </p>
             <div class="">
-              <input type="number" name="installment_amount_${count}" class="rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-amt-${count}" required>
+              <span class="m-0 h4 fw-normal">${count}. </span>
+              <input type="text" name="installment_label_${count}" type="text" value="Installment" class="rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" required>
+            </div>
+            <div class="d-flex gap-2">
+              <input type="number" name="installment_amount_${count}" placeholder="amount" class="mt-1 rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-amt-${count}" required>
               <input type="date" name="installment_due_date_${count}" value=${today} class="mt-1 rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-date-${count}" required>
+              <select class="form-select mt-1 rounded p-1 px-2 pe-3" style="width: fit-content;" name="payment_type_${count}" id="payment_type_${count}">
+                  {% for option in payment_options %}
+                    <option value="{{option.0}}">{{option.1}}</option>
+                  {% endfor %}
+              </select>
 
               <button type="button" onclick="deleteInstallment(${count})" id="delete-btn-${count}" style="height: fit-content;" class="px-2 py-1 ms-2 btn btn-outline-danger fw-semibold text-decoration-none">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
@@ -193,7 +218,6 @@
                   <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
                 </svg>
               </button>
-
             </div>
           </div>
 

@@ -177,18 +177,21 @@ def student_fees_details(request, stu_id):
                         student=student,
                         amount=request.POST.get(f'installment_amount_{ins}'),
                         due_date=request.POST.get(f'installment_due_date_{ins}'),
-                        paid=request.POST.get(f'paid_{ins}') == 'on'
+                        paid=(request.POST.get(f'paid_{ins}') == 'on') ,
+                        label = request.POST.get(f'installment_label_{ins}'),
+                        payment_type = request.POST.get(f'payment_type_{ins}')
                     )
                     installment.save()
         except Exception as e:
             messages.error(request, "Invalid Data or form.")
             return redirect('student_fees_details', stu_id=stu_id)
 
-
+    payment_options = Installment.PAYMENT_CHOICES
 
     return render(request, "registration/student_fees_details.html", {
         'student': student,
         'fees_details': fees_details,
+        'payment_options': payment_options,
     })
 
 def student_transport_details(request, stu_id):

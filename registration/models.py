@@ -63,9 +63,21 @@ class FeeDetails(models.Model):
         return f"Fees for {self.student.user.first_name}"
 
 class Installment(models.Model):
+    PAYMENT_CHOICES = [
+        ('Cash', 'Cash'),
+        ('UPI', 'UPI'),
+        ('Net Banking', 'Net Banking'),
+        ('Credit Card', 'Credit Card'),
+        ('Debit Card', 'Debit Card'),
+        ('Auto Debit', 'Auto Debit'),
+    ]
+    
     installment_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='installments')
+    label = models.CharField(max_length=255, blank=True, null=True)
+    payment_type = models.CharField(max_length=255, choices=PAYMENT_CHOICES, blank=True, null=True)
+
     fee_details = models.ForeignKey(FeeDetails, on_delete=models.CASCADE, related_name='installments')
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     due_date = models.DateField()
