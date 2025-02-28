@@ -21,7 +21,7 @@
 
     <div class="my-4 mt-2 container-sm d-flex">
         <h2 class="fw-normal text-dark">Student Details </h2>
-        <button class="btn bg-warning-subtle" onclick="printDiv('student_reg_doc')">Print Section</button>
+        <button class="btn bg-warning ms-2" onclick="printDiv('student_reg_doc')">Print Document</button>
     </div>
 
 
@@ -230,7 +230,7 @@
             </div>
         </div>
 
-        <div class="mt-3 px-2">
+        <div class="mt-2 px-2">
             <div class="d-flex mb-3" style="width: 100%; align-items: center;">
                 <h4 class="mb-0">Transport Details</h4>
                 <div style="flex-grow: 1; border-bottom: 2px solid rgba(105, 105, 105, 0.477); margin-left: 10px;">
@@ -447,6 +447,11 @@
         window.print();
         document.body.innerHTML = originalContent;
     }
+
+    window.onbeforeprint = function() {
+        printDiv('student_reg_doc')
+        alert('Printing');
+    };
 </script>
 
 {% endblock dashboard %}
