@@ -113,6 +113,17 @@
             </div>
 
             <div class="d-flex justify-content-between">
+                <p class="fw-semibold">Course</p>
+                {% if student.course %}
+                <p class="">
+                    {{ student.course }}
+                </p>
+                {% else %}
+                <p class="">CBSE</p>
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between">
                 <p class="fw-semibold">Marksheet Submitted</p>
                 {% if student.marksheet_submitted %}
                 <p class="">
