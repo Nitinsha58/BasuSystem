@@ -255,6 +255,14 @@
                 </div>
             </div>
             <div class="d-flex justify-content-between">
+                <p class="fw-semibold">Registration Fee</p>
+                {% if student.fees.registration_fee %}
+                <p class="">₹ {{student.fees.registration_fee}}</p>
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+            </div>
+            <div class="d-flex justify-content-between">
                 <p class="fw-semibold">Tuition Fee</p>
                 {% if student.fees.tuition_fees %}
                 <p class="">₹ {{student.fees.tuition_fees}}</p>
@@ -266,14 +274,6 @@
                 <p class="fw-semibold">Cab Fee</p>
                 {% if student.fees.cab_fees %}
                 <p class="">₹ {{student.fees.cab_fees}}</p>
-                {% else %}
-                <p class="">N/A</p>
-                {% endif %}
-            </div>
-            <div class="d-flex justify-content-between">
-                <p class="fw-semibold">Uniform Fee</p>
-                {% if student.fees.uniform_fees %}
-                <p class="">₹ {{student.fees.uniform_fees}}</p>
                 {% else %}
                 <p class="">N/A</p>
                 {% endif %}
