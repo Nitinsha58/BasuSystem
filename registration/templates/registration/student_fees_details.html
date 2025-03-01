@@ -27,11 +27,7 @@
       <div class="row justify-content-evenly mt-3">
         <div class="col-md-4">
           <label for="book_fees" class="form-label">Registration Fees</label>
-          {% if fees_details.registration_fee >= 0 %}
           <input type="text" value="{{fees_details.registration_fee}}" class="form-control" name="registration_fee" id="registration_fee" >
-          {% else %}
-          <input type="text" value="2500" class="form-control" name="registration_fee" id="registration_fee" >
-          {% endif %}
         </div>
         <div class="col-md-4">
           <label for="cab_fees" class="form-label">Cab Fees</label>
