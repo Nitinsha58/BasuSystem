@@ -149,7 +149,7 @@ def student_fees_details(request, stu_id):
 
     if request.method == 'POST':
         form_data = {
-            "book_fees": request.POST.get("book_fees") or 0,
+            "registration_fee": request.POST.get("registration_fee") or 0,
             "uniform_fees": request.POST.get("uniform_fees") or 0,
             "cab_fees": request.POST.get("cab_fees") or 0,
             "tuition_fees": request.POST.get("tuition_fees") or 0,
@@ -162,8 +162,7 @@ def student_fees_details(request, stu_id):
                 fees_details, created = FeeDetails.objects.get_or_create(student=student)
 
                 fees_details.total_fees = request.POST.get("total_fees") or 0
-                fees_details.book_fees = request.POST.get("book_fees") or 0
-                fees_details.uniform_fees = request.POST.get("uniform_fees") or 0
+                fees_details.registration_fee = request.POST.get("registration_fee") or 0
                 fees_details.cab_fees = request.POST.get("cab_fees") or 0
                 fees_details.tuition_fees = request.POST.get("tuition_fees") or 0
                 

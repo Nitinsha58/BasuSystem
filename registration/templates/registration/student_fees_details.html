@@ -26,21 +26,18 @@
       <input type="text" hidden value="{{fees_details.total_fees}}" class="form-control" name="total_fees" id="total_fees_input">
       <div class="row justify-content-evenly mt-3">
         <div class="col-md-4">
-          <label for="book_fees" class="form-label">Book Fees</label>
-          <input type="text" value="{{fees_details.book_fees}}" class="form-control" name="book_fees" id="book_fees">
+          <label for="book_fees" class="form-label">Registration Fees</label>
+          <input type="text" value="{{fees_details.registration_fee|default:2500}}" class="form-control" name="registration_fee" id="registration_fee" >
         </div>
-        <div class="col-md-4">
-          <label for="uniform_fees" class="form-label">Uniform Fees</label>
-          <input type="text" value="{{fees_details.uniform_fees}}" class="form-control" name="uniform_fees" id="uniform_fees">
-        </div>
-      </div>
-      
-      <div class="row justify-content-evenly mt-3">
         <div class="col-md-4">
           <label for="cab_fees" class="form-label">Cab Fees</label>
           <input type="text" minlength="10" value="{{fees_details.cab_fees}}" maxlength="10" class="form-control" name="cab_fees" id="cab_fees">
         </div>
+      </div>
+      
+      <div class="row justify-content-evenly mt-3">
 
+        <div class="col-md-4"></div>
         <div class="col-md-4">
           <label for="tuition_fees" class="form-label">Tuition Fees</label>
           <input type="text" minlength="10" maxlength="10" value="{{fees_details.tuition_fees}}" class="form-control" name="tuition_fees" id="tuition_fees" required>
@@ -147,7 +144,7 @@
     const totalFeesElement = document.getElementById("total_fees");
     const totalFeesInput = document.getElementById("total_fees_input");
     const installmentContainer = document.querySelector(".installments");
-    const feeInputs = document.querySelectorAll("#book_fees, #uniform_fees, #cab_fees, #tuition_fees");
+    const feeInputs = document.querySelectorAll("#registration_fee, #cab_fees, #tuition_fees");
     today = new Date().toISOString().split('T')[0];
 
     first_installment_date = document.getElementById("installment-date-1");
