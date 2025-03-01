@@ -50,4 +50,19 @@
 </div>
 </div>
 
+
+<script>
+
+  const father_phone = document.getElementById('father_contact');
+  const mother_phone = document.getElementById('mother_contact')
+  
+  father_phone.addEventListener("input", function () {
+      this.value = this.value.replace(/\D/g, "").slice(0, 10); // Remove non-digits and limit to 10
+  });
+  mother_phone.addEventListener("input", function () {
+      this.value = this.value.replace(/\D/g, "").slice(0, 10); // Remove non-digits and limit to 10
+  });
+
+</script>
+
 {% endblock dashboard %}
