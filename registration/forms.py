@@ -26,7 +26,8 @@ class StudentRegistrationForm(forms.ModelForm):
             "last_year_marks_details", 
             "aadhar_card_number", 
             "gender", 
-            "subjects"
+            "subjects",
+            "course"
         ]
     
     def clean_phone(self):
@@ -98,7 +99,8 @@ class StudentUpdateForm(forms.ModelForm):
             "address", 
             "last_year_marks_details", 
             "aadhar_card_number", 
-            "gender", 
+            "gender",
+            "course"
         ]
 
     def __init__(self, *args, **kwargs):

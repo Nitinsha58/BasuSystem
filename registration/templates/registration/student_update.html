@@ -125,12 +125,17 @@
             <option value="Other" {% if student.gender == 'Other' %} selected {% endif %} >Other</option>
           </select>
         </div>
-
+        <div class="col-md-3">
+          <label for="gender" class="form-label">Course</label>
+          <select class="form-select" name="course" id="course">
+            <option value="CBSE" {% if student.course == 'CBSE' %} selected {% endif %} >CBSE</option>
+            <option value="JEE" {% if student.course == 'JEE' %} selected {% endif %} >JEE</option>
+            <option value="NEET" {% if student.course == 'NEET' %} selected {% endif %} >NEET</option>
+          </select>
+        </div>
         <div class="col-md-3 mt-4">
           <button class="btn btn-warning" type="submit">Update Student</button>
         </div>
-        <div class="col-md-3"></div>
-
       </div>
     </form>
 </div>

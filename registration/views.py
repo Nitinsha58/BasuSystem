@@ -28,6 +28,7 @@ def student_registration(request):
             "last_year_marks_details": request.POST.get("last_year_marks_details"),
             "aadhar_card_number": request.POST.get("aadhar_card_number"),
             "gender": request.POST.get("gender"),
+            "course": request.POST.get("course"),
         }
         form = StudentRegistrationForm(form_data)
 
@@ -75,6 +76,7 @@ def student_update(request, stu_id):
             "last_year_marks_details": request.POST.get("last_year_marks_details"),
             "aadhar_card_number": request.POST.get("aadhar_card_number"),
             "gender": request.POST.get("gender"),
+            "course": request.POST.get("course"),
         }
         form = StudentUpdateForm(form_data, instance=student)
 
