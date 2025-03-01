@@ -16,7 +16,7 @@
         <h2 class="fw-normal text-dark">{{student.user.first_name}}'s Fee Details </h2>
     </div>
 
-    <form class="g-3 bg-light rounded p-2 pb-3" method="post">
+    <form class="g-3 bg-light rounded p-2 pb-3" method="post" id="fee-form">
       {% csrf_token %}
       <div class="row justify-content-evenly mt-3">
         <div class="col-md-10">
@@ -146,9 +146,24 @@
     const installmentContainer = document.querySelector(".installments");
     const feeInputs = document.querySelectorAll("#registration_fee, #cab_fees, #tuition_fees");
     today = new Date().toISOString().split('T')[0];
+    
+    const fee_form = document.getElementById("fee-form");
 
     first_installment_date = document.getElementById("installment-date-1");
     first_installment_date.value = today;
+
+    document.getElementById("fee-form").addEventListener("submit", function (event) {
+      let totalFees = parseInt(totalFeesInput.value, 10);
+      let installment_total_amt = parseInt(document.getElementById("installment-total-amt").textContent, 10);
+
+      if (totalFees !== installment_total_amt) {
+        alert("Total fees and total installment Don't Match.");
+        event.preventDefault();
+      }
+    });
+
+    // total_fees
+    // installment-total-amt
 
     function calculateTotalFees() {
         let totalFees = 0;
