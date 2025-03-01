@@ -316,6 +316,21 @@
                 <p class="fw-bold">Total Fees</p>
                 <p class="">₹ {{student.fees.total_fees}}</p>
             </div>
+
+            <div class="mb-2">
+                <h5 style="margin: 5px;"><strong>Declaration:</strong></h5>
+                <p style="margin: 5px;">I, 
+                    {% if student.parent_details.father_name %}
+                        {{ student.parent_details.father_name }}
+                    {% elif student.parent_details.mother_name %}
+                        {{ student.parent_details.mother_name }}
+                    {% endif %}
+                    
+                    parent/guardian of {{student.user.first_name}} {{student.user.last_name}}, confirm that the above fees for the student are correct and agreed upon.</p>
+                <p style="margin: 5px;">Parent/Guardian's Signature: ______________ </p>
+                <p style="margin: 5px;">Institute's Representative: ________________</p>
+                <p style="margin: 5px;">Academic Head: ________________</p>
+            </div>
         </div>
 
         <div class="navbar-brand d-flex justify-content-center flex-column align-items-center" style="page-break-before: always;">
