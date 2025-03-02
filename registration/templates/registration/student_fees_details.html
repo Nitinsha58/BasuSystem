@@ -153,10 +153,10 @@
     first_installment_date.value = today;
 
     document.getElementById("fee-form").addEventListener("submit", function (event) {
-      let totalFees = parseInt(totalFeesInput.value, 10);
-      let installment_total_amt = parseInt(document.getElementById("installment-total-amt").textContent, 10);
+      let totalFees = totalFeesElement.textContent;
+      let installment_total_amt = document.getElementById("installment-total-amt").textContent;
 
-      if (totalFees !== installment_total_amt) {
+      if (totalFees != installment_total_amt) {
         alert("Total fees and total installment Don't Match.");
         event.preventDefault();
       }
