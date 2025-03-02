@@ -268,7 +268,15 @@
             <td colspan="6" class="right">No payments available</td>
         </tr>
         {% endfor %}
-        
+        <tr>
+            <td></td>
+            <td><b>Total</b></td>
+            <td class="right">
+            </td>
+            <td class="right"></td>
+            <td class="right"></td>
+            <td class="bold">₹{{ student.fees.total_fees|default:"0" }}</td>
+        </tr>
     </tbody>
 </table>
 
