@@ -50,6 +50,7 @@ class FeeDetails(models.Model):
     fee_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
     student = models.OneToOneField(Student, on_delete=models.CASCADE, related_name='fees')
+    discount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True, blank=True)
     registration_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True, blank=True)
     cab_fees = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True, blank=True)
     tuition_fees = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)

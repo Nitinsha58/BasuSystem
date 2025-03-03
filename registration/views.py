@@ -161,6 +161,8 @@ def student_fees_details(request, stu_id):
             "cab_fees": request.POST.get("cab_fees") or 0,
             "tuition_fees": request.POST.get("tuition_fees") or 0,
             "num_installments": request.POST.get("num_installments") or 1,
+            "discount": request.POST.get("discount") or 0,
+            "total_fees": request.POST.get("total_fees") or 0,
             "installments": []
         }
 
@@ -172,6 +174,7 @@ def student_fees_details(request, stu_id):
                 fees_details.registration_fee = request.POST.get("registration_fee") or 0
                 fees_details.cab_fees = request.POST.get("cab_fees") or 0
                 fees_details.tuition_fees = request.POST.get("tuition_fees") or 0
+                fees_details.discount = request.POST.get("discount") or 0
                 
                 fees_details.save()
 

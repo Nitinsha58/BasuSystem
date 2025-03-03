@@ -37,7 +37,10 @@
       
       <div class="row justify-content-evenly mt-3">
 
-        <div class="col-md-4"></div>
+        <div class="col-md-4">
+          <label for="discount" class="form-label">Discount Amount</label>
+          <input type="text" minlength="10" maxlength="10" value="{{fees_details.discount}}" class="form-control" name="discount" id="discount">
+        </div>
         <div class="col-md-4">
           <label for="tuition_fees" class="form-label">Tuition Fees</label>
           <input type="text" minlength="10" maxlength="10" value="{{fees_details.tuition_fees}}" class="form-control" name="tuition_fees" id="tuition_fees" required>
@@ -144,7 +147,7 @@
     const totalFeesElement = document.getElementById("total_fees");
     const totalFeesInput = document.getElementById("total_fees_input");
     const installmentContainer = document.querySelector(".installments");
-    const feeInputs = document.querySelectorAll("#registration_fee, #cab_fees, #tuition_fees");
+    const feeInputs = document.querySelectorAll("#registration_fee, #cab_fees, #tuition_fees, #discount");
     today = new Date().toISOString().split('T')[0];
     
     const fee_form = document.getElementById("fee-form");
@@ -168,7 +171,11 @@
     function calculateTotalFees() {
         let totalFees = 0;
         feeInputs.forEach(input => {
-            totalFees += parseInt(input.value || 0, 10);
+            if (input.id === "discount") {
+                totalFees -= parseInt(input.value || 0, 10);
+            } else {
+              totalFees += parseInt(input.value || 0, 10);
+            }
         });
         totalFeesElement.textContent = totalFees.toLocaleString();
         totalFeesInput.value = totalFees;
