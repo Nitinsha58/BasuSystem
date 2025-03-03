@@ -126,17 +126,34 @@
           </select>
         </div>
         <div class="col-md-3">
-          <label for="gender" class="form-label">Course</label>
+          <label for="course" class="form-label">Course</label>
           <select class="form-select" name="course" id="course">
-            <option value="CBSE" {% if student.course == 'CBSE' %} selected {% endif %} >CBSE</option>
-            <option value="JEE" {% if student.course == 'JEE' %} selected {% endif %} >JEE</option>
-            <option value="NEET" {% if student.course == 'NEET' %} selected {% endif %} >NEET</option>
+            {% for course in student.COURSE_CHOICE %}
+            <option value="{{course.0}}" {% if course.0 == student.course %} selected {% endif %} >{{course.1}}</option>
+            {% endfor %}
           </select>
+        </div>
+        <div class="col-md-3">
+          <label for="program_duration" class="form-label">Duration</label>
+          <select class="form-select" name="program_duration" id="program_duration">
+            {% for duration in student.DURATION_CHOICE %}
+            <option value="{{duration.0}}" {% if duration.0 == student.program_duration %} selected {% endif %} >{{duration.1}}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="row justify-content-evenly mt-3">
+        <div class="col-md-3">
         </div>
         <div class="col-md-3 mt-4">
           <button class="btn btn-warning" type="submit">Update Student</button>
         </div>
+        <div class="col-md-3">
+        </div>
       </div>
+
+
     </form>
 </div>
 </div>

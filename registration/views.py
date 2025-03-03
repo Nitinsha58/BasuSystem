@@ -29,6 +29,7 @@ def student_registration(request):
             "aadhar_card_number": request.POST.get("aadhar_card_number"),
             "gender": request.POST.get("gender"),
             "course": request.POST.get("course"),
+            "program_duration": request.POST.get("program_duration"),
         }
         form = StudentRegistrationForm(form_data)
 
@@ -43,11 +44,15 @@ def student_registration(request):
 
     classes = ClassName.objects.all().order_by('-name')
     subjects = Subject.objects.all().order_by('name')
+    courses = Student.COURSE_CHOICE
+    durations = Student.DURATION_CHOICE
 
     return render(request, "registration/student_registration.html", {
         'classes': classes, 
         'subjects': subjects,
-        'form': form_data
+        'form': form_data,
+        'courses': courses,
+        'durations': durations
     })
 
 
@@ -77,9 +82,10 @@ def student_update(request, stu_id):
             "aadhar_card_number": request.POST.get("aadhar_card_number"),
             "gender": request.POST.get("gender"),
             "course": request.POST.get("course"),
+            "program_duration": request.POST.get("program_duration"),
         }
         form = StudentUpdateForm(form_data, instance=student)
-
+        print(form_data)
         if form.is_valid():
             form.save()
             messages.success(request, 'Student Updated.')

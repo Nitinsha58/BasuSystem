@@ -7,11 +7,13 @@ from user.models import BaseUser
 class Student(models.Model):
     GENDER_CHOICE = [('Male', 'Male'), ('Female', 'Female'), ('Other', 'Other')]
     COURSE_CHOICE = [('CBSE', 'CBSE'), ('NEET', 'NEET'), ('JEE', 'JEE')]
+    DURATION_CHOICE = [('1 Year', '1 Year'), ('2 Year', '2 Year'), ('3 Year', '3 Year')]
     
     stu_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     user = models.OneToOneField(BaseUser, on_delete=models.CASCADE, related_name="registered_student")
     
     course = models.CharField(max_length=10, choices=COURSE_CHOICE, blank=True, null=True)
+    program_duration = models.CharField(max_length=10, choices=DURATION_CHOICE, blank=True, default='1 Year')
     email = models.EmailField(unique=True, blank=True, null=True)
     dob = models.DateField()
     doj = models.DateField(blank=True, null=True)
