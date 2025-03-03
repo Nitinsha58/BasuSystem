@@ -85,7 +85,6 @@ def student_update(request, stu_id):
             "program_duration": request.POST.get("program_duration"),
         }
         form = StudentUpdateForm(form_data, instance=student)
-        print(form_data)
         if form.is_valid():
             form.save()
             messages.success(request, 'Student Updated.')
