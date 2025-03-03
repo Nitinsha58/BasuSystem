@@ -27,12 +27,12 @@
 
     <div class="g-3 bg-light rounded p-2 pb-3 container-sm p-4" id="student_reg_doc">
         <div class="navbar-brand d-flex justify-content-center">
-            <img src="https://basueducation.com/static/images/BASU%20LOGO.5e3cc85845b7.svg" alt="logo" width="125">
+            <img src="https://basueducation.com/static/images/BASU%20LOGO.5e3cc85845b7.svg" alt="logo" width="115">
         </div>
         <div class="navbar-brand d-flex flex-column align-items-center justify-content-center p-3" style="width: 100%;">
             <h3 class="fw-normal">Student Registration</h3>
         </div>
-        <div class="mt-3 px-2">
+        <div class="px-2">
             <div class="d-flex mb-3" style="width: 100%; align-items: center;">
                 <h4 class="mb-0">Personal Details</h4>
                 <div style="flex-grow: 1; border-bottom: 2px solid rgba(105, 105, 105, 0.477); margin-left: 10px;">
@@ -124,6 +124,17 @@
             </div>
 
             <div class="d-flex justify-content-between">
+                <p class="fw-semibold">Program Duration</p>
+                {% if student.program_duration %}
+                <p class="">
+                    {{ student.program_duration }}
+                </p>
+                {% else %}
+                <p class="">1 Year</p>
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between">
                 <p class="fw-semibold">Marksheet Submitted</p>
                 {% if student.marksheet_submitted %}
                 <p class="">
@@ -184,7 +195,7 @@
 
         </div>
 
-        <div class="mt-3 px-2">
+        <div class="px-2">
             <div class="d-flex mb-3" style="width: 100%; align-items: center;">
                 <h4 class="mb-0">Parent Details</h4>
                 <div style="flex-grow: 1; border-bottom: 2px solid rgba(105, 105, 105, 0.477); margin-left: 10px;">
@@ -241,7 +252,7 @@
             </div>
         </div>
 
-        <div class="mt-2 px-2">
+        <div class="mt-1 px-2">
             <div class="d-flex mb-3" style="width: 100%; align-items: center;">
                 <h4 class="mb-0">Transport Details</h4>
                 <div style="flex-grow: 1; border-bottom: 2px solid rgba(105, 105, 105, 0.477); margin-left: 10px;">
@@ -289,10 +300,33 @@
                 <p class="">N/A</p>
                 {% endif %}
             </div>
+            
+            {% if student.fees.discount %}
             <div class="d-flex justify-content-between">
-                <p class="fw-semibold">Book Fee</p>
-                {% if student.fees.book_fees %}
-                <p class="">₹ {{student.fees.book_fees}}</p>
+                <p class="fw-semibold">Discount</p>
+                {% if student.fees.discount %}
+                <p class="">- ₹ {{ student.fees.discount|default:0 }}</p>
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div style="flex-grow: 1; border-bottom: 2px solid rgba(105, 105, 105, 0.477); margin-left: 10px;"></div>
+
+            <div class="d-flex justify-content-between">
+                <p class="">Total Fee</p>
+                {% if student.fees.total_fees %}
+                <p class="">₹ {{ student.fees.registration_fee|default:0|add:student.fees.tuition_fees|default:0|add:student.fees.cab_fees|default:0|floatformat:2 }}</p>
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+            </div>
+            
+            <div class="d-flex justify-content-between">
+                <p class="fw-bold">Net Fees</p>
+                {% if student.fees.total_fees %}
+                <p class="">₹ {{ student.fees.total_fees }}</p>
                 {% else %}
                 <p class="">N/A</p>
                 {% endif %}
@@ -313,7 +347,7 @@
 
             <div style="flex-grow: 1; border-bottom: 2px solid rgba(105, 105, 105, 0.477); margin-left: 10px;"></div>
             <div class="d-flex justify-content-between">
-                <p class="fw-bold">Total Fees</p>
+                <p class="fw-bold">Total Payable Fees</p>
                 <p class="">₹ {{student.fees.total_fees}}</p>
             </div>
 
