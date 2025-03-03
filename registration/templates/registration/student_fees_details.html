@@ -218,7 +218,7 @@
             </div>
             <div class="d-flex gap-2">
               <input type="number" name="installment_amount_${count}" placeholder="amount" class="mt-1 rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-amt-${count}" required>
-              <input type="date" name="installment_due_date_${count}" value=${today} class="mt-1 rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-date-${count}" required>
+              <input type="date" name="installment_due_date_${count}" class="mt-1 rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-date-${count}" required>
               <select class="form-select mt-1 rounded p-1 px-2 pe-3" style="width: fit-content;" name="payment_type_${count}" id="payment_type_${count}">
                   {% for option in payment_options %}
                     <option value="{{option.0}}">{{option.1}}</option>
