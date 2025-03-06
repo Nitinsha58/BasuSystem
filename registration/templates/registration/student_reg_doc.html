@@ -1,6 +1,26 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block style %}
+<style>
+    .student_reg_doc {
+        position: relative;
+    }
+    .photo-frame {
+        position: absolute;
+        right: 0;
+        width: 100px;
+        height: 120px;
+        border: 1px solid #000;
+        margin: 0 auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+</style>
+{% endblock style %}
+
 {% block dashboard %}
 
 
@@ -26,6 +46,9 @@
 
 
     <div class="g-3 bg-light rounded p-2 pb-3 container-sm p-4" id="student_reg_doc">
+        <div class="photo-frame">
+            Student Photo
+        </div>
         <div class="navbar-brand d-flex justify-content-center">
             <img src="https://basueducation.com/static/images/BASU%20LOGO.5e3cc85845b7.svg" alt="logo" width="115">
         </div>
