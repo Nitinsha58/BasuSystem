@@ -279,7 +279,27 @@
             <div class="d-flex justify-content-between">
                 <p class="fw-semibold">Registration Fee</p>
                 {% if student.fees.registration_fee %}
-                <p class="">₹ {{student.fees.registration_fee}}</p>
+
+                {% if student.fees.registration_discount %}
+                <s class="">₹ {{student.fees.registration_fee}}</s>
+                {% else %}
+                <p class="">₹ {{student.fees.registration_discount}}</p>
+                {% endif %}
+
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+            </div>
+            <div class="d-flex justify-content-between">
+                <p class="fw-semibold">Book Fees</p>
+                {% if student.fees.book_fees %}
+                
+                {% if student.fees.book_discount %}
+                <s class="">₹ {{student.fees.book_fees}}</s>
+                {% else %}
+                <p class="">₹ {{student.fees.book_fees}}</p>
+                {% endif %}
+
                 {% else %}
                 <p class="">N/A</p>
                 {% endif %}
@@ -303,7 +323,7 @@
             
             {% if student.fees.discount %}
             <div class="d-flex justify-content-between">
-                <p class="fw-semibold">Discount</p>
+                <p class="fw-semibold">Additional Discount</p>
                 {% if student.fees.discount %}
                 <p class="">- ₹ {{ student.fees.discount|default:0 }}</p>
                 {% else %}
@@ -314,15 +334,19 @@
 
             <div style="flex-grow: 1; border-bottom: 2px solid rgba(105, 105, 105, 0.477); margin-left: 10px;"></div>
 
+            {% if total_discount %}
             <div class="d-flex justify-content-between">
                 <p class="">Total Fee</p>
-                {% if student.fees.total_fees %}
-                <p class="">₹ {{ student.fees.registration_fee|default:0|add:student.fees.tuition_fees|default:0|add:student.fees.cab_fees|default:0|floatformat:2 }}</p>
-                {% else %}
-                <p class="">N/A</p>
-                {% endif %}
+                <p class="">₹ {{ total_fees|floatformat:2 }}</p>
             </div>
-            
+            {% endif %}
+            {% if total_discount %}
+            <div class="d-flex justify-content-between">
+                <p class="">Total Fee Discount</p>
+                <p class="">₹ {{ total_discount|floatformat:2 }}</p>
+            </div>
+            {% endif %}
+
             <div class="d-flex justify-content-between">
                 <p class="fw-bold">Net Fees</p>
                 {% if student.fees.total_fees %}

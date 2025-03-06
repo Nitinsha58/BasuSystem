@@ -163,6 +163,7 @@ def student_fees_details(request, stu_id):
             "num_installments": request.POST.get("num_installments") or 1,
             "discount": request.POST.get("discount") or 0,
             "total_fees": request.POST.get("total_fees") or 0,
+            "book_fees": request.POST.get("book_fees") or 0,
             "installments": []
         }
 
@@ -175,7 +176,10 @@ def student_fees_details(request, stu_id):
                 fees_details.cab_fees = request.POST.get("cab_fees") or 0
                 fees_details.tuition_fees = request.POST.get("tuition_fees") or 0
                 fees_details.discount = request.POST.get("discount") or 0
-                
+                fees_details.book_fees = request.POST.get("book_fees") or 0
+                fees_details.book_discount = (request.POST.get("book_discount") == 'on')
+                fees_details.registration_discount = (request.POST.get("registration_discount") == 'on')
+
                 fees_details.save()
 
                 # Delete existing installments
@@ -247,9 +251,24 @@ def student_reg_doc(request, stu_id):
     if stu_id and not Student.objects.filter(stu_id=stu_id):
         messages.error(request, "Invalid Student")
         return redirect('student_registration')
-    
+
+    student = Student.objects.filter(stu_id=stu_id).first()
+    total_discount = 0
+    total_fees = 0
+    if student:
+        fee_details = FeeDetails.objects.filter(student=student).first()
+        total_discount = fee_details.discount + (fee_details.book_fees if fee_details.book_discount else 0) + (fee_details.registration_fee if fee_details.registration_discount else 0)
+
+        total_fees = fee_details.total_fees + fee_details.discount
+        if fee_details.book_discount:
+            total_fees += fee_details.book_fees
+        if fee_details.registration_discount:
+            total_fees += fee_details.registration_fee
+
     return render(request, "registration/student_reg_doc.html", {
-        'student': Student.objects.filter(stu_id=stu_id).first()
+        'student': Student.objects.filter(stu_id=stu_id).first(),
+        'total_discount': total_discount,
+        'total_fees': total_fees
     })
     
 def print_receipt(request, stu_id):

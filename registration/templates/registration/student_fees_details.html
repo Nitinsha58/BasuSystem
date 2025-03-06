@@ -28,6 +28,10 @@
         <div class="col-md-4">
           <label for="book_fees" class="form-label">Registration Fees</label>
           <input type="text" value="{{fees_details.registration_fee}}" class="form-control" name="registration_fee" id="registration_fee" >
+          <div class="form-check form-switch mt-2">
+            <label class="form-check-label" for="registration_discount">Discount</label>
+            <input class="form-check-input w-4 h-4" type="checkbox" name="registration_discount" {% if fees_details.registration_discount %} checked {% endif %} role="switch" id="registration_discount">
+          </div>
         </div>
         <div class="col-md-4">
           <label for="cab_fees" class="form-label">Cab Fees</label>
@@ -44,6 +48,19 @@
         <div class="col-md-4">
           <label for="tuition_fees" class="form-label">Tuition Fees</label>
           <input type="text" minlength="10" maxlength="10" value="{{fees_details.tuition_fees}}" class="form-control" name="tuition_fees" id="tuition_fees" required>
+        </div>
+      </div>
+      
+      <div class="row justify-content-evenly mt-3">
+        <div class="col-md-4">
+        </div>
+        <div class="col-md-4">
+          <label for="book_fees" class="form-label">Book Fees</label>
+          <input type="text" minlength="10" maxlength="10" value="{{fees_details.book_fees}}" class="form-control" name="book_fees" id="book_fees" required>
+          <div class="form-check form-switch mt-2">
+            <label class="form-check-label" for="book_discount">Discount</label>
+            <input class="form-check-input w-4 h-4" type="checkbox" name="book_discount" {% if fees_details.book_discount %} checked {% endif %} role="switch" id="book_discount">
+          </div>
         </div>
       </div>
       <div class="row mt-3">
@@ -147,8 +164,11 @@
     const totalFeesElement = document.getElementById("total_fees");
     const totalFeesInput = document.getElementById("total_fees_input");
     const installmentContainer = document.querySelector(".installments");
-    const feeInputs = document.querySelectorAll("#registration_fee, #cab_fees, #tuition_fees, #discount");
+    const feeInputs = document.querySelectorAll("#registration_fee, #cab_fees, #tuition_fees, #discount, #book_fees");
     today = new Date().toISOString().split('T')[0];
+
+    const registration_discount = document.getElementById("registration_discount");
+    const book_discount = document.getElementById("book_discount");
     
     const fee_form = document.getElementById("fee-form");
 
@@ -177,9 +197,21 @@
               totalFees += parseInt(input.value || 0, 10);
             }
         });
+
+        if (registration_discount.checked) {
+            totalFees -= parseInt(document.getElementById("registration_fee").value || 0, 10);
+        }
+
+        if (book_discount.checked) {
+            totalFees -= parseInt(document.getElementById("book_fees").value || 0, 10);
+        }
+
         totalFeesElement.textContent = totalFees.toLocaleString();
-        totalFeesInput.value = totalFees;
+        totalFeesInput.value = totalFees;        
     }
+
+    registration_discount.addEventListener("input", calculateTotalFees);
+    book_discount.addEventListener("input", calculateTotalFees);
 
     feeInputs.forEach(input => {
         input.addEventListener("input", function () {
@@ -187,6 +219,8 @@
             calculateTotalFees();
         });
     });
+
+
 
     function updateTotalInstallmentAmt(){
       let installments = document.querySelectorAll(".installment");
