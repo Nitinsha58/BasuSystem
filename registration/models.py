@@ -13,8 +13,8 @@ class Student(models.Model):
         ('Apex Course', 'Apex Course'),
         ('Momentum Course', 'Momentum Course'),
         ('Foundation Course', 'Foundation Course'),
-
         ]
+    
     DURATION_CHOICE = [
         ('1 Year', '1 Year'), 
         ('2 Year', '2 Year'), 

@@ -152,6 +152,14 @@ def create_inquiry(request):
         address = request.POST.get("address")
         phone = request.POST.get("phone")
         referral_source = request.POST.get("referral")
+
+        existing_inquiries = Inquiry.objects.filter(phone=phone)
+        if existing_inquiries:
+            return render(request, 'success-page.html', {
+                'headline': "Thank you, Your Inquiry has already been submitted.",
+                'message': "You have taken the first step towards your child's Second Home.",
+            })
+
         inquiry = Inquiry.objects.create(
             student_name=student_name,
             school=school_name,
@@ -169,7 +177,10 @@ def create_inquiry(request):
             messages.success(request, "Inquiry Created.")
             return redirect('inquiries')
         
-        return render(request, 'success-page.html')
+        return render(request, 'success-page.html', {
+            'headline': "Thank you for submitting your details.",
+            'message': "You have taken the first step towards your child's Second Home.",
+        })
 
     return render(request, 'inquiry.html', {
         'classes':classes,

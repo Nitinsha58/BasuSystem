@@ -39,7 +39,7 @@ class Inquiry(models.Model):
     subjects = models.ManyToManyField(Subject, blank=True)
     school = models.CharField(max_length=255)
     address = models.TextField()
-    phone = models.CharField(max_length=15)
+    phone = models.CharField(max_length=15, unique=True)
     referral = models.ForeignKey(Referral, on_delete=models.SET_NULL, null=True, blank=True, related_name='inquiry')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
