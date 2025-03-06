@@ -154,7 +154,13 @@ def create_inquiry(request):
         referral_source = request.POST.get("referral")
 
         existing_inquiries = Inquiry.objects.filter(phone=phone)
+
+        
         if existing_inquiries:
+            if request.user and request.user.is_authenticated and AdmissionCounselor.objects.filter(user=request.user).first():
+                messages.success(request, "Inquiry Already Exists.")
+                return redirect('inquiries')
+            
             return render(request, 'success-page.html', {
                 'headline': "Thank you, Your Inquiry has already been submitted.",
                 'message': "You have taken the first step towards your child's Second Home.",
