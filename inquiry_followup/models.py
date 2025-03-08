@@ -41,6 +41,7 @@ class Inquiry(models.Model):
     address = models.TextField()
     phone = models.CharField(max_length=15, unique=True)
     referral = models.ForeignKey(Referral, on_delete=models.SET_NULL, null=True, blank=True, related_name='inquiry')
+    existing_member = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

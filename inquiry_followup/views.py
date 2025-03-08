@@ -152,12 +152,13 @@ def create_inquiry(request):
         address = request.POST.get("address")
         phone = request.POST.get("phone")
         referral_source = request.POST.get("referral")
+        existing_member = request.POST.get("existing_member") == "Yes"
 
         existing_inquiries = Inquiry.objects.filter(phone=phone)
-
         
         if existing_inquiries:
             if request.user and request.user.is_authenticated and AdmissionCounselor.objects.filter(user=request.user).first():
+                
                 messages.success(request, "Inquiry Already Exists.")
                 return redirect('inquiries')
             
@@ -171,7 +172,8 @@ def create_inquiry(request):
             school=school_name,
             address=address,
             phone=phone,
-            referral_id=referral_source 
+            referral_id=referral_source,
+            existing_member=existing_member
         )
 
         # Add many-to-many relationships (if applicable)

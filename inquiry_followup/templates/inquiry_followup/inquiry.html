@@ -31,6 +31,13 @@
             <p class="my-1"><span class="fw-semibold">School: </span> {{inquiry.school}}</p>
             <p class="my-1"><span class="fw-semibold">Address: </span> {{inquiry.address}}</p>
             <p class="my-1"><span class="fw-semibold">Referral: </span> {{inquiry.referral}}</p>
+            <p class="my-1"><span class="fw-semibold">Existing Parnet: </span> 
+                {% if inquiry.existing_member %}
+                    Yes
+                {% else %}
+                    No
+                {% endif %}
+            </p>
         </div>
     </div>
 

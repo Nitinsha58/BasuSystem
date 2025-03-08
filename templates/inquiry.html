@@ -96,6 +96,14 @@
           </div>
         
           <div class="">
+            <label for="existing_member" class="block mb-2 text-sm font-medium text-gray-900">Are you an existing member of BASU Classes?</label>
+            <select id="existing_member" required name="existing_member" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+              <option value="No">No</option>
+              <option value="Yes">Yes</option>
+            </select>
+          </div>
+
+          <div class="">
             <label for="referral" class="block mb-2 text-sm font-medium text-gray-900">Where did you hear about us?</label>
             <select id="referral" required size="{{referrals.count}}" name="referral" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
               {% for referral in referrals %}
