@@ -1,3 +1,4 @@
+{% load static %}
 <!doctype html>
 <html>
   <head>
@@ -28,6 +29,14 @@
               transition: transform 0.25s ease-out;
               font-size: 14px;
             }
+
+            html {
+                background-image: url("{% static 'images/background.png' %}");
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+                height: 100vh;
+            }
         </style>
     </head>
   <body>
@@ -38,7 +47,7 @@
 
               <div class="flex shrink-0 items-center">
                 <a href="https://basueducation.com" class="">
-                    <img class="h-8 w-auto" src="https://basueducation.com/static/images/BASU%20LOGO.5e3cc85845b7.svg" alt="Your Company">
+                    <img class="h-8 w-auto" src="{% static 'images/BASU.svg' %}" alt="Your Company">
                 </a>
               </div>
 

@@ -7,8 +7,6 @@ from django.contrib import messages
 from django.utils.timezone import localtime, now
 
 
-
-
 from django.utils import timezone
 
 def inquiries(request):

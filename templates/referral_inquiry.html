@@ -47,7 +47,7 @@
 
               <div class="flex shrink-0 items-center">
                 <a href="https://basueducation.com" class="">
-                    <img class="h-8 w-auto" src="https://basueducation.com/static/images/BASU%20LOGO.5e3cc85845b7.svg" alt="Your Company">
+                    <img class="h-8 w-auto" src="{% static 'images/BASU.svg' %}" alt="Your Company">
                 </a>
               </div>
 
@@ -58,7 +58,7 @@
 
     <div class="mx-auto max-w-7xl px-3 sm:px-6 lg:px-8 py-3 sm:py-6 lg:py-8">
         <div class="w-fit mx-auto">
-            <h1 class="mb-4 text-2xl font-semibold leading-none tracking-tight text-gray-900"></h1>
+            <h1 class="mb-4 text-2xl font-semibold leading-none tracking-tight text-gray-900">Shape Your Future—Start Learning Today!</h1>
         </div>
         <form class="w-full grid grid-cols-1 md:grid-cols-2 gap-4 auto-rows-auto" method="post">
           {% csrf_token %}
@@ -85,8 +85,7 @@
               {% endfor %}
             </select>
           </div>
-        
-        
+      
           <div class="">
             <label for="phone" class="block mb-2 text-sm font-medium text-gray-900">Phone</label>
             

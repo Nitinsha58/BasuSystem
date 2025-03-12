@@ -1,9 +1,10 @@
+{% load static %}
 <nav class="navbar navbar-expand-lg bg-body-tertiary">
     <div class="container-fluid">
         
         <!-- Brand Logo -->
         <a class="navbar-brand" href="{% url 'staff_dashboard' %}">
-            <img src="https://basueducation.com/static/images/BASU%20LOGO.5e3cc85845b7.svg" alt="logo" width="100">
+            <img src="{% static 'images/BASU.svg' %}" alt="logo" width="100">
         </a>
 
         <!-- Toggler for smaller screens -->
