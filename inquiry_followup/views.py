@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from .models import Inquiry, ClassName, Subject, Referral, FollowUp, FollowUpStatus, AdmissionCounselor
+from .models import Inquiry, ClassName, Subject, Referral, FollowUp, FollowUpStatus, AdmissionCounselor, StationaryPartner
 from datetime import datetime, timedelta
 from collections import defaultdict
 from django.db.models import Max, Q
@@ -195,6 +195,71 @@ def create_inquiry(request):
         'subjects':subjects,
         'referrals': referrals
         })
+
+def create_referral_inquiry(request):
+    classes = ClassName.objects.all()
+    subjects = Subject.objects.all()
+    partners = StationaryPartner.objects.all()
+
+    if request.method == "POST":
+        student_name = request.POST.get("student-name")
+        selected_classes = request.POST.getlist("classes")  # getlist() for multiple selection
+        selected_subjects = request.POST.getlist("subjects")
+        phone = request.POST.get("phone")
+        partner_refrral = request.POST.get("partner")
+        existing_member = request.POST.get("existing_member") == "Yes"
+
+        existing_inquiries = Inquiry.objects.filter(phone=phone)
+        
+        if existing_inquiries:
+            if request.user and request.user.is_authenticated and AdmissionCounselor.objects.filter(user=request.user).first():
+                
+                messages.success(request, "Inquiry Already Exists.")
+                return redirect('inquiries')
+            
+            return render(request, 'success-page.html', {
+                'headline': "Thank you, Your Inquiry has already been submitted.",
+                'message': "You have taken the first step towards your child's Second Home.",
+            })
+        
+        if not partner_refrral:
+            messages.error(request, "Invalid Partner")
+            return redirect('create_referral_inquiry')
+        else:
+            partner = StationaryPartner.objects.filter(id=partner_refrral).first()
+            if not partner:
+                messages.error(request, "Invalid Partner")
+                return redirect('create_referral_inquiry')
+            
+        inquiry = Inquiry.objects.create(
+            student_name=student_name,
+            # school=school_name,
+            address=partner.address,
+            phone=phone,
+            stationary_partner=partner,
+            existing_member=existing_member
+        )
+
+        # Add many-to-many relationships (if applicable)
+        inquiry.classes.set(selected_classes)
+        inquiry.subjects.set(selected_subjects)
+        inquiry.save()
+
+        if request.user and request.user.is_authenticated and AdmissionCounselor.objects.filter(user=request.user).first():
+            messages.success(request, "Inquiry Created.")
+            return redirect('inquiries')
+        
+        return render(request, 'success-page.html', {
+            'headline': "Thank you for submitting your details.",
+            'message': "You have taken the first step towards your child's Second Home.",
+        })
+
+    return render(request, 'referral_inquiry.html', {
+        'classes':classes,
+        'subjects':subjects,
+        'partners': partners
+        })
+
 
 def search_inquiries(request):
     search_term = request.GET.get('search', '').strip()
