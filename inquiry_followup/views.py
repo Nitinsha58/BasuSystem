@@ -35,6 +35,10 @@ def inquiries(request):
     })
 
 def inquiry(request, inquiry_id):
+    classes = ClassName.objects.all()
+    subjects = Subject.objects.all()
+    referrals = Referral.objects.all()
+    lead_types = Inquiry.LEAD_TYPE_CHOICES
     inquiry_obj = Inquiry.objects.filter(id=inquiry_id).first()
     if not inquiry_obj:
         messages.error(request, 'Invalid Inquiry')
@@ -53,11 +57,37 @@ def inquiry(request, inquiry_id):
         status = followup.status if followup.status else "No Status"
         followup_status_dict.setdefault(status, []).append(followup)
 
+    if request.method == 'POST':
+        student_name = request.POST.get("student_name")
+        selected_classes = request.POST.getlist("classes")  # getlist() for multiple selection
+        selected_subjects = request.POST.getlist("subjects")
+        school_name = request.POST.get("school")
+        address = request.POST.get("address")
+        lead_type = request.POST.get("lead_type")
+
+        # update inquiry accordingly 
+        inquiry_obj.student_name = student_name
+        inquiry_obj.school = school_name
+        inquiry_obj.address = address
+        inquiry_obj.lead_type = lead_type
+
+        # Update many-to-many relationships
+        inquiry_obj.classes.set(selected_classes)
+        inquiry_obj.subjects.set(selected_subjects)
+        inquiry_obj.save()
+
+        messages.success(request, "Inquiry Updated.")
+        return redirect('inquiry', inquiry_id=inquiry_id)
+    
 
     return render(request, 'inquiry_followup/inquiry.html', {
         'inquiry': inquiry_obj,
         'followups': dict(followup_status_dict),
-        'followup_status': FollowUpStatus.objects.all()
+        'followup_status': FollowUpStatus.objects.all(),
+        'classes':classes,
+        'subjects':subjects,
+        'referrals': referrals,
+        'lead_types': lead_types
     })
 
 def create_followup(request, inquiry_id):
@@ -171,7 +201,8 @@ def create_inquiry(request):
             address=address,
             phone=phone,
             referral_id=referral_source,
-            existing_member=existing_member
+            existing_member=existing_member,
+            lead_type='Verified'
         )
 
         # Add many-to-many relationships (if applicable)

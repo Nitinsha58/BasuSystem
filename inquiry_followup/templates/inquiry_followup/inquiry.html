@@ -17,20 +17,86 @@
 
 <div class="container-sm">
     <div class="w-md-75 my-2 py-2">
+
+        <form action="" id="update-inquiry-form" method="post" class="d-none bg-light rounded my-2 mb-4 p-2">
+            {% csrf_token %}
+            <p  class="border-0 h2 rounded">Update Inquiry</p>
+            <div class="d-flex gap-4">
+                <div class="col-md-3">
+                    <label for="student_name" class="form-label">Name</label>
+                    <input id="student_name" name="student_name" value="{{inquiry.student_name}}" class="rounded form-control">
+                </div>
+                <div class="col-md-3">
+                    <label for="classes" class="form-label">Classes</label>
+                    <select id="classes" multiple size="3" name="classes" class="form-select">
+                        {% for cls in classes %}
+                        <option value="{{ cls.id }}" 
+                        {% if cls in inquiry.classes.all %} selected {% endif %}>
+                        {{ cls.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+        
+                <div class="col-md-3">
+                    <label for="subjects" class="form-label">Subjects</label>
+                    <select class="form-control" name="subjects" size="3" id="subjects" multiple>
+                      {% for subject in subjects %}
+                      <option value="{{ subject.id }}" 
+                        {% if subject in inquiry.subjects.all %} selected {% endif %}>
+                        {{ subject.name }}
+                      </option>
+                      {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="row mt-3">
+                <div class="col-md-3">
+                    <label for="school" class="form-label">School</label>
+                    <input type="text" class="form-control" value="{{inquiry.school}}" name="school" id="school">
+                </div>
+                
+                <div class="col-md-3">
+                    <label for="lead_type" class="form-label">Lead Type</label>
+                    <select id="lead_type" name="lead_type" class="form-select">
+                        {% for lead in lead_types %}
+                        <option value="{{ lead.0 }}">{{ lead.1 }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label for="address" class="form-label">Address</label>
+                    <input type="text" class="form-control" value="{{inquiry.address}}" name="address" id="address">
+                </div>
+            </div>
+            <div class="col-md-3 mt-2">
+                <a id="cancel-inquiry-button" class="btn btn-primary px-4 py-2" style="height: fit-content;">Cancel</a>
+                <button type="submit" class="btn btn-warning px-4 py-2" style="height: fit-content;">Update Inquiry</button>
+            </div>
+        </form>
         <div class="d-flex justify-content-between ">
-            <p class="h2">{{inquiry.student_name}}</p>
-            <a href="{% url 'delete_inquiry' inquiry.id %}" class="btn btn-danger px-4 py-2" style="height: fit-content;">Delete Inquiry</a>
+            <p  class="border-0 h2 rounded d-flex justify-content-center align-items-center">{{inquiry.student_name}} </p>
+            <div class="d-flex gap-2">
+                <butto id="update-inquiry-button" class="btn btn-warning px-4 py-2" style="height: fit-content;">Update Inquiry</butto>
+                <a href="{% url 'delete_inquiry' inquiry.id %}" class="btn btn-danger px-4 py-2" style="height: fit-content;">Delete Inquiry</a>
+            </div>
         </div>
         <p class="m-0 mb-1">
             {% with classes=inquiry.classes.all|join:", " subjects=inquiry.subjects.all|join:", " %}
                 {{ classes|title }} - {{ subjects|title }}
             {% endwith %}
         </p>
+
         <div class="d-md-flex gap-4">
             <p class="my-1"><span class="fw-semibold">Phone: </span> {{inquiry.phone}}</p>
+
             <p class="my-1"><span class="fw-semibold">School: </span> {{inquiry.school}}</p>
             <p class="my-1"><span class="fw-semibold">Address: </span> {{inquiry.address}}</p>
-            <p class="my-1"><span class="fw-semibold">Referral: </span> {{inquiry.referral}}</p>
+            <p class="my-1"><span class="fw-semibold">Referral: </span> {% if inquiry.stationary_partner %} {{inquiry.stationary_partner.name}}-{{inquiry.stationary_partner.address}} {% else  %} {{inquiry.referral}}  {% endif%}</p>
+            
+            <p class="my-1"><span class="fw-semibold">Lead Type: </span> {{inquiry.lead_type}}</p>
             <p class="my-1"><span class="fw-semibold">Existing Parnet: </span> 
                 {% if inquiry.existing_member %}
                     Yes
@@ -212,6 +278,20 @@
                 }, 100);
             });
         });
+    });
+
+    const updateInquiryButton = document.getElementById("update-inquiry-button");
+    const updateInquiryForm = document.getElementById("update-inquiry-form");
+    const cancelInquiryButton = document.getElementById("cancel-inquiry-button");
+
+    updateInquiryButton.addEventListener("click", function () {
+        updateInquiryForm.classList.toggle("d-none");
+        updateInquiryButton.classList.toggle("d-none");
+    });
+
+    cancelInquiryButton.addEventListener("click", function () {
+        updateInquiryForm.classList.add("d-none");
+        updateInquiryButton.classList.remove("d-none");
     });
 
 
