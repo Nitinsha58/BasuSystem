@@ -61,7 +61,7 @@
                     <label for="lead_type" class="form-label">Lead Type</label>
                     <select id="lead_type" name="lead_type" class="form-select">
                         {% for lead in lead_types %}
-                        <option value="{{ lead.0 }}">{{ lead.1 }}</option>
+                        <option value="{{ lead.0 }}" {% if inquiry.lead_type == lead.0 %} selected {% endif %}>{{ lead.1 }}</option>
                         {% endfor %}
                     </select>
                 </div>
