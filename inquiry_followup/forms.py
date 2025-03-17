@@ -75,7 +75,7 @@ class StationaryPartnerForm(forms.ModelForm):
 
     class Meta:
         model = StationaryPartner
-        fields = ['user', 'first_name', 'last_name', 'phone', 'name', 'address', 'password', 'center', 'monthly_incentive', 'lead_incentive', 'is_active']
+        fields = ['user', 'first_name', 'last_name', 'phone', 'name', 'address', 'center', 'monthly_incentive', 'lead_incentive', 'is_active']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
