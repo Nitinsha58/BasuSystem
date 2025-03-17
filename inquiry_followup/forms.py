@@ -70,11 +70,12 @@ class StationaryPartnerForm(forms.ModelForm):
     phone = forms.CharField(max_length=15, required=False)
     password = forms.CharField(widget=forms.PasswordInput, required=False)
     monthly_incentive = forms.DecimalField(max_digits=10, decimal_places=2, required=False)
+    lead_incentive = forms.DecimalField(max_digits=10, decimal_places=2, required=False)
     is_active = forms.BooleanField(required=False)
 
     class Meta:
         model = StationaryPartner
-        fields = ['user', 'first_name', 'last_name', 'phone', 'name', 'address', 'password', 'center', 'monthly_incentive', 'is_active']
+        fields = ['user', 'first_name', 'last_name', 'phone', 'name', 'address', 'password', 'center', 'monthly_incentive', 'lead_incentive', 'is_active']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -88,6 +89,7 @@ class StationaryPartnerForm(forms.ModelForm):
             self.fields['name'].initial = self.instance.name
             self.fields['address'].initial = self.instance.address
             self.fields['monthly_incentive'].initial = self.instance.monthly_incentive
+            self.fields['lead_incentive'].initial = self.instance.lead_incentive
             self.fields['is_active'].initial = self.instance.is_active
 
     def clean(self):

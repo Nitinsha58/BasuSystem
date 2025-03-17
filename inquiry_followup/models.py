@@ -24,7 +24,7 @@ class StationaryPartner(models.Model):
     pending_commission = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total_commission = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     monthly_incentive = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-
+    lead_incentive = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     is_active = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)

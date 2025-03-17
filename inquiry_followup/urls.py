@@ -9,6 +9,7 @@ from .views import (
     delete_inquiry, 
     search_inquiries,
     create_referral_inquiry,
+    stationary_partner_inquiries
 )
 
 urlpatterns = [
@@ -21,4 +22,6 @@ urlpatterns = [
     path('update-followup/<int:inquiry_id>/<int:followup_id>', update_followup, name='update_followup'),
     path('delete-followup/<int:inquiry_id>/<int:followup_id>', delete_followup, name='delete_followup'),
     path('delete-inquiry/<int:inquiry_id>/', delete_inquiry, name='delete_inquiry'),
+
+    path('partner-inquiries/<int:partner_id>/', stationary_partner_inquiries, name='partner_inquiry'),
 ]

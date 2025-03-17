@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load mathfilters %}
+{% load static %}
+
+{% block dashboard %}
+
+<div class="mx-2 px-2 mt-md-4 mx-md-4 mt-xl-5 mx-xl-5">
+    <div class="d-flex g-4 w-100 dates-group pb-3">
+        <table class="table table-striped">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Name</th>
+                <th scope="col">Phone</th>
+                <th scope="col">Status</th>
+                <th scope="col">Incentive</th>
+              </tr>
+            </thead>
+            <tbody>
+                {% for inq in inquiries %}
+                    <tr>
+                        <th scope="row">{{forloop.counter}}</th>
+                        <td>{{inq.student_name}}</td>
+                        <td>{{inq.phone}}</td>
+                        <td>{{inq.lead_type}}</td>
+                        <td>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+          </table>
+        
+    </div>
+</div>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const searchInput = document.getElementById("search-stu-input");
+        const searchList = document.getElementById("search-inquiries-list");
+    
+        searchInput.addEventListener("blur", function() {
+            setTimeout(() => searchList.style.display = "none", 200);
+        });
+    
+        searchInput.addEventListener("focus", function() {
+            searchList.style.display = "block";
+        });
+    });
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const options = { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' };
+        const today = new Date().toLocaleDateString('en-CA', options);
+        const dateCards = document.querySelectorAll(".date-card");
+        const gap = 32;
+        const container = document.querySelector(".dates-group");
+
+        const cardWidth = dateCards[0]?.offsetWidth || 0;
+
+        let scrollOffset = 0;
+
+        const scrollPosition = sessionStorage.getItem("inquiriesPosition");
+        if (scrollPosition) {
+            container.scrollTo({
+                left: scrollPosition,
+            });
+
+            sessionStorage.removeItem("inquiriesPosition");
+        }
+            window.addEventListener("beforeunload", function () {
+            sessionStorage.setItem("inquiriesPosition", container.scrollLeft);
+        });
+
+        for (let i = 0; i < dateCards.length; i++) {
+            if (dateCards[i].dataset.date === today) {
+                dateCards[i].querySelector('ul.list-group').children[0].innerText += "";
+                dateCards[i].querySelector('ul.list-group').children[0].classList.remove("text-dark", "bg-light");
+                dateCards[i].querySelector('ul.list-group').children[0].classList.add("bg-dark", "text-white", "border-dark");
+                break;
+            }
+            scrollOffset +=  gap + cardWidth;
+        }
+        scrollOffset -= gap*2 + cardWidth;
+
+        if (!scrollPosition) {
+            container.scrollTo({
+                left: scrollOffset,
+                // behavior: "smooth",
+            });
+        }
+    });
+</script>
+
+
+{% endblock dashboard %}

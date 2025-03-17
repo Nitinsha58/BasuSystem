@@ -3,7 +3,20 @@
 {% block dashboard %}
 <div class="container-fluid p-0 p-sm-2 p-xl-4">
   <div class="row m-0 m-sm-2 row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+    
     {% if request.user.is_authenticated %}
+      {% if request.user.is_superuser or request.user.stationary_partner %}
+        <div class="col">
+          <div class="card h-100">
+            <div class="card-body">
+              <h3 class="card-title">Partner Inquiries</h3>
+              <p class="card-text">Leads generated throught partner QR will be listed here.</p>
+              <a href="{% url 'partner_inquiry' request.user.stationary_partner.id %}" class="btn btn-warning">Partner Inquiries</a>
+            </div>
+          </div>
+        </div>
+      {% endif %}
+
       {% if request.user.is_superuser %}
       <div class="col">
         <div class="card h-100">

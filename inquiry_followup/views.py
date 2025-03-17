@@ -311,5 +311,16 @@ def search_inquiries(request):
     else:
         inquiry_list = []
     return render(request, 'inquiry_followup/inquiries_results.html', {'inquiries': inquiry_list})
+
+def stationary_partner_inquiries(request, partner_id):
+    partner = StationaryPartner.objects.filter(id=partner_id).first()
+    if not partner:
+        messages.error(request, "Invalid Partner")
+        return redirect('inquiries')
     
     
+    inquiries = Inquiry.objects.filter(stationary_partner=partner)
+    return render(request, 'inquiry_followup/partner_inquiries.html', {
+        'inquiries': inquiries,
+        'partner': partner
+    })
