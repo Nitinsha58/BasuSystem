@@ -12,9 +12,11 @@ class CustomUserAdmin(UserAdmin):
     fieldsets = (
         (None, {'fields': ('first_name', 'last_name', 'phone', 'password')}),
         ('Permissions', {'fields': ('is_staff', 'is_active', 'groups', 'user_permissions')}),
-        ('Important dates', {'fields': ('last_login', 'date_joined')}),
+        ('Important dates', {'fields': ('last_login',)}),  # Removed 'date_joined'
     )
-    
+
+    readonly_fields = ('date_joined', 'last_login')
+
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
@@ -22,7 +24,6 @@ class CustomUserAdmin(UserAdmin):
         ),
     )
 
-    # Fix search to work with the 'phone' field
     def get_search_results(self, request, queryset, search_term):
         queryset, use_distinct = super().get_search_results(request, queryset, search_term)
         queryset |= self.model.objects.filter(Q(phone__icontains=search_term))
