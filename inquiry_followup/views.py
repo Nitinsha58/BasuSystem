@@ -20,7 +20,8 @@ def inquiries(request):
     inquiry_followup_dict = defaultdict(list)
 
     for followup in latest_followups:
-        created_date = followup.inquiry.created_at.date()
+        # created_date = followup.inquiry.created_at.date()
+        created_date = followup.created_at.date()
         followup_date = followup.followup_date
         if followup_date:
             inquiry_followup_dict[followup_date].append(followup)
