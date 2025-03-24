@@ -89,7 +89,7 @@ class Installment(models.Model):
         ('Credit Card', 'Credit Card'),
         ('Debit Card', 'Debit Card'),
         ('Auto Debit', 'Auto Debit'),
-        ('Check', 'Check'),
+        ('Cheque', 'Cheque'),
     ]
     
     installment_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
