@@ -38,7 +38,7 @@ class StudentRegistrationForm(forms.ModelForm):
         if len(phone) < 10:
             self.add_error("phone", "Phone number must be at least 10 digits long.")
 
-        if phone and BaseUser.objects.filter(phone=phone).exists():
+        if phone and BaseUser.objects.filter(phone=phone).exists() and Student.objects.filter(user__phone=phone).exists():
             self.add_error("phone", "Already taken")
         return phone
 
@@ -61,12 +61,15 @@ class StudentRegistrationForm(forms.ModelForm):
     def save(self, commit=True):
         with transaction.atomic():
             # Create User
-            user = BaseUser.objects.create(
-                first_name=self.cleaned_data['first_name'],
-                last_name=self.cleaned_data['last_name'],
-                phone=self.cleaned_data['phone'],
-                password=make_password("basu@123")  # Default password
-            )
+
+            user = BaseUser.objects.filter(phone=self.cleaned_data['phone']).first()
+            if not user:
+                user = BaseUser.objects.create(
+                    first_name=self.cleaned_data['first_name'],
+                    last_name=self.cleaned_data['last_name'],
+                    phone=self.cleaned_data['phone'],
+                    password=make_password("basu@123")  # Default password
+                )
 
             # Create Student
             student = super().save(commit=False)

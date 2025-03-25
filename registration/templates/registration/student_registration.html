@@ -126,7 +126,7 @@
             <label for="course" class="form-label">Course</label>
             <select class="form-select" name="course" id="course">
               {% for course in courses %}
-              <option value="{{course.0}}">{{course.1}}</option>
+              <option value="{{course.0}}"  {% if form and form.course == course.0 %} selected {% endif %}>{{course.1}}</option>
               {% endfor %}          
             </select>
           </div>
@@ -135,7 +135,7 @@
             <label for="program_duration" class="form-label">Duration</label>
             <select class="form-select" name="program_duration" id="program_duration">
               {% for duration in durations %}
-              <option value="{{duration.0}}">{{duration.1}}</option>
+              <option value="{{duration.0}}"  {% if form and form.program_duration == duration.0 %} selected {% endif %} >{{duration.1}}</option>
               {% endfor %}
             </select>
           </div>
