@@ -19,6 +19,16 @@ class Batch(models.Model):
         section = getattr(self.section, 'name', 'N/A')
         subject = getattr(self.subject, 'name', 'N/A')
         return f"{class_name} {subject} {section}"
+    
+class Teacher(models.Model):
+    user = models.OneToOneField(BaseUser, on_delete=models.CASCADE, related_name="teachers")
+    batches = models.ManyToManyField('Batch', related_name='teachers')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        full_name = f"{self.user.first_name} {self.user.last_name}".strip()
+        return f"{full_name  or self.user.phone}"
 
 class Student(models.Model):
     GENDER_CHOICE = [('Male', 'Male'), ('Female', 'Female'), ('Other', 'Other')]

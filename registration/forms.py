@@ -1,9 +1,12 @@
 from django import forms
 from django.contrib.auth.hashers import make_password
 from django.db import transaction
-from .models import Student, BaseUser, ParentDetails, FeeDetails, Installment, TransportDetails, Batch
+from .models import Student, BaseUser, ParentDetails, FeeDetails, Installment, TransportDetails, Batch, Teacher
 from center.models import Subject
 from django.core.exceptions import ValidationError
+from django.contrib import messages
+from django.db import IntegrityError
+
 
 class StudentRegistrationForm(forms.ModelForm):
     first_name = forms.CharField(max_length=255)
@@ -206,3 +209,74 @@ class TransportDetailsForm(forms.ModelForm):
             if commit:
                 transport_details.save()
         return transport_details
+    
+class TeacherForm(forms.ModelForm):
+    user = forms.ModelChoiceField(queryset=BaseUser.objects.all(), required=False)  # Optional user field
+    first_name = forms.CharField(max_length=255, required=False)
+    last_name = forms.CharField(max_length=255, required=False)
+    phone = forms.CharField(max_length=15, required=False)
+    batches = forms.ModelMultipleChoiceField(queryset=Batch.objects.all(), required=False)
+
+    class Meta:
+        model = Teacher
+        fields = ['user', 'first_name', 'last_name', 'phone', 'batches']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # If updating an existing instance, populate fields
+        if self.instance and self.instance.pk:
+            self.fields['user'].initial = self.instance.user
+            self.fields['first_name'].initial = self.instance.user.first_name
+            self.fields['last_name'].initial = self.instance.user.last_name
+            self.fields['phone'].initial = self.instance.user.phone
+            self.fields['batches'].initial = self.instance.batches.all()
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        user = cleaned_data.get('user')
+        first_name = cleaned_data.get('first_name')
+        last_name = cleaned_data.get('last_name')
+        phone = cleaned_data.get('phone')
+
+        # If no user is provided, first_name, last_name, and phone are required
+        if not user:
+            if not first_name:
+                self.add_error('first_name', "This field is required when no user is selected.")
+            if not last_name:
+                self.add_error('last_name', "This field is required when no user is selected.")
+            if not phone:
+                self.add_error('phone', "This field is required when no user is selected.")
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        cleaned_data = self.cleaned_data
+        user = cleaned_data.get('user')
+
+        if user:
+            teacher = super().save(commit=False)
+            teacher.user = user
+        else:
+            # Check if a user with the same phone already exists
+            existing_user = BaseUser.objects.filter(phone=cleaned_data['phone']).first()
+
+            if existing_user:
+                self.add_error("phone", "A user with this phone number already exists.")
+                return None  # Prevent saving
+
+            # Create a new BaseUser
+            base_user = BaseUser.objects.create(
+                first_name=cleaned_data['first_name'],
+                last_name=cleaned_data['last_name'],
+                phone=cleaned_data['phone'],
+            )
+            teacher = super().save(commit=False)
+            teacher.user = base_user
+
+        if commit:
+            teacher.save()
+            if 'batches' in cleaned_data:
+                teacher.batches.set(cleaned_data['batches'])
+
+        return teacher
