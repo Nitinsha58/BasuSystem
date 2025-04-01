@@ -146,6 +146,24 @@
       <div class="row justify-content-evenly mt-3">
         <div class="col-md-3">
         </div>
+        <div class="col-md-3">
+        </div>
+        <div class="col-md-3">
+          <label for="batches" class="form-label">Batches</label>
+          <select class="form-select" name="batches" id="batches" size="3" multiple>
+            {% for batch in batches %}
+            <option value="{{ batch.id }}" 
+              {% if batch in student.batches.all %} selected {% endif %}>
+              {{ batch }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="row justify-content-evenly mt-3">
+        <div class="col-md-3">
+        </div>
         <div class="col-md-3 mt-4">
           <button class="btn btn-warning" type="submit">Update Student</button>
         </div>

@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from .models import Student, ParentDetails, FeeDetails, Installment, TransportDetails
+from .models import Student, ParentDetails, FeeDetails, Installment, TransportDetails, Batch
 from .forms import StudentRegistrationForm, StudentUpdateForm, ParentDetailsForm, TransportDetailsForm
 from center.models import Subject, ClassName
 from django.contrib import messages
@@ -74,6 +74,7 @@ def student_update(request, stu_id):
             "school_name": request.POST.get("school_name"),
             "class_enrolled": ClassName.objects.filter(id=request.POST.get("class_enrolled")).first() if request.POST.get("class_enrolled") else '',
             "subjects": request.POST.getlist("subjects"),  # ManyToMany field
+            "batches": request.POST.getlist("batches"),  # ManyToMany field
             "marksheet_submitted": request.POST.get("marksheet_submitted") == "yes",
             "sat_score": request.POST.get("sat_score"),
             "remarks": request.POST.get("remarks"),
@@ -98,11 +99,14 @@ def student_update(request, stu_id):
     
     classes = ClassName.objects.all().order_by('-name')
     subjects = Subject.objects.all().order_by('name')
+    selected_class = ClassName.objects.filter(id=student.class_enrolled.id).first() if student.class_enrolled else None
+    batches = Batch.objects.filter(class_name=selected_class)
 
     return render(request, "registration/student_update.html", {
         'student': student,
         'classes': classes, 
-        'subjects': subjects
+        'subjects': subjects,
+        'batches': batches,
     })
 
 def students_list(request):

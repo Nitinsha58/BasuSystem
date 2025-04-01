@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.hashers import make_password
 from django.db import transaction
-from .models import Student, BaseUser, ParentDetails, FeeDetails, Installment, TransportDetails
+from .models import Student, BaseUser, ParentDetails, FeeDetails, Installment, TransportDetails, Batch
 from center.models import Subject
 from django.core.exceptions import ValidationError
 
@@ -87,6 +87,7 @@ class StudentUpdateForm(forms.ModelForm):
     phone = forms.CharField(max_length=15)
     email = forms.EmailField(required=False)
     subjects = forms.ModelMultipleChoiceField(queryset=Subject.objects.all())
+    batches = forms.ModelMultipleChoiceField(queryset=Batch.objects.all(), required=False)
 
     class Meta:
         model = Student
@@ -105,7 +106,8 @@ class StudentUpdateForm(forms.ModelForm):
             "aadhar_card_number", 
             "gender",
             "course",
-            "program_duration"
+            "program_duration",
+            "batches",
         ]
 
     def __init__(self, *args, **kwargs):
@@ -154,6 +156,7 @@ class StudentUpdateForm(forms.ModelForm):
                 user.save()
                 student.save()
                 self.cleaned_data['subjects'] and student.subjects.set(self.cleaned_data['subjects'])
+                self.cleaned_data['batches'] and student.batches.set(self.cleaned_data['batches'])
 
         return student
 

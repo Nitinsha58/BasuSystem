@@ -1,8 +1,24 @@
 from django.db import models
 import uuid
 
-from center.models import ClassName, Subject
+from center.models import ClassName, Subject, Section
 from user.models import BaseUser
+
+class Batch(models.Model):
+    class_name = models.ForeignKey(ClassName, on_delete=models.CASCADE, related_name="batches")
+    section = models.ForeignKey(Section, on_delete=models.CASCADE, related_name="batches")
+    subject  = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name="batches")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("class_name", "section", "subject")
+
+    def __str__(self):
+        class_name = getattr(self.class_name, 'name', 'N/A')
+        section = getattr(self.section, 'name', 'N/A')
+        subject = getattr(self.subject, 'name', 'N/A')
+        return f"{class_name} {subject} {section}"
 
 class Student(models.Model):
     GENDER_CHOICE = [('Male', 'Male'), ('Female', 'Female'), ('Other', 'Other')]
@@ -25,6 +41,8 @@ class Student(models.Model):
     user = models.OneToOneField(BaseUser, on_delete=models.CASCADE, related_name="registered_student")
     
     course = models.CharField(max_length=65, choices=COURSE_CHOICE, blank=True, null=True)
+    batches = models.ManyToManyField('Batch', related_name='students', blank=True)
+
     program_duration = models.CharField(max_length=10, choices=DURATION_CHOICE, blank=True, default='1 Year')
     email = models.EmailField(unique=True, blank=True, null=True)
     dob = models.DateField()
