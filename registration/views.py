@@ -4,7 +4,8 @@ from .forms import StudentRegistrationForm, StudentUpdateForm, ParentDetailsForm
 from center.models import Subject, ClassName
 from django.contrib import messages
 from django.db import transaction
-from datetime import datetime
+from datetime import datetime, timedelta
+from collections import defaultdict
 
 from django.db.models import Q
 
@@ -313,7 +314,7 @@ def mark_attendance(request, batch_id=None):
         messages.error(request, "Invalid Batch")
         return redirect('students_list')
     
-    if not Teacher.objects.filter(user=request.user).exists():
+    if not Teacher.objects.filter(user=request.user).exists() and not request.user.is_superuser:
         messages.error(request, "You are not authorized to mark attendance.")
         return redirect('students_list')
 
@@ -333,7 +334,21 @@ def mark_attendance(request, batch_id=None):
             messages.error(request, "Attendance for this date already exists.")
             return redirect('mark_attendance', batch_id=batch_id)
 
-        # Process the attendance data
+        # # Process the attendance data
+        # for data in attendance_data:
+        #     stu_id, status = data.split(':')
+        #     student = Student.objects.filter(stu_id=stu_id).first()
+        #     if student:
+        #         Attendance.objects.create(
+        #             student=student,
+        #             batch=batch,
+        #             is_present=(status == 'present')
+        #         )
+        #         pass
+        batch = Batch.objects.filter(id=batch_id).first()
+        students = Student.objects.filter(batches=batch)
+
+        marked_students = set()
         for data in attendance_data:
             stu_id, status = data.split(':')
             student = Student.objects.filter(stu_id=stu_id).first()
@@ -343,8 +358,17 @@ def mark_attendance(request, batch_id=None):
                     batch=batch,
                     is_present=(status == 'present')
                 )
-                print(f"Student ID: {stu_id}, Status: {status}")
-                pass
+            marked_students.add(student.stu_id)
+
+        # Mark absent for students not in attendance_data
+        for student in students:
+            if student.stu_id not in marked_students:
+                Attendance.objects.create(
+                    student=student,
+                    batch=batch,
+                    is_present=False
+                )
+
 
         messages.success(request, "Attendance marked successfully.")
         return redirect('mark_attendance', batch_id=batch_id)
@@ -356,6 +380,7 @@ def mark_attendance(request, batch_id=None):
         return render(request, 'registration/mark_attendance.html', {
             'students': students,
             'batch': batch,
+            'batches': Batch.objects.all(),
             'date': datetime.now().date(),
         })
 
@@ -364,6 +389,52 @@ def mark_attendance(request, batch_id=None):
     batches = Batch.objects.all()
 
     return render(request, 'registration/attendance.html', {'classes': classes, 'batches': batches})
+
+def get_attendance(request, batch_id):
+    if batch_id and not Batch.objects.filter(id=batch_id):
+        messages.error(request, "Invalid Batch")
+        return redirect('students_list')
+
+    if not Teacher.objects.filter(user=request.user).exists():
+        messages.error(request, "You are not authorized to view attendance.")
+        return redirect('students_list')
+
+    batch = Batch.objects.filter(id=batch_id).first()
+    students = Student.objects.filter(batches=batch).order_by('stu_id')
+
+    # Get attendance records for the batch
+    attendance_records = Attendance.objects.filter(batch=batch).order_by('created_at__date', 'student__stu_id')
+
+    # Organize attendance records by date and student
+    attendance_by_date = defaultdict(dict)
+    for record in attendance_records:
+        date = record.created_at.date()
+        attendance_by_date[date][record.student.stu_id] = record.is_present
+
+    # Generate a timeline of dates for the past 30 days
+    today = datetime.now().date()
+    start_date = today - timedelta(days=15)
+    dates = [start_date + timedelta(days=i) for i in range(31)]
+
+    # Merge attendance data with the timeline and ensure all students are included
+    attendance_timeline = []
+    for date in dates:
+        daily_attendance = []
+        if date in attendance_by_date:    
+            for student in students:
+                daily_attendance.append({
+                    'student': student,
+                    'is_present': attendance_by_date.get(date, {}).get(student.stu_id, None)  # None means not marked
+                })
+        attendance_timeline.append({'date': date, 'attendance': daily_attendance})
+
+    return render(request, 'registration/get_attendance.html', {
+        'batch': batch,
+        'attendance_timeline': attendance_timeline,
+        'students': students,
+        'dates': dates,
+    })
+
 
 # def attendance_report(request):
 #     if request.method == 'POST':

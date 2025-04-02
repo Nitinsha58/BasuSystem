@@ -6,35 +6,35 @@
 {% endblock style %}
 
 {% block dashboard %}
-<h3 class="heading m-2">Select Batch</h3>
+<h2 class="heading m-2">Mark Batch Attendance</h2>
 <div class="content-container m-2">
     <div class="batch-buttons">
-        {% for batch in user.teachers.batches.all %}
-            <a href="{{batch.id}}" class="m-1 btn btn-warning ">{{batch}}</a>
-        {% endfor %}
+
+        {% if request.user.teachers %}
+            {% for batch in user.teachers.batches.all %}
+                <a href="{% url 'mark_attendance' batch.id  %}" class="m-1 btn btn-warning ">{{batch}}</a>
+            {% endfor %}
+        {% elif request.user.is_superuser %}
+            {% for batch in batches %}
+                <a href="{% url 'mark_attendance' batch.id  %}" class="m-1 btn btn-warning ">{{batch}}</a>
+            {% endfor %}
+        {% endif %}
     </div>
     
-    <form action="" method="post">
-        {% csrf_token %}
-        
-        <div class="students-list-container">
-            <ul class="students-list">
-                {% for student in students %}
-                <li class="student">
-                    <p class="student-name">{{ student.0 }}</p>
-                    <label class="switch">
-                        <input name="student-{{forloop.counter}}" type="checkbox" {% if student.1 %} checked {% endif %}>
-                        <span class="slider round"></span>
-                    </label>
-                </li>
-                {% endfor %}
-            </ul>
-            <div class="wrapper">
-                <button class="submit-btn">Save Attendance</button>
-            </div>
-        </div> 
-    </form>
-    
+    <h2 class="heading m-2">Get Attendance</h2>
+    <div class="batch-buttons">
+        {% if request.user.teachers %}
+            {% for batch in user.teachers.batches.all %}
+                <a href="{% url 'get_attendance' batch.id %}" class="m-1 btn btn-success ">{{batch}}</a>
+            {% endfor %}
+        {% elif request.user.is_superuser %}
+            {% for batch in batches %}
+                <a href="{% url 'get_attendance' batch.id %}" class="m-1 btn btn-success ">{{batch}}</a>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+
 </div>  
 
 {% endblock dashboard %}

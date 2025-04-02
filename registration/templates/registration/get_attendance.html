@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load mathfilters %}
+{% load static %}
+
+{% block dashboard %}
+
+<style>
+    .dates-group {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+        overflow-x: auto;
+        display: flex;
+        gap: 2rem;
+    }
+</style>
+
+<!-- <div class="mx-2 px-2">
+    <div class="d-flex g-4 w-100 dates-group pb-3">
+        {% for date, attendance_records in attendance_timeline.items %}
+        <div class="card date-card" style="min-width: 20rem; height: fit-content; border: none;" data-date="{{ date|date:'Y-m-d' }}">
+            <ul class="list-group"></ul>
+            <li class="list-group-item text-dark bg-light rounded">{{ date|date:'d b Y ( l )'|title }}</li>
+
+            {% for record in attendance_records %}
+                <li class="list-group-item p-2 my-2 rounded bg-light-subtle" style="box-shadow: -3px -3px 12px #39299410, 6px 6px 12px #39299420; border: 2px solid #392994;">
+                <p class="fs-5 m-0 mb-1">{{ record.student_name|title }}</p>
+                <div class="d-flex justify-content-between">
+                    <p class="m-0">ID: {{ record.student_id }}</p>
+                    <p class="m-0">{{ record.is_present|yesno:"Present,Absent" }}</p>
+                </div>
+                </li>
+            {% endfor %}
+
+            </ul>
+        </div>
+        {% endfor %}
+    </div>
+</div> -->
+
+<div class="mx-2 px-2">
+    <div class="d-flex g-4 w-100 dates-group pb-3">
+        {% for day in attendance_timeline %}
+        <div class="card date-card" style="min-width: 18rem; height: fit-content; border: none;" data-date="{{ day.date|date:'Y-m-d' }}">
+            <ul class="list-group ">
+            <li class="list-group-item text-dark bg-light rounded">{{ day.date|date:'d b Y ( l )'|title }}</li>
+
+            {% for record in day.attendance %}
+                <li class="list-group-item p-2 my-2 rounded {% if record.is_present == False %} bg-danger-subtle {% elif record.is_present %} bg-success-subtle {% else %} bg-warning-subtle {% endif %}">
+                    <p class="text-decoration-none text-dark m-0">
+                        {{ forloop.counter }}. {{ record.student.user.first_name }} {{ record.student.user.last_name }} {% if record.is_present == False %} Absent {% elif record.is_present %} Present {% else %} Not Marked {% endif %}
+                    </p>
+                </li>
+            {% endfor %}
+            </ul>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const options = { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' };
+        const today = new Date().toLocaleDateString('en-CA', options);
+        const dateCards = document.querySelectorAll(".date-card");
+        const gap = 32;
+        const container = document.querySelector(".dates-group");
+
+        const cardWidth = dateCards[0]?.offsetWidth || 0;
+
+        let scrollOffset = 0;
+
+        const scrollPosition = sessionStorage.getItem("inquiriesPosition");
+        if (scrollPosition) {
+            container.scrollTo({
+                left: scrollPosition,
+            });
+
+            sessionStorage.removeItem("inquiriesPosition");
+        }
+            window.addEventListener("beforeunload", function () {
+            sessionStorage.setItem("inquiriesPosition", container.scrollLeft);
+        });
+
+        for (let i = 0; i < dateCards.length; i++) {
+            if (dateCards[i].dataset.date === today) {
+                dateCards[i].querySelector('ul.list-group').children[0].innerText += "";
+                dateCards[i].querySelector('ul.list-group').children[0].classList.remove("text-dark", "bg-light");
+                dateCards[i].querySelector('ul.list-group').children[0].classList.add("bg-dark", "text-white", "border-dark");
+                break;
+            }
+            scrollOffset +=  gap + cardWidth;
+        }
+        scrollOffset -= gap*2 + cardWidth;
+
+        if (!scrollPosition) {
+            container.scrollTo({
+                left: scrollOffset,
+                // behavior: "smooth",
+            });
+        }
+    });
+</script>
+
+
+{% endblock dashboard %}
