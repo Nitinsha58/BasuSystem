@@ -11,7 +11,9 @@ from .views import (
     search_students,
     print_receipt,
     mark_attendance,
-    get_attendance
+    get_attendance,
+    add_teacher,
+    update_teacher
     )
 
 
@@ -29,4 +31,7 @@ urlpatterns = [
     path('mark_attendance/', mark_attendance, name='attendance'),
     path('mark_attendance/<int:batch_id>', mark_attendance, name='mark_attendance'),
     path('get_attendance/<int:batch_id>', get_attendance, name='get_attendance'),
+
+    path('add_teacher/', add_teacher, name='add_teacher'),
+    path('update_teacher/<int:teacher_id>', update_teacher, name='update_teacher'),
 ]

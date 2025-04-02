@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.db import transaction
 from datetime import datetime, timedelta
 from collections import defaultdict
+from user.models import BaseUser
 
 from django.db.models import Q
 
@@ -436,18 +437,82 @@ def get_attendance(request, batch_id):
     })
 
 
-# def attendance_report(request):
-#     if request.method == 'POST':
-#         class_id = request.POST.get('class_id')
-#         batch_id = request.POST.get('batch_id')
-#         date = request.POST.get('date')
+def add_teacher(request):
+    if request.method == "POST":
+        form_data = {
+            "first_name": request.POST.get("first_name"),
+            "last_name": request.POST.get("last_name"),
+            "phone": request.POST.get("phone"),
+            "password": "basu@123",
+            "batches": request.POST.getlist("batches"),
+        }
 
-#         # Fetch attendance records based on the selected class, batch, and date
-#         attendance_records = []  # Replace with your logic to fetch attendance records
+        # Check if user already exists
+        user = BaseUser.objects.filter(phone=form_data["phone"]).first()
 
-#         return render(request, 'registration/attendance_report.html', {'attendance_records': attendance_records})
+        if Teacher.objects.filter(user=user):
+            messages.error(request, "Teacher already exists")
+            return redirect("add_teacher")
+        if user:
+            messages.info(request, "User already exists. Linking the existing user to the teacher.")
+        else:
+            # Create a new user
+            user = BaseUser.objects.create_user(
+                phone=form_data["phone"],
+                password=form_data["password"],
+                first_name=form_data["first_name"],
+                last_name=form_data["last_name"],
+            )
+            messages.success(request, "User created successfully.")
 
-#     classes = ClassName.objects.all()
-#     batches = Batch.objects.all()
+        # Create or update the teacher
+        teacher, created = Teacher.objects.get_or_create(user=user)
+        if not created:
+            messages.info(request, "Teacher already exists. Updating the teacher details.")
+        teacher.batches.set(form_data["batches"])
+        teacher.save()
 
-#     return render(request, 'registration/attendance_report.html', {'classes': classes, 'batches': batches})
+        messages.success(request, "Teacher registered successfully.")
+        return redirect("add_teacher")
+
+    classes = ClassName.objects.all()
+    class_teachers = [{'class': cls.name, 'teachers': Teacher.objects.filter(batches__class_name=cls).distinct()} for cls in classes ]
+    batches = Batch.objects.all()
+    return render(request, "registration/add_teacher.html", {'batches': batches, "class_teachers": class_teachers})
+
+
+def update_teacher(request, teacher_id):
+    teacher = Teacher.objects.filter(id = teacher_id).first()
+    if not teacher:
+        messages.error(request, "Invalid Teacher Id")
+        return redirect("add_teacher")
+
+    if request.method == "POST":
+        form_data = {
+            "first_name": request.POST.get("first_name"),
+            "last_name": request.POST.get("last_name"),
+            "batches": request.POST.getlist("batches"),
+        }
+
+        # Update teacher's user details
+        teacher.user.first_name = form_data["first_name"]
+        teacher.user.last_name = form_data["last_name"]
+        teacher.user.save()
+
+        # Update assigned batches
+        teacher.batches.set(form_data["batches"])
+        teacher.save()
+
+        messages.success(request, "Teacher details updated successfully.")
+        return redirect("update_teacher", teacher_id=teacher.id)
+
+    # Fetch existing details
+    classes = ClassName.objects.all()
+    class_teachers = [{'class': cls.name, 'teachers': Teacher.objects.filter(batches__class_name=cls).distinct()} for cls in classes ]
+    batches = Batch.objects.all()
+
+    return render(
+        request, 
+        "registration/update_teacher.html", 
+        {'batches': batches, "class_teachers": class_teachers, "teacher": teacher}
+    )

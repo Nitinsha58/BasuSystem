@@ -95,6 +95,9 @@
                 
                 {% if request.user.admissioncounsellor or request.user.is_superuser %}
                 <li class="nav-item">
+                    <a class="nav-link" href="{% url 'add_teacher' %}">Add Teacher</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="{% url 'inquiries' %}">Inquiries</a>
                 </li>
                 <li class="nav-item">
@@ -106,7 +109,6 @@
                 <li class="nav-item text-dark">
                     <a class="nav-link" href="{% url 'students_list' %}">New Students</a>
                 </li>
-
                 {% endif %}
             </ul>
 
