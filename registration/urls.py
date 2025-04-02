@@ -9,7 +9,8 @@ from .views import (
     student_reg_doc,
     delete_installment,
     search_students,
-    print_receipt
+    print_receipt,
+    mark_attendance
     )
 
 
@@ -24,4 +25,6 @@ urlpatterns = [
     path('<uuid:stu_id>/registration_document', student_reg_doc, name='student_reg_doc'),
     path('<uuid:stu_id>/receipt', print_receipt, name='receipt'),
     path('delete_installment/<uuid:stu_id>/<int:ins_id>', delete_installment, name='delete_installment'),
+    path('mark_attendance/', mark_attendance, name='attendance'),
+    path('mark_attendance/<int:batch_id>', mark_attendance, name='mark_attendance'),
 ]

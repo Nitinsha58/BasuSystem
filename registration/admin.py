@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Student, ParentDetails, FeeDetails, Installment, TransportDetails, Batch, Teacher
+from .models import Student, ParentDetails, FeeDetails, Installment, TransportDetails, Batch, Teacher, Attendance, Homework
 from .forms import TeacherForm
 from django.contrib import messages
 from django.core.exceptions import ValidationError
@@ -29,3 +29,5 @@ admin.site.register(Installment)
 admin.site.register(TransportDetails)
 admin.site.register(Batch)
 admin.site.register(Teacher)
+admin.site.register(Attendance)
+admin.site.register(Homework)

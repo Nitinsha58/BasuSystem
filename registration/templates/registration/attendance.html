@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block style %}
+<link rel="stylesheet" href="{% static 'css/attendance.css' %}">
+{% endblock style %}
+
+{% block dashboard %}
+<h3 class="heading m-2">Select Batch</h3>
+<div class="content-container m-2">
+    <div class="batch-buttons">
+        {% for batch in user.teachers.batches.all %}
+            <a href="{{batch.id}}" class="m-1 btn btn-warning ">{{batch}}</a>
+        {% endfor %}
+    </div>
+    
+    <form action="" method="post">
+        {% csrf_token %}
+        
+        <div class="students-list-container">
+            <ul class="students-list">
+                {% for student in students %}
+                <li class="student">
+                    <p class="student-name">{{ student.0 }}</p>
+                    <label class="switch">
+                        <input name="student-{{forloop.counter}}" type="checkbox" {% if student.1 %} checked {% endif %}>
+                        <span class="slider round"></span>
+                    </label>
+                </li>
+                {% endfor %}
+            </ul>
+            <div class="wrapper">
+                <button class="submit-btn">Save Attendance</button>
+            </div>
+        </div> 
+    </form>
+    
+</div>  
+
+{% endblock dashboard %}

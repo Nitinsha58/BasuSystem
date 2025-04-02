@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from .models import Student, ParentDetails, FeeDetails, Installment, TransportDetails, Batch
+from .models import Student, ParentDetails, FeeDetails, Installment, TransportDetails, Batch, Teacher, Attendance
 from .forms import StudentRegistrationForm, StudentUpdateForm, ParentDetailsForm, TransportDetailsForm
 from center.models import Subject, ClassName
 from django.contrib import messages
@@ -307,4 +307,76 @@ def search_students(request):
         student_list = []
     return render(request, 'registration/students_results.html', {'students': student_list})
     
+
+def mark_attendance(request, batch_id=None):
+    if batch_id and not Batch.objects.filter(id=batch_id):
+        messages.error(request, "Invalid Batch")
+        return redirect('students_list')
     
+    if not Teacher.objects.filter(user=request.user).exists():
+        messages.error(request, "You are not authorized to mark attendance.")
+        return redirect('students_list')
+
+
+    if batch_id and request.method == 'POST':
+        date = request.POST.get('date')
+        attendance_data = request.POST.getlist('attendance[]')
+
+        batch = Batch.objects.filter(id=batch_id).first()
+        if not batch:
+            messages.error(request, "Invalid Batch")
+            return redirect('mark_attendance', batch_id=batch_id)
+
+        # Check if attendance already exists for the given date
+        existing_attendance = Attendance.objects.filter(batch=batch, created_at__date=date)
+        if existing_attendance.exists():
+            messages.error(request, "Attendance for this date already exists.")
+            return redirect('mark_attendance', batch_id=batch_id)
+
+        # Process the attendance data
+        for data in attendance_data:
+            stu_id, status = data.split(':')
+            student = Student.objects.filter(stu_id=stu_id).first()
+            if student:
+                Attendance.objects.create(
+                    student=student,
+                    batch=batch,
+                    is_present=(status == 'present')
+                )
+                print(f"Student ID: {stu_id}, Status: {status}")
+                pass
+
+        messages.success(request, "Attendance marked successfully.")
+        return redirect('mark_attendance', batch_id=batch_id)
+
+    if batch_id:
+        batch = Batch.objects.filter(id=batch_id).first()
+        students = Student.objects.filter(batches=batch)
+
+        return render(request, 'registration/mark_attendance.html', {
+            'students': students,
+            'batch': batch,
+            'date': datetime.now().date(),
+        })
+
+    
+    classes = ClassName.objects.all()
+    batches = Batch.objects.all()
+
+    return render(request, 'registration/attendance.html', {'classes': classes, 'batches': batches})
+
+# def attendance_report(request):
+#     if request.method == 'POST':
+#         class_id = request.POST.get('class_id')
+#         batch_id = request.POST.get('batch_id')
+#         date = request.POST.get('date')
+
+#         # Fetch attendance records based on the selected class, batch, and date
+#         attendance_records = []  # Replace with your logic to fetch attendance records
+
+#         return render(request, 'registration/attendance_report.html', {'attendance_records': attendance_records})
+
+#     classes = ClassName.objects.all()
+#     batches = Batch.objects.all()
+
+#     return render(request, 'registration/attendance_report.html', {'classes': classes, 'batches': batches})
