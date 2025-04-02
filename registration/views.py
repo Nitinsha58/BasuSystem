@@ -372,7 +372,7 @@ def mark_attendance(request, batch_id=None):
 
 
         messages.success(request, "Attendance marked successfully.")
-        return redirect('mark_attendance', batch_id=batch_id)
+        return redirect('attendance')
 
     if batch_id:
         batch = Batch.objects.filter(id=batch_id).first()
