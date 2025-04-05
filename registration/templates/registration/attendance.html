@@ -52,11 +52,11 @@
     <div class="batch-buttons">
         {% if request.user.teachers %}
             {% for batch in user.teachers.batches.all %}
-                <a href="{% url 'get_attendance' batch.id %}" class="m-1 btn btn-success ">{{batch}}</a>
+                <a href="{% url 'get_homework' batch.id %}" class="m-1 btn btn-success ">{{batch}}</a>
             {% endfor %}
         {% elif request.user.is_superuser %}
             {% for batch in batches %}
-                <a href="{% url 'get_attendance' batch.id %}" class="m-1 btn btn-success ">{{batch}}</a>
+                <a href="{% url 'get_homework' batch.id %}" class="m-1 btn btn-success ">{{batch}}</a>
             {% endfor %}
         {% endif %}
     </div>

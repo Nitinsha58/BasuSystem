@@ -25,7 +25,7 @@
             {% for record in day.attendance %}
                 <li class="list-group-item p-2 my-2 rounded {% if record.is_present == False %} bg-danger-subtle {% elif record.is_present %} bg-success-subtle {% else %} bg-warning-subtle {% endif %}">
                     <p class="text-decoration-none text-dark m-0">
-                        {{ forloop.counter }}. {{ record.student.user.first_name }} {{ record.student.user.last_name }} {% if record.is_present == False %} Absent {% elif record.is_present %} Present {% else %} Not Marked {% endif %}
+                        {{ forloop.counter }}. {{ record.student.user.first_name }} {{ record.student.user.last_name }} ( {% if record.is_present == False %} Absent {% elif record.is_present %} Present {% else %} Not Marked {% endif %} )
                     </p>
                 </li>
             {% endfor %}

@@ -170,6 +170,7 @@ class Attendance(models.Model):
 class Homework(models.Model):
     STATUS_CHOICES = [
         ('Pending', 'Pending'),
+        ('Partial Done', 'Partial Done'),
         ('Completed', 'Completed')
     ]
 

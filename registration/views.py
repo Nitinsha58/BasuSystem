@@ -330,7 +330,7 @@ def mark_attendance(request, batch_id=None):
             return redirect('mark_attendance', batch_id=batch_id)
 
         # Check if attendance already exists for the given date
-        existing_attendance = Attendance.objects.filter(batch=batch, created_at__date=date)
+        existing_attendance = Attendance.objects.filter(batch=batch, date=date)
         if existing_attendance.exists():
             messages.error(request, "Attendance for this date already exists.")
             return redirect('mark_attendance', batch_id=batch_id)
@@ -398,7 +398,7 @@ def mark_homework(request, batch_id):
         homework_data = request.POST.getlist('homework[]')
 
         # Check if homework already marked for the given date
-        existing_homework = Homework.objects.filter(batch=batch, created_at__date=date)
+        existing_homework = Homework.objects.filter(batch=batch, date=date)
         if existing_homework.exists():
             messages.error(request, "Homework for this date already marked.")
             return redirect('mark_homework', batch_id=batch_id)
@@ -446,12 +446,12 @@ def get_attendance(request, batch_id):
     students = Student.objects.filter(batches=batch).order_by('stu_id')
 
     # Get attendance records for the batch
-    attendance_records = Attendance.objects.filter(batch=batch).order_by('created_at__date', 'student__stu_id')
+    attendance_records = Attendance.objects.filter(batch=batch).order_by('date', 'student__stu_id')
 
     # Organize attendance records by date and student
     attendance_by_date = defaultdict(dict)
     for record in attendance_records:
-        date = record.created_at.date()
+        date = record.date
         attendance_by_date[date][record.student.stu_id] = record.is_present
 
     # Generate a timeline of dates for the past 30 days
@@ -478,6 +478,50 @@ def get_attendance(request, batch_id):
         'dates': dates,
     })
 
+def get_homework(request, batch_id):
+    if batch_id and not Batch.objects.filter(id=batch_id):
+        messages.error(request, "Invalid Batch")
+        return redirect('students_list')
+
+    if not Teacher.objects.filter(user=request.user).exists():
+        messages.error(request, "You are not authorized to view homework.")
+        return redirect('students_list')
+
+    batch = Batch.objects.filter(id=batch_id).first()
+    students = Student.objects.filter(batches=batch).order_by('stu_id')
+
+    # Get homework records for the batch
+    homework_records = Homework.objects.filter(batch=batch).order_by('date', 'student__stu_id')
+
+    # Organize homework records by date and student
+    homework_by_date = defaultdict(dict)
+    for record in homework_records:
+        date = record.date
+        homework_by_date[date][record.student.stu_id] = record.status
+
+    # Generate a timeline of dates for the past 30 days
+    today = datetime.now().date()
+    start_date = today - timedelta(days=15)
+    dates = [start_date + timedelta(days=i) for i in range(31)]
+
+    # Merge homework data with the timeline and ensure all students are included
+    homework_timeline = []
+    for date in dates:
+        daily_homework = []
+        if date in homework_by_date:
+            for student in students:
+                daily_homework.append({
+                    'student': student,
+                    'status': homework_by_date.get(date, {}).get(student.stu_id, None)  # None means not marked
+                })
+        homework_timeline.append({'date': date, 'homework': daily_homework})
+
+    return render(request, 'registration/get_homework.html', {
+        'batch': batch,
+        'homework_timeline': homework_timeline,
+        'students': students,
+        'dates': dates,
+    })
 
 def add_teacher(request):
     if request.method == "POST":
