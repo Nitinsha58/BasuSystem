@@ -62,16 +62,16 @@
                 {% for cls in class_teachers %}
                 <div class="col-sm-6 col-md-4 col-lg-3 category shuffle-item shuffle-item--visible mb-4">
                     <div class="card">
-                    <ul class="list-group">
-                        <li class="list-group-item bg-dark text-white list-group border-dark"> {{cls.class}} -  ( {{cls.teachers.count}} )</li>
-                        {% for teacher in cls.teachers %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <a class="text-decoration-none text-dark" href="{% url 'update_teacher' teacher.id %}">
-                                <span class="">{{forloop.counter}}. {{teacher.user.first_name}} {{teacher.user.last_name}}</span>
-                            </a>
-                        </li>
-                        {% endfor %}
-                    </ul>
+                        <ul class="list-group">
+                            <li class="list-group-item bg-dark text-white list-group border-dark"> {{cls.class}} -  ( {{cls.teachers.count}} )</li>
+                            {% for teacher in cls.teachers %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <a class="text-decoration-none text-dark" href="{% url 'update_teacher' teacher.id %}">
+                                    <span class="">{{forloop.counter}}. {{teacher.user.first_name}} {{teacher.user.last_name}}</span>
+                                </a>
+                            </li>
+                            {% endfor %}
+                        </ul>
                     </div>
                 </div>
                 {% endfor %}

@@ -13,7 +13,8 @@ from .views import (
     mark_attendance,
     get_attendance,
     add_teacher,
-    update_teacher
+    update_teacher,
+    mark_homework
     )
 
 
@@ -29,8 +30,10 @@ urlpatterns = [
     path('<uuid:stu_id>/receipt', print_receipt, name='receipt'),
     path('delete_installment/<uuid:stu_id>/<int:ins_id>', delete_installment, name='delete_installment'),
     path('mark_attendance/', mark_attendance, name='attendance'),
+
     path('mark_attendance/<int:batch_id>', mark_attendance, name='mark_attendance'),
     path('get_attendance/<int:batch_id>', get_attendance, name='get_attendance'),
+    path('mark_homework/<int:batch_id>', mark_homework, name='mark_homework'),
 
     path('add_teacher/', add_teacher, name='add_teacher'),
     path('update_teacher/<int:teacher_id>', update_teacher, name='update_teacher'),

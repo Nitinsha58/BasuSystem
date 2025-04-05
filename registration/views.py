@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from .models import Student, ParentDetails, FeeDetails, Installment, TransportDetails, Batch, Teacher, Attendance
+from .models import Student, ParentDetails, FeeDetails, Installment, TransportDetails, Batch, Teacher, Attendance, Homework
 from .forms import StudentRegistrationForm, StudentUpdateForm, ParentDetailsForm, TransportDetailsForm
 from center.models import Subject, ClassName
 from django.contrib import messages
@@ -334,18 +334,7 @@ def mark_attendance(request, batch_id=None):
         if existing_attendance.exists():
             messages.error(request, "Attendance for this date already exists.")
             return redirect('mark_attendance', batch_id=batch_id)
-
-        # # Process the attendance data
-        # for data in attendance_data:
-        #     stu_id, status = data.split(':')
-        #     student = Student.objects.filter(stu_id=stu_id).first()
-        #     if student:
-        #         Attendance.objects.create(
-        #             student=student,
-        #             batch=batch,
-        #             is_present=(status == 'present')
-        #         )
-        #         pass
+        
         batch = Batch.objects.filter(id=batch_id).first()
         students = Student.objects.filter(batches=batch)
 
@@ -370,7 +359,6 @@ def mark_attendance(request, batch_id=None):
                     is_present=False
                 )
 
-
         messages.success(request, "Attendance marked successfully.")
         return redirect('attendance')
 
@@ -390,6 +378,57 @@ def mark_attendance(request, batch_id=None):
     batches = Batch.objects.all()
 
     return render(request, 'registration/attendance.html', {'classes': classes, 'batches': batches})
+
+def mark_homework(request, batch_id):
+    if batch_id and not Batch.objects.filter(id=batch_id):
+        messages.error(request, "Invalid Batch")
+        return redirect('students_list')
+
+    if not Teacher.objects.filter(user=request.user).exists() and not request.user.is_superuser:
+        messages.error(request, "You are not authorized to update homework.")
+        return redirect('students_list')
+    
+    batch = Batch.objects.filter(id=batch_id).first()
+    students = Student.objects.filter(batches=batch)
+
+    if batch_id and request.method == 'POST':
+        date = request.POST.get('date')
+        homework_data = request.POST.getlist('homework[]')
+
+        # Check if homework already marked for the given date
+        existing_homework = Homework.objects.filter(batch=batch, created_at__date=date)
+        if existing_homework.exists():
+            messages.error(request, "Homework for this date already marked.")
+            return redirect('mark_homework', batch_id=batch_id)
+
+        # Process the homework data
+        students = Student.objects.filter(batches=batch)
+
+        for data in homework_data:
+            stu_id, status = data.split(':')
+            student = Student.objects.filter(stu_id=stu_id).first()
+            if student:
+                Homework.objects.create(
+                    student=student,
+                    batch=batch,
+                    status=status
+                )
+
+        messages.success(request, "Homework updated successfully.")
+        return redirect('mark_homework')
+    
+    homework_status = Homework.STATUS_CHOICES
+
+  
+
+    return render(request, 'registration/mark_homework.html', {
+        'students': students,
+        'batch': batch,
+        'batches': Batch.objects.all(),
+        'date': datetime.now().date(),
+        'homework_status': homework_status,
+    })
+
 
 def get_attendance(request, batch_id):
     if batch_id and not Batch.objects.filter(id=batch_id):
