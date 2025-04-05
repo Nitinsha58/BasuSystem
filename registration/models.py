@@ -156,6 +156,7 @@ class Attendance(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="attendance")
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name="attendance")
     is_present = models.BooleanField()
+    date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -174,6 +175,7 @@ class Homework(models.Model):
 
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="homework")
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name="homework")
+    date = models.DateField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

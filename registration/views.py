@@ -346,7 +346,8 @@ def mark_attendance(request, batch_id=None):
                 Attendance.objects.create(
                     student=student,
                     batch=batch,
-                    is_present=(status == 'present')
+                    is_present=(status == 'present'),
+                    date=date
                 )
             marked_students.add(student.stu_id)
 
@@ -356,7 +357,8 @@ def mark_attendance(request, batch_id=None):
                 Attendance.objects.create(
                     student=student,
                     batch=batch,
-                    is_present=False
+                    is_present=False,
+                    date = date
                 )
 
         messages.success(request, "Attendance marked successfully.")
@@ -411,11 +413,12 @@ def mark_homework(request, batch_id):
                 Homework.objects.create(
                     student=student,
                     batch=batch,
-                    status=status
+                    status=status,
+                    date = date
                 )
 
         messages.success(request, "Homework updated successfully.")
-        return redirect('mark_homework')
+        return redirect('mark_homework', batch_id=batch_id)
     
     homework_status = Homework.STATUS_CHOICES
 
