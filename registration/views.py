@@ -294,14 +294,18 @@ def search_students(request):
         students = Student.objects.filter(
             Q(user__first_name__icontains=search_term) |
             Q(user__last_name__icontains=search_term) |
-            Q(user__phone__icontains=search_term)
+            Q(user__phone__icontains=search_term) |
+            Q(user__registered_student__school_name__icontains = search_term) |
+            Q(user__registered_student__class_enrolled__name__icontains = search_term) |
+            Q(user__registered_student__subjects__name__icontains = search_term)
         ).select_related('user')[:10]
         student_list = [
             {   "stu_id": student.stu_id,
                 "name": f"{student.user.first_name} {student.user.last_name}",
                 "phone": student.user.phone,
                 "class": student.class_enrolled if student.class_enrolled else "N/A",
-                "subjects": ", ".join(subject.name for subject in student.subjects.all())
+                "subjects": ", ".join(subject.name for subject in student.subjects.all()),
+                "school_name": student.school_name
             }
             for student in students
         ]
