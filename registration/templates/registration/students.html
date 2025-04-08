@@ -29,10 +29,13 @@
           <li class="list-group-item bg-dark text-white list-group border-dark"> {{cls.class}} - (
             {{cls.students.count}} )</li>
           {% for student in cls.students %}
-          <li class="list-group-item d-flex justify-content-between align-items-center {% if not student.fees.installments.first.paid %} bg-warning {% endif %}">
+          <li style="position: relative;" class="list-group-item d-flex justify-content-between align-items-center {% if not student.fees.installments.first.paid %} bg-warning {% endif %}">
             <a class="text-decoration-none text-dark" target="_blank" href="{% url 'student_update' student.stu_id %}">
               <span class="">{{forloop.counter}}. {{student.user.first_name}} {{student.user.last_name}}</span>
             </a>
+            {% if not student.batches.all %}
+              <div style="position: absolute; background-color: red; border-radius: 50%; width: 8px; height: 8px; right: -6px; top: 50%;" class="indicator"></div>
+            {% endif %}
           </li>
           {% endfor %}
         </ul>
