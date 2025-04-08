@@ -1,6 +1,6 @@
 {% if students %}
     {% for student in students %}
-    <li class="list-group-item m-2 rounded p-2 bg-light">
+    <li style="position: relative;"  class="list-group-item m-2 rounded p-2 bg-light">
         <a href="{% url 'student_update' student.stu_id %}" class="nav-link">
             <div class="d-flex justify-content-between">
                 <div class="" style="font-size: 16px;">{{student.name}}</div>
@@ -9,6 +9,9 @@
             <small class="text-muted">{{student.class}} | Subjects: {{student.subjects}}</small>
             <small style="display: block;" class="text-muted">School: {{student.school_name}}</small>
         </a>
+        {% if not student.batches %}
+            <div style="position: absolute; background-color: red; border-radius: 50%; width: 8px; height: 8px; right: -6px; top: 50%;" class="indicator"></div>
+        {% endif %}
     </li>
     {% endfor %}
 

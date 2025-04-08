@@ -305,9 +305,10 @@ def search_students(request):
                 "phone": student.user.phone,
                 "class": student.class_enrolled if student.class_enrolled else "N/A",
                 "subjects": ", ".join(subject.name for subject in student.subjects.all()),
-                "school_name": student.school_name
+                "school_name": student.school_name,
+                "batches": bool(student.batches.all()),
             }
-            for student in students
+            for student in set(students)
         ]
     else:
         student_list = []
