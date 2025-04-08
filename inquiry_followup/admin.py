@@ -8,7 +8,7 @@ class AdmissionCounselorAdmin(admin.ModelAdmin):
 
 class StationaryPartnerAdmin(admin.ModelAdmin):
     form = StationaryPartnerForm
-    list_display = ['name', 'address', 'created_at', 'updated_at']
+    list_display = ['name', 'user__first_name', 'user__phone', 'address', 'created_at']
 
 admin.site.register(AdmissionCounselor, AdmissionCounselorAdmin)
 admin.site.register(StationaryPartner, StationaryPartnerAdmin)
