@@ -112,7 +112,7 @@ def student_update(request, stu_id):
     })
 
 def students_list(request):
-    classes = ClassName.objects.all().order_by('-name')
+    classes = ClassName.objects.all().order_by('-created_at')
     class_students = [
         {'class': cls.name, 'students': Student.objects.filter(class_enrolled=cls).distinct()} for cls in classes ]
     return render(request, "registration/students.html", {
