@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'testprogress.apps.TestprogressConfig',
     'inquiry_followup.apps.InquiryFollowupConfig',
     'registration.apps.RegistrationConfig',
+    'accounts.apps.AccountsConfig',
 ]
 
 MIDDLEWARE = [

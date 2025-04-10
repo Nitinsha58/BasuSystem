@@ -12,5 +12,6 @@ urlpatterns = [
     path("mock-progress/", include("testprogress.urls")),
     path("", include("inquiry_followup.urls")),
     path("student/", include("registration.urls")),
+    path("accounts/", include("accounts.urls")),
 
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

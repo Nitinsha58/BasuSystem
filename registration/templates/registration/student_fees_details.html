@@ -172,8 +172,10 @@
     
     const fee_form = document.getElementById("fee-form");
 
-    first_installment_date = document.getElementById("installment-date-1");
-    first_installment_date.value = today;
+    {% if not fees_details.installments %}
+      first_installment_date = document.getElementById("installment-date-1");
+      first_installment_date.value = today;
+    {% endif %}
 
     document.getElementById("fee-form").addEventListener("submit", function (event) {
       let totalFees = totalFeesElement.textContent;
