@@ -19,6 +19,12 @@ def inquiries(request):
 
     inquiry_followup_dict = defaultdict(list)
 
+    status_counts = defaultdict(int)
+
+    for followup in latest_followups:
+        if followup.status:
+            status_counts[followup.status] += 1
+
     for followup in latest_followups:
         # created_date = followup.inquiry.created_at.date()
         created_date = followup.created_at.date()
@@ -32,7 +38,8 @@ def inquiries(request):
 
     return render(request, 'inquiry_followup/inquiries.html', {
         'dates': merged_dict,
-        'followup_status': FollowUpStatus.objects.all()
+        'followup_status': FollowUpStatus.objects.all(),
+        'status_counts': dict(status_counts),
     })
 
 def inquiry(request, inquiry_id):

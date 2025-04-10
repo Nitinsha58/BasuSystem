@@ -14,7 +14,7 @@
         gap: 2rem;
     }
 </style>
-<div id="searchStuModal" class="start-0 d-flex items-center justify-content-center">
+<div id="searchStuModal" class="start-0 d-flex flex-column flex-md-row items-center justify-content-between">
     <div class="position-relative rounded-lg rounded my-2 w-100 bg-white shadow-md"
       style="height: fit-content; max-width: 400px; z-index: 2355;">
       <div class="search-form ">
@@ -28,6 +28,20 @@
         </ul>
       </div>
     </div>
+
+    <div class="row g-4 mx-2">
+        {% for sts, ct in status_counts.items %}
+        <div class="col">
+            <div class="card-body text-center me-2 rounded bg-light p-1" >
+                <p class="semibold card-title mb-0">{{ct}}</p>
+                <p class="card-text  mb-0" style="color: {{sts.color}};">{{sts.name}}</p>
+            </div>
+        </div>
+
+        {% endfor %}
+        
+    </div>
+
 </div>  
 
 <div class="mx-2 px-2">
