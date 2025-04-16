@@ -40,6 +40,10 @@
                 <p class="m-0">Collected</p>
                 <p class="text-success m-0">{{monthly_collected}}</p>
             </div>
+            <div class="field flex-column d-flex align-items-center">
+                <p class="m-0">Total</p>
+                <p class="text-dark m-0">{{total}}</p>
+            </div>
 
         </div>
     </div>
@@ -62,7 +66,7 @@
                 {% for inst in items %}
                     <li class="list-group-item p-2 my-2 rounded bg-light-subtle" {% if followup.followup_date %} style="box-shadow: -3px -3px 12px #39299410, 6px 6px 12px #39299420;
                         border: 2px solid #392994;" {% endif %}>
-                        <a href="" class="text-decoration-none  text-dark">
+                        <a href="{% url 'student_fees_details' inst.student.stu_id %}" class="text-decoration-none  text-dark">
                             <p class="fs-5 m-0 mb-1" >{{inst.student.user.first_name}} {{inst.student.user.last_name}}</p>
                             <div class="d-flex justify-content-between">
                                 <p class="m-0" >

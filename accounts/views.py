@@ -40,7 +40,8 @@ def installments(request):
 
     # Calculate total collection and pending amount for the current month
     monthly_collection = sum(inst.amount for inst in installments if inst.paid)
-    monthly_pending = sum(inst.amount for inst in installments if not inst.paid)
+    monthly_pending = sum(inst.amount for inst in installments if not inst.paid and inst.due_date <= today)
+    total = sum(inst.amount for inst in installments)
 
     # For previous/next month navigation
     prev_month = (start_date - timedelta(days=1)).replace(day=1)
@@ -54,4 +55,5 @@ def installments(request):
         'next_month': {'year': next_month.year, 'month': next_month.month},
         'monthly_collected': monthly_collection,
         'monthly_pending': monthly_pending,
+        'total' : total
     })
