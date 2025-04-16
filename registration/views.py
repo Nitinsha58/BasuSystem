@@ -115,8 +115,13 @@ def students_list(request):
     classes = ClassName.objects.all().order_by('-created_at')
     class_students = [
         {'class': cls.name, 'students': Student.objects.filter(class_enrolled=cls).order_by('-created_at', 'user__first_name', 'user__last_name').distinct()} for cls in classes ]
+    
+    count = Student.objects.all().distinct().count()
+    
+
     return render(request, "registration/students.html", {
-        'class_students' : class_students
+        'class_students' : class_students,
+        'count': count,
     })
 
 def student_parent_details(request, stu_id):
