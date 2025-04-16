@@ -52,6 +52,6 @@ def installments(request):
         'today': today,
         'prev_month': {'year': prev_month.year, 'month': prev_month.month},
         'next_month': {'year': next_month.year, 'month': next_month.month},
-        'monthly_collection': monthly_collection,
+        'monthly_collected': monthly_collection,
         'monthly_pending': monthly_pending,
     })
