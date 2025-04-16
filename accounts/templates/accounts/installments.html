@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% load mathfilters %}
+{% load static %}
+
+{% block dashboard %}
+
+<style>
+    .dates-group {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+        overflow-x: auto;
+        display: flex;
+        gap: 2rem;
+    }
+</style>
+<div id="searchStuModal" class="start-0 d-flex flex-column flex-md-row items-center justify-content-between p-2">
+    <div class="position-relative rounded-lg rounded my-2 w-100 bg-white shadow-md"
+      style="height: fit-content; max-width: 400px; z-index: 2355;">
+      <div class="search-form ">
+        <input type="text" class="form-control search-input p-2 fs-5" id="search-stu-input" maxlength="60"
+          placeholder="Search Inquiry..." autocomplete="off" autofocus
+          name="search" 
+          hx-get="/search-inquiries?search={value}"
+          hx-trigger="keyup changed delay:500ms, search" hx-target="#search-inquiries-list">
+        <ul class="position-absolute p-2 mt-2 top-2 w-100 rounded" id="search-inquiries-list">
+  
+        </ul>
+      </div>
+    </div>
+    <div></div>
+    <div class="">
+        <h2>{{ current_month|date:"F Y" }}</h2>
+        <div class="stats d-flex justify-content-between align-items-center">
+            <div class="field flex-column d-flex align-items-center">
+                <p class="m-0">Pending</p>
+                <p class="text-danger m-0">{{monthly_pending}}</p>
+            </div>
+            <div class="field flex-column d-flex align-items-center">
+                <p class="m-0">Collected</p>
+                <p class="text-success m-0">{{monthly_collected}}</p>
+            </div>
+
+        </div>
+    </div>
+    <div class="row g-4 mx-2">
+        <ul class="pagination">
+            <li class="page-item"><a class="page-link" href="?year={{ prev_month.year }}&month={{ prev_month.month }}">Previous</a></li>
+            <li class="page-item"><a class="page-link" href="?year={{ next_month.year }}&month={{ next_month.month }}">Next</a></li>
+          </ul>
+    </div>
+
+</div>  
+
+<div class="mx-2 px-2">
+    <div class="d-flex g-4 w-100 dates-group pb-3">
+        {% for date, items in dates.items %}
+        <div class="card date-card" style="min-width: 20rem; height: fit-content; border: none;" data-date="{{ date|date:'Y-m-d' }}">
+            <ul class="list-group ">
+                <li class="list-group-item text-dark bg-light rounded">{{ date|date:'d b Y ( l )'|title }}</li>
+
+                {% for inst in items %}
+                    <li class="list-group-item p-2 my-2 rounded bg-light-subtle" {% if followup.followup_date %} style="box-shadow: -3px -3px 12px #39299410, 6px 6px 12px #39299420;
+                        border: 2px solid #392994;" {% endif %}>
+                        <a href="" class="text-decoration-none  text-dark">
+                            <p class="fs-5 m-0 mb-1" >{{inst.student.user.first_name}} {{inst.student.user.last_name}}</p>
+                            <div class="d-flex justify-content-between">
+                                <p class="m-0" >
+                                    {{inst.student.class_enrolled|title}}
+                                </p>
+                                <h5 class="m-0">Rs. {{inst.amount}}</h5>
+                            </div>
+                            <p class="m-0 mb-2">
+                                {% for subject in inst.student.subjects.all %}
+                                    {{subject.name|title}}
+                                {% endfor %}
+                            </p>
+
+                            {% if inst.paid and inst.due_date %}
+                            <p class="rounded px-2 py-1 m-0" id="status" name="status" style="background: #7AFF91; width: fit-content; ">Payment Done</p>
+                            {% elif not inst.paid and inst.due_date < today %}
+                            <p class="rounded px-2 py-1 m-0" id="status" name="status"  style="background: #FF7C7C; width: fit-content; ">Pending Payment</p>
+                            {% endif %}
+                            {% if followup.inquiry.stationary_partner %}
+                            <p class="m-0 me-2 mb-2 position-absolute end-0 bottom-0 bg-warning-subtle rounded p-1" style="font-size: 14px;">{{followup.inquiry.stationary_partner.name}}</p>
+                            {% elif followup.admission_counsellor %}
+                            <p class="m-0 me-2 mb-2 position-absolute end-0 bottom-0" style="font-size: 14px;">{{followup.admission_counsellor.user.first_name}} {{followup.admission_counsellor.user.last_name}}</p>
+                            {% endif %}
+                        </a>
+                    </li>
+                {% endfor %}
+
+            </ul>
+        </div>
+        {% endfor %}
+
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const searchInput = document.getElementById("search-stu-input");
+        const searchList = document.getElementById("search-inquiries-list");
+    
+        searchInput.addEventListener("blur", function() {
+            setTimeout(() => searchList.style.display = "none", 200);
+        });
+    
+        searchInput.addEventListener("focus", function() {
+            searchList.style.display = "block";
+        });
+    });
+</script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const options = { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' };
+        const today = new Date().toLocaleDateString('en-CA', options);
+        const dateCards = document.querySelectorAll(".date-card");
+        const gap = 32;
+        const container = document.querySelector(".dates-group");
+
+        const cardWidth = dateCards[0]?.offsetWidth || 0;
+
+        let scrollOffset = 0;
+
+        const scrollPosition = sessionStorage.getItem("inquiriesPosition");
+        if (scrollPosition) {
+            container.scrollTo({
+                left: scrollPosition,
+            });
+
+            sessionStorage.removeItem("inquiriesPosition");
+        }
+            window.addEventListener("beforeunload", function () {
+            sessionStorage.setItem("inquiriesPosition", container.scrollLeft);
+        });
+
+        for (let i = 0; i < dateCards.length; i++) {
+            if (dateCards[i].dataset.date === today) {
+                dateCards[i].querySelector('ul.list-group').children[0].innerText += "";
+                dateCards[i].querySelector('ul.list-group').children[0].classList.remove("text-dark", "bg-light");
+                dateCards[i].querySelector('ul.list-group').children[0].classList.add("bg-dark", "text-white", "border-dark");
+                break;
+            }
+            scrollOffset +=  gap + cardWidth;
+        }
+        scrollOffset -= gap*2 + cardWidth;
+
+        if (!scrollPosition) {
+            container.scrollTo({
+                left: scrollOffset,
+                // behavior: "smooth",
+            });
+        }
+    });
+</script>
+
+
+{% endblock dashboard %}
