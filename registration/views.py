@@ -161,7 +161,7 @@ def student_parent_details(request, stu_id):
         "parent_details": parent_details
     })
 
-@login_required('login')
+@login_required(login_url = 'login')
 def student_fees_details(request, stu_id):
     student = Student.objects.filter(stu_id=stu_id).first()
     if not student:
