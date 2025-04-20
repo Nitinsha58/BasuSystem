@@ -7,9 +7,11 @@ from django.db import transaction
 from datetime import datetime, timedelta
 from collections import defaultdict
 from user.models import BaseUser
+from django.contrib.auth.decorators import login_required
 
 from django.db.models import Q
 
+@login_required('login')
 def student_registration(request):
     form_data = {}
     if request.method == "POST":
@@ -57,7 +59,7 @@ def student_registration(request):
         'durations': durations
     })
 
-
+@login_required('login')
 def student_update(request, stu_id):
     student = Student.objects.filter(stu_id=stu_id).first()
 
@@ -111,6 +113,7 @@ def student_update(request, stu_id):
         'batches': batches,
     })
 
+@login_required('login')
 def students_list(request):
     classes = ClassName.objects.all().order_by('-created_at')
     class_students = [
@@ -124,6 +127,7 @@ def students_list(request):
         'count': count,
     })
 
+@login_required('login')
 def student_parent_details(request, stu_id):
 
     if stu_id and not Student.objects.filter(stu_id=stu_id):
@@ -157,6 +161,7 @@ def student_parent_details(request, stu_id):
         "parent_details": parent_details
     })
 
+@login_required('login')
 def student_fees_details(request, stu_id):
     student = Student.objects.filter(stu_id=stu_id).first()
     if not student:
@@ -219,6 +224,7 @@ def student_fees_details(request, stu_id):
         'payment_options': payment_options,
     })
 
+@login_required('login')
 def student_transport_details(request, stu_id):
     if stu_id and not Student.objects.filter(stu_id=stu_id):
         messages.error(request, "Invalid Student")
@@ -246,7 +252,7 @@ def student_transport_details(request, stu_id):
         'student': Student.objects.filter(stu_id=stu_id).first()
     })
     
-
+@login_required('login')
 def delete_installment(request, stu_id, ins_id):
     if stu_id and not Student.objects.filter(stu_id=stu_id):
         messages.error(request, "Invalid Student")
@@ -258,6 +264,7 @@ def delete_installment(request, stu_id, ins_id):
     messages.success(request, "Installment Deleted.")
     return redirect('student_fees_details', stu_id=student.stu_id)
 
+@login_required('login')
 def student_reg_doc(request, stu_id):
     if stu_id and not Student.objects.filter(stu_id=stu_id):
         messages.error(request, "Invalid Student")
@@ -281,7 +288,8 @@ def student_reg_doc(request, stu_id):
         'total_discount': total_discount,
         'total_fees': total_fees
     })
-    
+
+@login_required('login')
 def print_receipt(request, stu_id):
     if stu_id and not Student.objects.filter(stu_id=stu_id):
         messages.error(request, "Invalid Student")
@@ -292,7 +300,7 @@ def print_receipt(request, stu_id):
         'today': datetime.now()
     })
 
-
+@login_required('login')
 def search_students(request):
     search_term = request.GET.get('search', '').strip()
     if search_term:
@@ -319,7 +327,7 @@ def search_students(request):
         student_list = []
     return render(request, 'registration/students_results.html', {'students': student_list})
     
-
+@login_required('login')
 def mark_attendance(request, batch_id=None):
     if batch_id and not Batch.objects.filter(id=batch_id):
         messages.error(request, "Invalid Batch")
@@ -391,6 +399,7 @@ def mark_attendance(request, batch_id=None):
 
     return render(request, 'registration/attendance.html', {'classes': classes, 'batches': batches})
 
+@login_required('login')
 def mark_homework(request, batch_id):
     if batch_id and not Batch.objects.filter(id=batch_id):
         messages.error(request, "Invalid Batch")
@@ -442,7 +451,7 @@ def mark_homework(request, batch_id):
         'homework_status': homework_status,
     })
 
-
+@login_required('login')
 def get_attendance(request, batch_id):
     if batch_id and not Batch.objects.filter(id=batch_id):
         messages.error(request, "Invalid Batch")
@@ -488,6 +497,7 @@ def get_attendance(request, batch_id):
         'dates': dates,
     })
 
+@login_required('login')
 def get_homework(request, batch_id):
     if batch_id and not Batch.objects.filter(id=batch_id):
         messages.error(request, "Invalid Batch")
@@ -533,6 +543,7 @@ def get_homework(request, batch_id):
         'dates': dates,
     })
 
+@login_required('login')
 def add_teacher(request):
     if request.method == "POST":
         form_data = {
@@ -576,7 +587,7 @@ def add_teacher(request):
     batches = Batch.objects.all()
     return render(request, "registration/add_teacher.html", {'batches': batches, "class_teachers": class_teachers})
 
-
+@login_required('login')
 def update_teacher(request, teacher_id):
     teacher = Teacher.objects.filter(id = teacher_id).first()
     if not teacher:
