@@ -23,8 +23,15 @@ class AttendanceAdmin(admin.ModelAdmin):
         'batch__subject__name'
     ]
 
+class StudentAdmin(admin.ModelAdmin):
+    list_display = ['user__first_name', 'user__last_name', 'created_at', 'updated_at']
+    search_fields = ['user__first_name', 'user__last_name', 'user__phone', 'batches__class_name__name',
+        'batches__section__name',
+        'batches__subject__name']
+    list_filter = ['batches__class_name', 'batches__section', 'batches__subject']
+    ordering = ['user__first_name', 'user__last_name']
 
-admin.site.register(Student)
+admin.site.register(Student, StudentAdmin)
 admin.site.register(ParentDetails)
 admin.site.register(FeeDetails)
 admin.site.register(Installment)
