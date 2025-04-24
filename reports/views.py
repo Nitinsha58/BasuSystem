@@ -81,8 +81,8 @@ def student_report(request, stu_id):
 
     current_month = []
     week = []
-    present_count = 0
-    absent_count = 0
+    present_c = 0
+    absent_c = 0
 
     for _ in range(first_weekday):
         week.append(None)
@@ -96,9 +96,9 @@ def student_report(request, stu_id):
             attendance_record = attendance_records.filter(date=current_date).first()
             attendance_status = 'Present' if attendance_record.is_present else 'Absent'
             if attendance_record.is_present:
-                present_count += 1
+                present_c += 1
             else:   
-                absent_count += 1
+                absent_c += 1
 
         homework_status = None
         homework_record = Homework.objects.filter(student=student, date=current_date).first()
@@ -174,9 +174,9 @@ def student_report(request, stu_id):
     return render(request, 'reports/student_report.html', {
         'current_month': current_month,
         'current_month_name': calendar.month_name[month],
-        'current_month_present_count': present_count,
-        'current_month_total_count': present_count + absent_count,
-        'current_month_percentage': round((present_count / (present_count + absent_count) * 100) if (present_count + absent_count) > 0 else 0, 1),
+        'current_month_present_count': present_c,
+        'current_month_total_count': (present_c + absent_c),
+        'current_month_percentage': round((present_c / (present_c + absent_c) * 100) if (present_c + absent_c) > 0 else 0, 1),
         'batchwise_calendar': batchwise_calendar,
         'student': student,
         'combined_attendance': combined_attendance,
