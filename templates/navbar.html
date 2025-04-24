@@ -109,8 +109,6 @@
                 <li class="nav-item m-2">
                     <a class="nav-link bg-warning-subtle rounded d-inline px-3 p-2 m-1" href="{% url 'student_registration' %}">New Registration</a>
                 </li>
-                {% endif %}
-
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                         Students
@@ -120,6 +118,9 @@
                         <li><a class="dropdown-item" href="{% url 'batchwise_students' %}">Batchwise Students</a></li>
                     </ul>
                 </li>
+                {% endif %}
+                
+
 
             </ul>
 
