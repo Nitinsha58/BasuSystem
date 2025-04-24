@@ -8,7 +8,7 @@
         </a>
 
         <!-- Toggler for smaller screens -->
-        <button class="navbar-toggler p-1 px-2" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+        <button class="navbar-toggler p-1 px-2" id="toggle-btn" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
             aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" viewBox="0 0 20 20" fill="none">
                 <path fill="#000000" fill-rule="evenodd" d="M19 4a1 1 0 01-1 1H2a1 1 0 010-2h16a1 1 0 011 1zm0 6a1 1 0 01-1 1H2a1 1 0 110-2h16a1 1 0 011 1zm-1 7a1 1 0 100-2H2a1 1 0 100 2h16z"/>
@@ -109,10 +109,18 @@
                 <li class="nav-item m-2">
                     <a class="nav-link bg-warning-subtle rounded d-inline px-3 p-2 m-1" href="{% url 'student_registration' %}">New Registration</a>
                 </li>
-                <li class="nav-item text-dark">
-                    <a class="nav-link" href="{% url 'students_list' %}">New Students</a>
-                </li>
                 {% endif %}
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Students
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{% url 'students_list' %}">New Students</a></li>
+                        <li><a class="dropdown-item" href="{% url 'batchwise_students' %}">Batchwise Students</a></li>
+                    </ul>
+                </li>
+
             </ul>
 
             <!-- User role display and action buttons -->

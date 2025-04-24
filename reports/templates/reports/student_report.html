@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block style %}
+<style>
+    .student_reg_doc {
+        position: relative;
+    }
+
+    .photo-frame {
+        position: absolute;
+        right: 0;
+        width: 100px;
+        height: 120px;
+        border: 1px solid #000;
+        margin: 0 auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+
+    p {
+        white-space: wrap;
+    }
+
+    @media print {
+        #toggle-btn {
+            display: none;
+        }
+    }
+
+    .divider {
+        height: 100%;
+        width: 2px;
+        background-color: #000;
+        margin: 0 auto;
+    }
+
+    .attendance, .homework {
+        display: flex;
+        flex-wrap: wrap;
+        /* justify-content: space-around; */
+        align-items: center;
+        gap: 20px;
+    }
+</style>
+
+{% endblock style %}
+
+{% block dashboard %}
+
+<div class="">
+
+    <div class="g-3 bg-light rounded pb-3" id="student_reg_doc">
+        <div class="bg-success-subtle mx-auto p-1 d-flex rounded" style="width: fit-content;">
+            <a href="" class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Weekly Report</a>
+            <a href="" class="text-decoration-none text-dark  p-1 px-2 rounded mx-2 my-1">Monthly Report</a>
+        </div>
+
+        <div class=" mt-4 donut_graph d-flex flex-column gap-4">
+            <div class="bg-success-subtle p-4">
+                <p class="border-0 h2">{{student.user.first_name}} {{student.user.last_name}}</p>
+                <p class="m-0 mb-1">{{student.class_enrolled}} - {{ student.subjects.all|join:", " }}</p>
+            </div>
+
+            <h3 class="">Attendance</h3>
+            <div class="attendance">
+                <div style="width: 200px;">
+                    <canvas id="attendanceChart"></canvas>
+                </div>
+                
+                {% for batch, atten in batchwise_attendance.items %}
+                {% if atten.present_percentage or atten.absent_percentage %}
+                <div style="width: 200px;">
+                    <canvas id="attendanceChart{{forloop.counter}}"></canvas>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            <h3 class="">Homework</h3>
+            <div class="homework">
+                <div style="width: 200px;">
+                    <canvas id="homeworkChart"></canvas>
+                </div>
+
+                {% for batch, hw in batchwise_homework.items %}
+                {% if hw.completed_percentage or hw.partial_done_percentage or hw.pending_percentage %} 
+                    <div style="width: 200px;">
+                        <canvas id="homeworkChart{{forloop.counter}}"></canvas>
+                    </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <h3 class="mt-4">Daily Attendance and Homework </h3>
+        <div class="calendars d-flex gap-4" style="flex-wrap: wrap;">
+
+            <div class="mt-4 ms-4 calendar_container">
+                <div class="d-flex justify-content-center align-items-center">
+                    <p class="m-0" style="font-weight: 500; font-size: 20px;">{{current_month_name}}</p>
+                </div>
+                <div class="row text-center font-weight-bold mx-1 mb-1" style="font-size: 12px; font-weight: 500;">
+                    <div class="col" style="max-width: 30px;">S</div>
+                    <div class="col" style="max-width: 30px;">M</div>
+                    <div class="col" style="max-width: 30px;">T</div>
+                    <div class="col" style="max-width: 30px;">W</div>
+                    <div class="col" style="max-width: 30px;">T</div>
+                    <div class="col" style="max-width: 30px;">F</div>
+                    <div class="col" style="max-width: 30px;">S</div>
+                </div>
+    
+                <div class="bg-white rounded py-1">
+                    {% for week in current_month %}
+                    <div class="row text-center mx-1">
+                        {% for day in week %}
+                        <div class="col"
+                            style="height: 30px; max-width: 30px; display: flex; justify-content: center; align-items: center;">
+                            {% if day %}
+                            <p class="text-small m-0 
+                                {% if day.attendance and day.attendance == 'Present' %}
+                                bg-success-subtle
+                                {% elif day.attendance and day.attendance == 'Absent' %} 
+                                bg-danger-subtle
+                                {% else %}
+                                bg-light
+                                {% endif %}
+                                
+                            p-0 rounded-circle text-dark"
+                                style="height: 20px; min-width: 20px; font-size: 10px; display: flex; justify-content: center; align-items: center;">
+                                {{ day.date.day }}</p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="mt-2 d-flex justify-content-center align-items-center">
+                    <p class="m-0">Overall ({{current_month_present_count}}/{{current_month_total_count}}) {{current_month_percentage}}%</p>
+                </div>
+            </div>
+
+            {% for batch, cal in batchwise_calendar.items %}
+            <div class="mt-4 ms-4 calendar_container">
+                <div class="d-flex justify-content-center align-items-center">
+                    <p class="m-0 mb-2" style="font-weight: 500; font-size: 14px;">{{batch}}</p>
+                </div>
+                <div class="row text-center font-weight-bold mx-1 mb-1" style="font-size: 12px; font-weight: 500;">
+                    <div class="col" style="max-width: 30px;">S</div>
+                    <div class="col" style="max-width: 30px;">M</div>
+                    <div class="col" style="max-width: 30px;">T</div>
+                    <div class="col" style="max-width: 30px;">W</div>
+                    <div class="col" style="max-width: 30px;">T</div>
+                    <div class="col" style="max-width: 30px;">F</div>
+                    <div class="col" style="max-width: 30px;">S</div>
+                </div>
+    
+                <div class="bg-white rounded py-1">
+                    {% for week in cal.cal %}
+                    <div class="row text-center mx-1">
+                        {% for day in week %}
+                        <div class="col"
+                            style="height: 30px; max-width: 30px; display: flex; justify-content: center; align-items: center;">
+                            {% if day %}
+                            <p class="text-small m-0 
+                                {% if day.attendance and day.attendance == 'Present' %}
+                                bg-success-subtle
+                                {% elif day.attendance and day.attendance == 'Absent' %} 
+                                bg-danger-subtle
+                                {% else %}
+                                bg-light
+                                {% endif %}
+                                
+                            p-0 rounded-circle text-dark"
+                                style="height: 20px; min-width: 20px; font-size: 10px; display: flex; justify-content: center; align-items: center;">
+                                {{ day.date.day }}</p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="mt-2 d-flex justify-content-center align-items-center">
+                    <p class="m-0">Overall ({{cal.present_count}}/{{cal.total_count}}) {{cal.percentage}}%</p>
+                </div>
+            </div>
+
+            {% endfor %}
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+    create_pie_chart = (id, labels_list, dataset_label, dataset_data_points, bg_dataset_data_points, title_text = "Demo Chart") => {
+        var ctx1 = document.getElementById(id).getContext('2d');
+        var attendanceChart = new Chart(ctx1, {
+            type: 'pie',
+            data: {
+                labels: labels_list,
+                datasets: [{
+                    label: dataset_label,
+                    data: dataset_data_points, 
+                    backgroundColor: bg_dataset_data_points,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12, 
+                            boxHeight: 12,
+                            font: {
+                                size: 10,
+                            }
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: title_text
+                    }
+                }
+            }
+        });
+
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+        create_pie_chart('attendanceChart', ['present ({{combined_attendance.present_count}})', 'Absent ({{combined_attendance.absent_count}})'], 'Attendance', [{{combined_attendance.present_percentage}}, {{combined_attendance.absent_percentage}}], ['#28a745', '#dc3545'], 'Overall Attendance - {{combined_attendance.present_percentage}}%')
+        {% for batch, atten in batchwise_attendance.items %}
+            {% if atten.present_percentage or atten.absent_percentage %}
+                create_pie_chart('attendanceChart{{forloop.counter}}', ['present ({{atten.present_count}})', 'Absent ({{atten.absent_count}})'], 'Attendance', [{{atten.present_percentage}}, {{atten.absent_percentage}}], ['#28a745', '#dc3545'], '{{batch}} - {{atten.present_percentage}}%')   
+            {% endif %}
+        {% endfor %}
+        
+        create_pie_chart('homeworkChart', ['Pending ({{combined_homework.pending_percentage}})', 'Partial Done ({{combined_homework.partial_done_percentage}})', 'Completed ({{combined_homework.completed_percentage}})'], 'Homework Status', [{{combined_homework.pending_percentage}}, {{combined_homework.partial_done_percentage}}, {{combined_homework.completed_percentage}} ], ['#dc3545', '#17a2b8', '#28a745'], 'Overall Homework Status')
+        
+        {% for batch, hw in batchwise_homework.items %}
+            {% if hw.completed_percentage or hw.partial_done_percentage or hw.pending_percentage %} 
+            create_pie_chart('homeworkChart{{forloop.counter}}', ['Pending ({{hw.pending_percentage}})', 'Partial Done ({{hw.partial_done_percentage}})', 'Completed ({{hw.completed_percentage}})'], 'Homework Status', [{{combined_homework.pending_percentage}}, {{combined_homework.partial_done_percentage}}, {{combined_homework.completed_percentage}} ], ['#dc3545', '#17a2b8', '#28a745'], '{{batch}}')
+            {% endif %}
+        {% endfor %}
+    });
+</script>
+
+{% endblock dashboard %}

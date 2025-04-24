@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'inquiry_followup.apps.InquiryFollowupConfig',
     'registration.apps.RegistrationConfig',
     'accounts.apps.AccountsConfig',
+    'reports.apps.ReportsConfig',
 ]
 
 MIDDLEWARE = [
