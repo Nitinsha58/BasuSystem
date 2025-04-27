@@ -11,25 +11,49 @@
     <div class="batch-buttons">
 
         {% if request.user.teachers %}
-            {% for batch in user.teachers.batches.all %}
-                <a href="{% url 'mark_attendance' batch.id  %}" class="m-1 btn btn-warning ">{{batch}}</a>
+            {% for cls, batches in class_batches.items %}
+                <h4 class="heading m-2">{{ cls }}</h4>
+                {% for batch in batches %}
+                    {% if batch in user.teachers.batches.all %}
+                        <a href="{% url 'mark_attendance' batch.id  %}" class="m-1 btn btn-warning ">{{batch}} - {{batch.attendance.last.date|date:"d M"}} </a>
+                    {% else %}
+                        <a href="{% url 'mark_attendance' batch.id  %}" class="m-1 btn btn-warning disabled">{{batch}} - {{batch.attendance.last.date|date:"d M"}} </a>
+                    {% endif %}
+                {% endfor %}
             {% endfor %}
+
         {% elif request.user.is_superuser %}
-            {% for batch in batches %}
-                <a href="{% url 'mark_attendance' batch.id  %}" class="m-1 btn btn-warning ">{{batch}}</a>
+            {% for cls, batches in class_batches.items %}
+                <h4 class="heading m-2">{{ cls }}</h4>
+                {% for batch in batches %}
+                    <a href="{% url 'mark_attendance' batch.id  %}" class="m-1 btn btn-warning ">{{batch}} - {{batch.attendance.last.date|date:"d M"}} </a>
+                {% endfor %}
             {% endfor %}
+
         {% endif %}
     </div>
     
     <h2 class="heading m-2">Get Attendance</h2>
     <div class="batch-buttons">
+
         {% if request.user.teachers %}
-            {% for batch in user.teachers.batches.all %}
-                <a href="{% url 'get_attendance' batch.id %}" class="m-1 btn btn-success ">{{batch}}</a>
+            {% for cls, batches in class_batches.items %}
+                <h4 class="heading m-2">{{ cls }}</h4>
+                {% for batch in batches %}
+                    {% if batch in user.teachers.batches.all %}
+                        <a href="{% url 'get_attendance' batch.id %}" class="m-1 btn btn-success ">{{batch}} - {{batch.attendance.last.date|date:"d M"}}</a>
+                    {% else %}
+                        <a href="{% url 'get_attendance' batch.id %}" class="m-1 btn btn-success disabled">{{batch}} - {{batch.attendance.last.date|date:"d M"}}</a>
+                    {% endif %}
+                {% endfor %}
             {% endfor %}
+
         {% elif request.user.is_superuser %}
-            {% for batch in batches %}
-                <a href="{% url 'get_attendance' batch.id %}" class="m-1 btn btn-success ">{{batch}}</a>
+            {% for cls, batches in class_batches.items %}
+                <h4 class="heading m-2">{{ cls }}</h4>
+                {% for batch in batches %}
+                    <a href="{% url 'get_attendance' batch.id %}" class="m-1 btn btn-success ">{{batch}} - {{batch.attendance.last.date|date:"d M"}}</a>
+                {% endfor %}
             {% endfor %}
         {% endif %}
     </div>
@@ -38,12 +62,22 @@
     <div class="batch-buttons">
 
         {% if request.user.teachers %}
-            {% for batch in user.teachers.batches.all %}
-                <a href="{% url 'mark_homework' batch.id  %}" class="m-1 btn btn-warning ">{{batch}}</a>
+            {% for cls, batches in class_batches.items %}
+                <h4 class="heading m-2">{{ cls }}</h4>
+                {% for batch in batches %}
+                    {% if batch in user.teachers.batches.all %}
+                        <a href="{% url 'mark_homework' batch.id  %}" class="m-1 btn btn-warning ">{{batch}} - {{batch.attendance.last.date|date:"d M"}}</a>
+                    {% else %}
+                        <a href="{% url 'mark_homework' batch.id  %}" class="m-1 btn btn-warning disabled">{{batch}} - {{batch.attendance.last.date|date:"d M"}}</a>
+                    {% endif %}
+                {% endfor %}
             {% endfor %}
         {% elif request.user.is_superuser %}
-            {% for batch in batches %}
-                <a href="{% url 'mark_homework' batch.id  %}" class="m-1 btn btn-warning ">{{batch}}</a>
+            {% for cls, batches in class_batches.items %}
+                <h4 class="heading m-2">{{ cls }}</h4>
+                {% for batch in batches %}
+                    <a href="{% url 'mark_homework' batch.id  %}" class="m-1 btn btn-warning ">{{batch}} - {{batch.attendance.last.date|date:"d M"}}</a>
+                {% endfor %}
             {% endfor %}
         {% endif %}
     </div>
@@ -51,12 +85,22 @@
     <h2 class="heading m-2">Get Homework</h2>
     <div class="batch-buttons">
         {% if request.user.teachers %}
-            {% for batch in user.teachers.batches.all %}
-                <a href="{% url 'get_homework' batch.id %}" class="m-1 btn btn-success ">{{batch}}</a>
+            {% for cls, batches in class_batches.items %}
+                <h4 class="heading m-2">{{ cls }}</h4>
+                {% for batch in batches %}
+                    {% if batch in user.teachers.batches.all %}
+                        <a href="{% url 'get_homework' batch.id %}" class="m-1 btn btn-success ">{{batch}} - {{batch.attendance.last.date|date:"d M"}}</a>
+                    {% else %}
+                        <a href="{% url 'get_homework' batch.id %}" class="m-1 btn btn-success disabled">{{batch}} - {{batch.attendance.last.date|date:"d M"}}</a>
+                    {% endif %}
+                {% endfor %}
             {% endfor %}
         {% elif request.user.is_superuser %}
-            {% for batch in batches %}
-                <a href="{% url 'get_homework' batch.id %}" class="m-1 btn btn-success ">{{batch}}</a>
+            {% for cls, batches in class_batches.items %}
+                <h4 class="heading m-2">{{ cls }}</h4>
+                {% for batch in batches %}
+                    <a href="{% url 'get_homework' batch.id %}" class="m-1 btn btn-success ">{{batch}} - {{batch.attendance.last.date|date:"d M"}}</a>
+                {% endfor %}
             {% endfor %}
         {% endif %}
     </div>

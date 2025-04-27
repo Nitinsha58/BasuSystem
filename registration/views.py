@@ -381,7 +381,11 @@ def mark_attendance(request, batch_id=None):
 
         messages.success(request, "Attendance marked successfully.")
         return redirect('attendance')
-
+    classes = ClassName.objects.all().order_by('name')
+    class_batches = {
+        cls.name: Batch.objects.filter(class_name=cls).order_by('class_name__name', 'section')
+        for cls in classes if Batch.objects.filter(class_name=cls).exists()
+    }
     if batch_id:
         batch = Batch.objects.filter(id=batch_id).first()
         students = Student.objects.filter(batches=batch)
@@ -390,6 +394,7 @@ def mark_attendance(request, batch_id=None):
             'students': students,
             'batch': batch,
             'batches': Batch.objects.all(),
+            'class_batches': class_batches,
             'date': datetime.now().date(),
         })
 
@@ -397,7 +402,8 @@ def mark_attendance(request, batch_id=None):
     classes = ClassName.objects.all()
     batches = Batch.objects.all()
 
-    return render(request, 'registration/attendance.html', {'classes': classes, 'batches': batches})
+    return render(request, 'registration/attendance.html', {'classes': classes, 'batches': batches, 'class_batches': class_batches,
+})
 
 @login_required(login_url='login')
 def mark_homework(request, batch_id):
