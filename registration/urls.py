@@ -28,6 +28,9 @@ from .views import (
     # Test Response
     result_templates,
     calculate_marks,
+    add_result,
+    update_result,
+    delete_result,
     )
 
 
@@ -66,5 +69,11 @@ urlpatterns = [
 
     # Test Response
     path('result-templates/', result_templates, name='result_templates'),
+    path('add-result/<int:batch_id>/<int:test_id>/', add_result, name="add_result"),
+    path('add-result/<int:batch_id>/<int:test_id>/<int:student_id>/', add_result, name="add_student_result"),
+
+    path('add-result/<int:batch_id>/<int:test_id>/<int:student_id>/<int:question_id>', add_result, name="add_student_question_response"),
+    path('update-result/<int:batch_id>/<int:test_id>/<int:student_id>/<int:response_id>', update_result, name="update_student_question_response"),
+    path('delete-result/<int:batch_id>/<int:test_id>/<int:student_id>/<int:response_id>', delete_result, name="delete_student_question_response"),
 
 ]

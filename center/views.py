@@ -538,7 +538,7 @@ def update_response(request, batch_id, test_id, student_id, response_id):
     response = QuestionResponse.objects.filter(id = response_id).first()
 
     if ( not batch or not test or not student or not response ) :
-        messages.error("Invalid Details.")
+        messages.error(request, "Invalid Details.")
         return redirect("create_student_response", batch_id=batch_id, test_id=test_id, student_id=student_id)
     
     if request.method == 'POST':

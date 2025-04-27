@@ -202,8 +202,6 @@ class Test(models.Model):
         self.total_max_marks = self.questions.filter(is_main=True).aggregate(
             total=models.Sum('max_marks')
         )['total'] or 0
-        if self.total_max_marks > 80:
-            print(self.name, self.total_max_marks)
         self.save()
 
 class Chapter(models.Model):
@@ -232,3 +230,56 @@ class TestQuestion(models.Model):
     def __str__(self):
         return f"Q{self.question_number} - {self.chapter_name}"
 
+class Remark(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+class TestResult(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="results")
+    test = models.ForeignKey(Test, on_delete=models.CASCADE, related_name="results")
+    no_of_questions_attempted = models.IntegerField(default=0)
+    total_marks_obtained = models.FloatField(default=0)
+    total_max_marks = models.FloatField(default=0)
+    percentage = models.FloatField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('student', 'test')  # Ensure one result per student per test
+
+    def __str__(self):
+        return f"{self.student.user.first_name} - {self.test}: {self.percentage:.2f}%"
+
+class QuestionResponse(models.Model):
+    question = models.ForeignKey(TestQuestion, on_delete=models.CASCADE, related_name='responses')
+    student = models.ForeignKey('Student', on_delete=models.CASCADE, related_name='responses')
+    test = models.ForeignKey(Test, on_delete=models.CASCADE, related_name='responses')
+    marks_obtained = models.FloatField()
+    remark = models.ForeignKey(Remark, null=True, blank=True, on_delete=models.SET_NULL, related_name='responses')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('question', 'student')  # Ensures a student can only respond once per question
+
+    def __str__(self):
+        test_name = getattr(self.test, 'name', 'Unknown Test')
+        return f"{self.student} for {self.question} in {test_name}".title()
+
+class RemarkCount(models.Model):
+    test = models.ForeignKey(Test, on_delete=models.CASCADE, related_name="remark_count")
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="remark_count")
+    remark = models.ForeignKey(Remark, on_delete=models.CASCADE, related_name="remark_count")
+    count = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('student', 'test', 'remark')  # Ensure one count per student per remark
+
+    def __str__(self):
+        return f"{self.remark.name}: {self.count}"

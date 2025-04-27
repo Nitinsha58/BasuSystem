@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% load mathfilters %}
+{% load static %}
+
+{% block dashboard %}
+
+
+<div class="container">
+    <div class="w-75 m-2 p-2 mb-4">
+        <p class="h2 fw-normal">{{test}}</p>
+    </div>
+
+    <div class="d-flex g-4">
+        <div class="w-25 m-2 p-2">
+
+            <div class="card">
+                <ul class="list-group">
+                    <li class="list-group-item d-flex justify-content-between bg-dark text-white border-dark">
+                        <p class="m-0 p-0">{{batch}}</p>
+                        {% if test.total_max_marks %}
+                        <span class="m-0 p-0" style="font-size: 14px;">{{test.total_max_marks}}</span>
+                        {% else %}
+                        <span class="m-0 p-0" style="font-size: 14px;">-</span>
+                        {% endif %}
+                    </li>
+                    {% for stu, result in students.items %}
+                    <a href="{% url 'add_student_result' batch.id test.id stu.id %}" class="text-decoration-none">
+                        <li class="list-group-item d-flex justify-content-between {% if student.id == stu.id %} list-group-item-primary {% endif %} ">
+                            <p class="m-0 p-0">{{forloop.counter}}. {{stu.user.first_name|title}} {{stu.user.last_name|title}}</p>
+                            {% if result.percentage %}
+                            <span class="m-0 p-0" style="font-size: 14px;">{{result.total_marks_obtained}}</span>
+                            {% endif %}
+                        </li>
+                    </a>
+                    {% endfor %}
+                </ul>
+            </div>
+
+        </div>
+
+        <div class="w-75 m-2 p-2 ps-4">
+
+            {% if student and question_response %}
+            <div class="d-flex justify-content-between w-100">
+                <p class="h4 fw-normal text-center">{{student.user.first_name|title}} {{student.user.last_name|title}} -
+                    {{batch}}</p>
+
+                <div class="d-flex align-items-end ">
+                    <label for="total_marks_obtained" class="form-label">{{result.total_marks_obtained}} / {{test.total_max_marks}}  ({{result.percentage|floatformat:1}}%)</label>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end">
+                <a href="" class="btn bg-success-subtle">Add All Pending</a>
+            </div>
+
+            {% for item in question_response %}
+                {% if item.response %}
+                <div class="container-sm my-4">
+                    <div class="">
+                        <p class="h4 fw-normal">Q{{item.response.question.question_number}}. {{item.response.question.chapter_name}} (Ch-{{item.response.question.chapter_no}})</p>
+                    </div>
+                    <form class="row g-3 w-100 d-flex justify-content-between ps-5" action="{% url 'update_student_question_response' batch.id test.id student.id item.response.id %}"
+                        method="post">
+                        {% csrf_token %}
+                        <div class="col-md-4 w-40">
+                            <label for="remark" class="form-label">Remark</label>
+                            <select class="form-select row row-cols-2" name="remark"  size="{{ remarks.count }}" >
+                                {% for remark in remarks %}
+                                <option class="col col-sm-6" value="{{ remark.id }}"
+                                    {% if remark == item.response.remark %} selected {% endif %}>{{ remark.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4 w-35 d-flex flex-column">
+                            <label for="marks_obtained" class="form-label self-align-end">Marks Deducted</label>
+                            <div class="d-flex align-items-center">
+                                <input type="text" class="form-control w-25" id="marks_obtained" name="marks_obtained" required
+                                value="{{ item.response.marks_obtained|sub:item.response.question.max_marks }}">
+                                <p class="h4 ms-2 fw-normal">
+                                <p class="h3 fw-normal">/</p>{{item.response.question.max_marks}}</p>
+                            </div>
+                        </div>
+
+                        <div class="col-md-2 w-25 d-flex justify-content-end mt-5">
+                            <button type="submit" class="btn btn-warning w-100" style="height: fit-content;">Update Marks</button>
+                            <a href="{% url 'delete_student_question_response' batch.id test.id student.id item.response.id %}" style="height: fit-content;" class="px-2 py-1 ms-2 btn btn-outline-danger fw-semibold text-decoration-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"></path>
+                                    <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
+                                  </svg>
+                            </a>
+                        </div>
+                    </form>
+                </div>
+
+                {% else  %}
+                <div class="container-sm my-4">
+                    <div class="">
+                        <p class="h4 fw-normal">Q{{item.question.question_number}}. {{item.question.chapter_name}} (Ch-{{item.question.chapter_no}})</p>
+                    </div>
+                    <form class="row g-3 w-100 d-flex justify-content-between ps-5" action="{% url 'add_student_question_response' batch.id test.id student.id item.question.id %}"
+                        method="post">
+                        {% csrf_token %}
+                        <div class="col-md-4 w-40">
+                            <label for="remark" class="form-label">Remark</label>
+                            <select class="form-select row row-cols-2" name="remark"  size="{{remarks.count}}">
+                                {% for remark in remarks %}
+                                <option class="col col-sm-6"  value="{{remark.id}}">{{remark.name}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4 w-35 d-flex flex-column">
+                            <label for="marks_obtained" class="form-label self-align-end">Marks Deducted</label>
+                            <div class="d-flex align-items-center">
+                                <input type="text" class="form-control w-25" id="marks_obtained" name="marks_obtained" required
+                                    value="0">
+                                <p class="h4 ms-2 fw-normal">
+                                <p class="h3 fw-normal">/</p>{{item.question.max_marks}}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2 w-25 d-flex justify-content-end mt-5">
+                            <button type="submit" class="btn btn-success w-100" style="height: fit-content;">Add Marks</button>
+                        </div>
+                    </form>
+                    {% if item.question.optional_question %}
+                    <div class="row g-3">
+                        <p class="h4 text-center fw-normal my-4">Optional Question</p>
+                    </div>
+                    <div class="">
+                        <p class="h4 fw-normal ms-5">{{item.question.optional_question.chapter_name}} (Ch-{{item.question.optional_question.chapter_no}})</p>
+                    </div>
+                    <form class="row g-3 w-100 d-flex justify-content-between ps-5" action="{% url 'add_student_question_response' batch.id test.id student.id item.question.optional_question.id %}"
+                        method="post">
+                        {% csrf_token %}
+                        <div class="col-md-4 w-40">
+                            <label for="remark" class="form-label">Remark</label>
+                            <select class="form-select row row-cols-2" name="remark"  size="{{remarks.count}}"
+                                >
+                                {% for remark in remarks %}
+                                <option class="col col-sm-6"  value="{{remark.id}}">{{remark.name}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4 w-35">
+                            <label for="marks_obtained" class="form-label">Marks Deducted</label>
+                            <div class="d-flex align-items-center">
+                                <input type="text" class="form-control w-25" id="marks_obtained" name="marks_obtained" required
+                                    value="0">
+                                <p class="h4 ms-2 fw-normal">
+                                <p class="h3 fw-normal">/</p>{{item.question.optional_question.max_marks}}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2 w-25 d-flex justify-content-end mt-5">
+                            <button type="submit" class="btn btn-success w-100" style="height: fit-content;">Add Marks</button>
+                        </div>
+                    </form>
+                    {% endif %}
+                </div>
+                {% endif %}
+            {% endfor %}
+
+            {% elif student %}
+
+            <div class="container-sm w-75 mb-4">
+                <form class="row g-3" action="{% url 'create_marks_obtained' batch.id test.id student.id %}" method="post">
+                    {% csrf_token %}
+                    <div class="d-flex align-items-end ">
+                        <div class="col-3">
+                            <label for="total_marks_obtained" class="form-label">Marks Obtained</label>
+                            <input type="text" class="form-control" id="total_marks_obtained" name="total_marks_obtained" value="{{result.total_marks_obtained}}"> 
+                            <span class="position-absolute mt-1 ms-1">out of {{test.total_max_marks}} </span>
+                        </div>
+                        <button type="submit" class="ms-2 text-decoration-none btn btn-success me-4 ">Save</button>
+                    </div>
+                </form>
+            </div>
+
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+
+<script>
+    document.documentElement.style.scrollBehavior = 'auto'
+    document.addEventListener("DOMContentLoaded", function () {
+        const scrollPosition = sessionStorage.getItem("scrollPositionResponse");
+        if (scrollPosition) {
+            window.scrollTo(0, parseInt(scrollPosition, 10) );
+            sessionStorage.removeItem("scrollPositionResponse");
+        }
+        window.addEventListener("beforeunload", function () {
+            sessionStorage.setItem("scrollPositionResponse", window.scrollY);
+        });
+    });
+    setTimeout(() => {
+        document.documentElement.style.scrollBehavior = 'smooth';
+    }, 1000);
+</script>
+
+
+{% endblock dashboard %}

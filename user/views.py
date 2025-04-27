@@ -12,7 +12,6 @@ def login_user(request):
         username = request.POST.get("username")  
         password = request.POST.get("password")
         user = authenticate(request, username=username, password=password)
-        print("Post Request")
         if user is not None:
             login(request, user)
             return redirect("staff_dashboard")

@@ -12,7 +12,8 @@ from .models import (
     Chapter,
     Test,
     TestQuestion,
-
+    Remark,
+    RemarkCount
 
     )
 from .forms import TeacherForm
@@ -61,3 +62,5 @@ admin.site.register(Homework)
 admin.site.register(Chapter, ChapterAdmin)
 admin.site.register(Test)
 admin.site.register(TestQuestion)
+admin.site.register(Remark)
+admin.site.register(RemarkCount)

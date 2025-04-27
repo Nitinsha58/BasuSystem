@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from .models import Student, ParentDetails, FeeDetails, Installment, TransportDetails, Batch, Teacher, Attendance, Homework, Test, TestQuestion, Chapter
+from .models import Student, ParentDetails, FeeDetails, Installment, TransportDetails, Batch, Teacher, Attendance, Homework, Test, TestQuestion, Chapter, Remark, RemarkCount, QuestionResponse, TestResult
 from .forms import StudentRegistrationForm, StudentUpdateForm, ParentDetailsForm, TransportDetailsForm
 from center.models import Subject, ClassName
 from django.contrib import messages
@@ -841,3 +841,123 @@ def result_templates(request):
         'class_batches': class_batches,
     })
 
+@login_required(login_url='login')
+def add_result(request, batch_id, test_id, student_id=None, question_id = None):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
+    batch = Batch.objects.filter(id=batch_id).first()
+    test = Test.objects.filter(id=test_id).first()
+    student = None
+    question_response = None
+    result = None
+    
+    if not batch or not test:
+        messages.error(request, "Invalid Batch or Test")
+        return redirect("result_templates")
+
+    questions = TestQuestion.objects.filter(test=test).order_by('question_number')
+    remarks = Remark.objects.all()
+
+    if student_id and Student.objects.filter(id=student_id).first():
+        student = Student.objects.filter(id=student_id).first()
+        question = TestQuestion.objects.filter(id=question_id).first()
+
+        result = TestResult.objects.filter(test=test, student=student).first()
+
+        if request.method == 'POST' and question:
+            marks_obtained = request.POST.get("marks_obtained")
+            remark_id = request.POST.get("remark")
+            remark = Remark.objects.filter(id=remark_id).first()
+
+            response = QuestionResponse.objects.create(
+                question = question,
+                student=student,
+                test=test,
+                marks_obtained = float(question.max_marks) - float(marks_obtained),
+                remark = remark
+            )
+            response.save()
+            return redirect("add_student_result", batch_id=batch_id, test_id=test_id, student_id=student_id)
+        
+        responses = QuestionResponse.objects.filter(student=student, test=test).select_related("question")
+
+        # Create a dictionary to map questions to their responses
+        response_map = {response.question.id: response for response in responses}
+        question_nums = [response.question.question_number for response in responses]
+
+        question_response = []
+
+        for question in questions:
+            if question.id in response_map:
+                question_response.append({"response": response_map.get(question.id)})
+            elif question.is_main and question.question_number not in question_nums:
+                question_response.append({"question": question})
+    
+    students = Student.objects.filter(batches=batch)
+    students_map = {student : TestResult.objects.filter(test=test, student=student).first() or 0 for student in students}
+
+    return render(request, "registration/add_results.html", {
+        "batch":batch, 
+        "test":test,
+        "students": students_map,
+        "questions": questions,
+        "student":student,
+        "remarks":remarks,
+        "question_response": question_response,
+        "result":result,
+    })
+
+
+@login_required(login_url='login')
+def update_result(request, batch_id, test_id, student_id, response_id):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
+    batch = Batch.objects.filter(id=batch_id).first()
+    test = Test.objects.filter(id=test_id).first()
+    student = Student.objects.filter(id=student_id).first()
+    response = QuestionResponse.objects.filter(id = response_id).first()
+
+    if ( not batch or not test or not student or not response ) :
+        messages.error("Invalid Details.")
+        return redirect("add_student_question_response", batch_id=batch_id, test_id=test_id, student_id=student_id)
+
+    if request.method == 'POST':
+        marks_obtained = request.POST.get("marks_obtained")
+        remark_id = request.POST.get("remark")
+
+        response.marks_obtained = float(response.question.max_marks) - abs(float(marks_obtained))
+        if remark_id:
+            remark = Remark.objects.get(id=remark_id)
+            response.remark = remark
+        response.save()
+
+    return redirect("add_student_result", batch_id=batch_id, test_id=test_id, student_id=student_id)
+
+def delete_result(request, batch_id, test_id, student_id, response_id):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
+    try:
+        if not Batch.objects.filter(id=batch_id).exists():
+            messages.error(request, "Invalid batch ID.")
+            return redirect("add_student_result", batch_id=batch_id, test_id=test_id, student_id=student_id)
+
+        if not Test.objects.filter(id=test_id).exists():
+            messages.error(request, "Invalid test ID.")
+            return redirect("add_student_result", batch_id=batch_id, test_id=test_id, student_id=student_id)
+
+        if not Student.objects.filter(id=student_id).exists():
+            messages.error(request, "Invalid student ID.")
+            return redirect("add_student_result", batch_id=batch_id, test_id=test_id, student_id=student_id)
+
+        response = QuestionResponse.objects.get(id=response_id)
+
+        response.delete()
+        messages.success(request, "Response deleted.")
+
+    except QuestionResponse.DoesNotExist:
+
+        messages.error(request, "Response not found. Unable to delete.")
+    except Exception as e:
+        messages.error(request, f"An error occurred: {str(e)}")
+
+    return redirect("add_student_result", batch_id=batch_id, test_id=test_id, student_id=student_id)

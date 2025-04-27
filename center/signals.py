@@ -45,7 +45,7 @@ def result_post_update(sender, instance, created, *args, **kwargs):
         return
     
     instance._signal_processed = True
-    print(f"Signal triggered for QuestionResponse ID: {instance.id}, created: {created}")
+    # print(f"Signal triggered for QuestionResponse ID: {instance.id}, created: {created}")
 
     test = instance.test
     student = instance.student

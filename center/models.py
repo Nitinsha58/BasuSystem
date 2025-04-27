@@ -96,8 +96,6 @@ class Test(models.Model):
         self.total_max_marks = self.question.filter(is_main=True).aggregate(
             total=models.Sum('max_marks')
         )['total'] or 0
-        if self.total_max_marks > 80:
-            print(self.name, self.total_max_marks)
         self.save()
 
 
