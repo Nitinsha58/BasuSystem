@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from .models import Student, ParentDetails, FeeDetails, Installment, TransportDetails, Batch, Teacher, Attendance, Homework
+from .models import Student, ParentDetails, FeeDetails, Installment, TransportDetails, Batch, Teacher, Attendance, Homework, Test, TestQuestion, Chapter
 from .forms import StudentRegistrationForm, StudentUpdateForm, ParentDetailsForm, TransportDetailsForm
 from center.models import Subject, ClassName
 from django.contrib import messages
@@ -623,3 +623,193 @@ def update_teacher(request, teacher_id):
         "registration/update_teacher.html", 
         {'batches': batches, "class_teachers": class_teachers, "teacher": teacher}
     )
+
+
+# Test Paper
+@login_required(login_url='login')
+def test_templates(request, batch_id=None):
+    if not request.user.is_superuser:
+        messages.error(request, "You are not authorized to view this page.")
+        return redirect('staff_dashboard')
+    
+    if batch_id and request.method == "POST":
+        if Batch.objects.filter(id=batch_id).first() == None:
+            messages.error("Invalid Batch")
+            return redirect('test_templates')
+        
+        batch = Batch.objects.filter(id=batch_id).first()
+        test = Test.objects.create(batch=batch, date=datetime.now())
+        test.name = 'Demo Test Paper '
+        test.save()
+
+        return redirect("create_testpaper", batch_id=batch_id, test_id=test.id )
+
+    classes = ClassName.objects.all().order_by('name')
+    class_batches = {
+            cls.name : Batch.objects.filter(class_name=cls).order_by('class_name__name', 'section')
+            for cls in classes
+        }
+
+    return render(request, "registration/test_templates.html", {
+        'class_batches': class_batches,
+    })
+
+@login_required(login_url='login')
+def create_testpaper(request, batch_id, test_id):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
+    batch = Batch.objects.filter(id=batch_id).first()
+    test = Test.objects.filter(id=test_id).first()
+    if not batch or not test:
+        messages.error(request, "Invalid Batch or Test")
+        return redirect("test_templates")
+    
+    if request.method == 'POST':
+        test_name = request.POST.get('test_name')
+        total_marks = request.POST.get('total_marks')
+        test.name = test_name
+        if total_marks:
+            test.total_max_marks = float(total_marks)
+
+        test.save()
+
+        return redirect('test_templates')
+    
+    questions = TestQuestion.objects.filter(test = test, is_main=True).order_by('question_number')
+    chapters = Chapter.objects.filter(subject=batch.subject, class_name=batch.class_name).order_by('chapter_no')
+    
+    return render(request,"registration/create_testpaper.html", {
+        "batch":batch, 
+        "test":test, 
+        "questions": questions,
+        "chapters": chapters,
+        })
+
+@login_required(login_url='login')
+def delete_testpaper(request, test_id):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
+    
+    test = Test.objects.filter(id=test_id).first()
+    if not test:
+        messages.error(request, "Invalid Test")
+        return redirect("test_templates")
+    
+    test.delete()
+    messages.success(request, "Test deleted successfully.")
+    return redirect("test_templates")
+
+@login_required(login_url='login')
+def create_test_question(request, batch_id, test_id):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
+    batch = Batch.objects.filter(id=batch_id).first()
+    test = Test.objects.filter(id=test_id).first()
+    if not batch or not test:
+        messages.error(request, "Invalid Batch or Test")
+        return redirect("test_templates")
+
+    if request.method == 'POST':
+        chapter_id = request.POST.get('chapter')
+        max_marks = request.POST.get('max_marks')
+        chapter = Chapter.objects.filter(id=chapter_id).first()
+
+        is_optional = request.POST.get('is_option')
+        opt_chapter_id = request.POST.get('opt_chapter')
+        opt_chapter = Chapter.objects.filter(id=opt_chapter_id).first()
+        opt_max_marks = request.POST.get('opt_max_marks')
+
+        if not chapter:
+            messages.error(request, "Invalid Chapter")
+            return redirect("create_testpaper", batch_id=batch_id, test_id=test_id)
+
+
+        if not opt_chapter and is_optional:
+            messages.error(request, "Invalid Optional Chapter")
+            return redirect("create_testpaper", batch_id=batch_id, test_id=test_id)
+
+
+        try:
+            with transaction.atomic():
+                question = TestQuestion.objects.create(
+                    test = test,
+                    question_number = TestQuestion.objects.filter(test=test, is_main=True).count() + 1,
+                    max_marks=float(max_marks),  # Convert to float here
+                    chapter_no = int(chapter.chapter_no),
+                    chapter_name=chapter.chapter_name,
+                    chapter = chapter,
+                )
+                question.save()
+
+                if is_optional:
+                    opt_question = TestQuestion.objects.create(
+                        test = test,
+                        is_main = False,
+                        question_number = question.question_number,
+                        chapter = opt_chapter,
+                        chapter_no = int(opt_chapter.chapter_no),
+                        chapter_name= opt_chapter.chapter_name,
+                        max_marks=float(opt_max_marks),  # Convert to float here
+                    )
+                    opt_question.save()
+
+                    question.optional_question = opt_question
+                    question.save()
+
+        except Exception as e:
+            messages.error(request, "Invalid Input.")
+
+        return redirect("create_testpaper", batch_id=batch_id, test_id=test_id )
+    return redirect("create_testpaper", batch_id=batch_id, test_id=test_id )
+
+
+@login_required(login_url='login')
+def update_test_question(request, batch_id, test_id, question_id):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
+    batch = Batch.objects.filter(id=batch_id).first()
+    test = Test.objects.filter(id=test_id).first()
+    question = TestQuestion.objects.filter(id=question_id).first()
+    if not batch or not test or not question:
+        messages.error(request, "Invalid Question")
+        return redirect("create_test_template")
+
+    if request.method == 'POST':
+        chapter_id = request.POST.get('chapter')
+        max_marks = request.POST.get('max_marks')
+
+        chapter = Chapter.objects.filter(id=chapter_id).first()
+        if not chapter:
+            messages.error(request, "Invalid Chapter")
+            return redirect("create_testpaper", batch_id=batch_id, test_id=test_id)
+
+
+        question.max_marks = float(max_marks)
+        question.chapter = chapter
+        question.chapter_no = int(chapter.chapter_no)
+        question.chapter_name = chapter.chapter_name
+
+        question.save()
+
+        if question.optional_question:
+            opt_question = question.optional_question
+            # opt_chapter_name = request.POST.get('opt_chapter_name')
+            # opt_chapter_no = request.POST.get('opt_chapter_no')
+            opt_chapter_id = request.POST.get('opt_chapter')
+            opt_chapter = Chapter.objects.filter(id=opt_chapter_id).first()
+            if not opt_chapter:
+                messages.error(request, "Invalid Optional Chapter")
+                return redirect("create_testpaper", batch_id=batch_id, test_id=test_id)
+            opt_chapter_no = chapter.chapter_no
+            opt_chapter_name = chapter.chapter_name
+            opt_max_marks = request.POST.get('opt_max_marks')
+
+            opt_question.chapter_no = opt_chapter_no
+            opt_question.max_marks = float(opt_max_marks)
+            opt_question.chapter_name= opt_chapter_name
+            opt_question.chapter = opt_chapter
+            opt_question.save()
+
+        return redirect("create_testpaper", batch_id=batch_id, test_id=test_id )
+    return redirect("create_testpaper", batch_id=batch_id, test_id=test_id )
+  

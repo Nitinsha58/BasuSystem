@@ -8,10 +8,11 @@ class CustomUserAdmin(UserAdmin):
     list_display = ['first_name', 'last_name', 'phone', 'is_staff', 'is_active']
     ordering = ['phone']
     search_fields = ['phone', 'first_name', 'last_name']
+    list_filter = ['is_staff', 'is_active', 'is_superuser']
 
     fieldsets = (
-        (None, {'fields': ('first_name', 'last_name', 'phone', 'password')}),
-        ('Permissions', {'fields': ('is_staff', 'is_active', 'groups', 'user_permissions')}),
+        (None, {'fields': ('first_name', 'last_name', 'phone', 'password', 'is_staff', 'is_active', 'is_superuser')}),
+        # ('Permissions', {'fields': ('is_staff', 'is_active', 'is_superuser', 'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login',)}),  # Removed 'date_joined'
     )
 
@@ -20,9 +21,10 @@ class CustomUserAdmin(UserAdmin):
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('first_name', 'last_name', 'phone', 'password1', 'password2', 'is_staff', 'is_active')}
+            'fields': ('first_name', 'last_name', 'phone', 'password1', 'password2', 'is_staff', 'is_active', 'is_superuser')}
         ),
     )
+
 
     def get_search_results(self, request, queryset, search_term):
         queryset, use_distinct = super().get_search_results(request, queryset, search_term)

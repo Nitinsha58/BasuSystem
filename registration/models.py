@@ -183,3 +183,52 @@ class Homework(models.Model):
 
     def __str__(self):
         return f"Homework for {self.student} - {self.status}"
+
+
+class Test(models.Model):
+    name = models.CharField(max_length=255)
+    date = models.DateField()
+    total_max_marks = models.FloatField(default=0)
+    no_of_questions = models.IntegerField(default=0)
+    batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name="test_paper")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} -  {self.batch.__str__()}"
+
+    def calculate_total_max_marks(self):
+        # Calculate the total marks for all related TestQuestions
+        self.total_max_marks = self.question.filter(is_main=True).aggregate(
+            total=models.Sum('max_marks')
+        )['total'] or 0
+        if self.total_max_marks > 80:
+            print(self.name, self.total_max_marks)
+        self.save()
+
+class Chapter(models.Model):
+    class_name = models.ForeignKey(ClassName, on_delete=models.CASCADE, related_name='chapters')
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='chapters')
+    chapter_no = models.IntegerField()
+    chapter_name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.chapter_no} - {self.chapter_name} - {self.subject.name} - {self.class_name.name}"
+
+class TestQuestion(models.Model):
+    test = models.ForeignKey(Test, on_delete=models.CASCADE, related_name='test_question')
+    question_number = models.IntegerField()
+    is_main = models.BooleanField(default=True)
+    optional_question = models.OneToOneField('self', on_delete=models.CASCADE, null=True, blank=True, default=None, related_name='optional')
+    chapter_no = models.IntegerField(null=True, blank=True)
+    chapter_name = models.CharField(max_length=255, null=True, blank=True)
+    chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE, related_name='questions', null=True, blank=True)
+    max_marks = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Q{self.question_number} - {self.chapter_name}"
+

@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block dashboard %}
+
+<div class="container">
+    <div class="container-sm w-75 mt-4 mb-4">
+        <p class="h2 fw-normal"> {{ test.name }} for {{batch}} - {{test.total_max_marks}}</p>
+    </div>
+
+
+    {% for question in questions %}
+    <div class="container-sm w-75 my-4 d-flex align-items-start">
+        <p class="h3 fw-normal d-block mb-4 me-4">{{question.question_number}}.</p>
+        <form class="row g-3 w-100 d-flex align-items-end" action="{% url 'update_test_question' batch.id test.id question.id %}" method="post">
+            {% csrf_token %}
+            <div class="col-md-6">
+                <label for="chapter" class="form-label">Chapter</label>
+                <select id="chapter" name="chapter" required class="form-select" aria-label="Default select example">
+                    {% for chapter in chapters %}
+                    <option {% if question.chapter == chapter %} selected {% endif %} value="{{chapter.id}}">{{chapter.chapter_no}}. {{chapter.chapter_name}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <!-- <div class="col-md-6">
+                <label for="chapter_name" class="form-label">Chapter Name</label>
+                <input type="text" class="form-control" id="chapter_name" name="chapter_name"
+                    value="{{question.chapter_name}}">
+            </div>
+            <div class="col-md-4">
+                <label for="chapter_no" class="form-label">Chapter No.</label>
+                <input type="text" class="form-control" id="chapter_no" name="chapter_no" required
+                    value="{{question.chapter_no}}">
+            </div> -->
+            <div class="col-md-2">
+                <label for="mark_marks" class="form-label">Max Marks</label>
+                <input type="text" class="form-control" id="max_marks" name="max_marks" required
+                    value="{{question.max_marks}}">
+            </div>
+
+            {% if question.optional_question %}
+            <div class="row g-3">
+                <p class="h4 text-center fw-normal">Optional Question</p>
+            </div>
+
+            <div class="row g-3 m-0 p-0">
+                <!-- <div class="col-md-6">
+                    <label for="opt_chapter_name" class="form-label">Chapter Name</label>
+                    <input type="text" value="{{question.optional_question.chapter_name}}" class="form-control" id="opt_chapter_name" name="opt_chapter_name">
+                </div>
+                <div class="col-md-4">
+                    <label for="opt_chapter_no" class="form-label">Chapter No.</label>
+                    <input type="text" value="{{question.optional_question.chapter_no}}" class="form-control" id="opt_chapter_no" name="opt_chapter_no" required>
+                </div> -->
+                <div class="col-md-6">
+                    <label for="opt_chapter" class="form-label">Chapter</label>
+                    <select id="opt_chapter" name="opt_chapter" required class="form-select" aria-label="Default select example">
+                        {% for chapter in chapters %}
+                        <option {% if question.optional_question.chapter == chapter %} selected {% endif %} value="{{chapter.id}}">{{chapter.chapter_no}}. {{chapter.chapter_name}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="opt_max_marks" class="form-label">Max Marks</label>
+                    <input type="text" value="{{question.optional_question.max_marks}}" class="form-control" id="opt_max_marks" name="opt_max_marks" required>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="col-md-2 d-flex justify-content-end ms-auto" >
+                <button type="submit" class="btn btn-warning text-nowrap" style="height: fit-content;">Update Question</button>
+            </div>
+        </form>
+    </div>
+    {% endfor %}
+
+    <div class="container-sm w-75">
+        <form class="" action="{% url 'create_test_question' batch.id test.id %}" method="post">
+            {% csrf_token %}
+            <div class="row g-3 d-flex justify-content-between">
+                <div class="col-md-6">
+                    <label for="chapter" class="form-label">Chapter</label>
+                    <select id="chapter" name="chapter" required class="form-select" >
+                        {% for chapter in chapters %}
+                        <option value="{{chapter.id}}">{{chapter.chapter_no}}. {{chapter.chapter_name}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <!-- <div class="col-md-6">
+                    <label for="chapter_name" class="form-label">Chapter Name</label>
+                    <input type="text" class="form-control" id="chapter_name" name="chapter_name">
+                </div>
+                <div class="col-md-4">
+                    <label for="chapter_no" class="form-label">Chapter No.</label>
+                    <input type="text" class="form-control" id="chapter_no" name="chapter_no" required>
+                </div> -->
+                <div class="col-md-2">
+                    <label for="mark_marks" class="form-label">Max Marks</label>
+                    <input type="text" class="form-control" id="max_marks" name="max_marks" required>
+                </div>
+
+                <div class="row g-3" id="opt_heading" >
+                    <p class="h4 text-center fw-normal">Optional Question</p>
+                </div>
+
+                <div class="row g-3 m-0 p-0 justify-content-between" id="optional">
+                    <!-- <div class="col-md-6">
+                        <label for="opt_chapter_name" class="form-label">Chapter Name</label>
+                        <input type="text" class="form-control" id="opt_chapter_name" name="opt_chapter_name">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="opt_chapter_no" class="form-label">Chapter No.</label>
+                        <input type="text" class="form-control" id="opt_chapter_no" name="opt_chapter_no">
+                    </div> -->
+
+                    <div class="col-md-6">
+                        <label for="opt_chapter" class="form-label">Chapter</label>
+                        <select id="opt_chapter" name="opt_chapter" required class="form-select" aria-label="Default select example">
+                            {% for chapter in chapters %}
+                            <option value="{{chapter.id}}">{{chapter.chapter_no}}. {{chapter.chapter_name}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="opt_mark_marks" class="form-label">Max Marks</label>
+                        <input type="text" class="form-control" id="opt_max_marks" name="opt_max_marks">
+                    </div>
+                </div>
+
+                <div class="col-12 d-flex justify-content-between">
+                    <input type="checkbox" class="btn-check" id="is_option" name="is_option" autocomplete="off">
+                    <label class="btn btn-outline-primary" id="is_option_label" for="is_option">Add Optional</label><br>
+                    <button type="submit" class="btn btn-success">Add Question</button>
+                </div>
+
+            </div>
+        </form>
+    </div>
+
+    <div class="container-sm w-75 my-4">
+        <form class="row g-3" action="{% url 'create_testpaper' batch.id test.id %}" method="post">
+            {% csrf_token %}
+            <div class="col-12">
+                <label for="test_name" class="form-label">Test Name</label>
+                <input type="text" class="form-control" id="test_name" name="test_name" value="{{test.name}}"
+                    placeholder="Mock Test 3..." required>
+            </div>
+            <div class="d-flex align-items-end ">
+                <div class="col-2 me-2">
+                    <label for="total_marks" class="form-label ">Test Date</label>
+                    <input type="date" class="form-control" id="test_name" name="total_marks" value="{{test.date|date:'Y-m-d'}}">
+                </div>
+                <div class="col-2">
+                    <label for="total_marks" class="form-label">Total Marks</label>
+                    <input type="text" class="form-control" id="test_name" name="total_marks" value="{{test.total_max_marks}}">
+                </div>
+                <a href="" class="ms-2 text-decoration-none btn btn-warning me-4 ">Auto Calculate</a>
+            </div>
+            <div class="col-12 d-flex justify-content-end">
+                <a href=""
+                    data-batch_id="{{batch.id}}" data-test_id="{{test.id}}"
+                    class="delete-link text-decoration-none btn btn-danger text-white me-4 ">Delete Test</a>
+                <button type="submit" class="btn btn-info">Save Test</button>
+            </div>
+        </form>
+    </div>
+
+</div>
+<div class="w-100" style="height: 35vh;"></div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const deleteLinks = document.querySelectorAll(".delete-link");
+      const modal = document.getElementById("deleteConfirmationModal");
+      const confirmButton = document.getElementById("confirmDeleteButton");
+      const cancelButton = document.getElementById("cancelButton");
+  
+      let deleteUrl = "";
+  
+      deleteLinks.forEach(link => {
+        link.addEventListener("click", function (event) {
+          event.preventDefault();
+          document.getElementsByTagName('html')[0].style.overflow = 'hidden';
+          document.getElementsByTagName('body')[0].style.overflow = 'hidden';
+          deleteUrl = `/student/delete-testpaper/${this.dataset.test_id}`; // Construct the delete URL
+
+          const scrollPosition = window.scrollY || document.documentElement.scrollTop;
+          modal.style.top = `${scrollPosition}px`;
+          modal.classList.remove('d-none');
+        });
+      });
+  
+      confirmButton.addEventListener("click", function () {
+        if (deleteUrl) {
+          window.location.href = deleteUrl; // Redirect to the delete URL
+        }
+      });
+  
+      cancelButton.addEventListener("click", function () {
+        modal.classList.add("d-none");
+        document.getElementsByTagName('html')[0].style.overflow = 'auto';
+        document.getElementsByTagName('body')[0].style.overflow = 'auto';
+      });
+    });
+  </script>
+
+<script>
+    document.documentElement.style.scrollBehavior = 'auto'
+    document.addEventListener("DOMContentLoaded", function () {
+        const scrollPosition = sessionStorage.getItem("scrollPositionResponse");
+        if (scrollPosition) {
+            window.scrollTo(0, parseInt(scrollPosition, 10) );
+            sessionStorage.removeItem("scrollPositionResponse");
+        }
+        window.addEventListener("beforeunload", function () {
+            sessionStorage.setItem("scrollPositionResponse", window.scrollY);
+        });
+    });
+    setTimeout(() => {
+        document.documentElement.style.scrollBehavior = 'smooth';
+    }, 1000);
+</script>
+
+<script>
+    window.onload = function() {
+        const optional = document.getElementById('optional');
+        const is_option = document.getElementById('is_option');
+        const is_option_label = document.getElementById('is_option_label');
+        const opt_heading = document.getElementById('opt_heading');
+
+        optional.style.display = 'none';
+        opt_heading.style.display = 'none';
+
+        is_option.addEventListener('change', function () {
+            if (is_option.checked) {
+                optional.style.display = 'flex';
+                opt_heading.style.display = 'block';
+                is_option_label.innerText = 'Remove Optional';
+            } else {
+                optional.style.display = 'none';
+                opt_heading.style.display = 'none';
+                is_option_label.innerText = 'Add Optional';
+
+            }
+        });
+    };
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js"
+    integrity="sha384-GNFwBvfVxBkLMJpYMOABq3c+d3KnQxudP/mGPkzpZSTYykLBNsZEnG2D9G/X/+7D" crossorigin="anonymous"
+    async></script>
+
+{% endblock dashboard %}

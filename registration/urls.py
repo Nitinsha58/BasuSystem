@@ -15,7 +15,15 @@ from .views import (
     add_teacher,
     update_teacher,
     mark_homework,
-    get_homework
+    get_homework,
+
+
+    # Test Paper
+    test_templates,
+    create_testpaper,
+    delete_testpaper,
+    create_test_question,
+    update_test_question,
     )
 
 
@@ -39,4 +47,14 @@ urlpatterns = [
 
     path('add_teacher/', add_teacher, name='add_teacher'),
     path('update_teacher/<int:teacher_id>', update_teacher, name='update_teacher'),
+
+
+    # Test Paper
+    path('test-templates/',test_templates, name='test_templates'),
+    path('test-templates/<int:batch_id>/',test_templates, name='test_templates'),
+    path('create-testpaper/<int:batch_id>/<int:test_id>/', create_testpaper, name="create_testpaper"),
+    path('delete-testpaper/<int:test_id>/', delete_testpaper, name="delete_testpaper"),
+    path('create-test-question/<int:batch_id>/<int:test_id>/', create_test_question, name="create_test_question"),
+    path('update-test-question/<int:batch_id>/<int:test_id>/<int:question_id>', update_test_question, name="update_test_question"),
+
 ]

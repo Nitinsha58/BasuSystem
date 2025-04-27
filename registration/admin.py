@@ -1,9 +1,21 @@
 from django.contrib import admin
-from .models import Student, ParentDetails, FeeDetails, Installment, TransportDetails, Batch, Teacher, Attendance, Homework
+from .models import (
+    Student, 
+    ParentDetails, 
+    FeeDetails, 
+    Installment, 
+    TransportDetails, 
+    Batch, 
+    Teacher, 
+    Attendance, 
+    Homework, 
+    Chapter,
+    Test,
+    TestQuestion,
+
+
+    )
 from .forms import TeacherForm
-from django.contrib import messages
-from django.core.exceptions import ValidationError
-from django.db import IntegrityError
 
 class TeacherAdmin(admin.ModelAdmin):
     form = TeacherForm
@@ -31,6 +43,12 @@ class StudentAdmin(admin.ModelAdmin):
     list_filter = ['batches__class_name', 'batches__section', 'batches__subject']
     ordering = ['user__first_name', 'user__last_name']
 
+class ChapterAdmin(admin.ModelAdmin):
+    list_display = ['chapter_name', 'subject', 'class_name', 'created_at', 'updated_at']
+    search_fields = ['chapter_name', 'chapter_no' 'subject__name', 'class_name']
+    list_filter = ['subject', 'class_name']
+    ordering = ['created_at']
+
 admin.site.register(Student, StudentAdmin)
 admin.site.register(ParentDetails)
 admin.site.register(FeeDetails)
@@ -40,3 +58,6 @@ admin.site.register(Batch)
 admin.site.register(Teacher, TeacherAdmin)
 admin.site.register(Attendance, AttendanceAdmin)
 admin.site.register(Homework)
+admin.site.register(Chapter, ChapterAdmin)
+admin.site.register(Test)
+admin.site.register(TestQuestion)
