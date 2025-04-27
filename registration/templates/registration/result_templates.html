@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block dashboard %}
+
+
+<div class="container">
+    <p class="h1 fw-semibold mb-4">Add Batch Marks</p>
+    {% for cls, batches in class_batches.items %}
+    <div class="row shuffle">
+    
+        <h2 class="text-dark fw-semibold mb-1 mt-4">{{ cls }}</h2>
+      {% for batch in batches %}
+      <div class="col-sm-6 col-md-4 col-lg-3 category shuffle-item shuffle-item--visible mb-4">
+        <div class="card">
+          <ul class="list-group">
+            <li class="list-group-item bg-dark text-white border-dark d-flex justify-content-between align-items-center">
+                <p class="m-0">{{batch}}</p> 
+                <form action="{% url 'test_templates' batch.id %}" method="post">
+                    {% csrf_token %}
+                        <button type="submit" class="btn btn-dark">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-plus-circle" viewBox="0 0 16 16" style="pointer-events: none;">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"></path>
+                                <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4"></path>
+                            </svg>
+                        </button>
+                </form>
+            </li>
+            {% for test in batch.test_paper.all %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <a href="" class=" text-dark fw-semibold text-decoration-none">
+                    <p class="m-0">{{test.name}}</p>
+                </a>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% endfor %}
+  </div>
+
+  
+<script src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js"
+    integrity="sha384-GNFwBvfVxBkLMJpYMOABq3c+d3KnQxudP/mGPkzpZSTYykLBNsZEnG2D9G/X/+7D" crossorigin="anonymous"
+    async></script>
+
+{% endblock dashboard %}

@@ -762,7 +762,6 @@ def create_test_question(request, batch_id, test_id):
         return redirect("create_testpaper", batch_id=batch_id, test_id=test_id )
     return redirect("create_testpaper", batch_id=batch_id, test_id=test_id )
 
-
 @login_required(login_url='login')
 def update_test_question(request, batch_id, test_id, question_id):
     if not request.user.is_superuser:
@@ -812,4 +811,33 @@ def update_test_question(request, batch_id, test_id, question_id):
 
         return redirect("create_testpaper", batch_id=batch_id, test_id=test_id )
     return redirect("create_testpaper", batch_id=batch_id, test_id=test_id )
-  
+
+
+@login_required(login_url='login')
+def calculate_marks(request, batch_id, test_id):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
+    batch = Batch.objects.filter(id=batch_id).first()
+    test = Test.objects.filter(id=test_id).first()
+    if not batch or not test:
+        messages.error(request, "Invalid Batch or Test")
+        return redirect("create_test_template")
+    test.calculate_total_max_marks()
+    return redirect("create_testpaper", batch_id=batch_id, test_id=test_id )
+
+# Test Response
+@login_required(login_url='login')
+def result_templates(request):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
+    
+    classes = ClassName.objects.all().order_by('name')
+    class_batches = {
+        cls.name : Batch.objects.filter(class_name=cls).order_by('class_name__name', 'section')
+        for cls in classes
+    }
+
+    return render(request, "registration/result_templates.html", {
+        'class_batches': class_batches,
+    })
+

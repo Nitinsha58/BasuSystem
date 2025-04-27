@@ -199,7 +199,7 @@ class Test(models.Model):
 
     def calculate_total_max_marks(self):
         # Calculate the total marks for all related TestQuestions
-        self.total_max_marks = self.question.filter(is_main=True).aggregate(
+        self.total_max_marks = self.questions.filter(is_main=True).aggregate(
             total=models.Sum('max_marks')
         )['total'] or 0
         if self.total_max_marks > 80:
@@ -218,7 +218,7 @@ class Chapter(models.Model):
         return f"{self.chapter_no} - {self.chapter_name} - {self.subject.name} - {self.class_name.name}"
 
 class TestQuestion(models.Model):
-    test = models.ForeignKey(Test, on_delete=models.CASCADE, related_name='test_question')
+    test = models.ForeignKey(Test, on_delete=models.CASCADE, related_name='questions')
     question_number = models.IntegerField()
     is_main = models.BooleanField(default=True)
     optional_question = models.OneToOneField('self', on_delete=models.CASCADE, null=True, blank=True, default=None, related_name='optional')
