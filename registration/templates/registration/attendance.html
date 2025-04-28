@@ -15,9 +15,7 @@
                 <h4 class="heading m-2">{{ cls }}</h4>
                 {% for batch in batches %}
                     {% if batch in user.teachers.batches.all %}
-                        <a href="{% url 'mark_attendance' batch.id  %}" class="m-1 btn btn-warning ">{{batch}} - {{batch.attendance.last.date|date:"d M"}} </a>
-                    {% else %}
-                        <a href="{% url 'mark_attendance' batch.id  %}" class="m-1 btn btn-warning disabled">{{batch}} - {{batch.attendance.last.date|date:"d M"}} </a>
+                        <a href="{% url 'mark_attendance' batch.id  %}" class="m-1 btn btn-warning ">{{batch}} - {{batch.last_attendance_date|date:"d M"}} </a>
                     {% endif %}
                 {% endfor %}
             {% endfor %}
@@ -26,7 +24,7 @@
             {% for cls, batches in class_batches.items %}
                 <h4 class="heading m-2">{{ cls }}</h4>
                 {% for batch in batches %}
-                    <a href="{% url 'mark_attendance' batch.id  %}" class="m-1 btn btn-warning ">{{batch}} - {{batch.attendance.last.date|date:"d M"}} </a>
+                    <a href="{% url 'mark_attendance' batch.id  %}" class="m-1 btn btn-warning ">{{batch}} - {{batch.last_attendance_date|date:"d M"}} </a>
                 {% endfor %}
             {% endfor %}
 
@@ -41,9 +39,7 @@
                 <h4 class="heading m-2">{{ cls }}</h4>
                 {% for batch in batches %}
                     {% if batch in user.teachers.batches.all %}
-                        <a href="{% url 'get_attendance' batch.id %}" class="m-1 btn btn-success ">{{batch}} - {{batch.attendance.last.date|date:"d M"}}</a>
-                    {% else %}
-                        <a href="{% url 'get_attendance' batch.id %}" class="m-1 btn btn-success disabled">{{batch}} - {{batch.attendance.last.date|date:"d M"}}</a>
+                        <a href="{% url 'get_attendance' batch.id %}" class="m-1 btn btn-success ">{{batch}} - {% if batch.attendance.last %} {{batch.last_attendance_date|date:"d M"}} {% endif %}</a>
                     {% endif %}
                 {% endfor %}
             {% endfor %}
@@ -52,7 +48,7 @@
             {% for cls, batches in class_batches.items %}
                 <h4 class="heading m-2">{{ cls }}</h4>
                 {% for batch in batches %}
-                    <a href="{% url 'get_attendance' batch.id %}" class="m-1 btn btn-success ">{{batch}} - {{batch.attendance.last.date|date:"d M"}}</a>
+                    <a href="{% url 'get_attendance' batch.id %}" class="m-1 btn btn-success ">{{batch}} - {{batch.last_attendance_date|date:"d M"}}</a>
                 {% endfor %}
             {% endfor %}
         {% endif %}
@@ -66,9 +62,7 @@
                 <h4 class="heading m-2">{{ cls }}</h4>
                 {% for batch in batches %}
                     {% if batch in user.teachers.batches.all %}
-                        <a href="{% url 'mark_homework' batch.id  %}" class="m-1 btn btn-warning ">{{batch}} - {{batch.attendance.last.date|date:"d M"}}</a>
-                    {% else %}
-                        <a href="{% url 'mark_homework' batch.id  %}" class="m-1 btn btn-warning disabled">{{batch}} - {{batch.attendance.last.date|date:"d M"}}</a>
+                        <a href="{% url 'mark_homework' batch.id  %}" class="m-1 btn btn-warning ">{{batch}} - {{batch.last_homework_date|date:"d M"}}</a>
                     {% endif %}
                 {% endfor %}
             {% endfor %}
@@ -76,7 +70,7 @@
             {% for cls, batches in class_batches.items %}
                 <h4 class="heading m-2">{{ cls }}</h4>
                 {% for batch in batches %}
-                    <a href="{% url 'mark_homework' batch.id  %}" class="m-1 btn btn-warning ">{{batch}} - {{batch.attendance.last.date|date:"d M"}}</a>
+                    <a href="{% url 'mark_homework' batch.id  %}" class="m-1 btn btn-warning ">{{batch}} - {{batch.last_homework_date|date:"d M"}}</a>
                 {% endfor %}
             {% endfor %}
         {% endif %}
@@ -89,9 +83,7 @@
                 <h4 class="heading m-2">{{ cls }}</h4>
                 {% for batch in batches %}
                     {% if batch in user.teachers.batches.all %}
-                        <a href="{% url 'get_homework' batch.id %}" class="m-1 btn btn-success ">{{batch}} - {{batch.attendance.last.date|date:"d M"}}</a>
-                    {% else %}
-                        <a href="{% url 'get_homework' batch.id %}" class="m-1 btn btn-success disabled">{{batch}} - {{batch.attendance.last.date|date:"d M"}}</a>
+                        <a href="{% url 'get_homework' batch.id %}" class="m-1 btn btn-success ">{{batch}} - {{batch.last_homework_date|date:"d M"}}</a>
                     {% endif %}
                 {% endfor %}
             {% endfor %}
@@ -99,7 +91,7 @@
             {% for cls, batches in class_batches.items %}
                 <h4 class="heading m-2">{{ cls }}</h4>
                 {% for batch in batches %}
-                    <a href="{% url 'get_homework' batch.id %}" class="m-1 btn btn-success ">{{batch}} - {{batch.attendance.last.date|date:"d M"}}</a>
+                    <a href="{% url 'get_homework' batch.id %}" class="m-1 btn btn-success ">{{batch}} - {{batch.last_homework_date|date:"d M"}}</a>
                 {% endfor %}
             {% endfor %}
         {% endif %}

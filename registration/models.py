@@ -1,5 +1,7 @@
 from django.db import models
 import uuid
+from django.db.models import Max
+
 
 from center.models import ClassName, Subject, Section
 from user.models import BaseUser
@@ -19,6 +21,15 @@ class Batch(models.Model):
         section = getattr(self.section, 'name', 'N/A')
         subject = getattr(self.subject, 'name', 'N/A')
         return f"{class_name} {subject} {section}"
+    
+    def last_attendance_date(self):
+        last_attendance = self.attendance.aggregate(last_date=Max('date'))['last_date']
+        return last_attendance
+
+    def last_homework_date(self):
+        last_homework = self.homework.aggregate(last_date=Max('date'))['last_date']
+        return last_homework
+
     
 class Teacher(models.Model):
     user = models.OneToOneField(BaseUser, on_delete=models.CASCADE, related_name="teachers")

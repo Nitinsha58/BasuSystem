@@ -50,6 +50,12 @@ class ChapterAdmin(admin.ModelAdmin):
     list_filter = ['subject', 'class_name']
     ordering = ['created_at']
 
+class HomeworkAdmin(admin.ModelAdmin):
+    list_display = ['student__user__first_name', 'batch', 'status', 'created_at', 'updated_at']
+    search_fields = ['batch__class_name__name', 'batch__section__name', 'batch__subject__name',]
+    list_filter = ['batch', 'status']
+    ordering = ['created_at']
+
 admin.site.register(Student, StudentAdmin)
 admin.site.register(ParentDetails)
 admin.site.register(FeeDetails)
@@ -58,7 +64,7 @@ admin.site.register(TransportDetails)
 admin.site.register(Batch)
 admin.site.register(Teacher, TeacherAdmin)
 admin.site.register(Attendance, AttendanceAdmin)
-admin.site.register(Homework)
+admin.site.register(Homework, HomeworkAdmin)
 admin.site.register(Chapter, ChapterAdmin)
 admin.site.register(Test)
 admin.site.register(TestQuestion)

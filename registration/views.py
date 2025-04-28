@@ -481,7 +481,7 @@ def get_attendance(request, batch_id):
 
     # Generate a timeline of dates for the past 30 days
     today = datetime.now().date()
-    start_date = today - timedelta(days=15)
+    start_date = today - timedelta(days=30)
     dates = [start_date + timedelta(days=i) for i in range(31)]
 
     # Merge attendance data with the timeline and ensure all students are included
