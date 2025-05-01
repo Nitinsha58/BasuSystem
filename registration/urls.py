@@ -31,6 +31,7 @@ from .views import (
     add_result,
     update_result,
     delete_result,
+    transport_list
     )
 
 
@@ -54,6 +55,8 @@ urlpatterns = [
 
     path('add_teacher/', add_teacher, name='add_teacher'),
     path('update_teacher/<int:teacher_id>', update_teacher, name='update_teacher'),
+
+    path('transport_list/', transport_list, name='transport_list'),
 
 
     # Test Paper

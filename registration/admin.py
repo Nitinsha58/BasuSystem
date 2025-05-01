@@ -13,8 +13,8 @@ from .models import (
     Test,
     TestQuestion,
     Remark,
-    RemarkCount
-
+    RemarkCount,
+    Day
     )
 from .forms import TeacherForm
 
@@ -56,12 +56,26 @@ class HomeworkAdmin(admin.ModelAdmin):
     list_filter = ['batch', 'status']
     ordering = ['created_at']
 
+class BatchAdmin(admin.ModelAdmin):
+    def days_display(self, obj):
+        return ", ".join([day.name for day in obj.days.all()])
+    days_display.short_description = 'Days'
+
+    def combined_time(self, obj):
+        return f"{obj.start_time} - {obj.end_time}"
+    combined_time.short_description = 'Time'
+
+    list_display = ['class_name', 'section', 'subject', 'combined_time', 'days_display']
+    search_fields = ['class_name__name', 'section__name', 'subject__name']
+    list_filter = ['class_name', 'section', 'subject']
+    ordering = ['class_name__name', 'section__name', 'subject__name']
+
 admin.site.register(Student, StudentAdmin)
 admin.site.register(ParentDetails)
 admin.site.register(FeeDetails)
 admin.site.register(Installment)
 admin.site.register(TransportDetails)
-admin.site.register(Batch)
+admin.site.register(Batch, BatchAdmin)
 admin.site.register(Teacher, TeacherAdmin)
 admin.site.register(Attendance, AttendanceAdmin)
 admin.site.register(Homework, HomeworkAdmin)
@@ -70,3 +84,5 @@ admin.site.register(Test)
 admin.site.register(TestQuestion)
 admin.site.register(Remark)
 admin.site.register(RemarkCount)
+admin.site.register(Day)
+

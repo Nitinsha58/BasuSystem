@@ -6,10 +6,25 @@ from django.db.models import Max
 from center.models import ClassName, Subject, Section
 from user.models import BaseUser
 
+class Day(models.Model):
+    name = models.CharField(max_length=20, unique=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name_plural = "Days"
+
 class Batch(models.Model):
+    BATCH_TIME_CHOICES = [
+        ('12:00 AM', '12:00 AM'), ('12:15 AM', '12:15 AM'), ('12:30 AM', '12:30 AM'), ('12:45 AM', '12:45 AM'), ('01:00 AM', '01:00 AM'), ('01:15 AM', '01:15 AM'), ('01:30 AM', '01:30 AM'), ('01:45 AM', '01:45 AM'), ('02:00 AM', '02:00 AM'), ('02:15 AM', '02:15 AM'), ('02:30 AM', '02:30 AM'), ('02:45 AM', '02:45 AM'), ('03:00 AM', '03:00 AM'), ('03:15 AM', '03:15 AM'), ('03:30 AM', '03:30 AM'), ('03:45 AM', '03:45 AM'), ('04:00 AM', '04:00 AM'), ('04:15 AM', '04:15 AM'), ('04:30 AM', '04:30 AM'), ('04:45 AM', '04:45 AM'), ('05:00 AM', '05:00 AM'), ('05:15 AM', '05:15 AM'), ('05:30 AM', '05:30 AM'), ('05:45 AM', '05:45 AM'), ('06:00 AM', '06:00 AM'), ('06:15 AM', '06:15 AM'), ('06:30 AM', '06:30 AM'), ('06:45 AM', '06:45 AM'), ('07:00 AM', '07:00 AM'), ('07:15 AM', '07:15 AM'), ('07:30 AM', '07:30 AM'), ('07:45 AM', '07:45 AM'), ('08:00 AM', '08:00 AM'), ('08:15 AM', '08:15 AM'), ('08:30 AM', '08:30 AM'), ('08:45 AM', '08:45 AM'), ('09:00 AM', '09:00 AM'), ('09:15 AM', '09:15 AM'), ('09:30 AM', '09:30 AM'), ('09:45 AM', '09:45 AM'), ('10:00 AM', '10:00 AM'), ('10:15 AM', '10:15 AM'), ('10:30 AM', '10:30 AM'), ('10:45 AM', '10:45 AM'), ('11:00 AM', '11:00 AM'), ('11:15 AM', '11:15 AM'), ('11:30 AM', '11:30 AM'), ('11:45 AM', '11:45 AM'), ('12:00 PM', '12:00 PM'), ('12:15 PM', '12:15 PM'), ('12:30 PM', '12:30 PM'), ('12:45 PM', '12:45 PM'), ('01:00 PM', '01:00 PM'), ('01:15 PM', '01:15 PM'), ('01:30 PM', '01:30 PM'), ('01:45 PM', '01:45 PM'), ('02:00 PM', '02:00 PM'), ('02:15 PM', '02:15 PM'), ('02:30 PM', '02:30 PM'), ('02:45 PM', '02:45 PM'), ('03:00 PM', '03:00 PM'), ('03:15 PM', '03:15 PM'), ('03:30 PM', '03:30 PM'), ('03:45 PM', '03:45 PM'), ('04:00 PM', '04:00 PM'), ('04:15 PM', '04:15 PM'), ('04:30 PM', '04:30 PM'), ('04:45 PM', '04:45 PM'), ('05:00 PM', '05:00 PM'), ('05:15 PM', '05:15 PM'), ('05:30 PM', '05:30 PM'), ('05:45 PM', '05:45 PM'), ('06:00 PM', '06:00 PM'), ('06:15 PM', '06:15 PM'), ('06:30 PM', '06:30 PM'), ('06:45 PM', '06:45 PM'), ('07:00 PM', '07:00 PM'), ('07:15 PM', '07:15 PM'), ('07:30 PM', '07:30 PM'), ('07:45 PM', '07:45 PM'), ('08:00 PM', '08:00 PM'), ('08:15 PM', '08:15 PM'), ('08:30 PM', '08:30 PM'), ('08:45 PM', '08:45 PM'), ('09:00 PM', '09:00 PM'), ('09:15 PM', '09:15 PM'), ('09:30 PM', '09:30 PM'), ('09:45 PM', '09:45 PM'), ('10:00 PM', '10:00 PM'), ('10:15 PM', '10:15 PM'), ('10:30 PM', '10:30 PM'), ('10:45 PM', '10:45 PM'), ('11:00 PM', '11:00 PM'), ('11:15 PM', '11:15 PM'), ('11:30 PM', '11:30 PM'), ('11:45 PM', '11:45 PM')]
+
     class_name = models.ForeignKey(ClassName, on_delete=models.CASCADE, related_name="batches")
     section = models.ForeignKey(Section, on_delete=models.CASCADE, related_name="batches")
     subject  = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name="batches")
+    days = models.ManyToManyField('Day', related_name="batches", blank=True)
+    start_time = models.CharField(max_length=10, choices=BATCH_TIME_CHOICES, blank=True, null=True)
+    end_time = models.CharField(max_length=10, choices=BATCH_TIME_CHOICES, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -294,3 +309,28 @@ class RemarkCount(models.Model):
 
     def __str__(self):
         return f"{self.remark.name}: {self.count}"
+
+# class Mentor(models.Model):
+#     user = models.OneToOneField(BaseUser, on_delete=models.CASCADE, related_name="mentor_profile")
+#     students = models.ManyToManyField('Student', related_name="mentors", blank=True)
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+
+#     def __str__(self):
+#         full_name = f"{self.user.first_name} {self.user.last_name}".strip()
+#         return full_name or self.user.phone
+#     def get_students(self):
+#         return self.students.all()
+
+# class MentorReview(models.Model):
+#     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="mentor_reviews")
+#     mentor = models.ForeignKey(Mentor, on_delete=models.CASCADE, related_name="reviews")
+#     mentor_review = models.TextField()
+#     parent_remark = models.TextField(blank=True, null=True)
+
+#     rating = models.PositiveIntegerField(default=0)
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+
+#     def __str__(self):
+#         return f"Review by {self.student.user.first_name} for {self.mentor.user.first_name}"

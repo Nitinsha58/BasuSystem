@@ -82,7 +82,7 @@
                     <label for="chapter" class="form-label">Chapter</label>
                     <select id="chapter" name="chapter" required class="form-select" >
                         {% for chapter in chapters %}
-                        <option value="{{chapter.id}}">{{chapter.chapter_no}}. {{chapter.chapter_name}}</option>
+                        <option value="{{chapter.id}}" >{{chapter.chapter_no}}. {{chapter.chapter_name}}</option>
                         {% endfor %}
                     </select>
                 </div>

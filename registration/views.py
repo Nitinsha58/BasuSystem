@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from .models import Student, ParentDetails, FeeDetails, Installment, TransportDetails, Batch, Teacher, Attendance, Homework, Test, TestQuestion, Chapter, Remark, RemarkCount, QuestionResponse, TestResult
+from .models import Student, ParentDetails, FeeDetails, Installment, TransportDetails, Batch, Teacher, Attendance, Homework, Test, TestQuestion, Chapter, Remark, RemarkCount, QuestionResponse, TestResult, Day
 from .forms import StudentRegistrationForm, StudentUpdateForm, ParentDetailsForm, TransportDetailsForm
 from center.models import Subject, ClassName
 from django.contrib import messages
@@ -967,3 +967,54 @@ def delete_result(request, batch_id, test_id, student_id, response_id):
         messages.error(request, f"An error occurred: {str(e)}")
 
     return redirect("add_student_result", batch_id=batch_id, test_id=test_id, student_id=student_id)
+
+
+@login_required(login_url='login')
+def transport_list(request):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
+
+    weekdays = list(Day.objects.order_by("id"))  # or "name" if alphabetically sorted
+    total = len(weekdays)
+
+    index = int(request.GET.get("day", 0))
+
+    move = request.GET.get("move")
+    if move == "next" and index < total - 1:
+        index += 1
+    elif move == "prev" and index > 0:
+        index -= 1
+    
+
+    # request.session["day"] = index
+    current_day = weekdays[index]
+
+    # # get all the batches with their days as current_day
+    # batches = Batch.objects.filter(days__name=current_day).order_by('start_time', 'class_name__name', 'section')
+    # grouped_batches = defaultdict(lambda: defaultdict(list))
+    # for batch in batches:
+    #     transport_students = Student.objects.filter(batches=batch, fees__cab_fees__gt=0).order_by('stu_id')
+    #     # if transport_students.exists():
+    #     #     grouped_batches[batch.start_time][batch] = transport_students
+    
+    batches = Batch.objects.filter(days__name=current_day).order_by('start_time', 'class_name__name', 'section')
+
+    # Group batches by start_time, and filter students with cab_fees > 0
+    grouped_batches = {}
+    for batch in batches:
+        transport_students = Student.objects.filter(
+            batches=batch,
+            fees__cab_fees__gt=0
+        ).order_by('stu_id')
+
+        if transport_students.exists():
+            if batch.start_time not in grouped_batches:
+                grouped_batches[batch.start_time] = {}
+            grouped_batches[batch.start_time][batch] = list(transport_students)
+    
+
+    return render(request, "registration/students_timing.html", {
+        "current_day": current_day,
+        "day": index,
+        "grouped_batches": dict(grouped_batches),
+    })

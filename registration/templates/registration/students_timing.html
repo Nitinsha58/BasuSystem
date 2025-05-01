@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load mathfilters %}
+{% load static %}
+
+{% block dashboard %}
+
+<style>
+    .dates-group {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+        overflow-x: auto;
+        display: flex;
+        gap: 2rem;
+    }
+</style>
+<div id="searchStuModal" class="start-0 d-flex flex-column flex-md-row items-center justify-content-between p-2">
+
+
+    <div class="row g-4 mx-2">
+        <ul class="pagination">
+            <li class="page-item"><a class="page-link" href="?day={{ day }}&move=prev">Previous</a></li>
+            <li class="page-item"><p class="page-link text-dark">{{current_day}}</p></li>
+            <li class="page-item"><a class="page-link" href="?day={{ day }}&move=next">Next</a></li>
+        </ul>
+    </div>
+
+</div>  
+
+<div class="mx-2 px-2">
+    <div class="d-flex g-4 w-100 flex-column dates-group pb-3">
+        
+        {% for time, batches in grouped_batches.items %}
+        <h5 class="card-title">{{ time }}</h5>
+        <div class="row shuffle bg-warning-subtle" data-masonry='{"percentPosition": true }' id="batches">
+          <div class="col-sm-6 col-md-4 col-lg-3 category shuffle-item shuffle-item--visible mb-4">
+              <div class="card">
+                {% for batch, students in batches.items %}
+                    <ul class="list-group">
+                        <li class="list-group-item bg-dark text-white list-group border-dark"> {{batch}} </li>
+                        {% for student in students %}
+                        <li style="position: relative;" class="list-group-item d-flex justify-content-between align-items-center">
+                            <a class="text-decoration-none text-dark" style="display: flex; justify-content: space-between;" target="_blank">
+                                <span class="">{{forloop.counter}}. {{student.user.first_name}} {{student.user.last_name}}</span>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% endfor %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+
+
+    </div>
+</div>
+
+{% endblock dashboard %}
