@@ -941,6 +941,7 @@ def update_result(request, batch_id, test_id, student_id, response_id):
 
     return redirect("add_student_result", batch_id=batch_id, test_id=test_id, student_id=student_id)
 
+@login_required(login_url='login')
 def delete_result(request, batch_id, test_id, student_id, response_id):
     if not request.user.is_superuser:
         return redirect('staff_dashboard')
@@ -970,6 +971,37 @@ def delete_result(request, batch_id, test_id, student_id, response_id):
 
     return redirect("add_student_result", batch_id=batch_id, test_id=test_id, student_id=student_id)
 
+@login_required(login_url='login')
+def all_pending_response(request, batch_id, test_id, student_id):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
+    test = Test.objects.filter(id=test_id).first()
+    student = Student.objects.filter(id=student_id).first()
+
+    if not student or not test:
+        messages.error(request, "Invalid Student or Test")
+        return redirect("add_student_result", batch_id=batch_id, test_id=test_id, student_id=student_id)
+
+    unanswered_questions = TestQuestion.objects.filter(
+        test=test
+    ).exclude(
+        responses__student=student
+    )
+
+    for question in unanswered_questions:
+        if question.optional_question or question.is_main==False:
+            messages.error(request, "Set Optional Questions Manually.")
+            continue
+        obj = QuestionResponse.objects.create(
+            question=question,
+            student=student,
+            test=test,
+            marks_obtained=question.max_marks,  # Default marks
+        )
+        obj.save()
+
+    return redirect("add_student_result", batch_id=batch_id, test_id=test_id, student_id=student_id)
+    
 
 @login_required(login_url='login')
 def transport_list(request):

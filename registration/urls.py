@@ -31,6 +31,9 @@ from .views import (
     add_result,
     update_result,
     delete_result,
+    all_pending_response,
+
+    # Transport
     transport_list
     )
 
@@ -78,5 +81,5 @@ urlpatterns = [
     path('add-result/<int:batch_id>/<int:test_id>/<int:student_id>/<int:question_id>', add_result, name="add_student_question_response"),
     path('update-result/<int:batch_id>/<int:test_id>/<int:student_id>/<int:response_id>', update_result, name="update_student_question_response"),
     path('delete-result/<int:batch_id>/<int:test_id>/<int:student_id>/<int:response_id>', delete_result, name="delete_student_question_response"),
-
+    path('all-pending-response/<int:batch_id>/<int:test_id>/<int:student_id>', all_pending_response, name="all_pending_response"),
 ]
