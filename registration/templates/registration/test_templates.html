@@ -30,6 +30,7 @@
             <li class="list-group-item d-flex justify-content-between align-items-center">
                 <a href="{% url 'create_testpaper' batch.id test.id %}" class=" text-dark fw-semibold text-decoration-none">
                     <p class="m-0">{{test.name}}</p>
+                    <p class="text-muted fw-normal m-0" style="font-size: 14px;">{{test.date|date:'d M Y'}}</p>
                 </a>
                 <a href="{% url 'delete_testpaper' test.id %}" data-batch_id="{{test.batch.id}}" data-test_id="{{test.id}}" class="delete-link px-2 py-1 btn btn-outline-danger fw-semibold text-decoration-none">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">

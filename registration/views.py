@@ -673,6 +673,8 @@ def create_testpaper(request, batch_id, test_id):
     if request.method == 'POST':
         test_name = request.POST.get('test_name')
         total_marks = request.POST.get('total_marks')
+        test_date = request.POST.get('date')
+        test.date = test_date
         test.name = test_name
         if total_marks:
             test.total_max_marks = float(total_marks)
