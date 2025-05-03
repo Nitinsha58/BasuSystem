@@ -62,12 +62,11 @@ class StudentAdmin(admin.ModelAdmin):
         # Write header
         writer.writerow(['Student Name', 'Phone'])
 
-        for student in queryset.select_related('user', 'class_enrolled').prefetch_related('batches'):
-            for batch in student.batches.all():
-                writer.writerow([
-                    f"{student.user.first_name} {student.user.last_name}",
-                    student.user.phone or ''
-                ])
+        for student in queryset.select_related('user').prefetch_related('batches__class_name'):
+            writer.writerow([
+            f"{student.user.first_name} {student.user.last_name}",
+            student.user.phone or ''
+            ])
 
         return response
 
