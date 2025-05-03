@@ -93,6 +93,7 @@ class Student(models.Model):
     last_year_marks_details = models.TextField(blank=True, null=True)
     aadhar_card_number = models.CharField(max_length=20, blank=True, null=True)
     gender = models.CharField(max_length=10, choices=GENDER_CHOICE, blank=True, null=True)
+    active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

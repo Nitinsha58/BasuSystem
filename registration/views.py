@@ -108,6 +108,7 @@ def student_update(request, stu_id):
             "gender": request.POST.get("gender"),
             "course": request.POST.get("course"),
             "program_duration": request.POST.get("program_duration"),
+            "active": request.POST.get("active") == "Active",
         }
         form = StudentUpdateForm(form_data, instance=student)
         if form.is_valid():

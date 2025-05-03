@@ -112,6 +112,7 @@ class StudentUpdateForm(forms.ModelForm):
             "course",
             "program_duration",
             "batches",
+            "active",
         ]
 
     def __init__(self, *args, **kwargs):

@@ -147,6 +147,11 @@
         <div class="col-md-3">
         </div>
         <div class="col-md-3">
+          <label for="batches" class="form-label">Status</label>
+          <select class="form-select" name="active" id="active">
+            <option value="Active" {% if student.active %} selected {% endif %}>Active</option>
+            <option value="Not Active" {% if not student.active %} selected {% endif %}>Not Active</option>
+          </select>
         </div>
         <div class="col-md-3">
           <label for="batches" class="form-label">Batches</label>
