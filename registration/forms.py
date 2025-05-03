@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.hashers import make_password
 from django.db import transaction
-from .models import Student, BaseUser, ParentDetails, FeeDetails, Installment, TransportDetails, Batch, Teacher
+from .models import Student, BaseUser, ParentDetails, FeeDetails, Installment, TransportDetails, Batch, Teacher, Mentor
 from center.models import Subject
 from django.core.exceptions import ValidationError
 from django.contrib import messages
@@ -281,3 +281,59 @@ class TeacherForm(forms.ModelForm):
                 teacher.batches.set(cleaned_data['batches'])
 
         return teacher
+
+class MentorForm(forms.ModelForm):
+    first_name = forms.CharField(max_length=255, required=False)
+    last_name = forms.CharField(max_length=255, required=False)
+    phone = forms.CharField(max_length=15, required=False)
+
+    class Meta:
+        model = Mentor
+        fields = ['first_name', 'last_name', 'phone']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # If updating an existing instance, populate fields
+        if self.instance and self.instance.pk:
+            self.fields['first_name'].initial = self.instance.user.first_name
+            self.fields['last_name'].initial = self.instance.user.last_name
+            self.fields['phone'].initial = self.instance.user.phone
+
+    def clean(self):
+        cleaned_data = super().clean()
+        first_name = cleaned_data.get('first_name')
+        last_name = cleaned_data.get('last_name')
+        phone = cleaned_data.get('phone')
+
+        # If no user is provided, first_name, last_name, and phone are required
+        
+        if not first_name:
+            self.add_error('first_name', "This field is required when no user is selected.")
+        if not last_name:
+            self.add_error('last_name', "This field is required when no user is selected.")
+        if not phone:
+            self.add_error('phone', "This field is required when no user is selected.")
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        cleaned_data = self.cleaned_data
+
+        user = BaseUser.objects.filter(phone=cleaned_data['phone']).first()
+        if user:
+            # If a user is provided, use it directly
+            mentor = super().save(commit=False)
+            mentor.user = user
+        else:
+            base_user = BaseUser.objects.create(
+                first_name=cleaned_data['first_name'],
+                last_name=cleaned_data['last_name'],
+                phone=cleaned_data['phone'],
+            )
+            mentor = super().save(commit=False)
+            mentor.user = base_user
+
+        if commit:
+            mentor.save()
+        return mentor

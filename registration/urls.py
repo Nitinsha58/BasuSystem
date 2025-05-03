@@ -34,7 +34,11 @@ from .views import (
     all_pending_response,
 
     # Transport
-    transport_list
+    transport_list,
+
+    # Mentorship Assignment
+    assign_mentor,
+    unassign_mentor,
     )
 
 
@@ -60,6 +64,11 @@ urlpatterns = [
     path('update_teacher/<int:teacher_id>', update_teacher, name='update_teacher'),
 
     path('transport_list/', transport_list, name='transport_list'),
+
+    # Mentorship Assignment
+    path('assign_mentor/', assign_mentor, name='assign_mentor'),
+    path('unassign_mentor/<uuid:stu_id>/', unassign_mentor, name='unassign_mentor'),
+
 
 
     # Test Paper

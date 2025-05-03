@@ -99,13 +99,14 @@
                 {% if request.user.admissioncounsellor or request.user.is_superuser %}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Add Teacher
+                        Management
                     </a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="{% url 'add_teacher' %}">Add Teacher</a></li>
                         <li><a class="dropdown-item" href="{% url 'test_templates' %}">Test Template</a></li>
                         <li><a class="dropdown-item" href="{% url 'result_templates' %}">Results</a></li>
                         <li><a class="dropdown-item" href="{% url 'transport_list' %}">Transport List</a></li>
+                        <li><a class="dropdown-item" href="{% url 'assign_mentor' %}">Assign Mentors</a></li>
                     </ul>
                 </li>
                 <li class="nav-item">

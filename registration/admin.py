@@ -14,9 +14,12 @@ from .models import (
     TestQuestion,
     Remark,
     RemarkCount,
-    Day
+    Day,
+    Mentor,
+    Mentorship,
+    MentorReview,
     )
-from .forms import TeacherForm
+from .forms import TeacherForm, MentorForm
 
 class TeacherAdmin(admin.ModelAdmin):
     form = TeacherForm
@@ -70,6 +73,11 @@ class BatchAdmin(admin.ModelAdmin):
     list_filter = ['class_name', 'section', 'subject']
     ordering = ['class_name__name', 'section__name', 'subject__name']
 
+class MentorAdmin(admin.ModelAdmin):
+    form = MentorForm
+    list_display = ['user', 'user__first_name', 'user__last_name', 'created_at']
+
+
 admin.site.register(Student, StudentAdmin)
 admin.site.register(ParentDetails)
 admin.site.register(FeeDetails)
@@ -85,4 +93,7 @@ admin.site.register(TestQuestion)
 admin.site.register(Remark)
 admin.site.register(RemarkCount)
 admin.site.register(Day)
+admin.site.register(Mentor, MentorAdmin)
+admin.site.register(Mentorship)
+admin.site.register(MentorReview)
 

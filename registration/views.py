@@ -1,5 +1,25 @@
 from django.shortcuts import render, redirect
-from .models import Student, ParentDetails, FeeDetails, Installment, TransportDetails, Batch, Teacher, Attendance, Homework, Test, TestQuestion, Chapter, Remark, RemarkCount, QuestionResponse, TestResult, Day
+from .models import (
+    Student, 
+    ParentDetails,
+    FeeDetails, 
+    Installment, 
+    TransportDetails, 
+    Batch, 
+    Teacher, 
+    Attendance, 
+    Homework, 
+    Test, 
+    TestQuestion, 
+    Chapter, 
+    Remark, 
+    RemarkCount, 
+    QuestionResponse, 
+    TestResult, 
+    Day, 
+    Mentor,
+    Mentorship,
+    )
 from .forms import StudentRegistrationForm, StudentUpdateForm, ParentDetailsForm, TransportDetailsForm
 from center.models import Subject, ClassName
 from django.contrib import messages
@@ -1052,3 +1072,66 @@ def transport_list(request):
         "day": index,
         "grouped_batches": dict(grouped_batches),
     })
+
+@login_required(login_url='login')
+def assign_mentor(request):
+    
+    if request.method == 'POST':
+        mentor = request.POST.get('mentor')
+        students = request.POST.getlist('students[]')
+
+        if not mentor or not students:
+            messages.error(request, "Please select a mentor and at least one student.")
+            return redirect('assign_mentor')
+        mentor_obj = Mentor.objects.filter(id=mentor).first()
+        if not mentor_obj:
+            messages.error(request, "Invalid Mentor")
+            return redirect('assign_mentor')
+        for student_id in students:
+            student = Student.objects.filter(stu_id=student_id).first()
+            if student:
+                mentorship, created = Mentorship.objects.get_or_create(
+                    mentor=mentor_obj,
+                    student=student,
+                    defaults={'active': True}
+                )
+                if not created:
+                    mentorship.active = True
+                    mentorship.save()
+        messages.success(request, "Mentor assigned successfully.")
+        return redirect('assign_mentor')
+
+    classes = ClassName.objects.all().order_by('-created_at')
+    class_students = [
+        {
+            'class': cls.name, 
+            'students': Student.objects.filter(class_enrolled=cls).order_by('-created_at', 'user__first_name', 'user__last_name').distinct()
+        } for cls in classes ]
+
+    mentors = Mentor.objects.all().order_by('-created_at')
+
+
+    return render(request, "registration/assign_mentor.html", {
+        'class_students' : class_students,
+        'mentors' : mentors,
+    })
+
+@login_required(login_url='login')
+def unassign_mentor(request, stu_id):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
+    
+    student = Student.objects.filter(stu_id=stu_id).first()
+    if not student:
+        messages.error(request, "Invalid Student")
+        return redirect('assign_mentor')
+
+    mentorship = Mentorship.objects.filter(student=student).first()
+    if mentorship:
+        mentorship.active = False
+        mentorship.save()
+        messages.success(request, "Mentorship unassigned successfully.")
+    else:
+        messages.error(request, "No active mentorship found for this student.")
+
+    return redirect('assign_mentor')

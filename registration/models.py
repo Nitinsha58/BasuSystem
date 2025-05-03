@@ -310,27 +310,44 @@ class RemarkCount(models.Model):
     def __str__(self):
         return f"{self.remark.name}: {self.count}"
 
-# class Mentor(models.Model):
-#     user = models.OneToOneField(BaseUser, on_delete=models.CASCADE, related_name="mentor_profile")
-#     students = models.ManyToManyField('Student', related_name="mentors", blank=True)
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
 
-#     def __str__(self):
-#         full_name = f"{self.user.first_name} {self.user.last_name}".strip()
-#         return full_name or self.user.phone
-#     def get_students(self):
-#         return self.students.all()
+class Mentor(models.Model):
+    user = models.OneToOneField(BaseUser, on_delete=models.CASCADE, related_name="mentor_profile")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-# class MentorReview(models.Model):
-#     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="mentor_reviews")
-#     mentor = models.ForeignKey(Mentor, on_delete=models.CASCADE, related_name="reviews")
-#     mentor_review = models.TextField()
-#     parent_remark = models.TextField(blank=True, null=True)
+    def get_active_students(self):
+        return Student.objects.filter(
+            mentorship__mentor=self,
+            mentorship__active=True
+        )
 
-#     rating = models.PositiveIntegerField(default=0)
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
+    def __str__(self):
+        full_name = f"{self.user.first_name} {self.user.last_name}".strip()
+        return f"{full_name or self.user.phone}"
 
-#     def __str__(self):
-#         return f"Review by {self.student.user.first_name} for {self.mentor.user.first_name}"
+class Mentorship(models.Model):
+    mentor = models.ForeignKey(Mentor, on_delete=models.CASCADE, related_name="mentorships")
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="mentorships")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.mentor.user.first_name} - {self.student.user.first_name} ({'Active' if self.active else 'Inactive'})"
+
+
+class MentorReview(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="mentor_reviews")
+    mentor = models.ForeignKey(Mentor, on_delete=models.CASCADE, related_name="reviews")
+    batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name="mentor_reviews", null=True, blank=True)
+    review = models.TextField(null=True, blank=True)
+    mentor_remark = models.TextField(null=True, blank=True)
+    parent_remark = models.TextField(blank=True, null=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.student.user.first_name} - {self.mentor.user.first_name} ({self.batch})"
