@@ -33,7 +33,7 @@
           <li class="list-group-item bg-dark text-white list-group border-dark"> {{cls.class}} - (
             {{cls.students.count}} )</li>
           {% for student in cls.students %}
-          <li style="position: relative;" class="list-group-item d-flex justify-content-between align-items-center {% if not student.fees.installments.first.paid %} bg-warning {% endif %}">
+          <li style="position: relative;" class="list-group-item d-flex justify-content-between align-items-center {% if not student.active %} bg-secondary {% elif not student.fees.installments.first.paid %} bg-warning {% endif %}">
             <a class="text-decoration-none text-dark" style="display: flex; justify-content: space-between;" target="_blank" href="{% url 'student_update' student.stu_id %}">
               <span class="">{{forloop.counter}}. {{student.user.first_name}} {{student.user.last_name}}</span>
             </a>
