@@ -331,6 +331,8 @@ class MentorForm(forms.ModelForm):
                 last_name=cleaned_data['last_name'],
                 phone=cleaned_data['phone'],
             )
+            base_user.set_password("basu@123")
+            base_user.save()
             mentor = super().save(commit=False)
             mentor.user = base_user
 
