@@ -375,7 +375,7 @@ def mark_attendance(request, batch_id=None):
             return redirect('mark_attendance', batch_id=batch_id)
         
         batch = Batch.objects.filter(id=batch_id).first()
-        students = Student.objects.filter(batches=batch)
+        students = Student.objects.filter(batches=batch, active=True)
 
         marked_students = set()
         for data in attendance_data:
@@ -409,7 +409,7 @@ def mark_attendance(request, batch_id=None):
     }
     if batch_id:
         batch = Batch.objects.filter(id=batch_id).first()
-        students = Student.objects.filter(batches=batch)
+        students = Student.objects.filter(batches=batch, active=True)
 
         return render(request, 'registration/mark_attendance.html', {
             'students': students,
@@ -437,7 +437,7 @@ def mark_homework(request, batch_id):
         return redirect('students_list')
     
     batch = Batch.objects.filter(id=batch_id).first()
-    students = Student.objects.filter(batches=batch)
+    students = Student.objects.filter(batches=batch, active=True)
 
     if batch_id and request.method == 'POST':
         date = request.POST.get('date')
@@ -450,7 +450,7 @@ def mark_homework(request, batch_id):
             return redirect('mark_homework', batch_id=batch_id)
 
         # Process the homework data
-        students = Student.objects.filter(batches=batch)
+        students = Student.objects.filter(batches=batch, active=True)
 
         for data in homework_data:
             stu_id, status = data.split(':')
