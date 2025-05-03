@@ -20,6 +20,8 @@ from .models import (
     MentorReview,
     )
 from .forms import TeacherForm, MentorForm
+import csv
+from django.http import HttpResponse
 
 class TeacherAdmin(admin.ModelAdmin):
     form = TeacherForm
@@ -40,12 +42,36 @@ class AttendanceAdmin(admin.ModelAdmin):
     ]
 
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ['user__first_name', 'user__last_name', 'created_at', 'updated_at']
-    search_fields = ['user__first_name', 'user__last_name', 'user__phone', 'batches__class_name__name',
-        'batches__section__name',
-        'batches__subject__name']
+    list_display = ['user_full_name', 'created_at', 'updated_at']
+    search_fields = ['user__first_name', 'user__last_name', 'user__phone',
+                     'batches__class_name__name', 'batches__section__name', 'batches__subject__name']
     list_filter = ['batches__class_name', 'batches__section', 'batches__subject']
     ordering = ['user__first_name', 'user__last_name']
+    actions = ['export_students_csv']
+    list_per_page = 100
+
+    def user_full_name(self, obj):
+        return f"{obj.user.first_name} {obj.user.last_name}"
+    user_full_name.short_description = "Name"
+
+    def export_students_csv(self, request, queryset):
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="students_by_class.csv"'
+        writer = csv.writer(response)
+        
+        # Write header
+        writer.writerow(['Student Name', 'Phone'])
+
+        for student in queryset.select_related('user', 'class_enrolled').prefetch_related('batches'):
+            for batch in student.batches.all():
+                writer.writerow([
+                    f"{student.user.first_name} {student.user.last_name}",
+                    student.user.phone or ''
+                ])
+
+        return response
+
+    export_students_csv.short_description = "Export students as CSV"
 
 class ChapterAdmin(admin.ModelAdmin):
     list_display = ['chapter_name', 'subject', 'class_name', 'created_at', 'updated_at']
