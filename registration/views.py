@@ -1106,7 +1106,7 @@ def assign_mentor(request):
     class_students = [
         {
             'class': cls.name, 
-            'students': Student.objects.filter(class_enrolled=cls).order_by('-created_at', 'user__first_name', 'user__last_name').distinct()
+            'students': Student.objects.filter(class_enrolled=cls, active=True).order_by('-created_at', 'user__first_name', 'user__last_name').distinct()
         } for cls in classes ]
 
     mentors = Mentor.objects.all().order_by('-created_at')
