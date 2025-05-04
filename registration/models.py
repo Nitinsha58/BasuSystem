@@ -168,9 +168,29 @@ class Installment(models.Model):
     def __str__(self):
         return f"Installment for {self.fee_details.student.user.first_name} - {self.amount}"
 
+
+class TransportPerson(models.Model):
+    person_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+class TransportMode(models.Model):
+    mode_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    name = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
 class TransportDetails(models.Model):
     transport_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-
+    transport_person = models.ForeignKey(TransportPerson, on_delete=models.CASCADE, related_name='transport', null=True, blank=True)
+    transport_mode = models.ForeignKey(TransportMode, on_delete=models.CASCADE, related_name='transport', null=True, blank=True)
     student = models.OneToOneField(Student, on_delete=models.CASCADE, related_name='transport')
     address = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)

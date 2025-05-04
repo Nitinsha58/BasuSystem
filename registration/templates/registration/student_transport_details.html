@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load form_tags %}
 
 {% block dashboard %}
 <div class="container-sm p-4 ">
@@ -16,16 +17,38 @@
         <h2 class="fw-normal text-dark">Add Location</h2>
     </div>
 
-    <form class="d-flex flex-column align-items-center  bg-light rounded p-2 pb-3" method="post">
+    <form class="d-flex flex-column align-items-center bg-light rounded p-2 pb-3" method="post">
       {% csrf_token %}
+    
       <div class="col-md-4">
-        <label for="address" class="form-label">Pickup Location</label>
-        <input  {% if student.transport %} value="{{student.transport.address}}" {% endif %} type="text" class="form-control" name="address" id="address" required>
+        {{ form.address.label_tag }}
+        {{ form.address|add_class:"form-control mt-1" }}
+        {% if form.address.errors %}
+          <div class="text-danger small">{{ form.address.errors.0 }}</div>
+        {% endif %}
       </div>
+    
+      <div class="col-md-4">
+        {{ form.transport_mode.label_tag }}
+        {{ form.transport_mode|add_class:"form-select mt-1" }}
+        {% if form.transport_mode.errors %}
+          <div class="text-danger small">{{ form.transport_mode.errors.0 }}</div>
+        {% endif %}
+      </div>
+    
+      <div class="col-md-4">
+        {{ form.transport_person.label_tag }}
+        {{ form.transport_person|add_class:"form-select mt-1" }}
+        {% if form.transport_person.errors %}
+          <div class="text-danger small">{{ form.transport_person.errors.0 }}</div>
+        {% endif %}
+      </div>
+    
       <div class="col-md-4 mt-3">
         <button class="btn btn-primary" type="submit">Add Location</button>
       </div>
     </form>
+    
 </div>
 </div>
 

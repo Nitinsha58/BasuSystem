@@ -19,6 +19,8 @@ from .models import (
     Day, 
     Mentor,
     Mentorship,
+    TransportPerson,
+    TransportMode
     )
 from .forms import StudentRegistrationForm, StudentUpdateForm, ParentDetailsForm, TransportDetailsForm
 from center.models import Subject, ClassName
@@ -247,31 +249,33 @@ def student_fees_details(request, stu_id):
 
 @login_required(login_url='login')
 def student_transport_details(request, stu_id):
-    if stu_id and not Student.objects.filter(stu_id=stu_id):
+    student = Student.objects.filter(stu_id=stu_id).first()
+    if not student:
         messages.error(request, "Invalid Student")
         return redirect('student_registration')
-    
-    student = Student.objects.filter(stu_id=stu_id).first()
-    form_data = {}
+
+    instance = getattr(student, 'transport', None)
 
     if request.method == "POST":
-        form_data = {
-            "address": request.POST.get("address"),
-        }
-        form = TransportDetailsForm(form_data)
-
+        form = TransportDetailsForm(request.POST, instance=instance)
         if form.is_valid():
-            form.save(student)
-            messages.success(request, "Location Saved.")
+            transport = form.save(commit=False)
+            transport.student = student
+            transport.save()
+            messages.success(request, "Transport details saved.")
             return redirect("student_transport_details", stu_id=student.stu_id)
-        
-        for field, error_list in form.errors.items():
-            for error in error_list:
-                messages.error(request, f"{field}: {error}")
-    
+        else:
+            for field, error_list in form.errors.items():
+                for error in error_list:
+                    messages.error(request, f"{field}: {error}")
+    else:
+        form = TransportDetailsForm(instance=instance)
+
     return render(request, "registration/student_transport_details.html", {
-        'student': Student.objects.filter(stu_id=stu_id).first()
+        'form': form,
+        'student': student,
     })
+
     
 @login_required(login_url='login')
 def delete_installment(request, stu_id, ins_id):

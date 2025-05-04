@@ -18,6 +18,8 @@ from .models import (
     Mentor,
     Mentorship,
     MentorReview,
+    TransportMode,
+    TransportPerson
     )
 from .forms import TeacherForm, MentorForm
 import csv
@@ -121,4 +123,6 @@ admin.site.register(Day)
 admin.site.register(Mentor, MentorAdmin)
 admin.site.register(Mentorship)
 admin.site.register(MentorReview)
+admin.site.register(TransportMode)
+admin.site.register(TransportPerson)
 

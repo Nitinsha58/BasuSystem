@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.hashers import make_password
 from django.db import transaction
-from .models import Student, BaseUser, ParentDetails, FeeDetails, Installment, TransportDetails, Batch, Teacher, Mentor
+from .models import Student, BaseUser, ParentDetails, FeeDetails, Installment, TransportDetails, Batch, Teacher, Mentor, TransportMode, TransportPerson
 from center.models import Subject
 from django.core.exceptions import ValidationError
 from django.contrib import messages
@@ -199,18 +199,13 @@ class ParentDetailsForm(forms.ModelForm):
         return parent_details
 
 class TransportDetailsForm(forms.ModelForm):
-    address = forms.CharField(max_length=255, required=True)
+    address = forms.CharField(max_length=255, required=False)
+    transport_mode = forms.ModelChoiceField(queryset=TransportMode.objects.all(), required=False)
+    transport_person = forms.ModelChoiceField(queryset=TransportPerson.objects.all(), required=False)
+
     class Meta:
         model = TransportDetails
-        fields = ["address"]
-
-    def save(self, student, commit=True):
-        with transaction.atomic():
-            transport_details, created = TransportDetails.objects.get_or_create(student=student)
-            transport_details.address = self.cleaned_data["address"]
-            if commit:
-                transport_details.save()
-        return transport_details
+        fields = ["address", "transport_mode", "transport_person"]
     
 class TeacherForm(forms.ModelForm):
     user = forms.ModelChoiceField(queryset=BaseUser.objects.all(), required=False)  # Optional user field
