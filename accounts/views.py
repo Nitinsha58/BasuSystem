@@ -27,7 +27,7 @@ def installments(request):
 
     # Query installments
     installments = Installment.objects.select_related('student', 'fee_details__student') \
-        .filter(due_date__range=(start_date, end_date)) \
+        .filter(due_date__range=(start_date, end_date), student__active=True) \
         .order_by('due_date')
 
     # Group installments by due date
