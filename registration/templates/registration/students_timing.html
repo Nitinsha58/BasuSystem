@@ -33,7 +33,7 @@
         {% for time, batches in grouped_batches.items %}
         <h5 class="card-title">{{ time }}</h5>
         <div class="row shuffle bg-warning-subtle" data-masonry='{"percentPosition": true }' id="batches">
-          <div class="col-sm-6 col-md-4 col-lg-3 category shuffle-item shuffle-item--visible mb-4 d-flex flex-md-row gap-2">
+          <div class="category flex-wrap shuffle-item shuffle-item--visible mb-4 d-flex flex-md-row gap-2">
               {% for batch, students in batches.items %}
               <div class="">
                     <ul class="list-group">
