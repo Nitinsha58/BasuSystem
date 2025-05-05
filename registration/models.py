@@ -97,6 +97,16 @@ class Student(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def needs_mentor(self):
+        last = self.mentorships.order_by('-updated_at').first()
+        return last is None or not last.active
+    
+    def active_mentorship(self):
+        return self.mentorships.filter(active=True).order_by('-updated_at').first()
+
+    def has_active_mentorship(self):
+        return self.active_mentorship() is not None
+
     def __str__(self):
         return self.user.first_name + " " + self.user.last_name
 

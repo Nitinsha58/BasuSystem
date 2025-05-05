@@ -32,7 +32,7 @@
 
                 </li>
                 {% for student in cls.students %}
-                    {% if not student.mentorships.all or student.mentorships.first and not student.mentorships.first.active %}
+                    {% if student.needs_mentor %}
                     <li class="list-group-item ">
                         <div class=" d-flex justify-content-between">
                             <label for="student_{{forloop.counter}}" class="text-decoration-none text-dark m-0" style="display: flex; justify-content: space-between;" target="_blank">
@@ -46,13 +46,13 @@
             </form>
 
           {% for student in cls.students %}
-            {% if student.mentorships.first and student.mentorships.first.active == True %}
+            {% if student.has_active_mentorship %}
             <li class="list-group-item d-flex justify-content-between align-items-center">
                 <div class="">
                     <p class="text-decoration-none text-dark m-0" style="display: flex; justify-content: space-between;" target="_blank">
                     {{forloop.counter}}. {{student.user.first_name}} {{student.user.last_name}}
                     </p>
-                    <p class="text-muted fw-normal m-0" style="font-size: 14px;">{{student.mentorships.first.mentor.user.first_name}} {{student.mentorships.first.mentor.user.last_name}}</p>
+                    <p class="text-muted fw-normal m-0" style="font-size: 14px;">{{ student.active_mentorship.mentor.user.first_name }} {{ student.active_mentorship.mentor.user.last_name }}</p>
                 </div>
                 <a data-stu_id="{{student.stu_id}}" class="delete-link px-2 py-1 btn btn-outline-danger fw-semibold text-decoration-none">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">

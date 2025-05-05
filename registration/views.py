@@ -1131,12 +1131,14 @@ def unassign_mentor(request, stu_id):
         messages.error(request, "Invalid Student")
         return redirect('assign_mentor')
 
-    mentorship = Mentorship.objects.filter(student=student).first()
-    if mentorship:
+    mentorships = Mentorship.objects.filter(student=student)
+    if not mentorships.exists():
+        messages.error(request, "No mentorship found for this student.")
+        return redirect('assign_mentor')
+    
+    for mentorship in mentorships:
         mentorship.active = False
         mentorship.save()
-        messages.success(request, "Mentorship unassigned successfully.")
-    else:
-        messages.error(request, "No active mentorship found for this student.")
+    messages.success(request, "Mentorship unassigned successfully.")
 
     return redirect('assign_mentor')
