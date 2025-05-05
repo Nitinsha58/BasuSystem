@@ -12,6 +12,8 @@ from registration.models import (
     QuestionResponse,
     Test,
     TestResult,
+    Mentor,
+    Mentorship
     )
 from collections import defaultdict
 from django.db.models import Q
@@ -81,6 +83,30 @@ def batchwise_students(request):
     return render(request, "reports/batchwise_students.html", {
         'batch_students': batch_students,
         'count': count,
+    })
+
+@login_required(login_url='login')
+def mentor_students(request):
+    classes = ClassName.objects.all()
+    # only show students who are active to current mentor/
+    class_mentorships = {}
+    mentor = Mentor.objects.filter(user=request.user).first()
+    print(mentor)
+    if not mentor and not request.user.is_superuser:
+        messages.error(request, "You are not authorized to view this page.")
+        return redirect('staff_dashboard')
+    
+    for class_name in classes:
+        if request.user.mentor_profile:
+            mentorships = mentor.mentorships.filter(active=True, student__class_enrolled=class_name)\
+                        .order_by('-created_at', 'student__user__first_name', 'student__user__last_name')\
+                        .distinct()
+        else:
+            mentorships = Mentorship.objects.filter(active=True, student__class_enrolled=class_name)\
+
+        class_mentorships[class_name] = mentorships
+    return render(request, "reports/mentor_students.html", {
+        'class_mentorships': class_mentorships,
     })
 
 @login_required(login_url='login')

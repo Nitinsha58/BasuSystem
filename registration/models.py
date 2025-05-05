@@ -352,6 +352,9 @@ class Mentor(models.Model):
             mentorship__mentor=self,
             mentorship__active=True
         )
+        
+    def total_active_mentorships(self):
+        return Mentorship.objects.filter(mentor=self, active=True).count()
 
     def __str__(self):
         full_name = f"{self.user.first_name} {self.user.last_name}".strip()
@@ -364,6 +367,7 @@ class Mentorship(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     active = models.BooleanField(default=True)
+
 
     def __str__(self):
         return f"{self.mentor.user.first_name} - {self.student.user.first_name} ({'Active' if self.active else 'Inactive'})"

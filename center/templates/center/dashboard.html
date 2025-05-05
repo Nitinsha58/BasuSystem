@@ -48,28 +48,18 @@
         </div>
       </div>
 
-      {% elif request.user.teacher %}
+      {% endif %}
+
+      {% if request.user.mentor_profile %}
       <div class="col">
         <div class="card h-100">
           <div class="card-body">
-            <h3 class="card-title">Batchwise Report</h3>
-            <p class="card-text">Combined batchwise report for all mocks and Mockwise report.</p>
-            <a href="{% url 'batchwise_report' %}" class="btn btn-success">Batchwise Report</a>
+            <h3 class="card-title">Mentor Report</h3>
+            <p class="card-text">Create and Review Students Reports</p>
+            <a href="{% url 'mentor_students' %}" class="btn bg-danger-subtle">Mentor Report</a>
           </div>
         </div>
-      </div>
-
-
-
-      <div class="col">
-        <div class="card h-100">
-          <div class="card-body">
-            <h3 class="card-title">Chapterwise Report</h3>
-            <p class="card-text">Combined batch chapterwise report and Mockwise report</p>
-            <a href="{% url 'chapterwise_report' %}" class="btn btn-warning">Chapterwise Report</a>
-          </div>
-        </div>
-      </div>
+      </div> 
       {% endif %}
 
       {% if request.user.teachers or request.user.is_superuser %}
