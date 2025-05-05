@@ -354,7 +354,7 @@ class Mentor(models.Model):
         )
         
     def total_active_mentorships(self):
-        return Mentorship.objects.filter(mentor=self.mentor, active=True).count()
+        return Mentorship.objects.filter(mentor=self, active=True).count()
 
     def __str__(self):
         full_name = f"{self.user.first_name} {self.user.last_name}".strip()
