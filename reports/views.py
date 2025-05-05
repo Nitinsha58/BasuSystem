@@ -1,188 +1,71 @@
 from django.shortcuts import render, redirect
 import calendar
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from django.contrib.auth.decorators import login_required
-from registration.models import ClassName, Student, Batch, Attendance, Homework
+from registration.models import (
+    ClassName, 
+    Student, 
+    Batch, 
+    Attendance, 
+    Homework,
+    TestQuestion,
+    QuestionResponse,
+    Test,
+    TestResult,
+    )
+from collections import defaultdict
+from django.db.models import Q
 from django.contrib import messages
 
-# Create your views here.
+from .utility import (
+    get_combined_attendance,
+    get_batchwise_attendance,
+    get_combined_homework,
+    get_batchwise_homework,
+    get_monthly_calendar,
+)
 
-@login_required(login_url='login')  
+@login_required(login_url='login')
 def student_report(request, stu_id):
-
     student = Student.objects.filter(stu_id=stu_id).first()
     if stu_id and not student:
         messages.error(request, "Invalid Student")
         return redirect('batchwise_students')
 
-    today = date.today()
-    year = today.year
-    month = today.month
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
 
-    # Get first weekday and number of days
-    first_weekday, total_days = calendar.monthrange(year, month)
+    if start_date_str and end_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+        except ValueError:
+            messages.error(request, "Invalid date format")
+            return redirect('student_report', stu_id=stu_id)
+    else:
+        today = date.today()
+        start_date = today.replace(day=1)
+        end_date = today
 
-    # 1. Combined Total Attendance of student in all batches
-    total_present = Attendance.objects.filter(student=student, is_present=True).count()
-    total_absent = Attendance.objects.filter(student=student, is_present=False).count()
-    total_attendance = total_present + total_absent
-    present_percentage = (total_present / total_attendance * 100) if total_attendance > 0 else 0
-    absent_percentage = (total_absent / total_attendance * 100) if total_attendance > 0 else 0
-
-    combined_attendance = {
-        'present_count': total_present,
-        'absent_count': total_absent,
-        'present_percentage': round(present_percentage, 1),
-        'absent_percentage': round(absent_percentage, 1),
-    }
-
-    # 2. Batchwise total attendance of student
-    batchwise_attendance = {}
-    for batch in student.batches.all():
-        batch_present = Attendance.objects.filter(student=student, batch=batch, is_present=True).count()
-        batch_absent = Attendance.objects.filter(student=student, batch=batch, is_present=False).count()
-        batch_total = batch_present + batch_absent
-        batch_present_percentage = (batch_present / batch_total * 100) if batch_total > 0 else 0
-        batch_absent_percentage = (batch_absent / batch_total * 100) if batch_total > 0 else 0
-
-        batchwise_attendance[batch] = {
-            'present_count': batch_present,
-            'absent_count': batch_absent,
-            'present_percentage': round(batch_present_percentage, 1),
-            'absent_percentage': round(batch_absent_percentage, 1),
-        }
-
-    # 3. Combined Total Homework of student in all batches
-    total_homework = Homework.objects.filter(student=student).count()
-    completed_homework = Homework.objects.filter(student=student, status='Completed').count()
-    partial_done_homework = Homework.objects.filter(student=student, status='Partial Done').count()
-    pending_homework = Homework.objects.filter(student=student, status='Pending').count()
-
-    combined_homework = {
-        'completed_percentage': round((completed_homework / total_homework * 100) if total_homework > 0 else 0 , 1),
-        'partial_done_percentage': round((partial_done_homework / total_homework * 100) if total_homework > 0 else 0, 1),
-        'pending_percentage': round((pending_homework / total_homework * 100) if total_homework > 0 else 0, 1),
-    }
-
-    # 4. Batchwise total homework of student
-    batchwise_homework = {}
-    for batch in student.batches.all():
-        batch_total_homework = Homework.objects.filter(student=student, batch=batch).count()
-        batch_completed_homework = Homework.objects.filter(student=student, batch=batch, status='Completed').count()
-        batch_partial_done_homework = Homework.objects.filter(student=student, batch=batch, status='Partial Done').count()
-        batch_pending_homework = Homework.objects.filter(student=student, batch=batch, status='Pending').count()
-
-        batchwise_homework[batch] = {
-            'completed_percentage': round((batch_completed_homework / batch_total_homework * 100) if batch_total_homework > 0 else 0, 1),
-            'partial_done_percentage': round((batch_partial_done_homework / batch_total_homework * 100) if batch_total_homework > 0 else 0, 1),
-            'pending_percentage': round((batch_pending_homework / batch_total_homework * 100) if batch_total_homework > 0 else 0, 1),
-        }
-
-
-    current_month = []
-    week = []
-    present_c = 0
-    absent_c = 0
-
-    for _ in range(first_weekday):
-        week.append(None)
-
-    for day in range(1, total_days + 1):
-        current_date = date(year, month, day)
-        attendance_records = Attendance.objects.filter(student=student, date__year=year, date__month=month)
-        dates_records = attendance_records.values_list('date', flat=True)
-        attendance_status = None
-        if current_date in dates_records:
-            attendance_record = attendance_records.filter(date=current_date).first()
-            attendance_status = 'Present' if attendance_record.is_present else 'Absent'
-            if attendance_record.is_present:
-                present_c += 1
-            else:   
-                absent_c += 1
-
-        homework_status = None
-        homework_record = Homework.objects.filter(student=student, date=current_date).first()
-        if homework_record:
-            homework_status = homework_record.status
-
-        week.append({
-            'date': current_date,
-            'attendance': attendance_status,
-            'homework': homework_status,
-        })
-
-        if len(week) == 7:
-            current_month.append(week)
-            week = []
-
-    if week:
-        while len(week) < 7:
-            week.append(None)
-        current_month.append(week)
-
-    batchwise_calendar = {}
-    for batch in student.batches.all():
-        batch_calendar = []
-        week = []
-        present_count = 0
-        absent_count = 0
-
-        for _ in range(first_weekday):
-            week.append(None)
-
-        for day in range(1, total_days + 1):
-            current_date = date(year, month, day)
-            attendance_records = Attendance.objects.filter(student=student, batch=batch, date__year=year, date__month=month)
-            dates_records = attendance_records.values_list('date', flat=True)
-            attendance_status = None
-            if current_date in dates_records:
-                attendance_record = attendance_records.filter(date=current_date).first()
-                attendance_status = 'Present' if attendance_record.is_present else 'Absent'
-            
-                if attendance_record.is_present:
-                    present_count += 1
-                else:   
-                    absent_count += 1
-
-            homework_status = None
-            homework_record = Homework.objects.filter(student=student, batch=batch, date=current_date).first()
-            if homework_record:
-                homework_status = homework_record.status
-
-            week.append({
-                'date': current_date,
-                'attendance': attendance_status,
-                'homework': homework_status,
-            })
-
-            if len(week) == 7:
-                batch_calendar.append(week)
-                week = []
-
-        if week:
-            while len(week) < 7:
-                week.append(None)
-            batch_calendar.append(week)
-
-        batchwise_calendar[batch] = {
-                "cal": batch_calendar,
-                "present_count": present_count,
-                "total_count": present_count + absent_count,
-                "percentage": round((present_count / (present_count + absent_count) * 100) if (present_count + absent_count) > 0 else 0, 1),
-            }
+    combined_attendance = get_combined_attendance(student, start_date, end_date)
+    batchwise_attendance = get_batchwise_attendance(student,start_date, end_date)
+    combined_homework = get_combined_homework(student, start_date, end_date)
+    batchwise_homework = get_batchwise_homework(student, start_date, end_date)
+    calendar_data = get_monthly_calendar(student)
 
     return render(request, 'reports/student_report.html', {
-        'current_month': current_month,
-        'current_month_name': calendar.month_name[month],
-        'current_month_present_count': present_c,
-        'current_month_total_count': (present_c + absent_c),
-        'current_month_percentage': round((present_c / (present_c + absent_c) * 100) if (present_c + absent_c) > 0 else 0, 1),
-        'batchwise_calendar': batchwise_calendar,
         'student': student,
         'combined_attendance': combined_attendance,
         'batchwise_attendance': batchwise_attendance,
         'combined_homework': combined_homework,
         'batchwise_homework': batchwise_homework,
+        'current_month': calendar_data['calendar'],
+        'current_month_name': calendar_data['month_name'],
+        'current_month_present_count': calendar_data['present_count'],
+        'current_month_total_count': calendar_data['present_count'] + calendar_data['absent_count'],
+        'current_month_percentage': calendar_data['percentage'],
+        'start_date': start_date,
+        'end_date': end_date,
     })
 
 
@@ -198,4 +81,139 @@ def batchwise_students(request):
     return render(request, "reports/batchwise_students.html", {
         'batch_students': batch_students,
         'count': count,
+    })
+
+@login_required(login_url='login')
+def chapterwise_student_report(request, batch_id=None, student_id=None):
+    batches = Batch.objects.all()
+    batch = None
+    students = None
+    student = None
+    students_list = {}
+
+    if batch and student:
+
+        chapters = {
+            question.chapter_no: question.chapter_name
+            for question in TestQuestion.objects.prefetch_related('test__batch').filter(test__batch=batch).order_by('chapter_no')
+        }
+        question_responses = QuestionResponse.objects.prefetch_related('remark', 'question').filter(test__batch=batch, student=student).select_related('question')
+
+        chapter_wise_remarks = defaultdict(lambda: [0] * len(chapters))
+        remarks_count = defaultdict(int)
+
+        # Populate counts
+        for response in question_responses:
+            ch_no = response.question.chapter_no
+            remark = response.remark
+            if not remark:
+                continue
+            chapter_index = list(chapters.keys()).index(ch_no)
+            chapter_wise_remarks[remark][chapter_index] += 1 * (response.question.max_marks - response.marks_obtained)
+            remarks_count[remark] += 1 * (response.question.max_marks - response.marks_obtained)
+
+        total_remarks_sum = sum(remarks_count.values())
+        if total_remarks_sum:
+            remarks_count = {key: round((value/total_remarks_sum)*100, 1) for key, value in remarks_count.items()}
+        
+        chapter_wise_remarks = dict(chapter_wise_remarks)
+        remarks_count = dict(remarks_count)
+
+
+        test_reports = []
+        tests = Test.objects.filter(batch=batch)
+
+        students = Student.objects.prefetch_related('batches__test', 'batches').filter(batches=batch)
+
+        for test in tests:
+            testwise_questions = TestQuestion.objects.prefetch_related('test__batch', 'test').filter(test__batch=batch, test=test).order_by('chapter_no')
+            test_chapters = {
+                question.chapter_no: question.chapter_name
+                for question in testwise_questions
+            }
+            testwise_responses = QuestionResponse.objects.prefetch_related('question', 'remark').filter(test=test, student=student)
+
+            chapter_wise_test_remarks = defaultdict(lambda: [0] * len(test_chapters))
+            
+
+
+            for response in testwise_responses:
+                ch_no = response.question.chapter_no
+                remark = response.remark
+                if not remark:
+                    continue
+                chapter_index = list(test_chapters.keys()).index(ch_no)
+                chapter_wise_test_remarks[remark][chapter_index] += 1 * (response.question.max_marks - response.marks_obtained)
+
+            chapter_wise_test_remarks = dict(chapter_wise_test_remarks)
+
+            max_marks = 0
+            total_marks = []
+            marks_deducted = []
+            marks_obtained = []
+            remarks = defaultdict(float)
+
+            for ch_no in test_chapters:
+                total_test_marks = 0
+                total_marks_obtained = 0
+                for response in testwise_responses.filter(question__chapter_no=ch_no):
+
+                    total_test_marks += response.question.max_marks
+                    total_marks_obtained += response.marks_obtained
+                    if response.remark:
+                        remarks[response.remark] += 1 * (response.question.max_marks - response.marks_obtained)
+            
+                if total_test_marks > max_marks:
+                    max_marks = total_test_marks
+                total_marks.append(total_test_marks)
+                marks_deducted.append(total_test_marks-total_marks_obtained)
+                marks_obtained.append(total_marks_obtained)
+
+            remarks_sum = sum(remarks.values())
+            if remarks_sum:
+                remarks = {key: round((value/remarks_sum)*100, 1) for key, value in remarks.items()}
+
+            test_reports.append({
+                'test' : test,
+                'chapters': test_chapters,
+                'marks_total' : total_marks,
+                'marks_deducated' : marks_deducted,
+                'marks_obtained' : marks_obtained,
+                'remarks': dict(sorted(remarks.items(), key=lambda d: d[1], reverse=True)),
+                'max_marks': max_marks,
+                'marks': {
+                    'percentage': (sum(marks_obtained)/(sum(total_marks) or 1)) * 100,
+                    'obtained_marks': sum(marks_obtained),
+                    'max_marks': sum(total_marks),
+                    },
+                'chapter_wise_test_remarks': chapter_wise_test_remarks,
+            })
+
+
+        remarks_count = dict(sorted(remarks_count.items(), key=lambda d: d[1], reverse=True))
+        marks_progress = {result.test : result.percentage for result in TestResult.objects.filter(student=student, test__batch=batch)}
+
+
+        return render(request, "center/chapterwise_student_report.html", {
+            'batches': batches,
+            'batch': batch,
+            'chapter_wise_remarks': chapter_wise_remarks,
+            'chapters': chapters,
+
+            'remarks_count': remarks_count,
+            'tests': test_reports,
+
+            'student': student,
+            'students': students,
+            'students_list': students_list,
+            'all_tests': sorted(tests, key=lambda test: test.name),
+            'marks_progress': marks_progress,
+        })
+
+    return render(request, "center/chapterwise_student_report.html", {
+        'batches': batches,
+        'batch': batch,
+        'students': students,
+        'student': student,
+        'students_list':students_list
     })

@@ -59,9 +59,26 @@
         </div>
 
         <div class=" mt-4 donut_graph d-flex flex-column gap-4">
-            <div class="bg-success-subtle p-4">
-                <p class="border-0 h2">{{student.user.first_name}} {{student.user.last_name}}</p>
-                <p class="m-0 mb-1">{{student.class_enrolled}} - {{ student.subjects.all|join:", " }}</p>
+            <div class="bg-success-subtle p-4 d-flex ">
+                <div class="">
+                    <p class="border-0 h2">{{student.user.first_name}} {{student.user.last_name}}</p>
+                    <p class="m-0 mb-1">{{student.class_enrolled}} - {{ student.subjects.all|join:", " }}</p>
+                </div>
+                <div class="ms-4">
+                    <form method="get" class="rounded p-2 pb-3 d-flex gap-2 align-items-end">
+                        <div class="">
+                            <label for="start_date" class="form-label">Start Date:</label>
+                            <input type="date" name="start_date" id="start_date" value="{{start_date|date:'Y-m-d'}}" class="form-control" required>
+                        </div>
+                        
+                        <div class="">
+                            <label for="end_date" class="form-label">End Date:</label>
+                            <input type="date" name="end_date" id="end_date" value="{{end_date|date:'Y-m-d'}}" class="form-control" required>
+                        </div>
+                        <button style="height: fit-content;" class="px-2 mt-2 btn btn-warning" type="submit">Filter</button>
+                      </form>
+                      
+                </div>
             </div>
 
             <h3 class="">Attendance</h3>
@@ -94,7 +111,7 @@
             </div>
         </div>
 
-        <h3 class="mt-4">Daily Attendance and Homework </h3>
+        <h3 class="mt-4">Daily Attendance </h3>
         <div class="calendars d-flex gap-4" style="flex-wrap: wrap;">
 
             <div class="mt-4 ms-4 calendar_container">
@@ -250,5 +267,25 @@
         {% endfor %}
     });
 </script>
+
+<script>
+    // Save date range to localStorage when form is submitted
+    document.querySelector("form").addEventListener("submit", function () {
+      const start = document.getElementById("start_date").value;
+      const end = document.getElementById("end_date").value;
+      localStorage.setItem("start_date", start);
+      localStorage.setItem("end_date", end);
+    });
+  
+    // On page load, set input values from localStorage if present
+    window.addEventListener("DOMContentLoaded", function () {
+      const start = localStorage.getItem("start_date");
+      const end = localStorage.getItem("end_date");
+  
+      if (start) document.getElementById("start_date").value = start;
+      if (end) document.getElementById("end_date").value = end;
+    });
+  </script>
+  
 
 {% endblock dashboard %}

@@ -35,10 +35,10 @@
                     {% if student.needs_mentor %}
                     <li class="list-group-item ">
                         <div class=" d-flex justify-content-between">
-                            <label for="student_{{forloop.counter}}" class="text-decoration-none text-dark m-0" style="display: flex; justify-content: space-between;" target="_blank">
+                            <label for="student_{{cls.id}}{{forloop.counter}}" class="text-decoration-none text-dark m-0" style="display: flex; justify-content: space-between;" target="_blank">
                                 {{forloop.counter}}. {{student.user.first_name}} {{student.user.last_name}}
                             </label>
-                            <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;" name="students[]" type="checkbox" value="{{ student.stu_id }}" id="student_{{forloop.counter}}">
+                            <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;" name="students[]" type="checkbox" value="{{ student.stu_id }}" id="student_{{cls.id}}{{forloop.counter}}">
                         </div>
                     </li>
                     {% endif %}    
