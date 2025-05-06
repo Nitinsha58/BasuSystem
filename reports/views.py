@@ -25,6 +25,9 @@ from .utility import (
     get_combined_homework,
     get_batchwise_homework,
     get_monthly_calendar,
+    get_chapters_from_questions,
+    calculate_testwise_remarks,
+    calculate_marks,
 )
 
 @login_required(login_url='login')
@@ -48,6 +51,38 @@ def student_report(request, stu_id):
         today = date.today()
         start_date = today.replace(day=1)
         end_date = today
+    
+    batches = Batch.objects.filter(class_name=student.class_enrolled).order_by('-created_at')
+    batch_wise_tests = {}
+
+    for batch in batches:
+        tests = Test.objects.filter(batch=batch).order_by('-date')
+        test_reports = []
+
+        for test in tests:
+            test_chapters = get_chapters_from_questions(test)
+            responses = QuestionResponse.objects.filter(test=test, student=student).select_related('question', 'remark')
+
+            chapter_remarks = calculate_testwise_remarks(responses, test_chapters)
+            marks_data = calculate_marks(responses, test_chapters)
+
+            test_reports.append({
+                'test': test,
+                'chapters': test_chapters,
+                'marks_total': marks_data['total'],
+                'marks_deducated': marks_data['deducted'],
+                'marks_obtained': marks_data['obtained'],
+                'remarks': marks_data['remarks'],
+                'max_marks': marks_data['max_marks'],
+                'marks': {
+                    'percentage': marks_data['percentage'],
+                    'obtained_marks': marks_data['obtained_total'],
+                    'max_marks': marks_data['total_max'],
+                },
+                'chapter_wise_test_remarks': chapter_remarks,
+            })
+
+        batch_wise_tests[batch] = test_reports
 
     combined_attendance = get_combined_attendance(student, start_date, end_date)
     batchwise_attendance = get_batchwise_attendance(student,start_date, end_date)
@@ -68,6 +103,9 @@ def student_report(request, stu_id):
         'current_month_percentage': calendar_data['percentage'],
         'start_date': start_date,
         'end_date': end_date,
+
+        'batch_wise_tests': batch_wise_tests,
+        'batches': batches,
     })
 
 
@@ -118,7 +156,7 @@ def mentor_students(request):
     })
 
 @login_required(login_url='login')
-def chapterwise_student_report(request, batch_id=None, student_id=None):
+def chapterwise_student_report(request, student_id):
     batches = Batch.objects.all()
     batch = None
     students = None
@@ -132,26 +170,6 @@ def chapterwise_student_report(request, batch_id=None, student_id=None):
             for question in TestQuestion.objects.prefetch_related('test__batch').filter(test__batch=batch).order_by('chapter_no')
         }
         question_responses = QuestionResponse.objects.prefetch_related('remark', 'question').filter(test__batch=batch, student=student).select_related('question')
-
-        chapter_wise_remarks = defaultdict(lambda: [0] * len(chapters))
-        remarks_count = defaultdict(int)
-
-        # Populate counts
-        for response in question_responses:
-            ch_no = response.question.chapter_no
-            remark = response.remark
-            if not remark:
-                continue
-            chapter_index = list(chapters.keys()).index(ch_no)
-            chapter_wise_remarks[remark][chapter_index] += 1 * (response.question.max_marks - response.marks_obtained)
-            remarks_count[remark] += 1 * (response.question.max_marks - response.marks_obtained)
-
-        total_remarks_sum = sum(remarks_count.values())
-        if total_remarks_sum:
-            remarks_count = {key: round((value/total_remarks_sum)*100, 1) for key, value in remarks_count.items()}
-        
-        chapter_wise_remarks = dict(chapter_wise_remarks)
-        remarks_count = dict(remarks_count)
 
 
         test_reports = []
@@ -231,15 +249,12 @@ def chapterwise_student_report(request, batch_id=None, student_id=None):
         return render(request, "center/chapterwise_student_report.html", {
             'batches': batches,
             'batch': batch,
-            'chapter_wise_remarks': chapter_wise_remarks,
+            # 'chapter_wise_remarks': chapter_wise_remarks,
             'chapters': chapters,
 
             'remarks_count': remarks_count,
             'tests': test_reports,
 
-            'student': student,
-            'students': students,
-            'students_list': students_list,
             'all_tests': sorted(tests, key=lambda test: test.name),
             'marks_progress': marks_progress,
         })

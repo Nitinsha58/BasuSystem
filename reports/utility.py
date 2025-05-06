@@ -122,3 +122,66 @@ def get_monthly_calendar(student):
         'percentage': round((present_c / (present_c + absent_c) * 100) if (present_c + absent_c) > 0 else 0, 1),
         'month_name': calendar.month_name[month],
     }
+
+from collections import defaultdict
+
+def get_chapters_from_questions(test):
+    questions = TestQuestion.objects.filter(test=test).order_by('chapter_no')
+    return {
+        q.chapter_no: q.chapter_name
+        for q in questions
+    }
+
+def calculate_testwise_remarks(testwise_responses, test_chapters):
+    chapter_wise_remarks = defaultdict(lambda: [0] * len(test_chapters))
+    for response in testwise_responses:
+        remark = response.remark
+        if not remark:
+            continue
+        ch_no = response.question.chapter_no
+        index = list(test_chapters.keys()).index(ch_no)
+        chapter_wise_remarks[remark][index] += (
+            response.question.max_marks - response.marks_obtained
+        )
+    return dict(chapter_wise_remarks)
+
+def calculate_marks(testwise_responses, test_chapters):
+    max_marks = 0
+    total_marks = []
+    marks_deducted = []
+    marks_obtained = []
+    remarks = defaultdict(float)
+
+    for ch_no in test_chapters:
+        total_test_marks = 0
+        total_marks_obt = 0
+        responses = testwise_responses.filter(question__chapter_no=ch_no)
+
+        for r in responses:
+            total_test_marks += r.question.max_marks
+            total_marks_obt += r.marks_obtained
+            if r.remark:
+                remarks[r.remark] += r.question.max_marks - r.marks_obtained
+
+        total_marks.append(total_test_marks)
+        marks_deducted.append(total_test_marks - total_marks_obt)
+        marks_obtained.append(total_marks_obt)
+        max_marks = max(max_marks, total_test_marks)
+
+    remarks_sum = sum(remarks.values())
+    if remarks_sum:
+        remarks = {
+            k: round((v / remarks_sum) * 100, 1)
+            for k, v in remarks.items()
+        }
+
+    return {
+        'total': total_marks,
+        'deducted': marks_deducted,
+        'obtained': marks_obtained,
+        'remarks': dict(sorted(remarks.items(), key=lambda d: d[1], reverse=True)),
+        'max_marks': max_marks,
+        'percentage': (sum(marks_obtained) / (sum(total_marks) or 1)) * 100,
+        'obtained_total': sum(marks_obtained),
+        'total_max': sum(total_marks),
+    }

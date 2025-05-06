@@ -142,7 +142,7 @@ def students_list(request):
     class_students = [
         {'class': cls.name, 'students': Student.objects.filter(class_enrolled=cls).order_by('-created_at', 'user__first_name', 'user__last_name').distinct()} for cls in classes ]
     
-    count = Student.objects.all().distinct().count()
+    count = Student.objects.filter(active=True).distinct().count()
     
 
     return render(request, "registration/students.html", {
