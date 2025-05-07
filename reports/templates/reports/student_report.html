@@ -28,6 +28,10 @@
         #toggle-btn {
             display: none;
         }
+
+        .navbar {
+            display: none;
+        }
     }
 
     .divider {
@@ -324,7 +328,7 @@
             },
             {
               label: 'Deducted Marks',
-              data: {{ report.marks_deducted|default:"[]"|safe }}, // Use the marks
+              data: {{ report.marks_deducated|safe }}, // Use the marks
               borderColor: '#FF5B61',
               backgroundColor: '#FF5B61',
               borderWidth: 2,
