@@ -88,9 +88,9 @@
                 {% endif %}
 
                 <!-- Student-specific links -->
-                {% if request.user.student %}
+                {% if request.user.registered_student %}
                 <li class="nav-item m-2">
-                    <a class="nav-link bg-success-subtle rounded d-inline px-3 p-2 m-1" href="{% url 'chapterwise_personal_report' %}">
+                    <a class="nav-link bg-success-subtle rounded d-inline px-3 p-2 m-1" href="{% url 'student_personal_report' request.user.registered_student.stu_id %}">
                         Personal Report
                     </a>
                 </li>
@@ -136,7 +136,7 @@
 
             <!-- User role display and action buttons -->
             <div class="d-flex align-items-center justify-content-center">
-                {% if request.user.student %}
+                {% if request.user.registered_student %}
                 <p class="m-0 mx-2 fs-6">Stu - {{ request.user.first_name }} {{ request.user.last_name }}</p>
                 {% elif request.user.teacher %}
                 <p class="m-0 mx-2 fs-6">Teach - {{ request.user.first_name }} {{ request.user.last_name }}</p>

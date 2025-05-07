@@ -74,13 +74,13 @@
       </div>
       {% endif %}
 
-      {% if request.user.student %}
+      {% if request.user.registered_student %}
       <div class="col">
         <div class="card h-100">
           <div class="card-body">
             <h3 class="card-title">Personal Report</h3>
             <p class="card-text">Combined batch chapterwise report and Mockwise report</p>
-            <a href="{% url 'chapterwise_personal_report' %}" class="btn btn-warning">Personal Report</a>
+            <a href="{% url 'student_personal_report' request.user.registered_student.stu_id %}" class="btn btn-warning">Personal Report</a>
           </div>
         </div>
       </div>
