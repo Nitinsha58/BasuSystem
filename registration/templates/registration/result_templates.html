@@ -18,10 +18,11 @@
                 <p class="m-0">{{batch}}</p> 
             </li>
             {% for test in batch.test_paper.all %}
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                <a href="{% url 'add_result' batch.id test.id %}" class=" text-dark fw-semibold text-decoration-none">
-                    <p class="m-0">{{test.name}}</p>
+            <li style="position: relative;" class="list-group-item d-flex justify-content-between align-items-center">
+                <a href="{% url 'add_result' batch.id test.id %}" style="z-index: 2;" class=" text-dark fw-semibold text-decoration-none">
+                  <p class="m-0">{{test.name}} </p>
                 </a>
+                <div class="bg-success-subtle" style="width: {{test.calculate_completion|floatformat:1}}%; height: 100%; position: absolute; top: 0; left: 0;"></div>
             </li>
             {% endfor %}
           </ul>

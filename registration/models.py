@@ -253,6 +253,14 @@ class Test(models.Model):
 
     def __str__(self):
         return f"{self.name} -  {self.batch.__str__()}"
+    
+    # calculate the percentage of students like how many students results has been added to that specific paper in comparison to total students in that specific batch test
+    def calculate_completion(self):
+        total_students = self.batch.students.count()
+        if total_students == 0:
+            return 0
+        total_results = self.results.count()
+        return (total_results / total_students) * 100
 
     def calculate_total_max_marks(self):
         # Calculate the total marks for all related TestQuestions
