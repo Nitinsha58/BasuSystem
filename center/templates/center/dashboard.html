@@ -31,9 +31,9 @@
       <div class="col">
         <div class="card h-100">
           <div class="card-body">
-            <h3 class="card-title">Student Registration</h3>
-            <p class="card-text">Register Students and assign different batches and their details.</p>
-            <a href="{% url 'staff_student_registration' %}" class="btn btn-primary">Start Registration</a>
+            <h3 class="card-title">Create Test</h3>
+            <p class="card-text">Create Test Template for different batches of the class</p>
+            <a href="{% url 'test_templates' %}" class="btn btn-primary">Test Templates</a>
           </div>
         </div>
       </div>
@@ -41,16 +41,16 @@
       <div class="col">
         <div class="card h-100">
           <div class="card-body">
-            <h3 class="card-title">Create Test</h3>
-            <p class="card-text">Create Test Template for different batches of the class</p>
-            <a href="{% url 'create_test_template' %}" class="btn btn-primary">Create Test Template</a>
+            <h3 class="card-title">Add Result</h3>
+            <p class="card-text">Add Test Result for different tests of the class</p>
+            <a href="{% url 'result_templates' %}" class="btn btn-danger">Add Result</a>
           </div>
         </div>
       </div>
 
       {% endif %}
 
-      {% if request.user.mentor_profile %}
+      {% if request.user.mentor_profile or request.user.is_superuser %}
       <div class="col">
         <div class="card h-100">
           <div class="card-body">
