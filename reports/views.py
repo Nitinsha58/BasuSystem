@@ -88,19 +88,26 @@ def student_report(request, stu_id):
     batchwise_attendance = get_batchwise_attendance(student,start_date, end_date)
     combined_homework = get_combined_homework(student, start_date, end_date)
     batchwise_homework = get_batchwise_homework(student, start_date, end_date)
-    calendar_data = get_monthly_calendar(student)
+    
+    
 
+    calendar_data = get_monthly_calendar(student, start_date, end_date)
+
+    # for month_cal in calendar_data:
+    #     print(month_cal)
+    #     print()
     return render(request, 'reports/student_report.html', {
         'student': student,
         'combined_attendance': combined_attendance,
         'batchwise_attendance': batchwise_attendance,
         'combined_homework': combined_homework,
         'batchwise_homework': batchwise_homework,
-        'current_month': calendar_data['calendar'],
-        'current_month_name': calendar_data['month_name'],
-        'current_month_present_count': calendar_data['present_count'],
-        'current_month_total_count': calendar_data['present_count'] + calendar_data['absent_count'],
-        'current_month_percentage': calendar_data['percentage'],
+        # 'current_month': calendar_data['calendar'],
+        # 'current_month_name': calendar_data['month_name'],
+        # 'current_month_present_count': calendar_data['present_count'],
+        # 'current_month_total_count': calendar_data['present_count'] + calendar_data['absent_count'],
+        # 'current_month_percentage': calendar_data['percentage'],
+        'calendar_data': calendar_data,
         'start_date': start_date,
         'end_date': end_date,
 

@@ -118,9 +118,12 @@
         <h3 class="mt-4">Daily Attendance </h3>
         <div class="calendars d-flex gap-4" style="flex-wrap: wrap;">
 
+            {% for month_data in calendar_data %}
             <div class="mt-4 ms-4 calendar_container">
                 <div class="d-flex justify-content-center align-items-center">
-                    <p class="m-0" style="font-weight: 500; font-size: 20px;">{{current_month_name}}</p>
+                    <p class="m-0" style="font-weight: 500; font-size: 20px;">
+                        {{ month_data.month_name }} {{ month_data.year }}
+                    </p>
                 </div>
                 <div class="row text-center font-weight-bold mx-1 mb-1" style="font-size: 12px; font-weight: 500;">
                     <div class="col" style="max-width: 30px;">S</div>
@@ -131,23 +134,22 @@
                     <div class="col" style="max-width: 30px;">F</div>
                     <div class="col" style="max-width: 30px;">S</div>
                 </div>
-    
+            
                 <div class="bg-white rounded py-1">
-                    {% for week in current_month %}
+                    {% for week in month_data.calendar %}
                     <div class="row text-center mx-1">
                         {% for day in week %}
                         <div class="col"
                             style="height: 30px; max-width: 30px; display: flex; justify-content: center; align-items: center;">
                             {% if day %}
                             <p class="text-small m-0 
-                                {% if day.attendance and day.attendance == 'Present' %}
-                                bg-success-subtle
-                                {% elif day.attendance and day.attendance == 'Absent' %} 
-                                bg-danger-subtle
+                                {% if day.attendance == 'Present' %}
+                                    bg-success-subtle
+                                {% elif day.attendance == 'Absent' %}
+                                    bg-danger-subtle
                                 {% else %}
-                                bg-light
+                                    bg-light
                                 {% endif %}
-                                
                             p-0 rounded-circle text-dark"
                                 style="height: 20px; min-width: 20px; font-size: 10px; display: flex; justify-content: center; align-items: center;">
                                 {{ day.date.day }}</p>
@@ -158,10 +160,11 @@
                     {% endfor %}
                 </div>
                 <div class="mt-2 d-flex justify-content-center align-items-center">
-                    <p class="m-0">Overall ({{current_month_present_count}}/{{current_month_total_count}}) {{current_month_percentage}}%</p>
+                    <p class="m-0">Overall ({{ month_data.present_count }}/{{ month_data.present_count|add:month_data.absent_count }}) {{ month_data.percentage }}%</p>
                 </div>
             </div>
-
+            {% endfor %}
+            
             {% for batch, cal in batchwise_calendar.items %}
             <div class="mt-4 ms-4 calendar_container">
                 <div class="d-flex justify-content-center align-items-center">

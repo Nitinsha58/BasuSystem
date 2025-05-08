@@ -78,50 +78,83 @@ def get_batchwise_homework(student, start_date, end_date):
     return result
 
 
-def get_monthly_calendar(student):
-    today = date.today()
-    year, month = today.year, today.month
-    first_weekday, total_days = calendar.monthrange(year, month)
+from datetime import date, timedelta
+import calendar
 
-    calendar_data = []
-    week = [None] * first_weekday
-    present_c, absent_c = 0, 0
+def get_monthly_calendar(student, start_date, end_date):
+    monthly_data = []
 
-    for day in range(1, total_days + 1):
-        current_date = date(year, month, day)
-        attendance = Attendance.objects.filter(student=student, date=current_date).first()
-        homework = Homework.objects.filter(student=student, date=current_date).first()
+    current = date(start_date.year, start_date.month, 1)
+    # last date in the the end_date month
+    last_date = date(end_date.year, end_date.month, calendar.monthrange(end_date.year, end_date.month)[1])
 
-        attendance_status = None
-        if attendance:
-            attendance_status = 'Present' if attendance.is_present else 'Absent'
-            present_c += 1 if attendance.is_present else 0
-            absent_c += 1 if not attendance.is_present else 0
+    while current <= last_date:
+        year, month = current.year, current.month
+        first_weekday, total_days = calendar.monthrange(year, month)
+        first_weekday = (first_weekday + 1) % 7
 
-        homework_status = homework.status if homework else None
+        calendar_data = []
+        week = [None] * first_weekday
+        present_c, absent_c = 0, 0
 
-        week.append({
-            'date': current_date,
-            'attendance': attendance_status,
-            'homework': homework_status,
+        for day in range(1, total_days + 1):
+            current_date = date(year, month, day)
+            if current_date < start_date or current_date > last_date:
+                if len(week) == 7:
+                    calendar_data.append(week)
+                    week = []
+                continue
+
+            if current_date > start_date and  current_date < end_date:
+                attendance = Attendance.objects.filter(student=student, date=current_date).first()
+                homework = Homework.objects.filter(student=student, date=current_date).first()
+            else:
+                attendance = None
+                homework = None
+
+            attendance_status = None
+            if attendance:
+                attendance_status = 'Present' if attendance.is_present else 'Absent'
+                present_c += 1 if attendance.is_present else 0
+                absent_c += 1 if not attendance.is_present else 0   
+
+            # homework_status = homework.status if homework else None
+
+            week.append({
+                'date': current_date,
+                'attendance': attendance_status,
+                # 'homework': homework_status,
+            })
+
+            if len(week) == 7:
+                calendar_data.append(week)
+                week = []
+            
+        if week:
+            while len(week) < 7:
+                week.append(None)
+            calendar_data.append(week)
+
+        if (len(calendar_data)) == 5:
+            calendar_data.append([None] * 7)
+
+        monthly_data.append({
+            'calendar': calendar_data,
+            'present_count': present_c,
+            'absent_count': absent_c,
+            'percentage': round((present_c / (present_c + absent_c) * 100) if (present_c + absent_c) > 0 else 0, 1),
+            'month_name': calendar.month_name[month],
+            'year': year,
         })
 
-        if len(week) == 7:
-            calendar_data.append(week)
-            week = []
+        # Move to the first of the next month
+        if month == 12:
+            current = date(year + 1, 1, 1)
+        else:
+            current = date(year, month + 1, 1)
 
-    if week:
-        while len(week) < 7:
-            week.append(None)
-        calendar_data.append(week)
+    return monthly_data
 
-    return {
-        'calendar': calendar_data,
-        'present_count': present_c,
-        'absent_count': absent_c,
-        'percentage': round((present_c / (present_c + absent_c) * 100) if (present_c + absent_c) > 0 else 0, 1),
-        'month_name': calendar.month_name[month],
-    }
 
 from collections import defaultdict
 
