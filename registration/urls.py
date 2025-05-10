@@ -11,6 +11,9 @@ from .views import (
     search_students,
     print_receipt,
     mark_attendance,
+    mark_present,
+    mark_absent,
+
     get_attendance,
     add_teacher,
     update_teacher,
@@ -53,9 +56,15 @@ urlpatterns = [
     path('<uuid:stu_id>/registration_document', student_reg_doc, name='student_reg_doc'),
     path('<uuid:stu_id>/receipt', print_receipt, name='receipt'),
     path('delete_installment/<uuid:stu_id>/<int:ins_id>', delete_installment, name='delete_installment'),
-    path('mark_attendance/', mark_attendance, name='attendance'),
 
-    path('mark_attendance/<int:batch_id>', mark_attendance, name='mark_attendance'),
+    path('mark_attendance/', mark_attendance, name='attendance'),
+    path('mark_attendance/<int:class_id>/', mark_attendance, name='attendance_class'),
+    path('mark_attendance/<int:class_id>/<int:batch_id>/', mark_attendance, name='attendance_batch'),
+
+    path('mark_present/<int:class_id>/<int:batch_id>/<int:attendance_id>', mark_present, name='mark_present'),
+    path('mark_absent/<int:class_id>/<int:batch_id>/<int:attendance_id>', mark_absent, name='mark_absent'),
+
+    # path('mark_attendance/<int:batch_id>', mark_attendance, name='mark_attendance'),
     path('get_attendance/<int:batch_id>', get_attendance, name='get_attendance'),
     path('mark_homework/<int:batch_id>', mark_homework, name='mark_homework'),
     path('get_homework/<int:batch_id>', get_homework, name='get_homework'),

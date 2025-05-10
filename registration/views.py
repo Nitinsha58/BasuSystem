@@ -353,16 +353,41 @@ def search_students(request):
     return render(request, 'registration/students_results.html', {'students': student_list})
     
 @login_required(login_url='login')
-def mark_attendance(request, batch_id=None):
+def mark_attendance(request, class_id = None, batch_id=None):
+    classes = None
+    batches = None
+    cls = None
+    batch = None
+
+    if class_id and not ClassName.objects.filter(id=class_id):
+        messages.error(request, "Invalid Class")
+        return redirect('students_list')
+
     if batch_id and not Batch.objects.filter(id=batch_id):
         messages.error(request, "Invalid Batch")
         return redirect('students_list')
     
+    if class_id:
+        cls = ClassName.objects.filter(id=class_id).first()
+        batches = Batch.objects.filter(class_name=cls).order_by('created_at')
+
+    if batch_id:
+        batch = Batch.objects.filter(id=batch_id).first()
+
+
     if not Teacher.objects.filter(user=request.user).exists() and not request.user.is_superuser:
         messages.error(request, "You are not authorized to mark attendance.")
         return redirect('students_list')
 
+    classes = ClassName.objects.all().order_by('created_at')
 
+    date = datetime.now().date()
+
+    students = Student.objects.filter(batches=batch, active=True)
+    marked_students = students.filter(attendance__date=date)
+    marked_attendance = Attendance.objects.filter(batch=batch, date=date, student__active=True).order_by('student__created_at')
+    un_marked_students = students.exclude(id__in=marked_students.values_list('id', flat=True))
+    
     if batch_id and request.method == 'POST':
         date = request.POST.get('date')
         attendance_data = request.POST.getlist('attendance[]')
@@ -371,20 +396,14 @@ def mark_attendance(request, batch_id=None):
         if not batch:
             messages.error(request, "Invalid Batch")
             return redirect('mark_attendance', batch_id=batch_id)
-
-        # Check if attendance already exists for the given date
-        existing_attendance = Attendance.objects.filter(batch=batch, date=date)
-        if existing_attendance.exists():
-            messages.error(request, "Attendance for this date already exists.")
-            return redirect('mark_attendance', batch_id=batch_id)
         
-        batch = Batch.objects.filter(id=batch_id).first()
-        students = Student.objects.filter(batches=batch, active=True)
+        students = Student.objects.filter(active=True)
+        marked_attendance = students.filter(attendance__batch=batch, active=True, attendance__date=date)
 
         marked_students = set()
         for data in attendance_data:
             stu_id, status = data.split(':')
-            student = Student.objects.filter(stu_id=stu_id).first()
+            student = Student.objects.filter(stu_id=stu_id, active=True).first()
             if student:
                 Attendance.objects.create(
                     student=student,
@@ -405,30 +424,33 @@ def mark_attendance(request, batch_id=None):
                 )
 
         messages.success(request, "Attendance marked successfully.")
-        return redirect('attendance')
-    classes = ClassName.objects.all().order_by('name')
-    class_batches = {
-        cls.name: Batch.objects.filter(class_name=cls).order_by('class_name__name', 'section')
-        for cls in classes if Batch.objects.filter(class_name=cls).exists()
-    }
-    if batch_id:
-        batch = Batch.objects.filter(id=batch_id).first()
-        students = Student.objects.filter(batches=batch, active=True)
+        return redirect('attendance_batch', class_id=class_id, batch_id=batch_id )
 
-        return render(request, 'registration/mark_attendance.html', {
-            'students': students,
-            'batch': batch,
-            'batches': Batch.objects.all(),
-            'class_batches': class_batches,
-            'date': datetime.now().date(),
-        })
+    return render(request, 'registration/attendance.html', {
+        'classes': classes,
+        'batches': batches,
+        'cls': cls,
+        'batch': batch,
+        'marked_students': marked_students,
+        'marked_attendance': marked_attendance,
+        'un_marked_students': un_marked_students,
+        'date': date,
+    })
 
-    
-    classes = ClassName.objects.all()
-    batches = Batch.objects.all()
 
-    return render(request, 'registration/attendance.html', {'classes': classes, 'batches': batches, 'class_batches': class_batches,
-})
+@login_required(login_url='login')
+def mark_present(request, class_id, batch_id, attendance_id):
+    obj = Attendance.objects.filter(id=attendance_id).first()
+    obj.is_present = True 
+    obj.save()
+    return redirect('attendance_batch', class_id=class_id, batch_id=batch_id)
+
+@login_required(login_url='login')
+def mark_absent(request, class_id, batch_id, attendance_id):
+    obj = Attendance.objects.filter(id=attendance_id).first()
+    obj.is_present = False 
+    obj.save()
+    return redirect('attendance_batch', class_id=class_id, batch_id=batch_id)
 
 @login_required(login_url='login')
 def mark_homework(request, batch_id):
@@ -716,7 +738,7 @@ def create_testpaper(request, batch_id, test_id):
         "test":test, 
         "questions": questions,
         "chapters": chapters,
-        })
+    })
 
 @login_required(login_url='login')
 def delete_testpaper(request, test_id):
