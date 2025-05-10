@@ -378,10 +378,14 @@ def mark_attendance(request, class_id = None, batch_id=None):
     date_str = request.GET.get("date")
     move = request.GET.get("move")
 
-    if date_str:
-        date = datetime.strptime(date_str, "%Y-%m-%d").date()
-    else:
+    if not date_str or date_str == "None":
         date = datetime.now().date()
+    else:
+        try:
+            date = datetime.strptime(date_str, "%Y-%m-%d").date()
+        except ValueError:
+            messages.error(request, "Invalid date format.")
+            return redirect('students_list')
 
     if move == "next":
         date += timedelta(days=1)
