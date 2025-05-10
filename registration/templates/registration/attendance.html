@@ -90,9 +90,11 @@
                       </div>
                 </li>
                 {% endfor %}
+                {% if un_marked_students %}
                 <div class="wrapper my-2">
                     <button class="submit-btn">Save Attendance</button>
                 </div>
+                {% endif %}
                 {% for atten in marked_attendance %}
                     {% if atten.is_present %}
                     <li class="student list-group-item bg-success-subtle p-0 px-2">

@@ -407,13 +407,13 @@ def mark_attendance(request, class_id = None, batch_id=None):
             messages.error(request, "Invalid Batch")
             return redirect('mark_attendance', batch_id=batch_id)
         
-        students = Student.objects.filter(active=True)
+        students = Student.objects.filter(active=True, batches=batch)
         marked_attendance = students.filter(attendance__batch=batch, active=True, attendance__date=date)
 
         marked_students = set()
         for data in attendance_data:
             stu_id, status = data.split(':')
-            student = Student.objects.filter(stu_id=stu_id, active=True).first()
+            student = Student.objects.filter(stu_id=stu_id, batches=batch, active=True).first()
             if student:
                 Attendance.objects.create(
                     student=student,
