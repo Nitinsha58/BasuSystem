@@ -32,6 +32,7 @@ from user.models import BaseUser
 from django.contrib.auth.decorators import login_required
 
 from django.db.models import Q
+from django.urls import reverse
 
 @login_required(login_url='login')
 def student_registration(request):
@@ -374,14 +375,24 @@ def mark_attendance(request, class_id = None, batch_id=None):
     if batch_id:
         batch = Batch.objects.filter(id=batch_id).first()
 
+    date_str = request.GET.get("date")
+    move = request.GET.get("move")
+
+    if date_str:
+        date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    else:
+        date = datetime.now().date()
+
+    if move == "next":
+        date += timedelta(days=1)
+    elif move == "prev":
+        date -= timedelta(days=1)
 
     if not Teacher.objects.filter(user=request.user).exists() and not request.user.is_superuser:
         messages.error(request, "You are not authorized to mark attendance.")
         return redirect('students_list')
 
     classes = ClassName.objects.all().order_by('created_at')
-
-    date = datetime.now().date()
 
     students = Student.objects.filter(batches=batch, active=True)
     marked_students = students.filter(attendance__date=date)
@@ -424,7 +435,7 @@ def mark_attendance(request, class_id = None, batch_id=None):
                 )
 
         messages.success(request, "Attendance marked successfully.")
-        return redirect('attendance_batch', class_id=class_id, batch_id=batch_id )
+        return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={date_str}")
 
     return render(request, 'registration/attendance.html', {
         'classes': classes,
@@ -440,17 +451,19 @@ def mark_attendance(request, class_id = None, batch_id=None):
 
 @login_required(login_url='login')
 def mark_present(request, class_id, batch_id, attendance_id):
+    day = request.GET.get('date')
     obj = Attendance.objects.filter(id=attendance_id).first()
     obj.is_present = True 
     obj.save()
-    return redirect('attendance_batch', class_id=class_id, batch_id=batch_id)
+    return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={day}")
 
 @login_required(login_url='login')
 def mark_absent(request, class_id, batch_id, attendance_id):
+    day = request.GET.get('date')
     obj = Attendance.objects.filter(id=attendance_id).first()
     obj.is_present = False 
     obj.save()
-    return redirect('attendance_batch', class_id=class_id, batch_id=batch_id)
+    return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={day}")
 
 @login_required(login_url='login')
 def mark_homework(request, batch_id):

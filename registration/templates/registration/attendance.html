@@ -72,7 +72,13 @@
         <div class="students-list-container">
             <div class="col-md-3 my-2">
                 <label for="date" class="form-label">Attendance Date</label>
-                <input type="date" class="form-control" name="date" id="date" value="{{ date|date:'Y-m-d' }}" required>
+                <div class="row g-4 mx-2">
+                    <ul class="pagination">
+                        <li class="page-item"><a class="page-link" href="?date={{ date|date:'Y-m-d' }}&move=prev">Previous</a></li>
+                        <li class="page-item"><p class="page-link text-dark">{{date|date:'Y-m-d'}}</p></li>
+                        <li class="page-item"><a class="page-link" href="?date={{ date|date:'Y-m-d' }}&move=next">Next</a></li>
+                    </ul>
+                </div>
             </div>
             <ul class="students-list list-group">
                 {% for student in un_marked_students %}
@@ -80,7 +86,7 @@
                     <!-- <p class="student-name">{{ student.user.first_name }} {{ student.user.last_name }}</p> -->
                     <div class="form-check form-switch" style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
                         <label class="form-check-label" for="student_{{forloop.counter}}">{{ student.user.first_name }} {{ student.user.last_name }}</label>
-                        <input class="form-check-input" style="transform: scale(1.3);" type="checkbox" name="attendance[]" role="switch" id="student_{{ student.stu_id }}" value="{{ student.stu_id }}:present">
+                        <input readonly class="form-check-input" style="transform: scale(1.3);" type="checkbox" name="attendance[]" role="switch" id="student_{{ student.stu_id }}" value="{{ student.stu_id }}:present">
                       </div>
                 </li>
                 {% endfor %}
@@ -94,17 +100,12 @@
                         <div class="form-check form-switch" style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
                             <label class="form-check-label" for="student_{{forloop.counter}}">{{ atten.student.user.first_name }} {{ atten.student.user.last_name }}</label>
                             <div class="d-flex gap-2">
-                                <a href="{% url 'mark_absent' cls.id batch.id atten.id %}" class="delete-link d-flex justify-content-center align-items-center py-2 px-2 btn bg-danger btn-outline-light fw-semibold text-decoration-none">
+                                <a href="{% url 'mark_absent' cls.id batch.id atten.id %}?date={{ date|date:'Y-m-d' }}" class="delete-link d-flex justify-content-center align-items-center py-2 px-2 btn bg-danger btn-outline-light fw-semibold text-decoration-none">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-square" viewBox="0 0 16 16">
                                         <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
                                         <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
                                     </svg>
                                 </a>
-                                <!-- <a data-stu_id="{{student.stu_id}}" class="delete-link px-2 py-1 btn btn-outline-danger fw-semibold text-decoration-none">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
-                                    </svg>
-                                </a> -->
                             </div>
                         </div>
                     </li>
@@ -115,17 +116,12 @@
                             <label class="form-check-label" for="student_{{forloop.counter}}">{{ atten.student.user.first_name }} {{ atten.student.user.last_name }}</label>
                             
                             <div class="d-flex gap-2">
-                                <a href="{% url 'mark_present' cls.id batch.id atten.id %}" class="delete-link d-flex justify-content-center align-items-center py-2 px-2 btn bg-success btn-outline-light fw-semibold text-decoration-none">
+                                <a href="{% url 'mark_present' cls.id batch.id atten.id %}?date={{ date|date:'Y-m-d' }}" class="delete-link d-flex justify-content-center align-items-center py-2 px-2 btn bg-success btn-outline-light fw-semibold text-decoration-none">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-square" viewBox="0 0 16 16">
                                         <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
                                         <path d="M10.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/>
                                     </svg>
                                 </a>
-                                <!-- <a data-stu_id="{{student.stu_id}}" class="delete-link px-2 py-1 btn btn-outline-danger fw-semibold text-decoration-none">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
-                                    </svg>
-                                </a> -->
                             </div>
                         </div>
                     </li>
@@ -136,30 +132,6 @@
         </div> 
     </form>
     {% endif %}
-
-    
-    <script>
-        if ('scrollRestoration' in history) {
-          history.scrollRestoration = 'manual';
-        }
-      
-        window.addEventListener('beforeunload', function () {
-          sessionStorage.setItem('scrollPosition', window.scrollY);
-        });
-      
-        window.addEventListener('load', function () {
-          const scrollPosition = sessionStorage.getItem('scrollPosition');
-          if (scrollPosition !== null) {
-            window.scrollTo({
-                top: scrollPosition,
-                behavior: 'auto'
-            });
-            sessionStorage.removeItem('scrollPosition');
-          }
-        });
-    </script>
-      
-
 </div>  
 
 {% endblock dashboard %}
