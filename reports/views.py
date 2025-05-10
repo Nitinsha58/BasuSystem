@@ -173,7 +173,7 @@ def student_personal_report(request, stu_id):
     batchwise_attendance = get_batchwise_attendance(student,start_date, end_date)
     combined_homework = get_combined_homework(student, start_date, end_date)
     batchwise_homework = get_batchwise_homework(student, start_date, end_date)
-    calendar_data = get_monthly_calendar(student)
+    calendar_data = get_monthly_calendar(student, start_date, end_date)
 
     return render(request, 'reports/student_report.html', {
         'student': student,
