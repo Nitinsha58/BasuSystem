@@ -72,10 +72,10 @@
         <div class="students-list-container">
             <div class="col-md-3 my-2">
                 <label for="date" class="form-label">Attendance Date</label>
-                <div class="row g-4 mx-2">
+                <div class="row mx-2">
                     <ul class="pagination">
                         <li class="page-item"><a class="page-link" href="?date={{ date|date:'Y-m-d' }}&move=prev">Previous</a></li>
-                        <li class="page-item"><p class="page-link text-dark">{{date|date:'Y-m-d'}}</p></li>
+                        <li class="page-item"><p class="page-link text-dark text-nowrap">{{date|date:'Y-m-d'}}</p></li>
                         <li class="page-item"><a class="page-link" href="?date={{ date|date:'Y-m-d' }}&move=next">Next</a></li>
                     </ul>
                 </div>
