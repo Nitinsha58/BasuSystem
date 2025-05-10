@@ -400,7 +400,6 @@ def mark_attendance(request, class_id = None, batch_id=None):
     un_marked_students = students.exclude(id__in=marked_students.values_list('id', flat=True))
     
     if batch_id and request.method == 'POST':
-        date = request.POST.get('date')
         attendance_data = request.POST.getlist('attendance[]')
 
         batch = Batch.objects.filter(id=batch_id).first()
