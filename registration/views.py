@@ -402,8 +402,8 @@ def mark_attendance(request, class_id = None, batch_id=None):
 
     classes = ClassName.objects.all().order_by('created_at')
 
-    students = list(Student.objects.filter(batches=batch, active=True))
-    marked_students = list(students.filter(attendance__date=date, attendance__batch=batch).order_by('created_at'))
+    students = Student.objects.filter(batches=batch, active=True)
+    marked_students = students.filter(attendance__date=date, attendance__batch=batch).order_by('created_at')
     marked_attendance = list(Attendance.objects.filter(batch=batch, date=date, student__active=True).order_by('student__created_at'))
     un_marked_students = list(students.exclude(id__in=marked_students.values_list('id', flat=True)))
 
