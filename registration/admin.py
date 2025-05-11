@@ -42,6 +42,8 @@ class AttendanceAdmin(admin.ModelAdmin):
         'batch__section__name',
         'batch__subject__name'
     ]
+    list_filter = ['batch', 'is_present']
+    
 
 class StudentAdmin(admin.ModelAdmin):
     list_display = ['user_full_name', 'created_at', 'updated_at']

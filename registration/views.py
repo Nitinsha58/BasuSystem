@@ -362,11 +362,11 @@ def mark_attendance(request, class_id = None, batch_id=None):
 
     if class_id and not ClassName.objects.filter(id=class_id):
         messages.error(request, "Invalid Class")
-        return redirect('students_list')
+        return redirect('attendance')
 
     if batch_id and not Batch.objects.filter(id=batch_id):
         messages.error(request, "Invalid Batch")
-        return redirect('students_list')
+        return redirect('attendance_class', class_id=class_id)
     
     if class_id:
         cls = ClassName.objects.filter(id=class_id).first()
@@ -374,6 +374,10 @@ def mark_attendance(request, class_id = None, batch_id=None):
 
     if batch_id:
         batch = Batch.objects.filter(id=batch_id).first()
+    
+    if batch_id and not batch:
+        messages.error(request, "Invalid Batch")
+        return redirect('attendance_class', class_id=class_id)
 
     date_str = request.GET.get("date")
     move = request.GET.get("move")
@@ -385,7 +389,7 @@ def mark_attendance(request, class_id = None, batch_id=None):
             date = datetime.strptime(date_str, "%Y-%m-%d").date()
         except ValueError:
             messages.error(request, "Invalid date format.")
-            return redirect('students_list')
+            return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={datetime.now().date()}")
 
     if move == "next":
         date += timedelta(days=1)
@@ -438,7 +442,7 @@ def mark_attendance(request, class_id = None, batch_id=None):
                 )
 
         messages.success(request, "Attendance marked successfully.")
-        return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={date_str}")
+        return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={date}")
 
     return render(request, 'registration/attendance.html', {
         'classes': classes,
