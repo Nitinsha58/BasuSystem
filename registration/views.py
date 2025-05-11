@@ -403,10 +403,16 @@ def mark_attendance(request, class_id = None, batch_id=None):
     classes = ClassName.objects.all().order_by('created_at')
 
     students = Student.objects.filter(batches=batch, active=True)
-    marked_students = students.filter(attendance__date=date)
+    marked_students = students.filter(attendance__date=date, attendance__batch=batch).order_by('created_at')
     marked_attendance = Attendance.objects.filter(batch=batch, date=date, student__active=True).order_by('student__created_at')
     un_marked_students = students.exclude(id__in=marked_students.values_list('id', flat=True))
     
+    print("Students", students)
+    print("Marked Students", marked_students)
+    print("Marked Attendance", marked_attendance)
+    print("Unmarked Students", un_marked_students)
+
+
     if batch_id and request.method == 'POST':
         attendance_data = request.POST.getlist('attendance[]')
 
