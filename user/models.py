@@ -23,6 +23,7 @@ class BaseUser(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)
+    change_password = models.BooleanField(default=True)
 
     USERNAME_FIELD = 'phone'  # Change this to 'phone' if preferred
     # REQUIRED_FIELDS = ['phone']  # Adjust as necessary

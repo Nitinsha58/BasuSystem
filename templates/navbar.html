@@ -1,20 +1,22 @@
 {% load static %}
 <nav class="navbar navbar-expand-lg bg-body-tertiary">
     <div class="container-fluid">
-        
+
         <!-- Brand Logo -->
         <a class="navbar-brand" href="{% url 'staff_dashboard' %}">
             <img src="{% static 'images/BASU.svg' %}" alt="logo" width="100">
         </a>
 
         <!-- Toggler for smaller screens -->
-        <button class="navbar-toggler p-1 px-2" id="toggle-btn" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
-            aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+        <button class="navbar-toggler p-1 px-2" id="toggle-btn" type="button" data-bs-toggle="collapse"
+            data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false"
+            aria-label="Toggle navigation">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" viewBox="0 0 20 20" fill="none">
-                <path fill="#000000" fill-rule="evenodd" d="M19 4a1 1 0 01-1 1H2a1 1 0 010-2h16a1 1 0 011 1zm0 6a1 1 0 01-1 1H2a1 1 0 110-2h16a1 1 0 011 1zm-1 7a1 1 0 100-2H2a1 1 0 100 2h16z"/>
-              </svg>
+                <path fill="#000000" fill-rule="evenodd"
+                    d="M19 4a1 1 0 01-1 1H2a1 1 0 010-2h16a1 1 0 011 1zm0 6a1 1 0 01-1 1H2a1 1 0 110-2h16a1 1 0 011 1zm-1 7a1 1 0 100-2H2a1 1 0 100 2h16z" />
+            </svg>
         </button>
-    
+
         <!-- Navbar content -->
         <div class="collapse navbar-collapse navbarContent" id="navbarContent">
             {% if request.user.is_authenticated %}
@@ -23,15 +25,18 @@
                 {% if request.user.is_superuser %}
 
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                        aria-expanded="false">
                         Admin
                     </a>
                     <ul class="dropdown-menu">
                         <li class="nav-item">
-                            <a class="dropdown-item" href="{% url 'staff_student_registration' %}">Student Registration</a>
+                            <a class="dropdown-item" href="{% url 'staff_student_registration' %}">Student
+                                Registration</a>
                         </li>
                         <li class="nav-item">
-                            <a class="dropdown-item" href="{% url 'staff_teacher_registration' %}">Teacher Registration</a>
+                            <a class="dropdown-item" href="{% url 'staff_teacher_registration' %}">Teacher
+                                Registration</a>
                         </li>
                         <li class="nav-item">
                             <a class="dropdown-item" href="{% url 'create_test_template' %}">Mock Tests</a>
@@ -47,7 +52,8 @@
 
 
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                        aria-expanded="false">
                         Mocks Reports
                     </a>
                     <ul class="dropdown-menu">
@@ -63,7 +69,9 @@
                             <a class="dropdown-item" href="{% url 'compare_progress' %}">Compare Progress</a>
                         </li>
                         <li class="nav-item">
-                            <p id="searchBtn dropdown-item" class="px-2 m-0 mx-2 nav-link btn bg-success-subtle btn-outline-success">Search Student</p>
+                            <p id="searchBtn dropdown-item"
+                                class="px-2 m-0 mx-2 nav-link btn bg-success-subtle btn-outline-success">Search Student
+                            </p>
                         </li>
                     </ul>
                 </li>
@@ -80,7 +88,7 @@
                     <a class="nav-link" href="{% url 'chapterwise_student_report' %}">Student Report</a>
                 </li>
                 {% endif %}
-                
+
                 {% if request.user.teachers %}
                 <li class="nav-item">
                     <a href="{% url 'attendance' %}" class="nav-link">Homework/Attendance</a>
@@ -90,15 +98,17 @@
                 <!-- Student-specific links -->
                 {% if request.user.registered_student %}
                 <li class="nav-item m-2">
-                    <a class="nav-link bg-success-subtle rounded d-inline px-3 p-2 m-1" href="{% url 'student_personal_report' request.user.registered_student.stu_id %}">
+                    <a class="nav-link bg-success-subtle rounded d-inline px-3 p-2 m-1"
+                        href="{% url 'student_personal_report' request.user.registered_student.stu_id %}">
                         Personal Report
                     </a>
                 </li>
                 {% endif %}
-                
+
                 {% if request.user.admissioncounsellor or request.user.is_superuser %}
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                        aria-expanded="false">
                         Management
                     </a>
                     <ul class="dropdown-menu">
@@ -117,10 +127,12 @@
                     <a class="nav-link" href="{% url 'create_inquiry' %}">Create Inquiry</a>
                 </li>
                 <li class="nav-item m-2">
-                    <a class="nav-link bg-warning-subtle rounded d-inline px-3 p-2 m-1" href="{% url 'student_registration' %}">New Registration</a>
+                    <a class="nav-link bg-warning-subtle rounded d-inline px-3 p-2 m-1"
+                        href="{% url 'student_registration' %}">New Registration</a>
                 </li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                        aria-expanded="false">
                         Students
                     </a>
                     <ul class="dropdown-menu">
@@ -129,23 +141,35 @@
                     </ul>
                 </li>
                 {% endif %}
-                
+
 
 
             </ul>
 
             <!-- User role display and action buttons -->
             <div class="d-flex align-items-center justify-content-center">
-                {% if request.user.registered_student %}
-                <p class="m-0 mx-2 fs-6">Stu - {{ request.user.first_name }} {{ request.user.last_name }}</p>
-                {% elif request.user.teacher %}
-                <p class="m-0 mx-2 fs-6">Teach - {{ request.user.first_name }} {{ request.user.last_name }}</p>
-                {% elif request.user.is_superuser %}
-                <a href="/admin" class="btn btn-success me-2"> {{ request.user.first_name }} Admin</a>
-                {% else %}
-                <p class="me-2 m-0"> {{ request.user.first_name }}</p>
-                {% endif %}
-                <a href="{% url 'logout' %}" class="btn btn-danger">Logout</a>
+                <li class="nav-item dropdown btn">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        Profile
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a href="{% url 'logout' %}" class="dropdown-item">Logout</a></li>
+                        <li><a href="{% url 'change_password' %}" class="dropdown-item">Change Password</a></li>
+                        <li>
+                            {% if request.user.registered_student %}
+                            <p class="m-0 dropdown-item">Stu - {{ request.user.first_name }} {{ request.user.last_name }}</p>
+                            {% elif request.user.teacher %}
+                            <p class="m-0 dropdown-item">Teach - {{ request.user.first_name }} {{ request.user.last_name }}</p>
+                            {% elif request.user.is_superuser %}
+                            <a href="/admin" class="dropdown-item"> {{ request.user.first_name }} Admin</a>
+                            {% else %}
+                            <p class="me-2 m-0"> {{ request.user.first_name }}</p>
+                            {% endif %}
+                        </li>
+                    </ul>
+                </li>
+
             </div>
             {% endif %}
         </div>
