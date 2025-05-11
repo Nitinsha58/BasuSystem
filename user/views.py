@@ -47,6 +47,7 @@ def change_password(request):
         user = authenticate(request, username=request.user.phone, password=current_password)
         if user is not None:
             user.set_password(new_password)
+            user.change_password = False
             user.save()
             messages.success(request, "Password changed successfully.")
             return redirect('login')
