@@ -33,7 +33,7 @@ class TeacherAdmin(admin.ModelAdmin):
         'batch__subject__name']
 
 class AttendanceAdmin(admin.ModelAdmin):
-    list_display = ['student', 'batch', 'is_present', 'created_at']
+    list_display = ['student', 'batch', 'is_present', 'date', 'created_at']
     search_fields = [
         'student__user__first_name', 
         'student__user__last_name', 

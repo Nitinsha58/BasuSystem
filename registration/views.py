@@ -353,73 +353,60 @@ def search_students(request):
         student_list = []
     return render(request, 'registration/students_results.html', {'students': student_list})
     
+
 @login_required(login_url='login')
-def mark_attendance(request, class_id = None, batch_id=None):
-    classes = None
-    batches = None
+def mark_attendance(request, class_id=None, batch_id=None):
     cls = None
     batch = None
 
-    if class_id and not ClassName.objects.filter(id=class_id):
+    if class_id and not ClassName.objects.filter(id=class_id).exists():
         messages.error(request, "Invalid Class")
         return redirect('attendance')
 
-    if batch_id and not Batch.objects.filter(id=batch_id):
+    if batch_id and not Batch.objects.filter(id=batch_id).exists():
         messages.error(request, "Invalid Batch")
         return redirect('attendance_class', class_id=class_id)
-    
+
     if class_id:
         cls = ClassName.objects.filter(id=class_id).first()
         batches = Batch.objects.filter(class_name=cls).order_by('created_at')
+    else:
+        batches = None
 
     if batch_id:
         batch = Batch.objects.filter(id=batch_id).first()
-    
+
     if batch_id and not batch:
         messages.error(request, "Invalid Batch")
         return redirect('attendance_class', class_id=class_id)
 
+    # Handle date input
     date_str = request.GET.get("date")
-    move = request.GET.get("move")
+    try:
+        date = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else datetime.now().date()
+    except ValueError:
+        messages.error(request, "Invalid date format.")
+        return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={datetime.now().date()}")
 
-    if not date_str or date_str == "None":
-        date = datetime.now().date()
-    else:
-        try:
-            date = datetime.strptime(date_str, "%Y-%m-%d").date()
-        except ValueError:
-            messages.error(request, "Invalid date format.")
-            return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={datetime.now().date()}")
-
-    if move == "next":
-        date += timedelta(days=1)
-    elif move == "prev":
-        date -= timedelta(days=1)
+    # Compute previous and next dates
+    prev_date = date - timedelta(days=1)
+    next_date = date + timedelta(days=1)
 
     if not Teacher.objects.filter(user=request.user).exists() and not request.user.is_superuser:
         messages.error(request, "You are not authorized to mark attendance.")
         return redirect('students_list')
 
     classes = ClassName.objects.all().order_by('created_at')
-
     students = Student.objects.filter(batches=batch, active=True)
+
     marked_students = students.filter(attendance__date=date, attendance__batch=batch).order_by('created_at')
     marked_attendance = list(Attendance.objects.filter(batch=batch, date=date, student__active=True).order_by('student__created_at'))
     un_marked_students = list(students.exclude(id__in=marked_students.values_list('id', flat=True)))
 
-
     if batch_id and request.method == 'POST':
         attendance_data = request.POST.getlist('attendance[]')
+        marked_students_set = set()
 
-        batch = Batch.objects.filter(id=batch_id).first()
-        if not batch:
-            messages.error(request, "Invalid Batch")
-            return redirect('mark_attendance', batch_id=batch_id)
-        
-        students = Student.objects.filter(active=True, batches=batch)
-        marked_attendance = students.filter(attendance__batch=batch, active=True, attendance__date=date)
-
-        marked_students = set()
         for data in attendance_data:
             stu_id, status = data.split(':')
             student = Student.objects.filter(stu_id=stu_id, batches=batch, active=True).first()
@@ -430,16 +417,16 @@ def mark_attendance(request, class_id = None, batch_id=None):
                     is_present=(status == 'present'),
                     date=date
                 )
-            marked_students.add(student.stu_id)
+                marked_students_set.add(student.stu_id)
 
-        # Mark absent for students not in attendance_data
+        # Mark absent for unmarked students
         for student in students:
-            if student.stu_id not in marked_students:
+            if student.stu_id not in marked_students_set:
                 Attendance.objects.create(
                     student=student,
                     batch=batch,
                     is_present=False,
-                    date = date
+                    date=date
                 )
 
         messages.success(request, "Attendance marked successfully.")
@@ -450,10 +437,12 @@ def mark_attendance(request, class_id = None, batch_id=None):
         'batches': batches,
         'cls': cls,
         'batch': batch,
-        'marked_students': marked_students,
         'marked_attendance': marked_attendance,
+        'marked_students': marked_students,
         'un_marked_students': un_marked_students,
         'date': date,
+        'prev_date': prev_date,
+        'next_date': next_date,
     })
 
 

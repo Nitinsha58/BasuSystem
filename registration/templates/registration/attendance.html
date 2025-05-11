@@ -74,10 +74,12 @@
                 <label for="date" class="form-label">Attendance Date</label>
                 <div class="row mx-2">
                     <ul class="pagination">
-                        <li class="page-item"><a class="page-link" href="?date={{ date|date:'Y-m-d' }}&move=prev">Previous</a></li>
+                        <li class="page-item"><a class="page-link" href="?date={{ prev_date|date:'Y-m-d' }}">Previous</a></li>
                         <li class="page-item"><p class="page-link text-dark text-nowrap">{{date|date:'Y-m-d'}}</p></li>
-                        <li class="page-item"><a class="page-link" href="?date={{ date|date:'Y-m-d' }}&move=next">Next</a></li>
+                        <input type="date" name="date" value="{{date|date:'Y-m-d'}}" hidden id="">
+                        <li class="page-item"><a class="page-link" href="?date={{ next_date|date:'Y-m-d' }}">Next</a></li>
                     </ul>
+
                 </div>
             </div>
             <ul class="students-list list-group">
