@@ -233,7 +233,8 @@ def student_fees_details(request, stu_id):
                         due_date=request.POST.get(f'installment_due_date_{ins}'),
                         paid=(request.POST.get(f'paid_{ins}') == 'on') ,
                         label = request.POST.get(f'installment_label_{ins}'),
-                        payment_type = request.POST.get(f'payment_type_{ins}')
+                        payment_type = request.POST.get(f'payment_type_{ins}'),
+                        remark = request.POST.get(f'installment_remark_{ins}'),
                     )
                     installment.save()
         except Exception as e:

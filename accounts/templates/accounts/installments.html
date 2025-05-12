@@ -74,11 +74,14 @@
                                 </p>
                                 <h5 class="m-0">Rs. {{inst.amount}}</h5>
                             </div>
-                            <p class="m-0 mb-2">
+                            <p class="m-0">
                                 {% for subject in inst.student.subjects.all %}
                                     {{subject.name|title}}
                                 {% endfor %}
                             </p>
+                            {% if inst.remark %}
+                            <small class="text-muted m-0 mb-2 text-sm">{{inst.remark}}</small>
+                            {% endif %}
 
                             {% if inst.paid and inst.due_date %}
                             <p class="rounded px-2 py-1 m-0" id="status" name="status" style="background: #7AFF91; width: fit-content; ">Payment Done</p>

@@ -91,6 +91,7 @@
                 <div class="">
                   <span class="m-0 h4 fw-normal">{{forloop.counter}}. </span>
                   <input type="text" name="installment_label_{{forloop.counter}}" value="{{installment.label}}" class="rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" required>
+                  <input type="text" name="installment_remark_{{forloop.counter}}" value="{{installment.remark|default:''}}" class="rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" placeholder="remark...">
                 </div>
                 <div class="d-flex gap-2">
                   <input type="number" name="installment_amount_{{forloop.counter}}" class="mt-1 rounded p-1 px-2" value="{{installment.amount}}" style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-amt-{{forloop.counter}}">
@@ -107,7 +108,7 @@
                       <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
                     </svg>
                   </button>
-                  {% endif  %}
+                  {% endif %}
                 </div>
               </div>
               <div class="form-check form-switch mt-2">
