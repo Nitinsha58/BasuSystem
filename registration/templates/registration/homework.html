@@ -65,7 +65,10 @@
 
 
     {% if cls and batch %}
-    <h3 class="heading m-2">Mark Homework</h3>
+    <div class="">
+        <h3 class="heading m-2">Mark Homework</h3>
+        <a href="{% url 'get_homework' batch.id %}" class="btn btn-primary">View Homework</a>
+    </div>
         {% if un_marked_students %}
         <form action="" method="post" class="bg-primary-subtle rounded p-1">
             {% csrf_token %}

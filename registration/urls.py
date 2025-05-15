@@ -72,9 +72,9 @@ urlpatterns = [
     path('mark_absent/<int:class_id>/<int:batch_id>/<int:attendance_id>', mark_absent, name='mark_absent'),
 
     # path('mark_attendance/<int:batch_id>', mark_attendance, name='mark_attendance'),
-    # path('get_attendance/<int:batch_id>', get_attendance, name='get_attendance'),
+    path('get_attendance/<int:batch_id>', get_attendance, name='get_attendance'),
     # path('mark_homework/<int:batch_id>', mark_homework, name='mark_homework'),
-    # path('get_homework/<int:batch_id>', get_homework, name='get_homework'),
+    path('get_homework/<int:batch_id>', get_homework, name='get_homework'),
 
     path('add_teacher/', add_teacher, name='add_teacher'),
     path('update_teacher/<int:teacher_id>', update_teacher, name='update_teacher'),

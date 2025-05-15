@@ -65,7 +65,10 @@
 
 
     {% if cls and batch %}
-    <h3 class="heading m-2">Mark Attendance</h3>
+    <div class="">
+        <h3 class="heading m-2">Mark Attendance</h3>
+        <a href="{% url 'get_attendance' batch.id %}" class="btn btn-primary">View Attendance</a>
+    </div>
     <form action="" method="post">
         {% csrf_token %}
         
