@@ -462,9 +462,14 @@ def mark_homework(request, class_id=None, batch_id=None):
 
     if class_id:
         cls = ClassName.objects.filter(id=class_id).first()
-        batches = Batch.objects.filter(class_name=cls).order_by('created_at')
+        batches = Batch.objects.filter(class_name=cls).order_by('created_at').exclude(
+            Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
+            Q(section__name='CBSE') &
+            Q(subject__name__in=['MATH', 'SCIENCE'])
+        )
     else:
         batches = None
+
 
     if batch_id:
         batch = Batch.objects.filter(id=batch_id).first()
@@ -554,7 +559,7 @@ def update_homework(request, class_id, batch_id):
         return redirect('students_list')
     
     date = datetime.now().date()
-    
+
     if request.method == 'POST':
         homework_data = request.POST.getlist('homework[]')
         # Handle date input
