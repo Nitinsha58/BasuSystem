@@ -85,7 +85,7 @@
                     </select>
                     <select class="form-select" style="width: fit-content;" name="test2" required >
                         {% for test in test_options %}
-                        <option value="{{test.id}}" {% if test.id == test2_id %} selected {% endif %}   >{{test.name}}</option>
+                        <option value="{{test.id}}" {% if test.id == test2_id %} selected {% endif %} >{{test.name}}</option>
                         {% endfor %}
                     </select>
                     <button class="btn btn-warning">Create Comparison</button>

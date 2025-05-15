@@ -268,7 +268,8 @@
             {
                 label: '{{remark}}',
                 data: {{counts}},
-                borderWidth: 1
+                borderWidth: 1,
+                maxBarThickness: 60,
             },
             {% endfor %}
         
@@ -329,6 +330,7 @@
               backgroundColor: '#4aaa70',
               borderWidth: 2,
               tension: 0.4,
+              maxBarThickness: 60,
             },
             {
               label: 'Deducted Marks',
@@ -336,7 +338,8 @@
               borderColor: '#FF5B61',
               backgroundColor: '#FF5B61',
               borderWidth: 2,
-              tension: 0.4
+              tension: 0.4,
+              maxBarThickness: 60
             },
         ]
       },

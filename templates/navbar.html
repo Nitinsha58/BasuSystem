@@ -90,8 +90,13 @@
                 {% endif %}
 
                 {% if request.user.teachers %}
-                <li class="nav-item">
-                    <a href="{% url 'attendance' %}" class="nav-link">Homework/Attendance</a>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                        aria-expanded="false">H.W / Atten</a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{% url 'attendance' %}">Attendance</a></li>
+                        <li><a class="dropdown-item" href="{% url 'homework' %}">Homework</a></li>
+                    </ul>
                 </li>
                 {% endif %}
 

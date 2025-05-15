@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block style %}
+<link rel="stylesheet" href="{% static 'css/attendance.css' %}">
+<style>
+    html {
+      scroll-behavior: auto !important;
+    }
+</style>
+{% endblock style %}
+
+{% block dashboard %}
+<div class="content-container m-2">
+
+    {% if classes and not cls %}
+    <h2 class="heading m-2">Homework</h2>
+    <div class="row g-2">
+        {% for c in classes %}
+        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+            <a href="{% url 'homework_class' c.id %}" class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    {% if cls %}
+    <div class="row g-2">
+        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+            <a href="{% url 'homework' %}" class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{cls.name}}</div>
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if batches and cls and not batch %}
+    <h2 class="heading m-2">Select Batch</h2>
+    <div class="row g-2">
+        {% for b in batches %}
+        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+            <a href="{% url 'homework_batch' cls.id b.id %}" class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{b.section.name}} {{b.subject.name}}</div>
+            </a>
+        </div>
+        {% endfor batches %}
+    </div>
+    {% endif %}
+
+    {% if cls and batch %}
+    <div class="row g-2 mt-1">
+        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+            <a href="{% url 'homework_class' cls.id %}" class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{batch.section.name}} {{batch.subject.name}}</div>
+            </a>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if batch %}
+    <h2 class="heading m-2">{{batch}}</h2>
+    {% endif %}
+
+
+    {% if cls and batch %}
+    <h3 class="heading m-2">Mark Homework</h3>
+        {% if un_marked_students %}
+        <form action="" method="post" class="bg-primary-subtle rounded p-1">
+            {% csrf_token %}
+            
+            <div class="students-list-container">
+                <div class="col-md-3 my-2">
+                    <div class="row mx-2">
+                        <ul class="pagination m-0">
+                            <li class="page-item m-0"><a class="page-link m-0" href="?date={{ prev_date|date:'Y-m-d' }}">Previous</a></li>
+                            <li class="page-item m-0"><p class="page-link text-dark text-nowrap m-0">{{date|date:'Y-m-d'}}</p></li>
+                            <input type="date" name="date" value="{{date|date:'Y-m-d'}}" hidden id="">
+                            <li class="page-item m-0"><a class="page-link m-0" href="?date={{ next_date|date:'Y-m-d' }}">Next</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <ul class="students-list list-group">
+                    {% for student in un_marked_students %}
+                    <li class="student list-group-item">
+                        <div class="form-check form-switch" style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
+                            <label class="form-check-label" for="student_{{forloop.counter}}">{{forloop.counter}}. {{ student.user.first_name }} {{ student.user.last_name }}</label>
+                            <select class="form-select" style="width: fit-content;" name="homework[]" id="student_{{ student.stu_id }}">
+                                {% for status in homework_status %}
+                                <option value="{{ student.stu_id }}:{{ status.0 }}">{{ status.1 }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </li>
+                    {% endfor %}
+                    {% if un_marked_students %}
+                    <div class="wrapper my-2">
+                        <button class="btn btn-primary">Add Homework</button>
+                    </div>
+                    {% endif %}
+                </ul>
+
+            </div> 
+        </form>
+        {% endif %}
+
+        {% if marked_homework %}
+        <form action="{% url 'homework_batch_update' cls.id batch.id %}?{{date|date:'Y-m-d'}}" method="post" class="bg-warning-subtle rounded p-1 mt-4">
+            {% csrf_token %}
+            
+            <div class="students-list-container">
+                <div class="col-md-3 my-2">
+                    <div class="row mx-2">
+                        <ul class="pagination m-0">
+                            <li class="page-item m-0"><a class="page-link m-0" href="?date={{ prev_date|date:'Y-m-d' }}">Previous</a></li>
+                            <li class="page-item m-0"><p class="page-link text-dark text-nowrap m-0">{{date|date:'Y-m-d'}}</p></li>
+                            <input type="date" name="date" value="{{date|date:'Y-m-d'}}" hidden id="">
+                            <li class="page-item m-0"><a class="page-link m-0" href="?date={{ next_date|date:'Y-m-d' }}">Next</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <ul class="students-list list-group ">
+                    {% for homework in marked_homework %}
+                    <li class="student list-group-item {% if homework.status == 'Pending' %} bg-danger-subtle {% elif homework.status == 'Completed' %} bg-success-subtle {% elif homework.status == 'Partial Done' %} bg-warning-subtle {% endif %}">
+                        <div class="form-check form-switch " style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
+                            <label class="form-check-label" for="student_{{forloop.counter}}">{{forloop.counter}}. {{ homeworl.student.user.first_name }} {{ homework.student.user.last_name }}</label>
+                            <select class="form-select" style="width: fit-content;" name="homework[]" id="student_{{ student.stu_id }}">
+                                {% for status in homework_status %}
+                                <option {% if homework.status == status.0 %} selected {% endif %}  value="{{ homework.id }}:{{ status.0 }}">{{ status.1 }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </li>
+                    {% endfor %}
+                    {% if marked_homework %}
+                    <div class="wrapper my-2">
+                        <button class="btn btn-warning">Update Homework</button>
+                    </div>
+                    {% endif %}
+                </ul>
+
+            </div> 
+        </form>
+
+        {% endif %}
+    {% endif %}
+</div>  
+
+{% endblock dashboard %}

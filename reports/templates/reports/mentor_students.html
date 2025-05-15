@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load center_filters %}
 
 {% block dashboard %}
 <div class="container p-4 bg-warning-subtle">
@@ -23,6 +24,85 @@
     </div>
     {% endfor %}
   </div>
+  {% endif %}
+</div>
+
+
+<div class="m-2 p-2 ps-4" style="width: 85%;">
+  {% if batch %}
+  <div class="">
+      <p class="h4 fw-normal ">{{batch.class_name|title}}th {{batch.subject|title}} ({{batch.section}})</p>
+  </div>
+
+
+  <div class="container-md my-2 mx-0 p-0 w-100">
+      <form class="d-flex gap-3 mb-4" method="POST">
+          {% csrf_token %}
+          <select class="form-select" style="width: fit-content;" name="test1" required>
+              {% for test in test_options %}
+              <option value="{{test.id}}" {% if test.id == test1_id %} selected {% endif %}  >{{test.name}}</option>
+              {% endfor %}
+          </select>
+          <select class="form-select" style="width: fit-content;" name="test2" required >
+              {% for test in test_options %}
+              <option value="{{test.id}}" {% if test.id == test2_id %} selected {% endif %} >{{test.name}}</option>
+              {% endfor %}
+          </select>
+          <button class="btn btn-warning">Create Comparison</button>
+      </form>
+
+      <div  class="g-3 d-flex justify-content-between">
+          <div class="h-auto d-flex flex-1">
+              {% if students_list %}
+              <ul class="list-group me-3" style="min-width: fit-content;">
+                  <li class="list-group-item bg-dark text-white border-dark">Students</li>
+                  {% if request.user.is_superuser %}
+                  {% for stu in students_list %}
+                      
+                      <li class="list-group-item d-flex justify-content-between " style="font-size: 14px;">
+                          <span class="">{{stu.student.stu.user.first_name}} {{stu.student.stu.user.last_name}}</span> 
+                          {% if stu.student.percentage == 0 %}
+                          <span class="fw-normal btn bg-danger-subtle px-2 py-0" style="font-size: 12px;" >Absent</span> 
+                          {% else %}
+                          <span class="fw-normal" > {{stu.student.percentage}}%</span> 
+                          {% endif %}
+                      </li>
+                  
+                  {% endfor %}
+                  {% endif %}
+              </ul>
+              {% endif %}
+              <div class="w-100 d-flex gap-3" style="overflow-x: scroll;">
+                  {% for test in tests %}
+                  <ul class="list-group" style="min-width: fit-content;">
+                      <li class="list-group-item bg-dark text-white border-dark">{{test.name}}</li>
+                      {% for data in students_list %}
+                          <!-- <li class="list-group-item text-decoration-none" style="font-size: 14px;">
+                              {% if data|get_item:test and data.student.percentage %} {{data.student.stu.user.first_name}} {{data.student.stu.user.first_name}} {% endif %}  {{data|get_item:test}}
+                          </li> -->
+
+                          <li class="list-group-item d-flex justify-content-center " style="font-size: 14px;">
+                              {% if data|get_item:test == 0 %}
+                                  {{data|get_item:test}}
+                              {% elif data|get_item:test == -1 %}
+                              <span class="fw-normal" style="opacity: 0;" >T</span> 
+                              <span class="fw-normal btn bg-danger-subtle px-2 py-0" style="font-size: 12px;" >Absent</span> 
+                              <span class="fw-normal" style="opacity: 0;" >T</span> 
+                              {% else %}
+                              <span class="fw-normal" >{{data|get_item:test}}%</span> 
+                              {% endif %}
+                          </li>
+                      {% endfor %}
+                  </ul>
+
+                  {% endfor %}
+
+              </div>
+          </div>
+
+      </div>
+  </div>
+
   {% endif %}
 </div>
 

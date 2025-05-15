@@ -66,9 +66,18 @@
       <div class="col">
         <div class="card h-100">
           <div class="card-body">
-            <h3 class="card-title">Homework & Attendance</h3>
-            <p class="card-text">Mark Homework & attendance for your assigned batches and monitor student participation.</p>
-            <a href="{% url 'attendance' %}" class="btn btn-success">Homework & Attendance</a>
+            <h3 class="card-title"> Attendance</h3>
+            <p class="card-text">Mark attendance for your assigned batches and monitor student participation.</p>
+            <a href="{% url 'attendance' %}" class="btn btn-warning">Attendance</a>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="card h-100">
+          <div class="card-body">
+            <h3 class="card-title">Homework</h3>
+            <p class="card-text">Mark Homework for your assigned batches and monitor student participation.</p>
+            <a href="{% url 'homework' %}" class="btn btn-success">Homework</a>
           </div>
         </div>
       </div>

@@ -83,7 +83,7 @@ class ChapterAdmin(admin.ModelAdmin):
     ordering = ['created_at']
 
 class HomeworkAdmin(admin.ModelAdmin):
-    list_display = ['student__user__first_name', 'batch', 'status', 'created_at', 'updated_at']
+    list_display = ['student__user__first_name', 'batch', 'status', 'date', 'created_at', 'updated_at']
     search_fields = ['batch__class_name__name', 'batch__section__name', 'batch__subject__name',]
     list_filter = ['batch', 'status']
     ordering = ['created_at']
