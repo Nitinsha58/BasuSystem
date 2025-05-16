@@ -56,7 +56,7 @@ def student_report(request, stu_id):
     batch_wise_tests = {}
 
     for batch in batches:
-        tests = Test.objects.filter(batch=batch).order_by('-date')
+        tests = Test.objects.filter(batch=batch, date__range=(start_date, end_date) ).order_by('-date')
         test_reports = []
 
         for test in tests:

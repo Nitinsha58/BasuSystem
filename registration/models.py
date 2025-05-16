@@ -278,7 +278,7 @@ class Test(models.Model):
         students_with_data = student_ids_with_results.union(student_ids_with_responses)
         missing_students = student_ids_in_batch - students_with_data
 
-        return len(missing_students) == 0
+        return len(students_with_data) > 0
 
 
 class Chapter(models.Model):

@@ -217,6 +217,7 @@
         <h3 class="mt-4">Weekly Tests</h3>
         {% for batch, reports in batch_wise_tests.items %}
             {% for test in reports %}
+            {% if test.test.is_data_complete_for_graph %}
             <div class="container-md my-4 w-100">
                 <div class="mt-4">
                 <p class="h4 fw-normal">{{test.test.name}}</p>
@@ -246,6 +247,7 @@
 
                 </div>
             </div>
+            {% endif %}
             {% endfor %}
         {% endfor %}
 
@@ -258,6 +260,7 @@
 <script>
 {% for batch, reports in batch_wise_tests.items %}   
 {% for report in reports %}
+    {% if report.test.is_data_complete_for_graph %}
   const ctx1{{batch.id}}{{ forloop.counter }} = document.getElementById('test_chart_1{{batch.id}}{{ forloop.counter }}').getContext('2d');
   new Chart(ctx1{{batch.id}}{{forloop.counter}}, {
       type: 'bar',
@@ -373,6 +376,8 @@
 //           }
 //       }
 //   });
+
+    {% endif %}
   {% endfor %}
   {% endfor %}
 </script>
