@@ -269,6 +269,17 @@ class Test(models.Model):
             total=models.Sum('max_marks')
         )['total'] or 0
         self.save()
+    
+    def is_data_complete_for_graph(self):
+        student_ids_in_batch = set(self.batch.students.values_list('id', flat=True))
+        student_ids_with_results = set(self.results.values_list('student_id', flat=True))
+        student_ids_with_responses = set(self.responses.values_list('student_id', flat=True))
+
+        students_with_data = student_ids_with_results.union(student_ids_with_responses)
+        missing_students = student_ids_in_batch - students_with_data
+
+        return len(missing_students) == 0
+
 
 class Chapter(models.Model):
     class_name = models.ForeignKey(ClassName, on_delete=models.CASCADE, related_name='chapters')
