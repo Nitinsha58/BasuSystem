@@ -14,6 +14,7 @@ from registration.models import (
     Test,
     TestResult,
     )
+from django.db.models import Q
 
 def get_combined_attendance(student, start_date, end_date):
     attendance_qs = Attendance.objects.filter(student=student, date__range=(start_date, end_date))
@@ -31,7 +32,11 @@ def get_combined_attendance(student, start_date, end_date):
 
 def get_batchwise_attendance(student, start_date, end_date):
     result = {}
-    for batch in student.batches.all():
+    for batch in student.batches.all().exclude(
+            Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
+            Q(section__name='CBSE') &
+            Q(subject__name__in=['MATH', 'SCIENCE'])
+        ):
         attendance_qs = Attendance.objects.filter(
             student=student,
             batch=batch,
