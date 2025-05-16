@@ -1212,25 +1212,16 @@ def transport_list(request):
         index -= 1
     
 
-    # request.session["day"] = index
     current_day = weekdays[index]
-
-    # # get all the batches with their days as current_day
-    # batches = Batch.objects.filter(days__name=current_day).order_by('start_time', 'class_name__name', 'section')
-    # grouped_batches = defaultdict(lambda: defaultdict(list))
-    # for batch in batches:
-    #     transport_students = Student.objects.filter(batches=batch, fees__cab_fees__gt=0).order_by('stu_id')
-    #     # if transport_students.exists():
-    #     #     grouped_batches[batch.start_time][batch] = transport_students
     
     batches = Batch.objects.filter(days__name=current_day).order_by('start_time', 'class_name__name', 'section')
 
-    # Group batches by start_time, and filter students with cab_fees > 0
     grouped_batches = {}
     for batch in batches:
         transport_students = Student.objects.filter(
             batches=batch,
-            fees__cab_fees__gt=0
+            fees__cab_fees__gt=0,
+            active=True,
         ).order_by('stu_id')
 
         if transport_students.exists():
