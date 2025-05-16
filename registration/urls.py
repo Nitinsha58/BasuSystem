@@ -36,6 +36,7 @@ from .views import (
     update_result,
     delete_result,
     all_pending_response,
+    add_total_marks_obtained,
 
     # Transport
     transport_list,
@@ -102,6 +103,7 @@ urlpatterns = [
     path('result-templates/', result_templates, name='result_templates'),
     path('add-result/<int:batch_id>/<int:test_id>/', add_result, name="add_result"),
     path('add-result/<int:batch_id>/<int:test_id>/<int:student_id>/', add_result, name="add_student_result"),
+    path('add_total_marks_obtained/<int:batch_id>/<int:test_id>/<int:student_id>/', add_total_marks_obtained, name="add_total_marks_obtained"),
 
     path('add-result/<int:batch_id>/<int:test_id>/<int:student_id>/<int:question_id>', add_result, name="add_student_question_response"),
     path('update-result/<int:batch_id>/<int:test_id>/<int:student_id>/<int:response_id>', update_result, name="update_student_question_response"),

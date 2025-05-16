@@ -1134,6 +1134,34 @@ def update_result(request, batch_id, test_id, student_id, response_id):
     return redirect("add_student_result", batch_id=batch_id, test_id=test_id, student_id=student_id)
 
 @login_required(login_url='login')
+def add_total_marks_obtained(request, batch_id, test_id, student_id):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
+    batch = Batch.objects.filter(id=batch_id).first()
+    test = Test.objects.filter(id=test_id).first()
+    student = None
+
+    if not batch or not test:
+        messages.error(request, "Invalid Batch or Test")
+        return redirect("result_templates")
+
+    student = Student.objects.filter(id=student_id).first()
+    if not student:
+        messages.error(request, "Invalid Student")
+        return redirect("add_student_result", batch_id=batch_id, test_id=test_id)
+
+    if request.method == 'POST':
+        total_marks_obtained = request.POST.get('total_marks_obtained')
+        result, created = TestResult.objects.get_or_create(student=student,test=test)
+        result.total_marks_obtained = float(total_marks_obtained)
+        result.total_max_marks = test.total_max_marks
+        result.percentage = (float(total_marks_obtained) / test.total_max_marks or 1) * 100
+        result.save()
+        return redirect("add_student_result", batch_id=batch_id, test_id=test_id, student_id=student_id)
+
+    return redirect("add_student_result", batch_id=batch_id, test_id=test_id)
+
+@login_required(login_url='login')
 def delete_result(request, batch_id, test_id, student_id, response_id):
     if not request.user.is_superuser:
         return redirect('staff_dashboard')
