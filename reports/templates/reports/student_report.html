@@ -236,7 +236,11 @@
                 </div>
                 <div class="m-sm-2 p-sm-2 remarks-container">
                     <ul class="list-group">
+                    {% if not test.marks.percentage %}
+                    <li class="list-group-item bg-dark text-white border-dark">Absent</li>
+                    {% else %}
                     <li class="list-group-item bg-dark text-white border-dark">Mock Remarks -  {{test.marks.percentage|floatformat:2}}% <br> ({{test.marks.obtained_marks|floatformat:1}}/{{test.marks.max_marks|floatformat:1}})</li>
+                    {% endif %}
                     {% for remark, count in test.remarks.items %}
                     <li class="list-group-item d-flex justify-content-between">
                         <span class="">{{remark.name}}</span> <span class="fw-normal" >{{count}}%</span> 

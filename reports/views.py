@@ -56,12 +56,22 @@ def student_report(request, stu_id):
     batch_wise_tests = {}
 
     for batch in batches:
-        tests = Test.objects.filter(batch=batch, date__range=(start_date, end_date) ).order_by('-date')
+        tests = Test.objects.filter(batch=batch, date__range=(start_date, end_date)).order_by('-date')
         test_reports = []
 
         for test in tests:
             test_chapters = get_chapters_from_questions(test)
             responses = QuestionResponse.objects.filter(test=test, student=student).select_related('question', 'remark')
+            test_result = TestResult.objects.filter(test=test, student=student).first()
+
+            # If no responses and no result, mark as absent
+            if not responses.exists() and not test_result:
+                test_reports.append({
+                    'test': test,
+                    'chapters': test_chapters,
+                    'absent': True,
+                })
+                continue
 
             chapter_remarks = calculate_testwise_remarks(responses, test_chapters)
             marks_data = calculate_marks(responses, test_chapters)
@@ -80,6 +90,7 @@ def student_report(request, stu_id):
                     'max_marks': marks_data['total_max'],
                 },
                 'chapter_wise_test_remarks': chapter_remarks,
+                'absent': False,
             })
 
         batch_wise_tests[batch] = test_reports
@@ -92,7 +103,6 @@ def student_report(request, stu_id):
     
 
     calendar_data = get_monthly_calendar(student, start_date, end_date)
-
     # for month_cal in calendar_data:
     #     print(month_cal)
     #     print()
