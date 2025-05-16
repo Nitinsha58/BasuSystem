@@ -1236,6 +1236,60 @@ def transport_list(request):
         "grouped_batches": dict(grouped_batches),
     })
 
+
+@login_required(login_url='login')
+def transport_driver_list(request):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
+
+    weekdays = list(Day.objects.order_by("id"))
+    total = len(weekdays)
+
+    index = int(request.GET.get("day", 0))
+    move = request.GET.get("move")
+
+    if move == "next" and index < total - 1:
+        index += 1
+    elif move == "prev" and index > 0:
+        index -= 1
+
+    current_day = weekdays[index]
+
+    # Step 1: Preload all students relevant to current_day
+    students = Student.objects.filter(
+        active=True,
+        fees__cab_fees__gt=0,
+        batches__days__name=current_day.name
+    ).prefetch_related(
+        'batches__days',
+        'batches',
+        'transport',
+        'transport__transport_person'
+    ).distinct()
+
+    # Step 2: Build grouped_transports dictionary
+    grouped_transports = defaultdict(lambda: defaultdict(list))
+
+    for student in students:
+        for batch in student.batches.all():
+            if current_day in batch.days.all():
+                time = batch.start_time
+                driver = student.transport.transport_person if student.transport else None
+                if driver:
+                    grouped_transports[time][driver].append(student)
+
+    # Sort students in each group by stu_id
+    for time in grouped_transports:
+        for driver in grouped_transports[time]:
+            grouped_transports[time][driver].sort(key=lambda s: s.stu_id)
+
+    grouped_transports = {time: dict(drivers) for time, drivers in grouped_transports.items()}
+    return render(request, "registration/students_driver_timing.html", {
+        "current_day": current_day,
+        "day": index,
+        "grouped_transports": grouped_transports,
+    })
+
 @login_required(login_url='login')
 def assign_mentor(request):
     
