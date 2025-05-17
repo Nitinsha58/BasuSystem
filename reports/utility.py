@@ -70,7 +70,11 @@ def get_combined_homework(student, start_date, end_date):
 def get_batchwise_homework(student, start_date, end_date):
     result = {}
     for batch in student.batches.all():
-        homework_qs = Homework.objects.filter(student=student, batch=batch, date__range=(start_date, end_date))
+        homework_qs = Homework.objects.filter(student=student, batch=batch, date__range=(start_date, end_date)).exclude(
+            Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
+            Q(section__name='CBSE') &
+            Q(subject__name__in=['MATH', 'SCIENCE'])
+        )
         total = homework_qs.count()
         completed = homework_qs.filter(status='Completed').count()
         partial = homework_qs.filter(status='Partial Done').count()
