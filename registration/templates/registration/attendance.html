@@ -69,7 +69,7 @@
         <h3 class="heading m-2">Mark Attendance</h3>
         <a href="{% url 'get_attendance' batch.id %}" class="btn btn-primary">View Attendance</a>
     </div>
-    <form action="" method="post">
+    <form action="" method="post" id="attendance-form">
         {% csrf_token %}
         
         <div class="students-list-container">
@@ -140,5 +140,19 @@
     </form>
     {% endif %}
 </div>  
+
+<script>
+    const form = document.getElementById('attendance-form');
+    // prevent duplicate submission
+    form.addEventListener('submit', function(event) {
+        const submitButton = form.querySelector('.submit-btn');
+        if (submitButton.disabled) {
+            event.preventDefault();
+            return;
+        }
+        submitButton.disabled = true;
+        submitButton.innerHTML = 'Saving...';
+    });
+</script>
 
 {% endblock dashboard %}

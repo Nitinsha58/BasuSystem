@@ -70,7 +70,7 @@
         <a href="{% url 'get_homework' batch.id %}" class="btn btn-primary">View Homework</a>
     </div>
         {% if un_marked_students %}
-        <form action="" method="post" class="bg-primary-subtle rounded p-1">
+        <form action="" method="post" class="bg-primary-subtle rounded p-1" id="homework-form">
             {% csrf_token %}
             
             <div class="students-list-container">
@@ -109,7 +109,7 @@
         {% endif %}
 
         {% if marked_homework %}
-        <form action="{% url 'homework_batch_update' cls.id batch.id %}?{{date|date:'Y-m-d'}}" method="post" class="bg-warning-subtle rounded p-1 mt-4">
+        <form action="{% url 'homework_batch_update' cls.id batch.id %}?{{date|date:'Y-m-d'}}" method="post" class="bg-warning-subtle rounded p-1 mt-4" id="homework-form2">
             {% csrf_token %}
             
             <div class="students-list-container">
@@ -149,5 +149,26 @@
         {% endif %}
     {% endif %}
 </div>  
+
+<script>
+    const form = document.getElementById('homework-form');
+    const form2 = document.getElementById('homework-form2');
+    // prevent duplicate form submission
+    form.addEventListener('submit', function(event) {
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (submitButton) {
+            submitButton.disabled = true; // Disable the button
+            submitButton.innerHTML = 'Submitting...'; // Change button text
+        }
+    });
+
+    form2.addEventListener('submit', function(event) {
+        const submitButton = form2.querySelector('button[type="submit"]');
+        if (submitButton) {
+            submitButton.disabled = true; // Disable the button
+            submitButton.innerHTML = 'Submitting...'; // Change button text
+        }
+    });
+</script>
 
 {% endblock dashboard %}
