@@ -127,7 +127,7 @@
                     {% for homework in marked_homework %}
                     <li class="student list-group-item {% if homework.status == 'Pending' %} bg-danger-subtle {% elif homework.status == 'Completed' %} bg-success-subtle {% elif homework.status == 'Partial Done' %} bg-warning-subtle {% endif %}">
                         <div class="form-check form-switch " style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
-                            <label class="form-check-label" for="student_{{forloop.counter}}">{{forloop.counter}}. {{ homeworl.student.user.first_name }} {{ homework.student.user.last_name }}</label>
+                            <label class="form-check-label" for="student_{{forloop.counter}}">{{forloop.counter}}. {{ homework.student.user.first_name }} {{ homework.student.user.last_name }}</label>
                             <div class="d-flex gap-2">
                                 <select class="form-select" style="width: fit-content;" name="homework[]" id="student_{{ student.stu_id }}">
                                     {% for status in homework_status %}

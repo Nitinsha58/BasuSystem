@@ -427,7 +427,9 @@ def mark_attendance(request, class_id=None, batch_id=None):
         # Mark absent for unmarked students
         for student in students:
             if student.stu_id not in marked_students_set:
-                Attendance.objects.create(
+                # Only create an absent record if not already marked for this student/date/batch
+                if not Attendance.objects.filter(student=student, batch=batch, date=date).exists():
+                    Attendance.objects.create(
                     student=student,
                     batch=batch,
                     is_present=False,

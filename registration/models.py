@@ -218,8 +218,8 @@ class Attendance(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    # class Meta:
-    #     unique_together = ('student', 'batch', 'created_at')
+    class Meta:
+        unique_together = ('student', 'batch', 'date')
 
     def __str__(self):
         return f"{self.student} - {self.created_at}: {'Present' if self.is_present else 'Absent'}"
@@ -238,6 +238,9 @@ class Homework(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('student', 'batch', 'date')
 
     def __str__(self):
         return f"Homework for {self.student} - {self.status}"
