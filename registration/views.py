@@ -603,56 +603,6 @@ def mark_absent(request, class_id, batch_id, attendance_id):
     obj.save()
     return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={day}")
 
-# @login_required(login_url='login')
-# def mark_homework(request, batch_id):
-#     if batch_id and not Batch.objects.filter(id=batch_id):
-#         messages.error(request, "Invalid Batch")
-#         return redirect('students_list')
-
-#     if not Teacher.objects.filter(user=request.user).exists() and not request.user.is_superuser:
-#         messages.error(request, "You are not authorized to update homework.")
-#         return redirect('students_list')
-    
-#     batch = Batch.objects.filter(id=batch_id).first()
-#     students = Student.objects.filter(batches=batch, active=True)
-
-#     if batch_id and request.method == 'POST':
-#         date = request.POST.get('date')
-#         homework_data = request.POST.getlist('homework[]')
-
-#         # Check if homework already marked for the given date
-#         existing_homework = Homework.objects.filter(batch=batch, date=date)
-#         if existing_homework.exists():
-#             messages.error(request, "Homework for this date already marked.")
-#             return redirect('mark_homework', batch_id=batch_id)
-
-#         # Process the homework data
-#         students = Student.objects.filter(batches=batch, active=True)
-
-#         for data in homework_data:
-#             stu_id, status = data.split(':')
-#             student = Student.objects.filter(stu_id=stu_id).first()
-#             if student:
-#                 Homework.objects.create(
-#                     student=student,
-#                     batch=batch,
-#                     status=status,
-#                     date = date
-#                 )
-
-#         messages.success(request, "Homework updated successfully.")
-#         return redirect('mark_homework', batch_id=batch_id)
-    
-#     homework_status = Homework.STATUS_CHOICES
-
-#     return render(request, 'registration/mark_homework.html', {
-#         'students': students,
-#         'batch': batch,
-#         'batches': Batch.objects.all(),
-#         'date': datetime.now().date(),
-#         'homework_status': homework_status,
-#     })
-
 @login_required(login_url='login')
 def get_attendance(request, batch_id):
     if batch_id and not Batch.objects.filter(id=batch_id):
@@ -744,6 +694,29 @@ def get_homework(request, batch_id):
         'students': students,
         'dates': dates,
     })
+
+
+@login_required(login_url='login')
+def delete_attendance(request, class_id, batch_id, attendance_id):
+    day = request.GET.get('date')
+    obj = Attendance.objects.filter(id=attendance_id).first()
+    if obj:
+        obj.delete()
+        messages.success(request, "Attendance Deleted.")
+    else:
+        messages.error(request, "Invalid Attendance Id.")
+    return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={day}")
+
+@login_required(login_url='login')
+def delete_homework(request, class_id, batch_id, homework_id):
+    day = request.GET.get('date')
+    obj = Homework.objects.filter(id=homework_id).first()
+    if obj:
+        obj.delete()
+        messages.success(request, "Homework Deleted.")
+    else:
+        messages.error(request, "Invalid Homework Id.")
+    return redirect(f"{reverse('homework_batch', args=[class_id, batch_id])}?date={day}")
 
 @login_required(login_url='login')
 def add_teacher(request):

@@ -20,7 +20,8 @@ from .views import (
     mark_homework,
     update_homework,
     get_homework,
-
+    delete_attendance,
+    delete_homework,
 
     # Test Paper
     test_templates,
@@ -72,6 +73,8 @@ urlpatterns = [
 
     path('mark_present/<int:class_id>/<int:batch_id>/<int:attendance_id>', mark_present, name='mark_present'),
     path('mark_absent/<int:class_id>/<int:batch_id>/<int:attendance_id>', mark_absent, name='mark_absent'),
+    path('delete_attendance/<int:class_id>/<int:batch_id>/<int:attendance_id>', delete_attendance, name='delete_attendance'),
+    path('delete_homework/<int:class_id>/<int:batch_id>/<int:homework_id>', delete_homework, name='delete_homework'),
 
     # path('mark_attendance/<int:batch_id>', mark_attendance, name='mark_attendance'),
     path('get_attendance/<int:batch_id>', get_attendance, name='get_attendance'),

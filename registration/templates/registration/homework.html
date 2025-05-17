@@ -128,11 +128,21 @@
                     <li class="student list-group-item {% if homework.status == 'Pending' %} bg-danger-subtle {% elif homework.status == 'Completed' %} bg-success-subtle {% elif homework.status == 'Partial Done' %} bg-warning-subtle {% endif %}">
                         <div class="form-check form-switch " style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
                             <label class="form-check-label" for="student_{{forloop.counter}}">{{forloop.counter}}. {{ homeworl.student.user.first_name }} {{ homework.student.user.last_name }}</label>
-                            <select class="form-select" style="width: fit-content;" name="homework[]" id="student_{{ student.stu_id }}">
-                                {% for status in homework_status %}
-                                <option {% if homework.status == status.0 %} selected {% endif %}  value="{{ homework.id }}:{{ status.0 }}">{{ status.1 }}</option>
-                                {% endfor %}
-                            </select>
+                            <div class="d-flex gap-2">
+                                <select class="form-select" style="width: fit-content;" name="homework[]" id="student_{{ student.stu_id }}">
+                                    {% for status in homework_status %}
+                                    <option {% if homework.status == status.0 %} selected {% endif %}  value="{{ homework.id }}:{{ status.0 }}">{{ status.1 }}</option>
+                                    {% endfor %}
+                                </select>
+                                {% if request.user and request.user.is_superuser %}
+                                <a data-batch_id="{{batch.id}}" data-cls_id="{{cls.id}}" data-homework_id="{{homework.id}}" class="delete-link d-flex justify-content-center align-items-center py-2 px-2 btn bg-danger btn-outline-light fw-semibold text-decoration-none">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"></path>
+                                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
+                                    </svg>
+                                </a>
+                                {% endif %}
+                            </div>
                         </div>
                     </li>
                     {% endfor %}
@@ -149,6 +159,42 @@
         {% endif %}
     {% endif %}
 </div>  
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const deleteLinks = document.querySelectorAll(".delete-link");
+      const modal = document.getElementById("deleteConfirmationModal");
+      const confirmButton = document.getElementById("confirmDeleteButton");
+      const cancelButton = document.getElementById("cancelButton");
+  
+      let deleteUrl = "";
+  
+      deleteLinks.forEach(link => {
+        link.addEventListener("click", function (event) {
+          event.preventDefault();
+          document.getElementsByTagName('html')[0].style.overflow = 'hidden';
+          document.getElementsByTagName('body')[0].style.overflow = 'hidden';
+          deleteUrl = `/student/delete_homework/${this.dataset.cls_id}/${this.dataset.batch_id}/${this.dataset.homework_id}?date={{ date|date:'Y-m-d' }}`; // Construct the delete URL
+
+          const scrollPosition = window.scrollY || document.documentElement.scrollTop;
+          modal.style.top = `${scrollPosition}px`;
+          modal.classList.remove('d-none');
+        });
+      });
+  
+      confirmButton.addEventListener("click", function () {
+        if (deleteUrl) {
+          window.location.href = deleteUrl; // Redirect to the delete URL
+        }
+      });
+  
+      cancelButton.addEventListener("click", function () {
+        modal.classList.add("d-none");
+        document.getElementsByTagName('html')[0].style.overflow = 'auto';
+        document.getElementsByTagName('body')[0].style.overflow = 'auto';
+      });
+    });
+</script>
 
 <script>
     const form = document.getElementById('homework-form');
