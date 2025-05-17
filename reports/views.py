@@ -52,7 +52,11 @@ def student_report(request, stu_id):
         start_date = today.replace(day=1)
         end_date = today
     
-    batches = Batch.objects.filter(class_name=student.class_enrolled).order_by('-created_at')
+    batches = student.batches.all().filter(class_name=student.class_enrolled).exclude(
+            Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
+            Q(section__name='CBSE') &
+            Q(subject__name__in=['MATH', 'SCIENCE'])
+        ).order_by('-created_at')
     batch_wise_tests = {}
 
     for batch in batches:
