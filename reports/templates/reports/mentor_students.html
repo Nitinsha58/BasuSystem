@@ -63,10 +63,11 @@
         </thead>
         <tbody>
           {% for student in students %}
+          {% with outer_counter=forloop.counter %}
           {% for batch in student.batches_data %}
           <tr {% if forloop.first %} class="table-active" {% endif %} >
             {% if forloop.first %}
-            <th scope="row" rowspan="{{ student.batches_data.count }}"><a href="{% url 'student_report' student.student.stu_id %}" class="nav-link">{{student.student_name}}</a></th>
+            <th scope="row" rowspan="{{ student.batches_data.count }}"><a href="{% url 'student_report' student.student.stu_id %}" class="nav-link">{{outer_counter}}.  {{student.student_name}}</a></th>
             {% else %}
             <th scope="row" rowspan="{{ student.batches_data.count }}"></th>
             {% endif %}
@@ -76,6 +77,7 @@
             <td>{{ batch.test_marks }}</td>
           </tr>
           {% endfor %}
+          {% endwith %}
           {% endfor %}
 
         </tbody>
