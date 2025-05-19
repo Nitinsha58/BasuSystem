@@ -357,7 +357,11 @@ def generate_group_report_data_v2(request, start_date: datetime.date, end_date: 
             'batches_data': []
         }
 
-        for batch in student.batches.all():
+        for batch in student.batches.all().exclude(
+            Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
+            Q(section__name='CBSE') &
+            Q(subject__name__in=['MATH', 'SCIENCE'])
+        ):
             batch_name = str(batch)
             
             # Call helper functions
@@ -375,7 +379,7 @@ def generate_group_report_data_v2(request, start_date: datetime.date, end_date: 
             
             student_info['batches_data'].append(batch_data)
 
-        if student_info['batches_data']:
-            report_data.append(student_info)
+        # if student_info['batches_data']:
+        report_data.append(student_info)
 
     return report_data

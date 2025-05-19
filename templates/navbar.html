@@ -75,18 +75,6 @@
                         </li>
                     </ul>
                 </li>
-
-                <!-- Teacher-specific links -->
-                {% elif request.user.teacher %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'batchwise_report' %}">Batchwise Report</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'chapterwise_report' %}">Chapterwise Report</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'chapterwise_student_report' %}">Student Report</a>
-                </li>
                 {% endif %}
 
                 {% if request.user.teachers %}
