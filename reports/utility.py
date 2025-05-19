@@ -15,6 +15,18 @@ from registration.models import (
     TestResult,
     )
 from django.db.models import Q
+from collections import defaultdict
+from datetime import date, timedelta
+import calendar
+
+from django.db.models import Sum, Value, FloatField
+from django.db.models.functions import Coalesce
+
+from django.db import models 
+from datetime import datetime
+from django.contrib import messages
+from django.shortcuts import render, redirect
+
 
 def get_combined_attendance(student, start_date, end_date):
     attendance_qs = Attendance.objects.filter(student=student, date__range=(start_date, end_date))
@@ -86,9 +98,6 @@ def get_batchwise_homework(student, start_date, end_date):
         }
     return result
 
-
-from datetime import date, timedelta
-import calendar
 
 def get_monthly_calendar(student, start_date, end_date):
     monthly_data = []
@@ -165,8 +174,6 @@ def get_monthly_calendar(student, start_date, end_date):
     return monthly_data
 
 
-from collections import defaultdict
-
 def get_chapters_from_questions(test):
     questions = TestQuestion.objects.filter(test=test).order_by('chapter_no')
     return {
@@ -227,3 +234,148 @@ def calculate_marks(testwise_responses, test_chapters):
         'obtained_total': sum(marks_obtained),
         'total_max': sum(total_marks),
     }
+
+
+
+def calculate_attendance_percentage(student, batch, start_date, end_date) -> float:
+    """
+    Calculates the attendance percentage for a given student in a specific batch
+    within the specified date range.
+    """
+    attendance_in_range = Attendance.objects.filter(
+        student=student,
+        batch=batch,
+        date__range=(start_date, end_date)
+    )
+    total_sessions_for_student = attendance_in_range.count()
+    present_sessions = attendance_in_range.filter(is_present=True).count()
+
+    if total_sessions_for_student > 0:
+        return round((present_sessions / total_sessions_for_student) * 100, 2)
+    return 0.0
+
+def calculate_homework_completion_percentage(student, batch, start_date, end_date) -> float:
+    """
+    Calculates the homework completion percentage for a given student in a specific batch
+    within the specified date range.
+    """
+    homework_in_range = Homework.objects.filter(
+        student=student,
+        batch=batch,
+        date__range=(start_date, end_date)
+    )
+    total_homeworks_for_student = homework_in_range.count()
+    completed_homeworks = homework_in_range.filter(status='Completed').count()
+
+    if total_homeworks_for_student > 0:
+        return round((completed_homeworks / total_homeworks_for_student) * 100, 2)
+    return 0.0
+
+def calculate_test_scores_percentage(student, batch, start_date, end_date) -> float:
+    """
+    Calculates the test scores percentage for a given student in a specific batch
+    within the specified date range.
+    The percentage is (Total marks student obtained) / (Total max marks of ALL tests in batch for the period).
+    """
+    # Get all tests conducted by this batch within the date range
+    relevant_tests_for_batch = Test.objects.filter(
+        batch=batch,
+        date__range=(start_date, end_date)
+    )
+
+    # Sum of max marks for ALL tests in this batch and date range
+    total_max_marks_all_batch_tests_agg = relevant_tests_for_batch.aggregate(
+        total=Coalesce(Sum('total_max_marks'), Value(0.0), output_field=FloatField())
+    )
+    total_max_marks_for_all_batch_tests = total_max_marks_all_batch_tests_agg['total']
+
+    # Sum of marks obtained by THIS student in these relevant tests
+    student_obtained_marks_agg = TestResult.objects.filter(
+        student=student,
+        test__in=relevant_tests_for_batch
+    ).aggregate(
+        total=Coalesce(Sum('total_marks_obtained'), Value(0.0), output_field=FloatField())
+    )
+    student_total_obtained_marks = student_obtained_marks_agg['total']
+
+    if total_max_marks_for_all_batch_tests > 0:
+        return round((student_total_obtained_marks / total_max_marks_for_all_batch_tests) * 100, 2)
+    return 0.0
+
+
+
+def generate_group_report_data_v2(request, start_date: datetime.date, end_date: datetime.date,):
+    """
+    Generates a group report for students detailing their performance in various batches
+    between a start date and an end date, using helper functions for calculations.
+
+    Args:
+        start_date_str: The start date for the report period in 'YYYY-MM-DD' format.
+        end_date_str: The end date for the report period in 'YYYY-MM-DD' format.
+
+    Returns:
+        A list of dictionaries, where each dictionary represents a student and
+        contains their performance data per batch.
+        Returns a dictionary with an "error" key if date parsing fails.
+    """
+    report_data = []
+
+    # Determine mentor from request if available
+    mentor = getattr(request.user, 'mentor_profile', None)
+
+
+    if request.user.is_superuser:
+        students = Student.objects.filter(
+            active=True,
+            mentorships__active=True
+        ).select_related('user').prefetch_related(
+            models.Prefetch(
+                'batches',
+                queryset=Batch.objects.order_by('class_name__name', 'subject__name', 'section__name')
+            )
+        ).order_by('user__last_name', 'user__first_name').distinct()
+    elif mentor:
+        students = Student.objects.filter(
+            active=True,
+            mentorships__active=True,
+            mentorships__mentor=mentor
+        ).select_related('user').prefetch_related(
+            models.Prefetch(
+                'batches',
+                queryset=Batch.objects.order_by('class_name__name', 'subject__name', 'section__name')
+            )
+        ).order_by('user__last_name', 'user__first_name').distinct()
+    else:
+        messages.error(request, "You are not authorized to view this page.")
+        return redirect('staff_dashboard')
+
+    for student in students:
+        student_info = {
+            'student_name': f"{student.user.first_name} {student.user.last_name}".strip() or student.user.phone,
+            'student_id': str(student.stu_id),
+            'student': student,
+            'batches_data': []
+        }
+
+        for batch in student.batches.all():
+            batch_name = str(batch)
+            
+            # Call helper functions
+            attendance_perc = calculate_attendance_percentage(student, batch, start_date, end_date)
+            homework_perc = calculate_homework_completion_percentage(student, batch, start_date, end_date)
+            test_scores_perc = calculate_test_scores_percentage(student, batch, start_date, end_date)
+
+            batch_data = {
+                'batch_name': batch_name,
+                'batch_id': batch.id,
+                'attendance': attendance_perc,
+                'homework': homework_perc,
+                'test_marks': test_scores_perc
+            }
+            
+            student_info['batches_data'].append(batch_data)
+
+        if student_info['batches_data']:
+            report_data.append(student_info)
+
+    return report_data
