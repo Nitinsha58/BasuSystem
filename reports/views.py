@@ -18,6 +18,7 @@ from registration.models import (
 from collections import defaultdict
 from django.db.models import Q
 from django.contrib import messages
+from django.db.models import Count
 
 from .utility import (
     get_combined_attendance,
@@ -270,3 +271,40 @@ def mentor_students(request):
         'end_date': end_date,
     })
 
+
+@login_required(login_url='login')
+def regular_absent_students(request):
+    start_date_str = request.GET.get('start_date')
+    n_days = request.GET.get('n_days', 2)  # default 3 days if not provided
+
+    try:
+        start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date() if start_date_str else date.today()
+        n_days = int(n_days)
+    except (ValueError, TypeError):
+        messages.error(request, "Invalid date or number of days.")
+        return redirect('some_dashboard_or_form_page')
+
+    end_date = start_date - timedelta(days=n_days - 1)
+    # date_range = [start_date - timedelta(days=i) for i in range(n_days)]
+
+    # Filter attendance marked as 'A' in this date range
+    absent_students = Attendance.objects.filter(
+        date__range=(end_date, start_date),
+        is_present=False,
+    ).values('student').annotate(
+        absent_count=Count('id')
+    ).filter(absent_count=n_days).values_list('student', flat=True)
+
+    students = Student.objects.filter(id__in=absent_students).select_related('user', 'class_enrolled')
+
+    # Group students class-wise
+    classwise_data = {}
+    for student in students:
+        class_name = student.class_enrolled.name if student.class_enrolled else 'Unknown'
+        classwise_data.setdefault(class_name, []).append(student)
+
+    return render(request, 'reports/consistent_absentees.html', {
+        'class_students': classwise_data,
+        'start_date': start_date,
+        'n_days': n_days,
+    })
