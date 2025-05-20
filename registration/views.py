@@ -629,7 +629,7 @@ def get_attendance(request, batch_id):
 
     # Generate a timeline of dates for the past 30 days
     today = datetime.now().date()
-    start_date = today - timedelta(days=45)
+    start_date = today - timedelta(days=90)
     dates = [start_date + timedelta(days=i) for i in range(45)]
 
     # Merge attendance data with the timeline and ensure all students are included
@@ -676,7 +676,7 @@ def get_homework(request, batch_id):
     # Generate a timeline of dates for the past 30 days
     today = datetime.now().date()
     start_date = today - timedelta(days=45)
-    dates = [start_date + timedelta(days=i) for i in range(45)]
+    dates = [start_date + timedelta(days=i) for i in range(90)]
 
     # Merge homework data with the timeline and ensure all students are included
     homework_timeline = []
