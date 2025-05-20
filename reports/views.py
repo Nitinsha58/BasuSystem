@@ -106,7 +106,8 @@ def student_report(request, stu_id):
     combined_homework = get_combined_homework(student, start_date, end_date)
     batchwise_homework = get_batchwise_homework(student, start_date, end_date)
     
-    
+    print("Combined Homework: ", combined_homework)
+    print("Batchwise Homework: ", batchwise_homework)
 
     calendar_data = get_monthly_calendar(student, start_date, end_date)
     return render(request, 'reports/student_report.html', {
@@ -291,6 +292,7 @@ def regular_absent_students(request):
     absent_students = Attendance.objects.filter(
         date__range=(end_date, start_date),
         is_present=False,
+        student__active=True,
     ).values('student').annotate(
         absent_count=Count('id')
     ).filter(absent_count=n_days).values_list('student', flat=True)

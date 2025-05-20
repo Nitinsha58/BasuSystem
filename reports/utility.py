@@ -66,7 +66,17 @@ def get_batchwise_attendance(student, start_date, end_date):
     return result
 
 def get_combined_homework(student, start_date, end_date):
-    homework_qs = Homework.objects.filter(student=student, date__range=(start_date, end_date))
+    # Exclude batches as in get_batchwise_homework
+    excluded_batches = student.batches.all().filter(
+        Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
+        Q(section__name='CBSE') &
+        Q(subject__name__in=['MATH', 'SCIENCE'])
+    )
+    homework_qs = Homework.objects.filter(
+        student=student,
+        date__range=(start_date, end_date)
+    ).exclude(batch__in=excluded_batches)
+
     total = homework_qs.count()
     completed = homework_qs.filter(status='Completed').count()
     partial = homework_qs.filter(status='Partial Done').count()
@@ -103,7 +113,6 @@ def get_monthly_calendar(student, start_date, end_date):
     monthly_data = []
 
     current = date(start_date.year, start_date.month, 1)
-    # last date in the the end_date month
     last_date = date(end_date.year, end_date.month, calendar.monthrange(end_date.year, end_date.month)[1])
 
     while current <= last_date:
@@ -117,43 +126,32 @@ def get_monthly_calendar(student, start_date, end_date):
 
         for day in range(1, total_days + 1):
             current_date = date(year, month, day)
-            if current_date < start_date or current_date > last_date:
-                if len(week) == 7:
-                    calendar_data.append(week)
-                    week = []
-                continue
-
-            if current_date > start_date and  current_date < end_date:
-                attendance = Attendance.objects.filter(student=student, date=current_date).first()
-                homework = Homework.objects.filter(student=student, date=current_date).first()
-            else:
-                attendance = None
-                homework = None
 
             attendance_status = None
-            if attendance:
-                attendance_status = 'Present' if attendance.is_present else 'Absent'
-                present_c += 1 if attendance.is_present else 0
-                absent_c += 1 if not attendance.is_present else 0   
-
-            # homework_status = homework.status if homework else None
-
+            if start_date <= current_date <= end_date:
+                attendance = Attendance.objects.filter(student=student, date=current_date).first()
+                if attendance:
+                    attendance_status = 'Present' if attendance.is_present else 'Absent'
+                    if attendance.is_present:
+                        present_c += 1
+                    else:
+                        absent_c += 1
+            # Fill the calendar day regardless of attendance
             week.append({
                 'date': current_date,
                 'attendance': attendance_status,
-                # 'homework': homework_status,
             })
 
             if len(week) == 7:
                 calendar_data.append(week)
                 week = []
-            
+
         if week:
             while len(week) < 7:
                 week.append(None)
             calendar_data.append(week)
 
-        if (len(calendar_data)) == 5:
+        if len(calendar_data) == 5:
             calendar_data.append([None] * 7)
 
         monthly_data.append({
@@ -165,7 +163,7 @@ def get_monthly_calendar(student, start_date, end_date):
             'year': year,
         })
 
-        # Move to the first of the next month
+        # Move to next month
         if month == 12:
             current = date(year + 1, 1, 1)
         else:
@@ -173,6 +171,63 @@ def get_monthly_calendar(student, start_date, end_date):
 
     return monthly_data
 
+def get_marks_percentage(student, start_date, end_date):
+    """
+    Calculates the marks percentage for a given student within the specified date range,
+    excluding batches as in get_batchwise_marks.
+    """
+    excluded_batches = student.batches.all().filter(
+        Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
+        Q(section__name='CBSE') &
+        Q(subject__name__in=['MATH', 'SCIENCE'])
+    )
+
+    test_results = TestResult.objects.filter(
+        student=student,
+        test__date__range=(start_date, end_date)
+    ).exclude(test__batch__in=excluded_batches)
+
+    total_max_marks = 0
+    total_obtained_marks = 0
+
+    for result in test_results:
+        total_max_marks += result.test.total_max_marks
+        total_obtained_marks += result.total_marks_obtained
+
+    if total_max_marks > 0:
+        return round((total_obtained_marks / total_max_marks) * 100, 2)
+    return 0.0
+
+def get_batchwise_marks(student, start_date, end_date):
+    """
+    Calculates the marks percentage for a given student in a specific batch
+    within the specified date range.
+    """
+    result = {}
+    for batch in student.batches.all().exclude(
+            Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
+            Q(section__name='CBSE') &
+            Q(subject__name__in=['MATH', 'SCIENCE'])
+        ):
+        test_results = TestResult.objects.filter(
+            student=student,
+            test__batch=batch,
+            test__date__range=(start_date, end_date)
+        )
+
+        total_max_marks = 0
+        total_obtained_marks = 0
+
+        for result in test_results:
+            total_max_marks += result.test.total_max_marks
+            total_obtained_marks += result.total_marks_obtained
+
+        if total_max_marks > 0:
+            result[batch] = round((total_obtained_marks / total_max_marks) * 100, 2)
+        else:
+            result[batch] = 0.0
+
+    return result
 
 def get_chapters_from_questions(test):
     questions = TestQuestion.objects.filter(test=test).order_by('chapter_no')
@@ -301,6 +356,7 @@ def calculate_test_scores_percentage(student, batch, start_date, end_date) -> fl
     if total_max_marks_for_all_batch_tests > 0:
         return round((student_total_obtained_marks / total_max_marks_for_all_batch_tests) * 100, 2)
     return 0.0
+
 
 
 

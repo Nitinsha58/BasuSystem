@@ -1322,6 +1322,160 @@ def transport_driver_list(request):
     })
 
 @login_required(login_url='login')
+def transport_driver_list(request):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
+
+    weekdays = list(Day.objects.order_by("id"))
+    total = len(weekdays)
+
+    index = int(request.GET.get("day", 0))
+    move = request.GET.get("move")
+
+    if move == "next" and index < total - 1:
+        index += 1
+    elif move == "prev" and index > 0:
+        index -= 1
+
+    current_day = weekdays[index]
+
+    # Load only students who have cab fees and are active
+    students = Student.objects.filter(
+        active=True,
+        fees__cab_fees__gt=0,
+        batches__days__name=current_day.name
+    ).prefetch_related(
+        'batches__days',
+        'batches',
+        'transport',
+        'transport__transport_person'
+    ).distinct()
+
+    grouped_transports = defaultdict(lambda: defaultdict(list))
+
+    seen_students = set()  # to avoid duplicate inclusion
+
+    for student in students:
+        if not student.transport or not student.transport.transport_person:
+            continue
+
+        # Get all batches on current_day
+        batches_today = [
+            batch for batch in student.batches.all()
+            if current_day in batch.days.all()
+        ]
+
+        if not batches_today:
+            continue
+
+        # Find the earliest batch time
+        earliest_batch = min(batches_today, key=lambda b: b.start_time)
+        time = earliest_batch.start_time
+        driver = student.transport.transport_person
+
+        # Use stu_id or student.pk to avoid duplicates
+        if student.pk not in seen_students:
+            grouped_transports[time][driver].append(student)
+            seen_students.add(student.pk)
+
+    # Sort students and timings
+    for time in grouped_transports:
+        for driver in grouped_transports[time]:
+            grouped_transports[time][driver].sort(key=lambda s: s.stu_id)
+
+    # Ensure timings are in ascending order
+    sorted_grouped = OrderedDict(sorted(grouped_transports.items()))
+
+    # Convert defaultdicts to normal nested dicts for template usage
+    for time in grouped_transports:
+        grouped_transports[time] = dict(grouped_transports[time])
+    grouped_transports = dict(grouped_transports)
+    sorted_grouped = dict(sorted(grouped_transports.items()))
+
+    return render(request, "registration/students_driver_timing.html", {
+        "current_day": current_day,
+        "day": index,
+        "grouped_transports": sorted_grouped,
+    })
+
+@login_required(login_url='login')
+def transport_student_list(request):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
+
+    weekdays = list(Day.objects.order_by("id"))
+    total = len(weekdays)
+
+    index = int(request.GET.get("day", 0))
+    move = request.GET.get("move")
+
+    if move == "next" and index < total - 1:
+        index += 1
+    elif move == "prev" and index > 0:
+        index -= 1
+
+    current_day = weekdays[index]
+
+    # Load only students who have cab fees and are active
+    students = Student.objects.filter(
+        active=True,
+        fees__cab_fees__gt=0,
+        batches__days__name=current_day.name
+    ).prefetch_related(
+        'batches__days',
+        'batches',
+        'transport',
+        'transport__transport_person'
+    ).distinct()
+
+    grouped_transports = defaultdict(lambda: defaultdict(list))
+
+    seen_students = set()  # to avoid duplicate inclusion
+
+    for student in students:
+        if not student.transport or not student.transport.transport_person:
+            continue
+
+        # Get all batches on current_day
+        batches_today = [
+            batch for batch in student.batches.all()
+            if current_day in batch.days.all()
+        ]
+
+        if not batches_today:
+            continue
+
+        # Find the earliest batch time
+        earliest_batch = min(batches_today, key=lambda b: b.start_time)
+        time = earliest_batch.start_time
+        driver = student.transport.transport_person
+
+        # Use stu_id or student.pk to avoid duplicates
+        if student.pk not in seen_students:
+            grouped_transports[time][driver].append(student)
+            seen_students.add(student.pk)
+
+    # Sort students and timings
+    for time in grouped_transports:
+        for driver in grouped_transports[time]:
+            grouped_transports[time][driver].sort(key=lambda s: s.stu_id)
+
+    # Ensure timings are in ascending order
+    sorted_grouped = OrderedDict(sorted(grouped_transports.items()))
+
+    # Convert defaultdicts to normal nested dicts for template usage
+    for time in grouped_transports:
+        grouped_transports[time] = dict(grouped_transports[time])
+    grouped_transports = dict(grouped_transports)
+    sorted_grouped = dict(sorted(grouped_transports.items()))
+
+    return render(request, "registration/students_driver_timing.html", {
+        "current_day": current_day,
+        "day": index,
+        "grouped_transports": sorted_grouped,
+    })
+
+@login_required(login_url='login')
 def assign_mentor(request):
     
     if request.method == 'POST':

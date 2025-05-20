@@ -439,7 +439,7 @@
         
         {% for batch, hw in batchwise_homework.items %}
             {% if hw.completed_percentage or hw.partial_done_percentage or hw.pending_percentage %} 
-            create_pie_chart('homeworkChart{{forloop.counter}}', ['Pending ({{hw.pending_percentage}})', 'Partial Done ({{hw.partial_done_percentage}})', 'Completed ({{hw.completed_percentage}})'], 'Homework Status', [{{combined_homework.pending_percentage}}, {{combined_homework.partial_done_percentage}}, {{combined_homework.completed_percentage}} ], ['#dc3545', '#17a2b8', '#28a745'], '{{batch}}')
+            create_pie_chart('homeworkChart{{forloop.counter}}', ['Pending ({{hw.pending_percentage}})', 'Partial Done ({{hw.partial_done_percentage}})', 'Completed ({{hw.completed_percentage}})'], 'Homework Status', [{{hw.pending_percentage}}, {{hw.partial_done_percentage}}, {{hw.completed_percentage}} ], ['#dc3545', '#17a2b8', '#28a745'], '{{batch}}')
             {% endif %}
         {% endfor %}
     });
