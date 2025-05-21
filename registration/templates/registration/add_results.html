@@ -70,6 +70,9 @@
                                 {% if test.objective and remark.name == 'MCQ' or test.objective and remark.name == 'Not Attempted' %}
                                 <option class="col col-sm-6" value="{{ remark.id }}"
                                     {% if remark == item.response.remark %} selected {% endif %}>{{ remark.name }}</option>
+                                {% elif not test.objective %}
+                                    <option class="col col-sm-6" value="{{ remark.id }}"
+                                    {% if remark == item.response.remark %} selected {% endif %}>{{ remark.name }}</option>
                                 {% endif %}
                                 {% endfor %}
                             </select>
@@ -109,7 +112,9 @@
                             <select class="form-select row row-cols-2" name="remark"  size="{% if test.objective %} 2 {% else %} {{ remarks.count }} {% endif %}" >
                                 {% for remark in remarks %}
                                 {% if test.objective and remark.name == 'MCQ' or test.objective and remark.name == 'Not Attempted' %}
-                                <option class="col col-sm-6" value="{{ remark.id }}">{{ remark.name }}</option>
+                                <option class="col col-sm-6" value="{{ remark.id }}" {% if remark.name == 'Not Attempted' %} selected {% endif %} >{{ remark.name }}</option>
+                                {% elif not test.objective %}
+                                    <option class="col col-sm-6" value="{{ remark.id }}">{{ remark.name }}</option>
                                 {% endif %}
                                 {% endfor %}
                             </select>
@@ -139,10 +144,13 @@
                         {% csrf_token %}
                         <div class="col-md-4 w-40">
                             <label for="remark" class="form-label">Remark</label>
-                            <select class="form-select row row-cols-2" name="remark"  size="{{remarks.count}}"
-                                >
+                            <select class="form-select row row-cols-2" name="remark"  size="{% if test.objective %} 2 {% else %} {{ remarks.count }} {% endif %}">
                                 {% for remark in remarks %}
-                                <option class="col col-sm-6"  value="{{remark.id}}">{{remark.name}}</option>
+                                {% if test.objective and remark.name == 'MCQ' or test.objective and remark.name == 'Not Attempted' %}
+                                <option class="col col-sm-6" value="{{ remark.id }}" {% if remark.name == 'Not Attempted' %} selected {% endif %} >{{ remark.name }}</option>
+                                {% elif not test.objective %}
+                                    <option class="col col-sm-6" value="{{ remark.id }}">{{ remark.name }}</option>
+                                {% endif %}
                                 {% endfor %}
                             </select>
                         </div>
