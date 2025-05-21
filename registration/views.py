@@ -845,6 +845,8 @@ def create_testpaper(request, batch_id, test_id):
         test_name = request.POST.get('test_name')
         total_marks = request.POST.get('total_marks')
         test_date = request.POST.get('date')
+        test.objective = request.POST.get('objective') == 'on'
+        test.negative_marking = request.POST.get('negative_marking') == 'on'
         test.date = test_date
         test.name = test_name
         if total_marks:

@@ -218,8 +218,8 @@ class Attendance(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    class Meta:
-        unique_together = ('student', 'batch', 'date')
+    # class Meta:
+    #     unique_together = ('student', 'batch', 'date')
 
     def __str__(self):
         return f"{self.student} - {self.created_at}: {'Present' if self.is_present else 'Absent'}"
@@ -239,8 +239,8 @@ class Homework(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    class Meta:
-        unique_together = ('student', 'batch', 'date')
+    # class Meta:
+    #     unique_together = ('student', 'batch', 'date')
 
     def __str__(self):
         return f"Homework for {self.student} - {self.status}"
@@ -252,6 +252,10 @@ class Test(models.Model):
     total_max_marks = models.FloatField(default=0)
     no_of_questions = models.IntegerField(default=0)
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name="test_paper")
+    
+    objective = models.BooleanField(default=False)
+    negative_marking = models.BooleanField(default=False)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
