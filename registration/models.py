@@ -254,7 +254,6 @@ class Test(models.Model):
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name="test_paper")
     
     objective = models.BooleanField(default=False)
-    negative_marking = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
