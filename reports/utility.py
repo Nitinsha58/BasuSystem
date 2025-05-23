@@ -86,6 +86,10 @@ def get_combined_homework(student, start_date, end_date):
         'completed_percentage': round((completed / total * 100) if total > 0 else 0, 1),
         'partial_done_percentage': round((partial / total * 100) if total > 0 else 0, 1),
         'pending_percentage': round((pending / total * 100) if total > 0 else 0, 1),
+        'completed_count': completed,
+        'partial_done_count': partial,
+        'pending_count': pending,
+        'total_count': total,
     }
 
 
@@ -105,6 +109,10 @@ def get_batchwise_homework(student, start_date, end_date):
             'completed_percentage': round((completed / total * 100) if total > 0 else 0, 1),
             'partial_done_percentage': round((partial / total * 100) if total > 0 else 0, 1),
             'pending_percentage': round((pending / total * 100) if total > 0 else 0, 1),
+            'completed_count': completed,
+            'partial_done_count': partial,
+            'pending_count': pending,
+            'total_count': total,
         }
     return result
 
