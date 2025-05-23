@@ -30,6 +30,9 @@ from .utility import (
     calculate_testwise_remarks,
     calculate_marks,
     generate_group_report_data_v2,
+
+    get_marks_percentage,
+    get_batchwise_marks,
 )
 
 @login_required(login_url='login')
@@ -105,7 +108,8 @@ def student_report(request, stu_id):
     batchwise_attendance = get_batchwise_attendance(student,start_date, end_date)
     combined_homework = get_combined_homework(student, start_date, end_date)
     batchwise_homework = get_batchwise_homework(student, start_date, end_date)
-    
+    combined_marks = get_marks_percentage(student, start_date, end_date)
+    batchwise_marks = get_batchwise_marks(student, start_date, end_date)
     print("Combined Homework: ", combined_homework)
     print("Batchwise Homework: ", batchwise_homework)
 
@@ -116,6 +120,9 @@ def student_report(request, stu_id):
         'batchwise_attendance': batchwise_attendance,
         'combined_homework': combined_homework,
         'batchwise_homework': batchwise_homework,
+        'combined_marks': combined_marks,
+        'batchwise_marks': batchwise_marks,
+
         'calendar_data': calendar_data,
         'start_date': start_date,
         'end_date': end_date,

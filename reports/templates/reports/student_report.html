@@ -41,7 +41,7 @@
         margin: 0 auto;
     }
 
-    .attendance, .homework {
+    .attendance, .homework, .test {
         display: flex;
         flex-wrap: wrap;
         /* justify-content: space-around; */
@@ -110,6 +110,21 @@
                     <div style="width: 200px;">
                         <canvas id="homeworkChart{{forloop.counter}}"></canvas>
                     </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+
+            <h3 class="">Test</h3>
+            <div class="test">
+                <div style="width: 200px;">
+                    <canvas id="testChart"></canvas>
+                </div>
+
+                {% for batch, test in batchwise_marks.items %}
+                {% if test.scored or test.deducted %}
+                <div style="width: 200px;">
+                    <canvas id="testChart{{forloop.counter}}"></canvas> 
+                </div>
                 {% endif %}
                 {% endfor %}
             </div>
@@ -442,6 +457,14 @@
             create_pie_chart('homeworkChart{{forloop.counter}}', ['Pending ({{hw.pending_percentage}})', 'Partial Done ({{hw.partial_done_percentage}})', 'Completed ({{hw.completed_percentage}})'], 'Homework Status', [{{hw.pending_percentage}}, {{hw.partial_done_percentage}}, {{hw.completed_percentage}} ], ['#dc3545', '#17a2b8', '#28a745'], '{{batch}}')
             {% endif %}
         {% endfor %}
+
+        create_pie_chart('testChart', ['Scored ({{combined_marks.scored}})', 'Deducted ({{combined_marks.deducted}})' ], 'Test Status', [{{combined_marks.scored}}, {{combined_marks.deducted}}], ['#28a745', '#dc3545',], 'Test Status')
+        {% for batch, test in batchwise_marks.items %}
+            {% if test.scored or test.deducted %}
+                create_pie_chart('testChart{{forloop.counter}}', ['Scored ({{test.scored}})', 'Deducted ({{test.deducted}})' ], 'Test Status', [{{test.scored}}, {{test.deducted}}], ['#28a745', '#dc3545',], '{{batch}}')
+            {% endif %}
+        {% endfor %}
+
     });
 </script>
 

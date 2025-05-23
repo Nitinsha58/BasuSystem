@@ -194,21 +194,30 @@ def get_marks_percentage(student, start_date, end_date):
         total_max_marks += result.test.total_max_marks
         total_obtained_marks += result.total_marks_obtained
 
-    if total_max_marks > 0:
-        return round((total_obtained_marks / total_max_marks) * 100, 2)
-    return 0.0
+        if total_max_marks > 0:
+            percentage_scored = round((total_obtained_marks / total_max_marks) * 100, 2)
+            percentage_deducted = 100 - percentage_scored
+        else:
+            percentage_scored = 0.0
+            percentage_deducted = 0.0
+
+        return {
+            'scored': percentage_scored,
+            'deducted': percentage_deducted,
+        }
 
 def get_batchwise_marks(student, start_date, end_date):
     """
-    Calculates the marks percentage for a given student in a specific batch
-    within the specified date range.
+    Calculates the marks percentage for a given student in each batch
+    within the specified date range, excluding specific batches.
     """
     result = {}
+
     for batch in student.batches.all().exclude(
-            Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
-            Q(section__name='CBSE') &
-            Q(subject__name__in=['MATH', 'SCIENCE'])
-        ):
+        Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
+        Q(section__name='CBSE') &
+        Q(subject__name__in=['MATH', 'SCIENCE'])
+    ):
         test_results = TestResult.objects.filter(
             student=student,
             test__batch=batch,
@@ -218,16 +227,23 @@ def get_batchwise_marks(student, start_date, end_date):
         total_max_marks = 0
         total_obtained_marks = 0
 
-        for result in test_results:
-            total_max_marks += result.test.total_max_marks
-            total_obtained_marks += result.total_marks_obtained
+        for test_result in test_results:  # renamed from `result` to `test_result`
+            total_max_marks += test_result.test.total_max_marks
+            total_obtained_marks += test_result.total_marks_obtained
 
         if total_max_marks > 0:
-            result[batch] = round((total_obtained_marks / total_max_marks) * 100, 2)
+            result[batch] = {
+                'scored': round((total_obtained_marks / total_max_marks) * 100, 2),
+                'deducted': round(100 - ((total_obtained_marks / total_max_marks) * 100), 2),
+            }
         else:
-            result[batch] = 0.0
+            result[batch] = {
+                'scored': 0.0,
+                'deducted': 0.0,
+            }
 
     return result
+
 
 def get_chapters_from_questions(test):
     questions = TestQuestion.objects.filter(test=test).order_by('chapter_no')
