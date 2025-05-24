@@ -110,8 +110,6 @@ def student_report(request, stu_id):
     batchwise_homework = get_batchwise_homework(student, start_date, end_date)
     combined_marks = get_marks_percentage(student, start_date, end_date)
     batchwise_marks = get_batchwise_marks(student, start_date, end_date)
-    print("Combined Homework: ", combined_homework)
-    print("Batchwise Homework: ", batchwise_homework)
 
     calendar_data = get_monthly_calendar(student, start_date, end_date)
     return render(request, 'reports/student_report.html', {
@@ -152,17 +150,32 @@ def student_personal_report(request, stu_id):
         today = date.today()
         start_date = today.replace(day=1)
         end_date = today
-    
-    batches = Batch.objects.filter(class_name=student.class_enrolled).order_by('-created_at')
+
+    # Use same batch filtering logic as student_report
+    batches = student.batches.all().filter(class_name=student.class_enrolled).exclude(
+        Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
+        Q(section__name='CBSE') &
+        Q(subject__name__in=['MATH', 'SCIENCE'])
+    ).order_by('-created_at')
     batch_wise_tests = {}
 
     for batch in batches:
-        tests = Test.objects.filter(batch=batch).order_by('-date')
+        tests = Test.objects.filter(batch=batch, date__range=(start_date, end_date)).order_by('-date')
         test_reports = []
 
         for test in tests:
             test_chapters = get_chapters_from_questions(test)
             responses = QuestionResponse.objects.filter(test=test, student=student).select_related('question', 'remark')
+            test_result = TestResult.objects.filter(test=test, student=student).first()
+
+            # If no responses and no result, mark as absent (same as student_report)
+            if not responses.exists() and not test_result:
+                test_reports.append({
+                    'test': test,
+                    'chapters': test_chapters,
+                    'absent': True,
+                })
+                continue
 
             chapter_remarks = calculate_testwise_remarks(responses, test_chapters)
             marks_data = calculate_marks(responses, test_chapters)
@@ -181,32 +194,32 @@ def student_personal_report(request, stu_id):
                     'max_marks': marks_data['total_max'],
                 },
                 'chapter_wise_test_remarks': chapter_remarks,
+                'absent': False,
             })
 
         batch_wise_tests[batch] = test_reports
 
     combined_attendance = get_combined_attendance(student, start_date, end_date)
-    batchwise_attendance = get_batchwise_attendance(student,start_date, end_date)
+    batchwise_attendance = get_batchwise_attendance(student, start_date, end_date)
     combined_homework = get_combined_homework(student, start_date, end_date)
     batchwise_homework = get_batchwise_homework(student, start_date, end_date)
-    calendar_data = get_monthly_calendar(student, start_date, end_date)
 
+    # Add marks summary as in student_report
+    combined_marks = get_marks_percentage(student, start_date, end_date)
+    batchwise_marks = get_batchwise_marks(student, start_date, end_date)
+
+    calendar_data = get_monthly_calendar(student, start_date, end_date)
     return render(request, 'reports/student_report.html', {
         'student': student,
         'combined_attendance': combined_attendance,
         'batchwise_attendance': batchwise_attendance,
         'combined_homework': combined_homework,
         'batchwise_homework': batchwise_homework,
-        # 'current_month': calendar_data['calendar'],
-        # 'current_month_name': calendar_data['month_name'],
-        # 'current_month_present_count': calendar_data['present_count'],
-        # 'current_month_total_count': calendar_data['present_count'] + calendar_data['absent_count'],
-        # 'current_month_percentage': calendar_data['percentage'],
+        'combined_marks': combined_marks,
+        'batchwise_marks': batchwise_marks,
         'calendar_data': calendar_data,
         'start_date': start_date,
         'end_date': end_date,
-        
-
         'batch_wise_tests': batch_wise_tests,
         'batches': batches,
     })

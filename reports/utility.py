@@ -179,10 +179,28 @@ def get_monthly_calendar(student, start_date, end_date):
 
     return monthly_data
 
+def is_absent(test, student):
+    """
+    Check if a student is absent for a given test.
+    """
+    # Check if test has any responses or results from other students
+    test_has_responses = QuestionResponse.objects.filter(test=test).exclude(student=student).exists()
+    test_has_results = TestResult.objects.filter(test=test).exclude(student=student).exists()
+
+    test_has_activity = test_has_responses or test_has_results
+
+    # Check if the student has participated
+    student_has_response = QuestionResponse.objects.filter(test=test, student=student).exists()
+    student_has_result = TestResult.objects.filter(test=test, student=student).exists()
+
+    if test_has_activity and not (student_has_response or student_has_result):
+        return True  # Student is absent
+    return False  # Student is present or test has no activity at all
+
 def get_marks_percentage(student, start_date, end_date):
     """
-    Calculates the marks percentage for a given student within the specified date range,
-    excluding batches as in get_batchwise_marks.
+    Calculates the marks percentage and test attendance for a given student
+    within the specified date range, excluding specific batches.
     """
     excluded_batches = student.batches.all().filter(
         Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
@@ -190,34 +208,47 @@ def get_marks_percentage(student, start_date, end_date):
         Q(subject__name__in=['MATH', 'SCIENCE'])
     )
 
-    test_results = TestResult.objects.filter(
-        student=student,
-        test__date__range=(start_date, end_date)
-    ).exclude(test__batch__in=excluded_batches)
+    tests = Test.objects.filter(
+        date__range=(start_date, end_date)
+        ,batch__in=student.batches.all()
+    ).exclude(batch__in=excluded_batches)
 
     total_max_marks = 0
     total_obtained_marks = 0
+    present_count = 0
+    absent_count = 0
 
-    for result in test_results:
-        total_max_marks += result.test.total_max_marks
-        total_obtained_marks += result.total_marks_obtained
 
-        if total_max_marks > 0:
-            percentage_scored = round((total_obtained_marks / total_max_marks) * 100, 2)
-            percentage_deducted = 100 - percentage_scored
-        else:
-            percentage_scored = 0.0
-            percentage_deducted = 0.0
+    for test in tests:
+        if is_absent(test, student):
+            absent_count += 1
+            continue
 
-        return {
-            'scored': percentage_scored,
-            'deducted': percentage_deducted,
-        }
+        present_count += 1
+
+        test_result = TestResult.objects.filter(test=test, student=student).first()
+        if test_result:
+            total_max_marks += test.total_max_marks
+            total_obtained_marks += test_result.total_marks_obtained
+
+    if total_max_marks > 0:
+        percentage_scored = round((total_obtained_marks / total_max_marks) * 100, 2)
+        percentage_deducted = round(100 - percentage_scored, 2)
+    else:
+        percentage_scored = 0.0
+        percentage_deducted = 0.0
+
+    return {
+        'scored': percentage_scored,
+        'deducted': percentage_deducted,
+        'present': present_count,
+        'absent': absent_count,
+    }
 
 def get_batchwise_marks(student, start_date, end_date):
     """
-    Calculates the marks percentage for a given student in each batch
-    within the specified date range, excluding specific batches.
+    Calculates the marks percentage and test attendance (present/absent count) 
+    for a given student in each batch within the specified date range.
     """
     result = {}
 
@@ -226,29 +257,42 @@ def get_batchwise_marks(student, start_date, end_date):
         Q(section__name='CBSE') &
         Q(subject__name__in=['MATH', 'SCIENCE'])
     ):
-        test_results = TestResult.objects.filter(
-            student=student,
-            test__batch=batch,
-            test__date__range=(start_date, end_date)
+        tests = Test.objects.filter(
+            batch=batch,
+            date__range=(start_date, end_date)
         )
 
         total_max_marks = 0
         total_obtained_marks = 0
+        present_count = 0
+        absent_count = 0
 
-        for test_result in test_results:  # renamed from `result` to `test_result`
-            total_max_marks += test_result.test.total_max_marks
-            total_obtained_marks += test_result.total_marks_obtained
+        for test in tests:
+            responses = QuestionResponse.objects.filter(test=test, student=student)
+            test_result = TestResult.objects.filter(test=test, student=student).first()
+
+            if is_absent(test, student):
+                absent_count += 1
+                continue
+
+            present_count += 1
+            if test_result:
+                total_max_marks += test.total_max_marks
+                total_obtained_marks += test_result.total_marks_obtained
 
         if total_max_marks > 0:
-            result[batch] = {
-                'scored': round((total_obtained_marks / total_max_marks) * 100, 2),
-                'deducted': round(100 - ((total_obtained_marks / total_max_marks) * 100), 2),
-            }
+            scored = round((total_obtained_marks / total_max_marks) * 100, 2)
+            deducted = round(100 - scored, 2)
         else:
-            result[batch] = {
-                'scored': 0.0,
-                'deducted': 0.0,
-            }
+            scored = 0.0
+            deducted = 0.0
+
+        result[batch] = {
+            'scored': round(scored, 2),
+            'deducted': round(deducted, 2),
+            'present': present_count or 0,
+            'total': absent_count or 0,
+        }
 
     return result
 
