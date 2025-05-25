@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block style %}
+<style>
+    p {
+        white-space: wrap;
+    }
+
+    @media print {
+        #toggle-btn {
+            display: none;
+        }
+
+        .navbar {
+            display: none;
+        }
+    }
+
+    .divider {
+        height: 100%;
+        width: 2px;
+        background-color: #000;
+        margin: 0 auto;
+    }
+
+    .attendance, .homework, .test {
+        display: flex;
+        flex-wrap: wrap;
+        /* justify-content: space-around; */
+        align-items: center;
+        gap: 20px;
+    }
+</style>
+
+{% endblock style %}
+
+{% block dashboard %}
+
+<div class="">
+
+    <div class="g-3 bg-light rounded pb-3" id="student_reg_doc">
+        <div class="bg-success-subtle mx-auto p-1 d-flex rounded" style="width: fit-content;">
+            <a href="" class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Weekly Report</a>
+            <a href="" class="text-decoration-none text-dark  p-1 px-2 rounded mx-2 my-1">Monthly Report</a>
+        </div>
+
+        <div class=" mt-4 donut_graph d-flex flex-column gap-4">
+            <div class="bg-success-subtle p-4 d-flex ">
+                <div class="">
+                    <h2></h1><a href="{% url 'teachers_list' %}" class="border-0 h2 nav-link">{{teacher.user.first_name}} {{teacher.user.last_name}}</a></h2>
+                    <p class="m-0 mb-1">{{ batches.all|join:", " }}</p>
+                </div>
+                <div class="ms-4">
+                    <form method="get" class="rounded p-2 pb-3 d-flex gap-2 align-items-end">
+                        <div class="">
+                            <label for="start_date" class="form-label">Start Date: {{ start_date|date:'d M' }}</label>
+                            <input type="date" name="start_date" id="start_date" value="{{start_date|date:'Y-m-d'}}" class="form-control" required>
+                        </div>
+                        
+                        <div class="">
+                            <label for="end_date" class="form-label">End Date: {{ end_date|date:'d M' }}</label>
+                            <input type="date" name="end_date" id="end_date" value="{{end_date|date:'Y-m-d'}}" class="form-control" required>
+                        </div>
+                        <button style="height: fit-content;" class="px-2 mt-2 btn btn-warning" type="submit">Filter</button>
+                      </form>
+                      
+                </div>
+            </div>
+
+            <h3 class="">Attendance</h3>
+            <div class="attendance">
+                <div style="width: 200px;">
+                    <canvas id="attendanceChart"></canvas>
+                </div>
+                
+                {% for batch, atten in batchwise_attendance.items %}
+                {% if atten.present_percentage or atten.absent_percentage %}
+                <div style="width: 200px;">
+                    <canvas id="attendanceChart{{forloop.counter}}"></canvas>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            <h3 class="">Homework</h3>
+            <div class="homework">
+                <div style="width: 200px;">
+                    <canvas id="homeworkChart"></canvas>
+                </div>
+
+                {% for batch, hw in batchwise_homework.items %}
+                {% if hw.completed_percentage or hw.partial_done_percentage or hw.pending_percentage %} 
+                    <div style="width: 200px;">
+                        <canvas id="homeworkChart{{forloop.counter}}"></canvas>
+                    </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+
+            <h3 class="">Test</h3>
+            <div class="test">
+                <div style="width: 200px;">
+                    <canvas id="testChart"></canvas>
+                </div>
+
+                {% for batch, test in batchwise_marks.items %}
+                {% if test.scored or test.deducted %}
+                <div style="width: 200px;">
+                    <canvas id="testChart{{forloop.counter}}"></canvas> 
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+<script>
+
+    create_pie_chart = (id, labels_list, dataset_label, dataset_data_points, bg_dataset_data_points, title_text = "Demo Chart") => {
+        var ctx1 = document.getElementById(id).getContext('2d');
+        var attendanceChart = new Chart(ctx1, {
+            type: 'pie',
+            data: {
+                labels: labels_list,
+                datasets: [{
+                    label: dataset_label,
+                    data: dataset_data_points, 
+                    backgroundColor: bg_dataset_data_points,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12, 
+                            boxHeight: 12,
+                            font: {
+                                size: 10,
+                            }
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: title_text
+                    }
+                }
+            }
+        });
+
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+        create_pie_chart('attendanceChart', ['present ({{combined_attendance.present_count}})', 'Absent ({{combined_attendance.absent_count}})'], 'Attendance', [{{combined_attendance.present_percentage}}, {{combined_attendance.absent_percentage}}], ['#28a745', '#dc3545'], 'Overall Attendance - {{combined_attendance.present_percentage}}%')
+        {% for batch, atten in batchwise_attendance.items %}
+            {% if atten.present_percentage or atten.absent_percentage %}
+                create_pie_chart('attendanceChart{{forloop.counter}}', ['present ({{atten.present_count}})', 'Absent ({{atten.absent_count}})'], 'Attendance', [{{atten.present_percentage}}, {{atten.absent_percentage}}], ['#28a745', '#dc3545'], '{{batch}} - {{atten.present_percentage}}%')   
+            {% endif %}
+        {% endfor %}
+        
+        create_pie_chart('homeworkChart', ['Pending ({{combined_homework.pending_count}})', 'Partial Done ({{combined_homework.partial_done_count}})', 'Completed ({{combined_homework.completed_count}})'], 'Homework Status', [{{combined_homework.pending_percentage}}, {{combined_homework.partial_done_percentage}}, {{combined_homework.completed_percentage}} ], ['#dc3545', '#17a2b8', '#28a745'], 'Overall Homework Status')
+        
+        {% for batch, hw in batchwise_homework.items %}
+            {% if hw.completed_percentage or hw.partial_done_percentage or hw.pending_percentage %} 
+            create_pie_chart('homeworkChart{{forloop.counter}}', ['Pending ({{hw.pending_count}})', 'Partial Done ({{hw.partial_done_count}})', 'Completed ({{hw.completed_count}})'], 'Homework Status', [{{hw.pending_percentage}}, {{hw.partial_done_percentage}}, {{hw.completed_percentage}} ], ['#dc3545', '#17a2b8', '#28a745'], '{{batch}}')
+            {% endif %}
+        {% endfor %}
+
+        create_pie_chart('testChart', ['Scored ({{combined_marks.scored}})', 'Deducted ({{combined_marks.deducted}})', 'Present ({{combined_marks.present}})', 'Absent ({{combined_marks.absent}})', ], 'Test Status', [{{combined_marks.scored}}, {{combined_marks.deducted}}, 0, 0], ['#28a745', '#dc3545','#28a745','#dc3545'], 'Test Status')
+        {% for batch, test in batchwise_marks.items %}
+            {% if test.scored or test.deducted %}
+                create_pie_chart('testChart{{forloop.counter}}', ['Scored ({{test.scored}})', 'Deducted ({{test.deducted}})','Present ({{test.present}})', 'Absent ({{test.absent}})', ], 'Test Status', [{{test.scored}}, {{test.deducted}}, 0, 0], ['#28a745', '#dc3545','#28a745','#dc3545',], '{{batch}}')
+            {% endif %}
+        {% endfor %}
+
+    });
+</script>
+
+
+
+<script>
+    // Save date range to localStorage when form is submitted
+    document.querySelector("form").addEventListener("submit", function () {
+      const start = document.getElementById("start_date").value;
+      const end = document.getElementById("end_date").value;
+      localStorage.setItem("start_date", start);
+      localStorage.setItem("end_date", end);
+    });
+  
+    // On page load, set input values from localStorage if present
+    window.addEventListener("DOMContentLoaded", function () {
+      const start = localStorage.getItem("start_date");
+      const end = localStorage.getItem("end_date");
+  
+      if (start) document.getElementById("start_date").value = start;
+      if (end) document.getElementById("end_date").value = end;
+    });
+  </script>
+  
+
+{% endblock dashboard %}

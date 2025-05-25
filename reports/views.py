@@ -13,7 +13,8 @@ from registration.models import (
     Test,
     TestResult,
     Mentor,
-    Mentorship
+    Mentorship,
+    Teacher
     )
 from collections import defaultdict
 from django.db.models import Q
@@ -33,6 +34,15 @@ from .utility import (
 
     get_marks_percentage,
     get_batchwise_marks,
+)
+
+from .teachers_utility import (
+    get_teacher_attendance_performance,
+    get_teacher_batchwise_attendance_performance,
+    get_teacher_combined_homework_performance,
+    get_teacher_batchwise_homework_performance,
+    get_teacher_marks_percentage,
+    get_teacher_batchwise_marks_performance
 )
 
 @login_required(login_url='login')
@@ -329,4 +339,61 @@ def regular_absent_students(request):
         'class_students': classwise_data,
         'start_date': start_date,
         'n_days': n_days,
+    })
+
+
+@login_required(login_url='login')
+def teachers_list(request):
+    teachers = Teacher.objects.all().order_by('user__first_name', 'user__last_name')
+    
+    return render(request, 'reports/teachers_list.html', {
+        'teachers': teachers,
+    })
+
+@login_required(login_url='login')
+def teacher_report(request, teacher_id):
+    teacher = Teacher.objects.filter(id=teacher_id).first()
+    if not teacher:
+        messages.error(request, "Invalid Teacher")
+        return redirect('teachers_list')
+
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+
+    if start_date_str and end_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+        except ValueError:
+            messages.error(request, "Invalid date format")
+            return redirect('teacher_report', teacher_id=teacher_id)
+    else:
+        today = date.today()
+        start_date = today.replace(day=1)
+        end_date = today
+
+    combined_attendance = get_teacher_attendance_performance(teacher, start_date, end_date)
+    batchwise_attendance = get_teacher_batchwise_attendance_performance(teacher,start_date, end_date)
+    combined_homework = get_teacher_combined_homework_performance(teacher, start_date, end_date)
+    batchwise_homework = get_teacher_batchwise_homework_performance(teacher, start_date, end_date)
+    combined_marks = get_teacher_marks_percentage(teacher, start_date, end_date)
+    batchwise_marks = get_teacher_batchwise_marks_performance(teacher, start_date, end_date)
+
+    return render(request, 'reports/teacher_report.html', {
+        'teacher': teacher,
+        'start_date': start_date,
+        'end_date': end_date,
+
+        'batches': teacher.batches.all().exclude(
+            Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
+            Q(section__name='CBSE') &
+            Q(subject__name__in=['MATH', 'SCIENCE'])
+        ),
+
+        'combined_attendance': combined_attendance,
+        'batchwise_attendance': batchwise_attendance,
+        'combined_homework': combined_homework,
+        'batchwise_homework': batchwise_homework,
+        'combined_marks': combined_marks,
+        'batchwise_marks': batchwise_marks,
     })

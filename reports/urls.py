@@ -5,6 +5,10 @@ from .views import (
     mentor_students,
     student_personal_report,
     regular_absent_students,
+
+    # Teachers Reports
+    teachers_list,
+    teacher_report,
 )
 
 urlpatterns = [
@@ -13,4 +17,8 @@ urlpatterns = [
     path('batchwise_students/', batchwise_students, name='batchwise_students'),
     path('mentor_students/', mentor_students, name='mentor_students'),
     path('regular_absent_students/', regular_absent_students, name='regular_absent_students'),
+
+    # Teachers Reports
+    path('teachers_list/', teachers_list, name='teachers_list'),
+    path('teacher_report/<int:teacher_id>/', teacher_report, name='teacher_report'),
 ]
