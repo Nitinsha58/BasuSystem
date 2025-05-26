@@ -29,7 +29,17 @@ from django.shortcuts import render, redirect
 
 
 def get_combined_attendance(student, start_date, end_date):
-    attendance_qs = Attendance.objects.filter(student=student, date__range=(start_date, end_date))
+    excluded_batches = student.batches.all().filter(
+        Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
+        Q(section__name='CBSE') &
+        Q(subject__name__in=['MATH', 'SCIENCE'])
+    )
+
+    attendance_qs = Attendance.objects.filter(
+        student=student,
+        date__range=(start_date, end_date),
+        batch__in=student.batches.all()
+    ).exclude(batch__in=excluded_batches)
 
     total_present = attendance_qs.filter(is_present=True).count()
     total_absent = attendance_qs.filter(is_present=False).count()
@@ -74,7 +84,8 @@ def get_combined_homework(student, start_date, end_date):
     )
     homework_qs = Homework.objects.filter(
         student=student,
-        date__range=(start_date, end_date)
+        date__range=(start_date, end_date),
+        batch__in=student.batches.all()
     ).exclude(batch__in=excluded_batches)
 
     total = homework_qs.count()
