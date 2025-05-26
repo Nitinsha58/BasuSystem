@@ -19,7 +19,8 @@ from .models import (
     Mentorship,
     MentorReview,
     TransportMode,
-    TransportPerson
+    TransportPerson,
+    ReportPeriod
     )
 from .forms import TeacherForm, MentorForm
 import csv
@@ -107,6 +108,12 @@ class MentorAdmin(admin.ModelAdmin):
     list_display = ['user', 'user__first_name', 'user__last_name', 'created_at']
 
 
+class ReportPeriodAdmin(admin.ModelAdmin):
+    list_display = ['name', 'start_date', 'end_date']
+    search_fields = ['name']
+    ordering = ['start_date']
+
+
 admin.site.register(Student, StudentAdmin)
 admin.site.register(ParentDetails)
 admin.site.register(FeeDetails)
@@ -127,4 +134,5 @@ admin.site.register(Mentorship)
 admin.site.register(MentorReview)
 admin.site.register(TransportMode)
 admin.site.register(TransportPerson)
+admin.site.register(ReportPeriod, ReportPeriodAdmin)
 

@@ -6,6 +6,14 @@ from django.db.models import Max
 from center.models import ClassName, Subject, Section
 from user.models import BaseUser
 
+class ReportPeriod(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    start_date = models.DateField()
+    end_date = models.DateField()
+
+    def __str__(self):
+        return f"({self.start_date} - {self.end_date})"
+
 class Day(models.Model):
     name = models.CharField(max_length=20, unique=True)
 

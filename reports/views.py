@@ -14,7 +14,8 @@ from registration.models import (
     TestResult,
     Mentor,
     Mentorship,
-    Teacher
+    Teacher,
+    ReportPeriod
     )
 from collections import defaultdict
 from django.db.models import Q
@@ -63,9 +64,14 @@ def student_report(request, stu_id):
             messages.error(request, "Invalid date format")
             return redirect('student_report', stu_id=stu_id)
     else:
-        today = date.today()
-        start_date = today.replace(day=1)
-        end_date = today
+        period = ReportPeriod.objects.all().first()
+        if period:
+            start_date = period.start_date
+            end_date = period.end_date
+        else:
+            today = date.today()
+            start_date = today.replace(day=1)
+            end_date = today
     
     batches = student.batches.all().filter(class_name=student.class_enrolled).exclude(
             Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
@@ -157,9 +163,14 @@ def student_personal_report(request, stu_id):
             messages.error(request, "Invalid date format")
             return redirect('student_personal_report', stu_id=stu_id)
     else:
-        today = date.today()
-        start_date = today.replace(day=1)
-        end_date = today
+        period = ReportPeriod.objects.all().first()
+        if period:
+            start_date = period.start_date
+            end_date = period.end_date
+        else:
+            today = date.today()
+            start_date = today.replace(day=1)
+            end_date = today
 
     # Use same batch filtering logic as student_report
     batches = student.batches.all().filter(class_name=student.class_enrolled).exclude(
@@ -265,9 +276,14 @@ def mentor_students(request):
             messages.error(request, "Invalid date format")
             return redirect('mentor_students')
     else:
-        today = date.today()
-        start_date = today.replace(day=1)
-        end_date = today
+        period = ReportPeriod.objects.all().first()
+        if period:
+            start_date = period.start_date
+            end_date = period.end_date
+        else:
+            today = date.today()
+            start_date = today.replace(day=1)
+            end_date = today
 
     mentor = getattr(request.user, 'mentor_profile', None)
     
@@ -368,9 +384,14 @@ def teacher_report(request, teacher_id):
             messages.error(request, "Invalid date format")
             return redirect('teacher_report', teacher_id=teacher_id)
     else:
-        today = date.today()
-        start_date = today.replace(day=1)
-        end_date = today
+        period = ReportPeriod.objects.all().first()
+        if period:
+            start_date = period.start_date
+            end_date = period.end_date
+        else:
+            today = date.today()
+            start_date = today.replace(day=1)
+            end_date = today
 
     combined_attendance = get_teacher_attendance_performance(teacher, start_date, end_date)
     batchwise_attendance = get_teacher_batchwise_attendance_performance(teacher,start_date, end_date)
