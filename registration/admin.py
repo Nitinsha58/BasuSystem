@@ -17,10 +17,13 @@ from .models import (
     Day,
     Mentor,
     Mentorship,
-    MentorReview,
     TransportMode,
     TransportPerson,
-    ReportPeriod
+    ReportPeriod,
+
+    MentorRemark,
+    Action,
+    ActionSuggested
     )
 from .forms import TeacherForm, MentorForm
 import csv
@@ -113,6 +116,22 @@ class ReportPeriodAdmin(admin.ModelAdmin):
     search_fields = ['name']
     ordering = ['start_date']
 
+class MentorRemarkAdmin(admin.ModelAdmin):
+    list_display = ['mentor', 'student', 'mentor_remark', 'created_at']
+    search_fields = ['mentor__user__first_name', 'mentor__user__last_name', 'student__user__first_name', 'student__user__last_name']
+    list_filter = ['mentor', 'student']
+    ordering = ['created_at']
+
+class ActionAdmin(admin.ModelAdmin):
+    list_display = ['name', 'created_at']
+    search_fields = ['name']
+    ordering = ['created_at']
+
+class ActionSuggestedAdmin(admin.ModelAdmin):
+    list_display = ['student', 'batch', 'created_at']
+    list_filter = ['action']
+    ordering = ['created_at']
+
 
 admin.site.register(Student, StudentAdmin)
 admin.site.register(ParentDetails)
@@ -131,8 +150,10 @@ admin.site.register(RemarkCount)
 admin.site.register(Day)
 admin.site.register(Mentor, MentorAdmin)
 admin.site.register(Mentorship)
-admin.site.register(MentorReview)
 admin.site.register(TransportMode)
 admin.site.register(TransportPerson)
 admin.site.register(ReportPeriod, ReportPeriodAdmin)
 
+admin.site.register(MentorRemark, MentorRemarkAdmin)
+admin.site.register(Action, ActionAdmin)
+admin.site.register(ActionSuggested, ActionSuggestedAdmin)

@@ -9,6 +9,7 @@ from .views import (
     # Teachers Reports
     teachers_list,
     teacher_report,
+    mentor_remarks,
 )
 
 urlpatterns = [
@@ -21,4 +22,6 @@ urlpatterns = [
     # Teachers Reports
     path('teachers_list/', teachers_list, name='teachers_list'),
     path('teacher_report/<int:teacher_id>/', teacher_report, name='teacher_report'),
+
+    path('mentor_remarks/<int:mentor_id>/<uuid:student_id>/', mentor_remarks, name='mentor_remarks'),
 ]

@@ -15,7 +15,10 @@ from registration.models import (
     Mentor,
     Mentorship,
     Teacher,
-    ReportPeriod
+    ReportPeriod,
+
+    MentorRemark,
+    Action, ActionSuggested
     )
 from collections import defaultdict
 from django.db.models import Q
@@ -417,4 +420,127 @@ def teacher_report(request, teacher_id):
         'batchwise_homework': batchwise_homework,
         'combined_marks': combined_marks,
         'batchwise_marks': batchwise_marks,
+    })
+
+@login_required(login_url='login')
+def mentor_remarks(request, mentor_id, student_id):
+    mentor = Mentor.objects.filter(id=mentor_id).first()
+    student = Student.objects.filter(stu_id=student_id).first()
+
+    if not mentor or not student:
+        messages.error(request, "Invalid Mentor or Student")
+        return redirect('mentor_students')
+
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+
+    if start_date and end_date:
+        try:
+            start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+        except ValueError:
+            messages.error(request, "Invalid date format")
+            return redirect('mentor_students')
+    else:
+        period = ReportPeriod.objects.all().first()
+        if period:
+            start_date = period.start_date
+            end_date = period.end_date
+        else:
+            today = date.today()
+            start_date = today.replace(day=1)
+            end_date = today
+
+    # check if there exists MentorRemark with this mentor student and date range
+    remark = MentorRemark.objects.filter(
+        mentor=mentor,
+        student=student,
+        start_date = start_date,
+        end_date = end_date
+    ).order_by('-start_date').first()
+
+    if remark:
+        if request.method == 'POST':
+            mentor_remark = request.POST.get('mentor_remark')
+            parent_remark = request.POST.get('parent_remark')
+
+
+            remark.mentor_remark = mentor_remark
+            remark.parent_remark = parent_remark
+            remark.save()
+
+            # Update ActionSuggested for each batch
+            for batch in student.batches.all():
+                action_ids = request.POST.getlist(f'actions_{batch.id}')
+                if action_ids:
+                    actions = Action.objects.filter(id__in=action_ids)
+                    action_suggested, created = ActionSuggested.objects.get_or_create(
+                        student=student,
+                        batch=batch,
+                        mentor_remark=remark,
+                        defaults={}
+                    )
+                    action_suggested.action.set(actions)
+                    action_suggested.save()
+                else:
+                    # If no actions selected, remove existing ActionSuggested for this batch and remark
+                    ActionSuggested.objects.filter(student=student, batch=batch, mentor_remark=remark).delete()
+
+            messages.success(request, "Remark updated successfully.")
+            return redirect('mentor_remarks', mentor_id=mentor.id, student_id=student.stu_id)
+
+        return render(request, 'reports/mentor_remarks.html', {
+            'mentor': mentor,
+            'student': student,
+            'remark': remark,
+            'actions': Action.objects.all(),
+            'start_date': start_date,
+            'end_date': end_date,
+        })
+
+
+    if request.method == 'POST':
+        mentor_remark = request.POST.get('mentor_remark')
+        parent_remark = request.POST.get('parent_remark')
+
+        if not mentor_remark:
+            messages.error(request, "mentor remark is required.")
+            return redirect('mentor_remarks', mentor_id=mentor.id, student_id=student.stu_id)
+
+        remark = MentorRemark.objects.create(
+            mentor=mentor,
+            student=student,
+            start_date=start_date,
+            end_date=end_date,
+            mentor_remark=mentor_remark,
+            parent_remark=parent_remark
+        )
+
+        remark.save()
+
+        # Add ActionSuggested for each batch
+        for batch in student.batches.all():
+            action_ids = request.POST.getlist(f'actions_{batch.id}')
+            if action_ids:
+                actions = Action.objects.filter(id__in=action_ids)
+                action_suggested, created = ActionSuggested.objects.get_or_create(
+                    student=student,
+                    batch=batch,
+                    mentor_remark=remark,
+                    defaults={}
+                )
+                action_suggested.action.set(actions)
+                action_suggested.save()
+
+        messages.success(request, "Remark added successfully.")
+        return redirect('mentor_remarks', mentor_id=mentor.id, student_id=student.stu_id)
+
+    # If GET request, render the form with existing remark
+    return render(request, 'reports/mentor_remarks.html', {
+        'mentor': mentor,
+        'student': student,
+        'remark': remark,
+        'start_date': start_date,
+        'end_date': end_date,
+        'actions': Action.objects.all(),
     })

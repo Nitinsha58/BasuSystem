@@ -407,16 +407,46 @@ class Mentorship(models.Model):
         return f"{self.mentor.user.first_name} - {self.student.user.first_name} ({'Active' if self.active else 'Inactive'})"
 
 
-class MentorReview(models.Model):
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="mentor_reviews")
-    mentor = models.ForeignKey(Mentor, on_delete=models.CASCADE, related_name="reviews")
-    batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name="mentor_reviews", null=True, blank=True)
-    review = models.TextField(null=True, blank=True)
-    mentor_remark = models.TextField(null=True, blank=True)
+class MentorRemark(models.Model):
+    mentor = models.ForeignKey(Mentor, on_delete=models.CASCADE, related_name="remarks")
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="mentor_remarks")
+    mentor_remark = models.TextField()
     parent_remark = models.TextField(blank=True, null=True)
-
+    start_date = models.DateField()
+    end_date = models.DateField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.student.user.first_name} - {self.mentor.user.first_name} ({self.batch})"
+        return f"{self.mentor.user.first_name} - {self.student.user.first_name} ({self.start_date})"
+    
+    class Meta:
+        unique_together = ('mentor', 'student', 'start_date', 'end_date')
+
+    
+class Action(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name_plural = "Actions"
+
+class ActionSuggested(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="action_suggestions")
+    action = models.ManyToManyField(Action, related_name="action_suggestions")
+    batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name="action_suggestions")
+    mentor_remark = models.ForeignKey(MentorRemark, on_delete=models.CASCADE, related_name="action_suggestions", null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        actions = ", ".join([a.name for a in self.action.all()])
+        return f"{self.student.user.first_name} - {actions} ({self.batch})"
+
+    class Meta:
+        # unique_together cannot include ManyToMany fields like 'action'
+        unique_together = ('student', 'batch', 'mentor_remark')

@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% load center_filters %}
+{% load static %}
+
+{% block dashboard %}
+<div class="container-sm p-4 ">
+    <div class="my-4 mt-2 g-3 bg-light rounded p-2 pb-3">
+        <div class="">
+            <p class="border-0 h2">{{student.user.first_name}} {{student.user.last_name}}'s Remark</p>
+            <p class="m-0 mb-1">{{student.class_enrolled}} - {{ student.subjects.all|join:", " }}</p>
+        </div>
+    </div>
+
+    {% if remark %}
+    <form class="g-3 bg-light rounded p-2 pb-3" method="post" action="{% url 'mentor_remarks' mentor.id student.stu_id %}?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}">
+        {% csrf_token %}
+
+        <div class="row justify-content-evenly mt-3">
+            <div class="col-md-3">
+                <label for="mentor_remark" class="form-label">Mentor Remarks</label>
+                <textarea class="form-control" name="mentor_remark" id="mentor_remark">{{remark.mentor_remark}}</textarea>
+            </div>
+
+            <div class="col-md-3">
+                <label for="parent_remark" class="form-label">Parent Remarks</label>
+                <textarea class="form-control" name="parent_remark" id="parent_remark">{{remark.parent_remark}}</textarea>
+            </div>
+        </div>
+
+        <div class="row justify-content-evenly mt-3">
+            {% for batch in student.batches.all %}
+            {% with suggestion=remark.action_suggestions.all|get_suggestion:batch %}
+                <div class="col-md-3">
+                <label for="actions_{{ batch.id }}" class="form-label">{{ batch }}</label>
+                <select class="form-select" name="actions_{{ batch.id }}" multiple id="actions_{{ batch.id }}">
+                    {% for action in actions %}
+                    <option value="{{ action.id }}" 
+                        {% if suggestion and action in suggestion.action.all %}selected{% endif %}>
+                        {{ action.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                </div>
+            {% endwith %}
+            {% endfor %}
+
+        </div>
+
+        <div class="row justify-content-evenly mt-3">
+            <div class="col-md-3">
+            </div>
+
+            <div class="col-md-3 mt-4">
+                <button class="btn btn-warning w-100" type="submit">Update Remarks</button>
+            </div>
+            <div class="col-md-3">
+            </div>
+        </div>
+    </form>
+
+    {% else %}
+    <form class="g-3 bg-light rounded p-2 pb-3" method="post" action="{% url 'mentor_remarks' mentor.id student.stu_id %}?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}">        
+        {% csrf_token %}
+
+        <div class="row justify-content-evenly mt-3">
+            <div class="col-md-3">
+                <label for="mentor_remark" class="form-label">Mentor Remarks</label>
+                <textarea class="form-control" name="mentor_remark" id="mentor_remark"></textarea>
+            </div>
+
+            <div class="col-md-3">
+                <label for="parent_remark" class="form-label">Parent Remarks</label>
+                <textarea class="form-control" name="parent_remark" id="parent_remark"></textarea>
+            </div>
+        </div>
+
+        <div class="row justify-content-evenly mt-3">
+            {% for batch in student.batches.all %}
+            <div class="col-md-3">
+                <label for="actions_{{batch.id}}" class="form-label">{{batch}}</label>
+                <select class="form-select" name="actions_{{batch.id}}" multiple id="actions_{{batch.id}}">
+                    {% for action in actions %}
+                    <option value="{{action.id}}" {% if action in remark.action_suggestions.action.all %} selected {% endif %}>{{action.name}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endfor %}
+        </div>
+
+
+
+
+        <div class="row justify-content-evenly mt-3">
+            <div class="col-md-3">
+            </div>
+
+            <div class="col-md-3 mt-4">
+                <button class="btn btn-warning w-100" type="submit">Create Student</button>
+            </div>
+            <div class="col-md-3">
+            </div>
+        </div>
+    </form>
+    {% endif %}
+
+</div>
+
+<script>
+    document.getElementById('doj').valueAsDate = new Date();
+
+    const input = document.getElementById('phone');
+    const aadhar = document.getElementById('aadhar_card_number')
+
+    input.addEventListener("input", function () {
+        this.value = this.value.replace(/\D/g, "").slice(0, 10); // Remove non-digits and limit to 10
+    });
+    aadhar.addEventListener("input", function () {
+        this.value = this.value.replace(/\D/g, "").slice(0, 12); // Remove non-digits and limit to 10
+    });
+</script>
+
+{% endblock dashboard %}

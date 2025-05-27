@@ -55,6 +55,7 @@
         <thead class="table-dark">
           <tr>
             <th scope="col">Student</th>
+            <th scope="col">Remarks</th>
             <th scope="col">Batch</th>
             <th scope="col">Attendance</th>
             <th scope="col">Homework</th>
@@ -71,6 +72,7 @@
             {% else %}
             <th scope="row" rowspan="{{ student.batches_data.count }}"></th>
             {% endif %}
+            <td><a href="{% url 'mentor_remarks' student.student.active_mentorship.mentor.id student.student.stu_id %}" class="btn btn-primary">Remark</a></td>
             <td>{{ batch.batch_name }}</td>
             <td>{{ batch.attendance }}</td>
             <td>{{ batch.homework }}</td>
