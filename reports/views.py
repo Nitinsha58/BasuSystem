@@ -453,7 +453,11 @@ def mentor_remarks(request, mentor_id, student_id):
             end_date = today
 
     stu_performance = generate_single_student_report_data(student, start_date, end_date)
-
+    batches = student.batches.all().filter(class_name=student.class_enrolled).exclude(
+        Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
+        Q(section__name='CBSE') &
+        Q(subject__name__in=['MATH', 'SCIENCE'])
+    ).order_by('-created_at')
     remark = MentorRemark.objects.filter(
         mentor=mentor,
         student=student,
@@ -499,6 +503,7 @@ def mentor_remarks(request, mentor_id, student_id):
             'start_date': start_date,
             'end_date': end_date,
             'stu_performance': stu_performance,
+            'batches': batches,
         })
 
 
@@ -547,4 +552,5 @@ def mentor_remarks(request, mentor_id, student_id):
         'end_date': end_date,
         'actions': Action.objects.all(),
         'stu_performance': stu_performance,
+        'batches': batches,
     })
