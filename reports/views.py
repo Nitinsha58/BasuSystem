@@ -35,6 +35,7 @@ from .utility import (
     calculate_testwise_remarks,
     calculate_marks,
     generate_group_report_data_v2,
+    generate_single_student_report_data,
 
     get_marks_percentage,
     get_batchwise_marks,
@@ -451,7 +452,8 @@ def mentor_remarks(request, mentor_id, student_id):
             start_date = today.replace(day=1)
             end_date = today
 
-    # check if there exists MentorRemark with this mentor student and date range
+    stu_performance = generate_single_student_report_data(student, start_date, end_date)
+
     remark = MentorRemark.objects.filter(
         mentor=mentor,
         student=student,
@@ -496,6 +498,7 @@ def mentor_remarks(request, mentor_id, student_id):
             'actions': Action.objects.all(),
             'start_date': start_date,
             'end_date': end_date,
+            'stu_performance': stu_performance,
         })
 
 
@@ -543,4 +546,5 @@ def mentor_remarks(request, mentor_id, student_id):
         'start_date': start_date,
         'end_date': end_date,
         'actions': Action.objects.all(),
+        'stu_performance': stu_performance,
     })

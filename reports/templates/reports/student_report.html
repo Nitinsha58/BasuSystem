@@ -65,7 +65,7 @@
         <div class=" mt-4 donut_graph d-flex flex-column gap-4">
             <div class="bg-success-subtle p-4 d-flex ">
                 <div class="">
-                    <p class="border-0 h2">{{student.user.first_name}} {{student.user.last_name}}</p>
+                    <a href="{% url 'student_update' student.stu_id %}" style="text-decoration: none;" class="border-0 h2">{{student.user.first_name}} {{student.user.last_name}}</a>
                     <p class="m-0 mb-1">{{student.class_enrolled}} - {{ student.subjects.all|join:", " }}</p>
                 </div>
                 <div class="ms-4">

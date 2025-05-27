@@ -3,12 +3,50 @@
 {% load static %}
 
 {% block dashboard %}
+
 <div class="container-sm p-4 ">
     <div class="my-4 mt-2 g-3 bg-light rounded p-2 pb-3">
+        <a href="{% url 'mentor_students' %}" class="btn btn-primary">Go Back</a>
         <div class="">
-            <p class="border-0 h2">{{student.user.first_name}} {{student.user.last_name}}'s Remark</p>
+            <a href="{% url 'student_report' student.stu_id %}" target="_blank" class="border-0 h2" style="text-decoration: none;">{{student.user.first_name}} {{student.user.last_name}}'s Remark    ({{ start_date|date:'d M' }} - {{ end_date|date:'d M' }})</a>
             <p class="m-0 mb-1">{{student.class_enrolled}} - {{ student.subjects.all|join:", " }}</p>
         </div>
+        
+        <div class="g-3 d-flex justify-content-between">
+  <table class="table">
+    <thead class="table-dark">
+      <tr>
+        <th scope="col">Batch</th>
+        <th scope="col">Attendance</th>
+        <th scope="col">Homework</th>
+        <th scope="col">Test Marks</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for batch in stu_performance.batches_data %}
+      <tr {% if forloop.first %} class="table-active" {% endif %}>
+        
+        <td>{{ batch.batch_name }}</td>
+        <td>{{ batch.attendance }}</td>
+        <td>{{ batch.homework }}</td>
+        <td>{{ batch.test_marks }}</td>
+      </tr>
+      {% endfor %}
+
+      {% if not stu_performance.batches_data %}
+      <tr>
+        <th scope="row">
+          <a href="{% url 'student_report' stu_performance.student.stu_id %}" class="nav-link">
+            {{ stu_performance.student_name }}
+          </a>
+        </th>
+        <td colspan="5" class="text-center">No data available</td>
+      </tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+
     </div>
 
     {% if remark %}

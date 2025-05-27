@@ -518,3 +518,44 @@ def generate_group_report_data_v2(request, start_date: datetime.date, end_date: 
         report_data.append(student_info)
 
     return report_data
+
+def generate_single_student_report_data(student, start_date: date, end_date: date):
+    """
+    Generates a report for a single student detailing their performance in various batches
+    between a start date and an end date, using helper functions for calculations.
+
+    Args:
+        student: The Student instance for whom the report is to be generated.
+        start_date: The start date for the report period (datetime.date).
+        end_date: The end date for the report period (datetime.date).
+
+    Returns:
+        A dictionary representing the student and their performance data per batch.
+    """
+    student_info = {
+        'student_name': f"{student.user.first_name} {student.user.last_name}".strip() or student.user.phone,
+        'student_id': str(student.stu_id),
+        'student': student,
+        'batches_data': []
+    }
+
+    for batch in student.batches.all().exclude(
+        Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
+        Q(section__name='CBSE') &
+        Q(subject__name__in=['MATH', 'SCIENCE'])
+    ):
+        batch_name = str(batch)
+        attendance_perc = calculate_attendance_percentage(student, batch, start_date, end_date)
+        homework_perc = calculate_homework_completion_percentage(student, batch, start_date, end_date)
+        test_scores_perc = calculate_test_scores_percentage(student, batch, start_date, end_date)
+
+        batch_data = {
+            'batch_name': batch_name,
+            'batch_id': batch.id,
+            'attendance': attendance_perc,
+            'homework': homework_perc,
+            'test_marks': test_scores_perc
+        }
+        student_info['batches_data'].append(batch_data)
+
+    return student_info
