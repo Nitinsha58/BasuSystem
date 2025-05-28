@@ -63,13 +63,13 @@
         </div>
 
         <div class=" mt-4 donut_graph d-flex flex-column gap-4">
-            <div class="bg-success-subtle p-4 d-flex ">
+            <div class="bg-success-subtle p-4 d-flex flex-column flex-md-row align-items-start">
                 <div class="">
                     <a href="{% url 'student_update' student.stu_id %}" style="text-decoration: none;" class="border-0 h2">{{student.user.first_name}} {{student.user.last_name}}</a>
                     <p class="m-0 mb-1">{{student.class_enrolled}} - {{ student.subjects.all|join:", " }}</p>
                 </div>
-                <div class="ms-4">
-                    <form method="get" class="rounded p-2 pb-3 d-flex gap-2 align-items-end">
+                <div class="ms-md-4">
+                    <form method="get" class="rounded p-md-2 pb-3 d-flex flex-column flex-md-row gap-2 align-items-end">
                         <div class="">
                             <label for="start_date" class="form-label">Start Date: {{ start_date|date:'d M' }}</label>
                             <input type="date" name="start_date" id="start_date" value="{{start_date|date:'Y-m-d'}}" class="form-control" required>
