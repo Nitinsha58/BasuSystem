@@ -73,6 +73,7 @@
                 <div class="">
                     <a href="{% url 'student_update' student.stu_id %}" style="text-decoration: none;" class="border-0 h2">{{student.user.first_name}} {{student.user.last_name}}</a>
                     <p class="m-0 mb-1">{{student.class_enrolled}} - {{ student.subjects.all|join:", " }}</p>
+                    <p class="m-0 mb-1">Joined On: {{student.doj|date:'d M Y'}}</p>
                 </div>
                 <div class="ms-md-4">
                     <form method="get" class="rounded p-md-2 pb-3 d-flex flex-column flex-md-row gap-2 align-items-end">
