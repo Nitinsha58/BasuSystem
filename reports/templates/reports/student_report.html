@@ -41,7 +41,9 @@
         margin: 0 auto;
     }
 
-    .attendance, .homework, .test {
+    .attendance,
+    .homework,
+    .test {
         display: flex;
         flex-wrap: wrap;
         /* justify-content: space-around; */
@@ -57,31 +59,44 @@
 <div class="">
 
     <div class="g-3 bg-light rounded pb-3" id="student_reg_doc">
+
+
         <div class="bg-success-subtle mx-auto p-1 d-flex rounded" style="width: fit-content;">
             <a href="" class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Weekly Report</a>
             <a href="" class="text-decoration-none text-dark  p-1 px-2 rounded mx-2 my-1">Monthly Report</a>
         </div>
 
-        <div class=" mt-4 donut_graph d-flex flex-column gap-4">
+        <div class="mt-4 donut_graph d-flex flex-column gap-4">
+            {% if request.user.is_superuser or request.user.teachers %}
+            <div class="bg-success-subtle p-1 d-flex rounded gap-2" style="width: fit-content;">
+                <a href="{% url 'mentor_remarks' student.active_mentorship.mentor.id student.stu_id %}" class="btn btn-primary">Go Back</a>
+                <a href="{% url 'mentor_students' %}" class="btn btn-warning">Students Reports</a>
+            </div>
+            {% endif %}
+
             <div class="bg-success-subtle p-4 d-flex flex-column flex-md-row align-items-start">
                 <div class="">
-                    <a href="{% url 'student_update' student.stu_id %}" style="text-decoration: none;" class="border-0 h2">{{student.user.first_name}} {{student.user.last_name}}</a>
+                    <p style="text-decoration: none;" class="border-0 h2">{{student.user.first_name}}
+                        {{student.user.last_name}}</p>
                     <p class="m-0 mb-1">{{student.class_enrolled}} - {{ student.subjects.all|join:", " }}</p>
                 </div>
                 <div class="ms-md-4">
                     <form method="get" class="rounded p-md-2 pb-3 d-flex flex-column flex-md-row gap-2 align-items-end">
                         <div class="">
                             <label for="start_date" class="form-label">Start Date: {{ start_date|date:'d M' }}</label>
-                            <input type="date" name="start_date" id="start_date" value="{{start_date|date:'Y-m-d'}}" class="form-control" required>
+                            <input type="date" name="start_date" id="start_date" value="{{start_date|date:'Y-m-d'}}"
+                                class="form-control" required>
                         </div>
-                        
+
                         <div class="">
                             <label for="end_date" class="form-label">End Date: {{ end_date|date:'d M' }}</label>
-                            <input type="date" name="end_date" id="end_date" value="{{end_date|date:'Y-m-d'}}" class="form-control" required>
+                            <input type="date" name="end_date" id="end_date" value="{{end_date|date:'Y-m-d'}}"
+                                class="form-control" required>
                         </div>
-                        <button style="height: fit-content;" class="px-2 mt-2 btn btn-warning" type="submit">Filter</button>
-                      </form>
-                      
+                        <button style="height: fit-content;" class="px-2 mt-2 btn btn-warning"
+                            type="submit">Filter</button>
+                    </form>
+
                 </div>
             </div>
 
@@ -90,7 +105,7 @@
                 <div style="width: 200px;">
                     <canvas id="attendanceChart"></canvas>
                 </div>
-                
+
                 {% for batch, atten in batchwise_attendance.items %}
                 {% if atten.present_percentage or atten.absent_percentage %}
                 <div style="width: 200px;">
@@ -106,10 +121,10 @@
                 </div>
 
                 {% for batch, hw in batchwise_homework.items %}
-                {% if hw.completed_percentage or hw.partial_done_percentage or hw.pending_percentage %} 
-                    <div style="width: 200px;">
-                        <canvas id="homeworkChart{{forloop.counter}}"></canvas>
-                    </div>
+                {% if hw.completed_percentage or hw.partial_done_percentage or hw.pending_percentage %}
+                <div style="width: 200px;">
+                    <canvas id="homeworkChart{{forloop.counter}}"></canvas>
+                </div>
                 {% endif %}
                 {% endfor %}
             </div>
@@ -123,7 +138,7 @@
                 {% for batch, test in batchwise_marks.items %}
                 {% if test.scored or test.deducted %}
                 <div style="width: 200px;">
-                    <canvas id="testChart{{forloop.counter}}"></canvas> 
+                    <canvas id="testChart{{forloop.counter}}"></canvas>
                 </div>
                 {% endif %}
                 {% endfor %}
@@ -149,7 +164,7 @@
                     <div class="col" style="max-width: 30px;">F</div>
                     <div class="col" style="max-width: 30px;">S</div>
                 </div>
-            
+
                 <div class="bg-white rounded py-1">
                     {% for week in month_data.calendar %}
                     <div class="row text-center mx-1">
@@ -175,11 +190,12 @@
                     {% endfor %}
                 </div>
                 <div class="mt-2 d-flex justify-content-center align-items-center">
-                    <p class="m-0">Overall ({{ month_data.present_count }}/{{ month_data.present_count|add:month_data.absent_count }}) {{ month_data.percentage }}%</p>
+                    <p class="m-0">Overall ({{ month_data.present_count }}/{{
+                        month_data.present_count|add:month_data.absent_count }}) {{ month_data.percentage }}%</p>
                 </div>
             </div>
             {% endfor %}
-            
+
             {% for batch, cal in batchwise_calendar.items %}
             <div class="mt-4 ms-4 calendar_container">
                 <div class="d-flex justify-content-center align-items-center">
@@ -194,7 +210,7 @@
                     <div class="col" style="max-width: 30px;">F</div>
                     <div class="col" style="max-width: 30px;">S</div>
                 </div>
-    
+
                 <div class="bg-white rounded py-1">
                     {% for week in cal.cal %}
                     <div class="row text-center mx-1">
@@ -231,18 +247,19 @@
 
         <h3 class="mt-4">Weekly Tests</h3>
         {% for batch, reports in batch_wise_tests.items %}
-            {% for test in reports %}
-            {% if test.test.is_data_complete_for_graph %}
-            <div class="container-md my-4 w-100">
-                <div class="mt-4">
+        {% for test in reports %}
+        {% if test.test.is_data_complete_for_graph %}
+        <div class="container-md my-4 w-100">
+            <div class="mt-4">
                 <p class="h4 fw-normal">{{test.test.name}}</p>
                 <p class="text-muted fw-normal m-0" style="font-size: 14px;">{{test.test.date|date:'d M Y'}}</p>
                 <p class="text-muted fw-normal m-0" style="font-size: 14px;">{{test.test.batch}}</p>
-                </div>
+            </div>
 
-                <div  class="container my-4 p-0 w-100 d-lg-flex justify-content-around">
+            <div class="container my-4 p-0 w-100 d-lg-flex justify-content-around">
                 <div class="w-100 h-auto" style="overflow-x: auto;">
-                    <canvas id="test_chart_1{{batch.id}}{{forloop.counter}}" class="w-100 h-auto" style="min-width: 700px;" ></canvas>
+                    <canvas id="test_chart_1{{batch.id}}{{forloop.counter}}" class="w-100 h-auto"
+                        style="min-width: 700px;"></canvas>
                     <!-- <canvas id="test_chart_2{{batch.id}}{{forloop.counter}}" class="w-100 h-auto" style="min-width: 700px;" ></canvas> -->
                     <!-- <div class="parent ">
                     <div class="child bg-warning" style="width: {{test.attempted}}%;"  ></div>
@@ -251,243 +268,245 @@
                 </div>
                 <div class="m-sm-2 p-sm-2 remarks-container">
                     <ul class="list-group">
-                    {% if not test.marks.percentage %}
-                    <li class="list-group-item bg-dark text-white border-dark">Absent</li>
-                    {% else %}
-                    <li class="list-group-item bg-dark text-white border-dark">Mock Remarks -  {{test.marks.percentage|floatformat:2}}% <br> ({{test.marks.obtained_marks|floatformat:1}}/{{test.marks.max_marks|floatformat:1}})</li>
-                    {% endif %}
-                    {% for remark, count in test.remarks.items %}
-                    <li class="list-group-item d-flex justify-content-between">
-                        <span class="">{{remark.name}}</span> <span class="fw-normal" >{{count}}%</span> 
-                    </li>
-                    {% endfor %}
+                        {% if not test.marks.percentage %}
+                        <li class="list-group-item bg-dark text-white border-dark">Absent</li>
+                        {% else %}
+                        <li class="list-group-item bg-dark text-white border-dark">Mock Remarks -
+                            {{test.marks.percentage|floatformat:2}}% <br>
+                            ({{test.marks.obtained_marks|floatformat:1}}/{{test.marks.max_marks|floatformat:1}})</li>
+                        {% endif %}
+                        {% for remark, count in test.remarks.items %}
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span class="">{{remark.name}}</span> <span class="fw-normal">{{count}}%</span>
+                        </li>
+                        {% endfor %}
                     </ul>
                 </div>
 
-                </div>
             </div>
-            {% endif %}
-            {% endfor %}
+        </div>
+        {% endif %}
+        {% endfor %}
         {% endfor %}
 
-</div>
+    </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 
 
-<script>
-{% for batch, reports in batch_wise_tests.items %}   
-{% for report in reports %}
-    {% if report.test.is_data_complete_for_graph %}
-  const ctx1{{batch.id}}{{ forloop.counter }} = document.getElementById('test_chart_1{{batch.id}}{{ forloop.counter }}').getContext('2d');
-  new Chart(ctx1{{batch.id}}{{forloop.counter}}, {
-      type: 'bar',
-      data: {
-        labels: [{% for ch_no, ch_name in report.chapters.items %} '{{ch_name}} {{ch_no}}', {% endfor %}].map(label => label.split(' ')),
-        datasets: [
+    <script>
+        {% for batch, reports in batch_wise_tests.items %}
+        {% for report in reports %}
+        {% if report.test.is_data_complete_for_graph %}
+        const ctx1{{ batch.id }}{ { forloop.counter } } = document.getElementById('test_chart_1{{batch.id}}{{ forloop.counter }}').getContext('2d');
+        new Chart(ctx1{{ batch.id }}{{ forloop.counter }}, {
+            type: 'bar',
+            data: {
+                labels: [{% for ch_no, ch_name in report.chapters.items %} '{{ch_name}} {{ch_no}}', {% endfor %}].map(label => label.split(' ')),
+            datasets: [
             {% for remark, counts in report.chapter_wise_test_remarks.items %}
-            {
-                label: '{{remark}}',
-                data: {{counts}},
-                borderWidth: 1,
+        {
+            label: '{{remark}}',
+                data: { { counts } },
+            borderWidth: 1,
                 maxBarThickness: 60,
             },
-            {% endfor %}
+        {% endfor %}
         
         ]
       },
-      options: {
-                responsive: false,
+        options: {
+            responsive: false,
                 plugins: {
-                    legend: {
-                        position: 'top',
+                legend: {
+                    position: 'top',
                         labels: {
-                            font: {
-                                size: 12
-                            }
+                        font: {
+                            size: 12
                         }
-                    },
-                    tooltip: {
-                        enabled: true
                     }
                 },
-                scales: {
-                    responsive: false,
-                    maintainAspectRatio: true,
-                    x: {
-                        stacked: true, // Enable stacking on the X-axis
-                        ticks: {
-                            autoSkip: false,
-                            maxRotation: 0,
-                            minRotation: 0,
-                            font: {
-                                size: 10
-                            }
-                        },
-                    },
-                    y: {
-                        stacked: true, // Enable stacking on the Y-axis
-                        beginAtZero: true,
-                        ticks: {
-                            font: {
-                                size: 10
-                            }
-                        },
-                    }
+                tooltip: {
+                    enabled: true
                 }
-            }
-    });
-
-//   const ctx2{{batch.id}}{{ forloop.counter }} = document.getElementById('test_chart_2{{batch.id}}{{ forloop.counter }}').getContext('2d');
-//   new Chart(ctx2{{batch.id}}{{ forloop.counter }}, {
-//       type: 'bar',
-//       data: {
-//           labels: [{% for ch_no, ch_name in report.chapters.items %} '{{ch_name}} {{ch_no}}', {% endfor %}].map(label => label.split(' ')),
-//           datasets: [
-//             {
-//               label: 'Chapter Marks Obtained',
-//               data: {{ report.marks_obtained|safe }}, // Use the marks
-//               borderColor: '#4aaa70',
-//               backgroundColor: '#4aaa70',
-//               borderWidth: 2,
-//               tension: 0.4,
-//               maxBarThickness: 60,
-//             },
-//             {
-//               label: 'Deducted Marks',
-//               data: {{ report.marks_deducated|safe }}, // Use the marks
-//               borderColor: '#FF5B61',
-//               backgroundColor: '#FF5B61',
-//               borderWidth: 2,
-//               tension: 0.4,
-//               maxBarThickness: 60
-//             },
-//         ]
-//       },
-//       options: {
-//           responsive: false,
-//           maintainAspectRatio: true,
-//           scales: {
-//               x: {
-//                 stacked: true,
-//                 beginAtZero: true,
-//                 ticks: {
-//                     autoSkip: false,
-//                     maxRotation: 0,
-//                     minRotation: 0,
-//                     font: {
-//                         size: 10
-//                     }
-//                 },
-//             },
-//             y: {
-//                 stacked: true,
-//                 beginAtZero: true,
-//                 ticks: {
-//                     font: {
-//                         size: 10
-//                     }
-//                 },
-//                 suggestedMax: {{ report.max_marks }} + 1,
-//             }
-
-//           }
-//       }
-//   });
-
-    {% endif %}
-  {% endfor %}
-  {% endfor %}
-</script>
-
-
-
-<script>
-
-    create_pie_chart = (id, labels_list, dataset_label, dataset_data_points, bg_dataset_data_points, title_text = "Demo Chart") => {
-        var ctx1 = document.getElementById(id).getContext('2d');
-        var attendanceChart = new Chart(ctx1, {
-            type: 'pie',
-            data: {
-                labels: labels_list,
-                datasets: [{
-                    label: dataset_label,
-                    data: dataset_data_points, 
-                    backgroundColor: bg_dataset_data_points,
-                    borderWidth: 1
-                }]
             },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            boxWidth: 12, 
-                            boxHeight: 12,
-                            font: {
-                                size: 10,
-                            }
+            scales: {
+                responsive: false,
+                    maintainAspectRatio: true,
+                        x: {
+                    stacked: true, // Enable stacking on the X-axis
+                        ticks: {
+                        autoSkip: false,
+                            maxRotation: 0,
+                                minRotation: 0,
+                                    font: {
+                            size: 10
                         }
                     },
-                    title: {
-                        display: true,
-                        text: title_text
-                    }
+                },
+                y: {
+                    stacked: true, // Enable stacking on the Y-axis
+                        beginAtZero: true,
+                            ticks: {
+                        font: {
+                            size: 10
+                        }
+                    },
                 }
             }
+        }
+    });
+
+        //   const ctx2{{batch.id}}{{ forloop.counter }} = document.getElementById('test_chart_2{{batch.id}}{{ forloop.counter }}').getContext('2d');
+        //   new Chart(ctx2{{batch.id}}{{ forloop.counter }}, {
+        //       type: 'bar',
+        //       data: {
+        //           labels: [{% for ch_no, ch_name in report.chapters.items %} '{{ch_name}} {{ch_no}}', {% endfor %}].map(label => label.split(' ')),
+        //           datasets: [
+        //             {
+        //               label: 'Chapter Marks Obtained',
+        //               data: {{ report.marks_obtained|safe }}, // Use the marks
+        //               borderColor: '#4aaa70',
+        //               backgroundColor: '#4aaa70',
+        //               borderWidth: 2,
+        //               tension: 0.4,
+        //               maxBarThickness: 60,
+        //             },
+        //             {
+        //               label: 'Deducted Marks',
+        //               data: {{ report.marks_deducated|safe }}, // Use the marks
+        //               borderColor: '#FF5B61',
+        //               backgroundColor: '#FF5B61',
+        //               borderWidth: 2,
+        //               tension: 0.4,
+        //               maxBarThickness: 60
+        //             },
+        //         ]
+        //       },
+        //       options: {
+        //           responsive: false,
+        //           maintainAspectRatio: true,
+        //           scales: {
+        //               x: {
+        //                 stacked: true,
+        //                 beginAtZero: true,
+        //                 ticks: {
+        //                     autoSkip: false,
+        //                     maxRotation: 0,
+        //                     minRotation: 0,
+        //                     font: {
+        //                         size: 10
+        //                     }
+        //                 },
+        //             },
+        //             y: {
+        //                 stacked: true,
+        //                 beginAtZero: true,
+        //                 ticks: {
+        //                     font: {
+        //                         size: 10
+        //                     }
+        //                 },
+        //                 suggestedMax: {{ report.max_marks }} + 1,
+        //             }
+
+        //           }
+        //       }
+        //   });
+
+        {% endif %}
+        {% endfor %}
+        {% endfor %}
+    </script>
+
+
+
+    <script>
+
+        create_pie_chart = (id, labels_list, dataset_label, dataset_data_points, bg_dataset_data_points, title_text = "Demo Chart") => {
+            var ctx1 = document.getElementById(id).getContext('2d');
+            var attendanceChart = new Chart(ctx1, {
+                type: 'pie',
+                data: {
+                    labels: labels_list,
+                    datasets: [{
+                        label: dataset_label,
+                        data: dataset_data_points,
+                        backgroundColor: bg_dataset_data_points,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                boxHeight: 12,
+                                font: {
+                                    size: 10,
+                                }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: title_text
+                        }
+                    }
+                }
+            });
+
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+
+            create_pie_chart('attendanceChart', ['present ({{combined_attendance.present_count}})', 'Absent ({{combined_attendance.absent_count}})'], 'Attendance', [{{ combined_attendance.present_percentage }}, {{ combined_attendance.absent_percentage }}], ['#28a745', '#dc3545'], 'Overall Attendance - {{combined_attendance.present_percentage}}%')
+        {% for batch, atten in batchwise_attendance.items %}
+        {% if atten.present_percentage or atten.absent_percentage %}
+        create_pie_chart('attendanceChart{{forloop.counter}}', ['present ({{atten.present_count}})', 'Absent ({{atten.absent_count}})'], 'Attendance', [{{ atten.present_percentage }}, {{ atten.absent_percentage }}], ['#28a745', '#dc3545'], '{{batch}} - {{atten.present_percentage}}%')
+        {% endif %}
+        {% endfor %}
+
+        create_pie_chart('homeworkChart', ['Pending ({{combined_homework.pending_count}})', 'Partial Done ({{combined_homework.partial_done_count}})', 'Completed ({{combined_homework.completed_count}})'], 'Homework Status', [{{ combined_homework.pending_percentage }}, {{ combined_homework.partial_done_percentage }}, {{ combined_homework.completed_percentage }}], ['#dc3545', '#17a2b8', '#28a745'], 'Overall Homework Status')
+
+        {% for batch, hw in batchwise_homework.items %}
+        {% if hw.completed_percentage or hw.partial_done_percentage or hw.pending_percentage %}
+        create_pie_chart('homeworkChart{{forloop.counter}}', ['Pending ({{hw.pending_count}})', 'Partial Done ({{hw.partial_done_count}})', 'Completed ({{hw.completed_count}})'], 'Homework Status', [{{ hw.pending_percentage }}, {{ hw.partial_done_percentage }}, {{ hw.completed_percentage }}], ['#dc3545', '#17a2b8', '#28a745'], '{{batch}}')
+        {% endif %}
+        {% endfor %}
+
+        create_pie_chart('testChart', ['Scored ({{combined_marks.scored}})', 'Deducted ({{combined_marks.deducted}})', 'Present ({{combined_marks.present}})', 'Absent ({{combined_marks.absent}})',], 'Test Status', [{{ combined_marks.scored }}, {{ combined_marks.deducted }}, 0, 0], ['#28a745', '#dc3545', '#28a745', '#dc3545'], 'Test Status')
+        {% for batch, test in batchwise_marks.items %}
+        {% if test.scored or test.deducted %}
+        create_pie_chart('testChart{{forloop.counter}}', ['Scored ({{test.scored}})', 'Deducted ({{test.deducted}})', 'Present ({{test.present}})', 'Absent ({{test.absent}})',], 'Test Status', [{{ test.scored }}, {{ test.deducted }}, 0, 0], ['#28a745', '#dc3545', '#28a745', '#dc3545',], '{{batch}}')
+        {% endif %}
+        {% endfor %}
+
+    });
+    </script>
+
+
+
+    <script>
+        // Save date range to localStorage when form is submitted
+        document.querySelector("form").addEventListener("submit", function () {
+            const start = document.getElementById("start_date").value;
+            const end = document.getElementById("end_date").value;
+            localStorage.setItem("start_date", start);
+            localStorage.setItem("end_date", end);
         });
 
-    }
+        // On page load, set input values from localStorage if present
+        window.addEventListener("DOMContentLoaded", function () {
+            const start = localStorage.getItem("start_date");
+            const end = localStorage.getItem("end_date");
 
-    document.addEventListener('DOMContentLoaded', function () {
-
-        create_pie_chart('attendanceChart', ['present ({{combined_attendance.present_count}})', 'Absent ({{combined_attendance.absent_count}})'], 'Attendance', [{{combined_attendance.present_percentage}}, {{combined_attendance.absent_percentage}}], ['#28a745', '#dc3545'], 'Overall Attendance - {{combined_attendance.present_percentage}}%')
-        {% for batch, atten in batchwise_attendance.items %}
-            {% if atten.present_percentage or atten.absent_percentage %}
-                create_pie_chart('attendanceChart{{forloop.counter}}', ['present ({{atten.present_count}})', 'Absent ({{atten.absent_count}})'], 'Attendance', [{{atten.present_percentage}}, {{atten.absent_percentage}}], ['#28a745', '#dc3545'], '{{batch}} - {{atten.present_percentage}}%')   
-            {% endif %}
-        {% endfor %}
-        
-        create_pie_chart('homeworkChart', ['Pending ({{combined_homework.pending_count}})', 'Partial Done ({{combined_homework.partial_done_count}})', 'Completed ({{combined_homework.completed_count}})'], 'Homework Status', [{{combined_homework.pending_percentage}}, {{combined_homework.partial_done_percentage}}, {{combined_homework.completed_percentage}} ], ['#dc3545', '#17a2b8', '#28a745'], 'Overall Homework Status')
-        
-        {% for batch, hw in batchwise_homework.items %}
-            {% if hw.completed_percentage or hw.partial_done_percentage or hw.pending_percentage %} 
-            create_pie_chart('homeworkChart{{forloop.counter}}', ['Pending ({{hw.pending_count}})', 'Partial Done ({{hw.partial_done_count}})', 'Completed ({{hw.completed_count}})'], 'Homework Status', [{{hw.pending_percentage}}, {{hw.partial_done_percentage}}, {{hw.completed_percentage}} ], ['#dc3545', '#17a2b8', '#28a745'], '{{batch}}')
-            {% endif %}
-        {% endfor %}
-
-        create_pie_chart('testChart', ['Scored ({{combined_marks.scored}})', 'Deducted ({{combined_marks.deducted}})', 'Present ({{combined_marks.present}})', 'Absent ({{combined_marks.absent}})', ], 'Test Status', [{{combined_marks.scored}}, {{combined_marks.deducted}}, 0, 0], ['#28a745', '#dc3545','#28a745','#dc3545'], 'Test Status')
-        {% for batch, test in batchwise_marks.items %}
-            {% if test.scored or test.deducted %}
-                create_pie_chart('testChart{{forloop.counter}}', ['Scored ({{test.scored}})', 'Deducted ({{test.deducted}})','Present ({{test.present}})', 'Absent ({{test.absent}})', ], 'Test Status', [{{test.scored}}, {{test.deducted}}, 0, 0], ['#28a745', '#dc3545','#28a745','#dc3545',], '{{batch}}')
-            {% endif %}
-        {% endfor %}
-
-    });
-</script>
+            if (start) document.getElementById("start_date").value = start;
+            if (end) document.getElementById("end_date").value = end;
+        });
+    </script>
 
 
-
-<script>
-    // Save date range to localStorage when form is submitted
-    document.querySelector("form").addEventListener("submit", function () {
-      const start = document.getElementById("start_date").value;
-      const end = document.getElementById("end_date").value;
-      localStorage.setItem("start_date", start);
-      localStorage.setItem("end_date", end);
-    });
-  
-    // On page load, set input values from localStorage if present
-    window.addEventListener("DOMContentLoaded", function () {
-      const start = localStorage.getItem("start_date");
-      const end = localStorage.getItem("end_date");
-  
-      if (start) document.getElementById("start_date").value = start;
-      if (end) document.getElementById("end_date").value = end;
-    });
-  </script>
-  
-
-{% endblock dashboard %}
+    {% endblock dashboard %}

@@ -12,6 +12,9 @@
             <p class="m-0 mb-1">{{student.class_enrolled}} - {{ student.subjects.all|join:", " }}</p>
         </div>
         <div class="mb-3">
+            <p class="m-0 mb-1">Joined On: {{student.doj|date:'d M Y'}}</p>
+        </div>
+        <div class="mb-3">
             <b class="m-0 mb-1">Mother: +91 {{student.parent_details.mother_contact}} - Father: +91 {{student.parent_details.father_contact}}</b>
         </div>
         
