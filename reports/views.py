@@ -39,6 +39,7 @@ from .utility import (
 
     get_marks_percentage,
     get_batchwise_marks,
+    get_student_test_report,
 )
 
 from .teachers_utility import (
@@ -452,7 +453,9 @@ def mentor_remarks(request, mentor_id, student_id):
             start_date = today.replace(day=1)
             end_date = today
 
-    stu_performance = generate_single_student_report_data(student, start_date, end_date)
+    stu_performance = generate_single_student_report_data(student, start_date, end_date)   
+    student_test_report = get_student_test_report(student, start_date, end_date)
+
     batches = student.batches.all().filter(class_name=student.class_enrolled).exclude(
         Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
         Q(section__name='CBSE') &
@@ -495,16 +498,7 @@ def mentor_remarks(request, mentor_id, student_id):
             messages.success(request, "Remark updated successfully.")
             return redirect('mentor_remarks', mentor_id=mentor.id, student_id=student.stu_id)
 
-        return render(request, 'reports/mentor_remarks.html', {
-            'mentor': mentor,
-            'student': student,
-            'remark': remark,
-            'actions': Action.objects.all(),
-            'start_date': start_date,
-            'end_date': end_date,
-            'stu_performance': stu_performance,
-            'batches': batches,
-        })
+        return redirect('mentor_remarks', mentor_id=mentor.id, student_id=student.stu_id)
 
 
     if request.method == 'POST':
@@ -553,4 +547,5 @@ def mentor_remarks(request, mentor_id, student_id):
         'actions': Action.objects.all(),
         'stu_performance': stu_performance,
         'batches': batches,
+        'student_test_report': student_test_report,
     })

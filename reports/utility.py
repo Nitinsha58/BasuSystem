@@ -559,3 +559,43 @@ def generate_single_student_report_data(student, start_date: date, end_date: dat
         student_info['batches_data'].append(batch_data)
 
     return student_info
+
+
+def get_student_test_report(student, start_date, end_date):
+    """
+    Generates a detailed test report for a student with test scores.
+
+    Args:
+        student: The Student instance.
+        start_date: Start of date range (datetime.date).
+        end_date: End of date range (datetime.date).
+
+    Returns:
+        A dictionary with batch as key and a list of dicts
+    """
+    test_result = {}
+    student_batches = student.batches.all().exclude(
+        Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
+        Q(section__name='CBSE') &
+        Q(subject__name__in=['MATH', 'SCIENCE'])
+    )
+
+    for batch in student_batches:
+        tests = Test.objects.filter(
+            batch=batch,
+            date__range=(start_date, end_date)
+        ).order_by('date')
+
+        test_result[batch] = []
+        for test in tests:
+            result = TestResult.objects.filter(test=test, student=student).first()
+            if not is_absent(test, student):
+                marks_or_AB = result
+            else:
+                marks_or_AB = 'AB'
+            test_result[batch].append({
+                'test': test,
+                'result': marks_or_AB
+            })
+            
+    return test_result

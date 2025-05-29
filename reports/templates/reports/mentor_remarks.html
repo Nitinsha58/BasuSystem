@@ -19,39 +19,70 @@
         </div>
         
         <div class="g-3 d-flex justify-content-between">
-  <table class="table">
-    <thead class="table-dark">
-      <tr>
-        <th scope="col">Batch</th>
-        <th scope="col">Attendance</th>
-        <th scope="col">Homework</th>
-        <th scope="col">Test Marks</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for batch in stu_performance.batches_data %}
-      <tr {% if forloop.first %} class="table-active" {% endif %}>
-        
-        <td>{{ batch.batch_name }}</td>
-        <td>{{ batch.attendance }}</td>
-        <td>{{ batch.homework }}</td>
-        <td>{{ batch.test_marks }}</td>
-      </tr>
-      {% endfor %}
+            <table class="table">
+                <thead class="table-dark">
+                <tr>
+                    <th scope="col">Batch</th>
+                    <th scope="col">Attendance</th>
+                    <th scope="col">Homework</th>
+                    <th scope="col">Test Marks</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for batch in stu_performance.batches_data %}
+                <tr {% if forloop.first %} class="table-active" {% endif %}>
+                    
+                    <td>{{ batch.batch_name }}</td>
+                    <td>{{ batch.attendance }}</td>
+                    <td>{{ batch.homework }}</td>
+                    <td>{{ batch.test_marks }}</td>
+                </tr>
+                {% endfor %}
 
-      {% if not stu_performance.batches_data %}
-      <tr>
-        <th scope="row">
-          <a href="{% url 'student_report' stu_performance.student.stu_id %}" class="nav-link">
-            {{ stu_performance.student_name }}
-          </a>
-        </th>
-        <td colspan="5" class="text-center">No data available</td>
-      </tr>
-      {% endif %}
-    </tbody>
-  </table>
-</div>
+                {% if not stu_performance.batches_data %}
+                <tr>
+                    <th scope="row">
+                    <a href="{% url 'student_report' stu_performance.student.stu_id %}" class="nav-link">
+                        {{ stu_performance.student_name }}
+                    </a>
+                    </th>
+                    <td colspan="5" class="text-center">No data available</td>
+                </tr>
+                {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="g-3 d-flex justify-content-between">
+            <table class="table">
+                <thead class="table-dark">
+                    <tr>
+                        <th scope="col">Batch</th>
+                        <th scope="col">Test</th>
+                        <th scope="col">Result</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for batch, tests in student_test_report.items %}
+                    {% for test_data in tests %}
+                    <tr {% if forloop.first %} class="table-active" {% endif %}>
+                        {% if forloop.first %}
+                            <td>{{ batch }}</td>
+                        {% else %}
+                             <td></td> 
+                        {% endif %}
+                        <td>{{ test_data.test.name }}</td>
+                        {% if test_data.result == 'AB' %}
+                        <td class="text-danger" >{{ test_data.result }}</td>
+                        {% else %}
+                        <td>{{ test_data.result.total_marks_obtained }} / {{ test_data.result.total_max_marks }} ( {{ test_data.result.percentage|floatformat:2 }}%)</td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
 
     </div>
 
