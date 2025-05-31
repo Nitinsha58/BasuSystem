@@ -181,12 +181,14 @@ def get_teacher_marks_percentage(teacher, start_date, end_date):
 
     percentage_scored = round((total_obtained_marks / total_max_marks) * 100, 2) if total_max_marks > 0 else 0.0
     percentage_deducted = round(100 - percentage_scored, 2) if total_max_marks > 0 else 0.0
+    present_percentage = percentage(present, present + absent)
+    absent_percentage = percentage(absent, present + absent)
 
     return {
         'scored': percentage_scored,
         'deducted': percentage_deducted,
-        'present': present,
-        'absent': absent,
+        'present': present_percentage,
+        'absent': absent_percentage,
     }
 
 def get_teacher_batchwise_marks_performance(teacher, start_date, end_date):
@@ -222,7 +224,8 @@ def get_teacher_batchwise_marks_performance(teacher, start_date, end_date):
 
         scored = round((total_obtained_marks / total_max_marks) * 100, 2) if total_max_marks > 0 else 0.0
         deducted = round(100 - scored, 2) if total_max_marks > 0 else 0.0
-
+        present = percentage(present, present + absent)
+        absent = percentage(absent, present + absent)
         result[batch] = {
             'scored': scored,
             'deducted': deducted,

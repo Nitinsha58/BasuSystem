@@ -158,25 +158,25 @@
 
     document.addEventListener('DOMContentLoaded', function () {
 
-        create_pie_chart('attendanceChart', ['present ({{combined_attendance.present_count}})', 'Absent ({{combined_attendance.absent_count}})'], 'Attendance', [{{combined_attendance.present_percentage}}, {{combined_attendance.absent_percentage}}], ['#28a745', '#dc3545'], 'Overall Attendance - {{combined_attendance.present_percentage}}%')
+        create_pie_chart('attendanceChart', ['present ({{combined_attendance.present_percentage}}%)', 'Absent ({{combined_attendance.absent_percentage}}%)'], 'Attendance', [{{combined_attendance.present_percentage}}, {{combined_attendance.absent_percentage}}], ['#28a745', '#dc3545'], 'Overall Attendance - {{combined_attendance.present_percentage}}%')
         {% for batch, atten in batchwise_attendance.items %}
             {% if atten.present_percentage or atten.absent_percentage %}
-                create_pie_chart('attendanceChart{{forloop.counter}}', ['present ({{atten.present_count}})', 'Absent ({{atten.absent_count}})'], 'Attendance', [{{atten.present_percentage}}, {{atten.absent_percentage}}], ['#28a745', '#dc3545'], '{{batch}} - {{atten.present_percentage}}%')   
+                create_pie_chart('attendanceChart{{forloop.counter}}', ['present ({{atten.present_percentage}}%)', 'Absent ({{atten.absent_percentage}}%)'], 'Attendance', [{{atten.present_percentage}}, {{atten.absent_percentage}}], ['#28a745', '#dc3545'], '{{batch}} - {{atten.present_percentage}}%')   
             {% endif %}
         {% endfor %}
         
-        create_pie_chart('homeworkChart', ['Pending ({{combined_homework.pending_count}})', 'Partial Done ({{combined_homework.partial_done_count}})', 'Completed ({{combined_homework.completed_count}})'], 'Homework Status', [{{combined_homework.pending_percentage}}, {{combined_homework.partial_done_percentage}}, {{combined_homework.completed_percentage}} ], ['#dc3545', '#17a2b8', '#28a745'], 'Overall Homework Status')
+        create_pie_chart('homeworkChart', ['Pending ({{combined_homework.pending_percentage}}%)', 'Partial Done ({{combined_homework.partial_done_percentage}}%)', 'Completed ({{combined_homework.completed_percentage}}%)'], 'Homework Status', [{{combined_homework.pending_percentage}}, {{combined_homework.partial_done_percentage}}, {{combined_homework.completed_percentage}} ], ['#dc3545', '#17a2b8', '#28a745'], 'Overall Homework Status')
         
         {% for batch, hw in batchwise_homework.items %}
             {% if hw.completed_percentage or hw.partial_done_percentage or hw.pending_percentage %} 
-            create_pie_chart('homeworkChart{{forloop.counter}}', ['Pending ({{hw.pending_count}})', 'Partial Done ({{hw.partial_done_count}})', 'Completed ({{hw.completed_count}})'], 'Homework Status', [{{hw.pending_percentage}}, {{hw.partial_done_percentage}}, {{hw.completed_percentage}} ], ['#dc3545', '#17a2b8', '#28a745'], '{{batch}}')
+            create_pie_chart('homeworkChart{{forloop.counter}}', ['Pending ({{hw.pending_percentage}}%)', 'Partial Done ({{hw.completed_percentage}}%)', 'Completed ({{hw.completed_percentage}}%)'], 'Homework Status', [{{hw.pending_percentage}}, {{hw.partial_done_percentage}}, {{hw.completed_percentage}} ], ['#dc3545', '#17a2b8', '#28a745'], '{{batch}}')
             {% endif %}
         {% endfor %}
 
-        create_pie_chart('testChart', ['Scored ({{combined_marks.scored}})', 'Deducted ({{combined_marks.deducted}})', 'Present ({{combined_marks.present}})', 'Absent ({{combined_marks.absent}})', ], 'Test Status', [{{combined_marks.scored}}, {{combined_marks.deducted}}, 0, 0], ['#28a745', '#dc3545','#28a745','#dc3545'], 'Test Status')
+        create_pie_chart('testChart', ['Avg Score ({{combined_marks.scored}}%)', 'Attempted ({{combined_marks.present}}%)', ], 'Test Status', [{{combined_marks.scored}}, {{combined_marks.deducted}}, 0, 0], ['#28a745', '#dc3545','#28a745','#dc3545'], 'Test Status')
         {% for batch, test in batchwise_marks.items %}
             {% if test.scored or test.deducted %}
-                create_pie_chart('testChart{{forloop.counter}}', ['Scored ({{test.scored}})', 'Deducted ({{test.deducted}})','Present ({{test.present}})', 'Absent ({{test.absent}})', ], 'Test Status', [{{test.scored}}, {{test.deducted}}, 0, 0], ['#28a745', '#dc3545','#28a745','#dc3545',], '{{batch}}')
+                create_pie_chart('testChart{{forloop.counter}}', ['Avg Score ({{test.scored}}%)','Attempted ({{test.present}}%)', ], 'Test Status', [{{test.scored}}, {{test.deducted}}, 0, 0], ['#28a745', '#dc3545','#28a745','#dc3545',], '{{batch}}')
             {% endif %}
         {% endfor %}
 
