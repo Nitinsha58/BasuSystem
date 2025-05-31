@@ -590,7 +590,6 @@ def getQuery(request):
     results = TestResult.objects.filter(percentage = 0).distinct('student').distinct('test__batch')
     # total_students = Student.objects.all().count()
     empty_results = TestResult.objects.filter(percentage=0, total_marks_obtained=0, no_of_questions_attempted=0).order_by('test__batch')
-    print(empty_results.count())
     # for result in empty_results:
     #     result.delete()
 

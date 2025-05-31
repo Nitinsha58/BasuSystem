@@ -35,9 +35,13 @@ def get_combined_attendance(student, start_date, end_date):
         Q(subject__name__in=['MATH', 'SCIENCE'])
     )
 
+    # Only include attendance from student's date of joining (doj) onwards
+    doj = getattr(student, 'doj', None)
+    effective_start_date = max(start_date, doj) if doj else start_date
+
     attendance_qs = Attendance.objects.filter(
         student=student,
-        date__range=(start_date, end_date),
+        date__range=(effective_start_date, end_date),
         batch__in=student.batches.all()
     ).exclude(batch__in=excluded_batches)
 
@@ -54,6 +58,10 @@ def get_combined_attendance(student, start_date, end_date):
 
 def get_batchwise_attendance(student, start_date, end_date):
     result = {}
+    # Only include attendance from student's date of joining (doj) onwards
+    doj = getattr(student, 'doj', None)
+    effective_start_date = max(start_date, doj) if doj else start_date
+
     for batch in student.batches.all().exclude(
             Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
             Q(section__name='CBSE') &
@@ -62,7 +70,7 @@ def get_batchwise_attendance(student, start_date, end_date):
         attendance_qs = Attendance.objects.filter(
             student=student,
             batch=batch,
-            date__range=(start_date, end_date)
+            date__range=(effective_start_date, end_date)
         )
         present = attendance_qs.filter(is_present=True).count()
         absent = attendance_qs.filter(is_present=False).count()
@@ -76,6 +84,9 @@ def get_batchwise_attendance(student, start_date, end_date):
     return result
 
 def get_combined_homework(student, start_date, end_date):
+    doj = getattr(student, 'doj', None)
+    effective_start_date = max(start_date, doj) if doj else start_date
+
     # Exclude batches as in get_batchwise_homework
     excluded_batches = student.batches.all().filter(
         Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
@@ -84,7 +95,7 @@ def get_combined_homework(student, start_date, end_date):
     )
     homework_qs = Homework.objects.filter(
         student=student,
-        date__range=(start_date, end_date),
+        date__range=(effective_start_date, end_date),
         batch__in=student.batches.all()
     ).exclude(batch__in=excluded_batches)
 
@@ -105,13 +116,15 @@ def get_combined_homework(student, start_date, end_date):
 
 
 def get_batchwise_homework(student, start_date, end_date):
+    doj = getattr(student, 'doj', None)
+    effective_start_date = max(start_date, doj) if doj else start_date
     result = {}
     for batch in student.batches.all().exclude(
             Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
             Q(section__name='CBSE') &
             Q(subject__name__in=['MATH', 'SCIENCE'])
         ):
-        homework_qs = Homework.objects.filter(student=student, batch=batch, date__range=(start_date, end_date))
+        homework_qs = Homework.objects.filter(student=student, batch=batch, date__range=(effective_start_date, end_date))
         total = homework_qs.count()
         completed = homework_qs.filter(status='Completed').count()
         partial = homework_qs.filter(status='Partial Done').count()
@@ -130,6 +143,8 @@ def get_batchwise_homework(student, start_date, end_date):
 
 def get_monthly_calendar(student, start_date, end_date):
     monthly_data = []
+
+    start_date = max(start_date, student.doj) if student.doj else start_date
 
     current = date(start_date.year, start_date.month, 1)
     last_date = date(end_date.year, end_date.month, calendar.monthrange(end_date.year, end_date.month)[1])

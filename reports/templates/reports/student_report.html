@@ -346,62 +346,6 @@
             }
     });
 
-//   const ctx2{{batch.id}}{{ forloop.counter }} = document.getElementById('test_chart_2{{batch.id}}{{ forloop.counter }}').getContext('2d');
-//   new Chart(ctx2{{batch.id}}{{ forloop.counter }}, {
-//       type: 'bar',
-//       data: {
-//           labels: [{% for ch_no, ch_name in report.chapters.items %} '{{ch_name}} {{ch_no}}', {% endfor %}].map(label => label.split(' ')),
-//           datasets: [
-//             {
-//               label: 'Chapter Marks Obtained',
-//               data: {{ report.marks_obtained|safe }}, // Use the marks
-//               borderColor: '#4aaa70',
-//               backgroundColor: '#4aaa70',
-//               borderWidth: 2,
-//               tension: 0.4,
-//               maxBarThickness: 60,
-//             },
-//             {
-//               label: 'Deducted Marks',
-//               data: {{ report.marks_deducated|safe }}, // Use the marks
-//               borderColor: '#FF5B61',
-//               backgroundColor: '#FF5B61',
-//               borderWidth: 2,
-//               tension: 0.4,
-//               maxBarThickness: 60
-//             },
-//         ]
-//       },
-//       options: {
-//           responsive: false,
-//           maintainAspectRatio: true,
-//           scales: {
-//               x: {
-//                 stacked: true,
-//                 beginAtZero: true,
-//                 ticks: {
-//                     autoSkip: false,
-//                     maxRotation: 0,
-//                     minRotation: 0,
-//                     font: {
-//                         size: 10
-//                     }
-//                 },
-//             },
-//             y: {
-//                 stacked: true,
-//                 beginAtZero: true,
-//                 ticks: {
-//                     font: {
-//                         size: 10
-//                     }
-//                 },
-//                 suggestedMax: {{ report.max_marks }} + 1,
-//             }
-
-//           }
-//       }
-//   });
 
     {% endif %}
   {% endfor %}

@@ -570,7 +570,6 @@ def update_homework(request, class_id, batch_id):
         homework_data = request.POST.getlist('homework[]')
         # Handle date input
         date_str = request.POST.get("date")
-        print("Date String:", date_str)
         try:
             date = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else datetime.now().date()
         except ValueError:
