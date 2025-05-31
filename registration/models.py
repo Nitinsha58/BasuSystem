@@ -339,6 +339,26 @@ class TestResult(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def mandatory_retest(self):
+        if self.no_of_questions_attempted == 0:
+            return True
+        
+        # Calculate the percentage of marks obtained
+        if self.total_max_marks > 0:
+            self.percentage = (self.total_marks_obtained / self.test.total_max_marks) * 100
+        else:
+            self.percentage = 0
+        
+        return self.percentage <= 50
+
+    def optional_retest(self):
+        # Calculate the percentage of marks obtained
+        if self.total_max_marks > 0:
+            self.percentage = (self.total_marks_obtained / self.test.total_max_marks) * 100
+        else:
+            self.percentage = 0
+        
+        return self.percentage <= 75 and self.percentage > 50
     class Meta:
         unique_together = ('student', 'test')  # Ensure one result per student per test
 

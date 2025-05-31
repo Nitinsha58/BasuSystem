@@ -1075,7 +1075,6 @@ def add_result(request, batch_id, test_id, student_id=None, question_id = None):
     
     students = Student.objects.filter(batches=batch)
     students_map = {student : TestResult.objects.filter(test=test, student=student).first() or 0 for student in students}
-
     return render(request, "registration/add_results.html", {
         "batch":batch, 
         "test":test,

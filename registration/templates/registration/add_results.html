@@ -25,7 +25,7 @@
                     </li>
                     {% for stu, result in students.items %}
                     <a href="{% url 'add_student_result' batch.id test.id stu.id %}" class="text-decoration-none">
-                        <li class="list-group-item d-flex justify-content-between {% if student.id == stu.id %} list-group-item-primary {% endif %} ">
+                        <li class="list-group-item d-flex justify-content-between {% if student.id == stu.id %} list-group-item-primary {% elif not result or result.mandatory_retest %} list-group-item-danger {% elif result.optional_retest %} list-group-item-warning {% endif %} ">
                             <p class="m-0 p-0">{{forloop.counter}}. {{stu.user.first_name|title}} {{stu.user.last_name|title}}</p>
                             {% if result.percentage %}
                             <span class="m-0 p-0" style="font-size: 14px;">{{result.total_marks_obtained}}</span>
