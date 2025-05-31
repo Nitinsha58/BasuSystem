@@ -465,10 +465,10 @@
             {% endif %}
         {% endfor %}
 
-        create_pie_chart('testChart', ['Scored ({{combined_marks.scored}})', 'Deducted ({{combined_marks.deducted}})', 'Present ({{combined_marks.present}})', 'Absent ({{combined_marks.absent}})', ], 'Test Status', [{{combined_marks.scored}}, {{combined_marks.deducted}}, 0, 0], ['#28a745', '#dc3545','#28a745','#dc3545'], 'Test Status')
+        create_pie_chart('testChart', ['Avg Score ({{combined_marks.scored}})', 'Present ({{combined_marks.present}})', 'Absent ({{combined_marks.absent}})', ], 'Test Status', [{{combined_marks.scored}}, {{combined_marks.deducted}}, 0, 0], ['#28a745', '#dc3545','#28a745','#dc3545'], 'Test Status')
         {% for batch, test in batchwise_marks.items %}
             {% if test.scored or test.deducted %}
-                create_pie_chart('testChart{{forloop.counter}}', ['Scored ({{test.scored}})', 'Deducted ({{test.deducted}})','Present ({{test.present}})', 'Absent ({{test.absent}})', ], 'Test Status', [{{test.scored}}, {{test.deducted}}, 0, 0], ['#28a745', '#dc3545','#28a745','#dc3545',], '{{batch}}')
+                create_pie_chart('testChart{{forloop.counter}}', ['Avg Score ({{test.scored}})','Present ({{test.present}})', 'Absent ({{test.absent}})', ], 'Test Status', [{{test.scored}}, {{test.deducted}}, 0, 0], ['#28a745', '#dc3545','#28a745','#dc3545',], '{{batch}}')
             {% endif %}
         {% endfor %}
 

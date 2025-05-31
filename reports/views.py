@@ -498,9 +498,6 @@ def mentor_remarks(request, mentor_id, student_id):
             messages.success(request, "Remark updated successfully.")
             return redirect('mentor_remarks', mentor_id=mentor.id, student_id=student.stu_id)
 
-        return redirect('mentor_remarks', mentor_id=mentor.id, student_id=student.stu_id)
-
-
     if request.method == 'POST':
         mentor_remark = request.POST.get('mentor_remark')
         parent_remark = request.POST.get('parent_remark')
