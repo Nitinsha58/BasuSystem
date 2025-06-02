@@ -17,12 +17,19 @@
 <div id="searchStuModal" class="start-0 d-flex flex-column flex-md-row items-center justify-content-between p-2">
     <div class="position-relative rounded-lg rounded my-2 w-100 bg-white shadow-md"
       style="height: fit-content; max-width: 400px; z-index: 2355;">
-      <div class="search-form ">
+      <div class="search-form d-flex w-100 align-items-center ">
         <input type="text" class="form-control search-input p-2 fs-5" id="search-stu-input" maxlength="60"
           placeholder="Search Inquiry..." autocomplete="off" autofocus
           name="search" 
           hx-get="/search-inquiries?search={value}"
           hx-trigger="keyup changed delay:500ms, search" hx-target="#search-inquiries-list">
+        <div class="row mx-2">
+            <p class="mb-1">{{ current_month|date:"F Y" }}</p>
+            <ul class="pagination">
+                <li class="page-item"><a class="page-link" href="?year={{ prev_month.year }}&month={{ prev_month.month }}">Previous</a></li>
+                <li class="page-item"><a class="page-link" href="?year={{ next_month.year }}&month={{ next_month.month }}">Next</a></li>
+            </ul>
+        </div>
         <ul class="position-absolute p-2 mt-2 top-2 w-100 rounded" id="search-inquiries-list">
   
         </ul>

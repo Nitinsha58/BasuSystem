@@ -8,12 +8,23 @@ from django.utils.timezone import localtime, now
 
 
 from django.utils import timezone
+from calendar import monthrange
 
 def inquiries(request):
-    today = timezone.now()
-    start_date = today - timedelta(days=20)
+    today = timezone.now().date()
+    year = int(request.GET.get('year', today.year))
+    month = int(request.GET.get('month', today.month))
 
-    dates = [start_date + timedelta(days=i) for i in range(31)]
+    if not year or not month:
+        year = today.year
+        month = today.month
+
+    # Get the first and last day of the selected month
+    first_day = datetime(year, month, 1).date()
+    last_day = datetime(year, month, monthrange(year, month)[1]).date()
+
+    # Generate all dates for the month
+    dates = [first_day + timedelta(days=i) for i in range((last_day - first_day).days + 1)]
 
     latest_followups = FollowUp.objects.select_related('inquiry').order_by('inquiry', '-created_at').distinct('inquiry')
 
@@ -34,12 +45,15 @@ def inquiries(request):
         else:
             inquiry_followup_dict[created_date].append(followup)
 
-    merged_dict = {date.date(): inquiry_followup_dict[date.date()] for date in dates}
+    merged_dict = {date: inquiry_followup_dict[date] for date in dates}
 
     return render(request, 'inquiry_followup/inquiries.html', {
         'dates': merged_dict,
         'followup_status': FollowUpStatus.objects.all(),
         'status_counts': dict(status_counts),
+        'current_month': first_day,
+        'prev_month': (first_day - timedelta(days=1)),
+        'next_month': (last_day + timedelta(days=1)),
     })
 
 def inquiry(request, inquiry_id):
