@@ -147,6 +147,23 @@ class ReportPositiveAdmin(admin.ModelAdmin):
     search_fields = ['name']
     ordering = ['created_at']
 
+class MentorshipAdmin(admin.ModelAdmin):
+    list_display = ['mentor_name', 'student_name', 'active', 'created_at', 'updated_at']
+    list_filter = ['active', 'mentor', 'student']
+    search_fields = [
+        'mentor__user__first_name', 'mentor__user__last_name',
+        'student__user__first_name', 'student__user__last_name'
+    ]
+    ordering = ['-created_at', '-updated_at']
+
+    def mentor_name(self, obj):
+        return f"{obj.mentor.user.first_name} {obj.mentor.user.last_name}"
+    mentor_name.short_description = "Mentor"
+
+    def student_name(self, obj):
+        return f"{obj.student.user.first_name} {obj.student.user.last_name}"
+    student_name.short_description = "Student"
+
 admin.site.register(Student, StudentAdmin)
 admin.site.register(ParentDetails)
 admin.site.register(FeeDetails)
@@ -163,7 +180,7 @@ admin.site.register(Remark)
 admin.site.register(RemarkCount)
 admin.site.register(Day)
 admin.site.register(Mentor, MentorAdmin)
-admin.site.register(Mentorship)
+admin.site.register(Mentorship, MentorshipAdmin)
 admin.site.register(TransportMode)
 admin.site.register(TransportPerson)
 admin.site.register(ReportPeriod, ReportPeriodAdmin)
