@@ -430,8 +430,14 @@ class Mentorship(models.Model):
 class MentorRemark(models.Model):
     mentor = models.ForeignKey(Mentor, on_delete=models.CASCADE, related_name="remarks")
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="mentor_remarks")
-    mentor_remark = models.TextField()
+    mentor_remark = models.TextField(blank=True, null=True)
+    mentor_negative = models.ManyToManyField('ReportNegative', related_name="mentor_remarks", blank=True)
+    mentor_positive = models.ManyToManyField('ReportPositive', related_name="mentor_remarks", blank=True)
+    
     parent_remark = models.TextField(blank=True, null=True)
+    parent_negative = models.ManyToManyField('ReportNegative', related_name="parent_remarks", blank=True)
+    parent_positive = models.ManyToManyField('ReportPositive', related_name="parent_remarks", blank=True)
+
     start_date = models.DateField()
     end_date = models.DateField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -443,6 +449,21 @@ class MentorRemark(models.Model):
     class Meta:
         unique_together = ('mentor', 'student', 'start_date', 'end_date')
 
+class ReportNegative(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
+
+class ReportPositive(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.name
     
 class Action(models.Model):
     name = models.CharField(max_length=255, unique=True)

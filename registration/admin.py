@@ -23,7 +23,11 @@ from .models import (
 
     MentorRemark,
     Action,
-    ActionSuggested
+    ActionSuggested,
+
+
+    ReportNegative,
+    ReportPositive
     )
 from .forms import TeacherForm, MentorForm
 import csv
@@ -133,6 +137,16 @@ class ActionSuggestedAdmin(admin.ModelAdmin):
     ordering = ['created_at']
 
 
+class ReportNegativeAdmin(admin.ModelAdmin):
+    list_display = ['name', 'created_at']
+    search_fields = ['name']
+    ordering = ['created_at']
+
+class ReportPositiveAdmin(admin.ModelAdmin):
+    list_display = ['name', 'created_at']
+    search_fields = ['name']
+    ordering = ['created_at']
+
 admin.site.register(Student, StudentAdmin)
 admin.site.register(ParentDetails)
 admin.site.register(FeeDetails)
@@ -157,3 +171,6 @@ admin.site.register(ReportPeriod, ReportPeriodAdmin)
 admin.site.register(MentorRemark, MentorRemarkAdmin)
 admin.site.register(Action, ActionAdmin)
 admin.site.register(ActionSuggested, ActionSuggestedAdmin)
+
+admin.site.register(ReportNegative, ReportNegativeAdmin)
+admin.site.register(ReportPositive, ReportPositiveAdmin)

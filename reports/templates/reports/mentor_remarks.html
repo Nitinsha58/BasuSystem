@@ -31,7 +31,6 @@
                 <tbody>
                 {% for batch in stu_performance.batches_data %}
                 <tr {% if forloop.first %} class="table-active" {% endif %}>
-                    
                     <td>{{ batch.batch_name }}</td>
                     <td>{{ batch.attendance }}</td>
                     <td>{{ batch.homework }}</td>
@@ -94,11 +93,68 @@
             <div class="col-md-3">
                 <label for="mentor_remark" class="form-label">Mentor Remarks</label>
                 <textarea class="form-control" name="mentor_remark" id="mentor_remark">{{remark.mentor_remark}}</textarea>
+                                                
+                <ul class="list-group">
+                    <li class="list-group-item bg-dark text-white list-group border-dark mt-2 mb-1">Negatives</li>
+
+                    <div class="p-2 border rounded">
+                            {% for n_remark in negatives %}
+                            <li class="list-group-item ">
+                                <div class=" d-flex justify-content-between">
+                                    <label for="n_remark_mentor{{n_remark.id}}" class="text-decoration-none text-dark m-0" style="display: flex; justify-content: space-between;" target="_blank">
+                                        {{n_remark.name}}
+                                    </label>
+                                    <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;" name="n_remark_mentor[]" type="checkbox" value="{{n_remark.id}}" {% if n_remark in remark.mentor_negative.all %} checked {% endif %}  id="n_remark_mentor{{n_remark.id}}">
+                                </div>
+                            </li>
+                            {% endfor %}
+
+                            <li class="list-group-item bg-dark text-white list-group border-dark mt-2 mb-1">Positives</li>
+                            {% for p_remark in positives %}
+                            <li class="list-group-item ">
+                                <div class=" d-flex justify-content-between">
+                                    <label for="p_remark_mentor{{p_remark.id}}" class="text-decoration-none text-dark m-0" style="display: flex; justify-content: space-between;" target="_blank">
+                                        {{p_remark.name}}
+                                    </label>
+                                    <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;" name="p_remark_mentor[]" type="checkbox" value="{{p_remark.id}}" {% if p_remark in remark.mentor_positive.all %} checked {% endif %} id="p_remark_mentor{{p_remark.id}}">
+                                </div>
+                            </li>
+                            {% endfor %}
+                    </div>
+                </ul>
             </div>
 
             <div class="col-md-3">
                 <label for="parent_remark" class="form-label">Parent Remarks</label>
                 <textarea class="form-control" name="parent_remark" id="parent_remark">{{remark.parent_remark}}</textarea>
+                <ul class="list-group">
+                    <li class="list-group-item bg-dark text-white list-group border-dark mt-2 mb-1">Negatives</li>
+
+                    <div class="p-2 border rounded">
+                        {% for n_remark in negatives %}
+                        <li class="list-group-item ">
+                            <div class=" d-flex justify-content-between">
+                                <label for="n_remark_parent{{n_remark.id}}" class="text-decoration-none text-dark m-0" style="display: flex; justify-content: space-between;" target="_blank">
+                                    {{n_remark.name}}
+                                </label>
+                                <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;" name="n_remark_parent[]" type="checkbox" value="{{n_remark.id}}" {% if n_remark in remark.parent_negative.all %} checked {% endif %}  id="n_remark_parent{{n_remark.id}}">
+                            </div>
+                        </li>
+                        {% endfor %}
+
+                        <li class="list-group-item bg-dark text-white list-group border-dark mt-2 mb-1">Positives</li>
+                        {% for p_remark in positives %}
+                        <li class="list-group-item ">
+                            <div class=" d-flex justify-content-between">
+                                <label for="p_remark_parent{{p_remark.id}}" class="text-decoration-none text-dark m-0" style="display: flex; justify-content: space-between;" target="_blank">
+                                    {{p_remark.name}}
+                                </label>
+                                <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;" name="p_remark_parent[]" type="checkbox" value="{{p_remark.id}}" {% if p_remark in remark.parent_positive.all %} checked {% endif %} id="p_remark_parent{{p_remark.id}}">
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </div>
+                </ul>
             </div>
         </div>
 
@@ -134,18 +190,79 @@
     </form>
 
     {% else %}
-    <form class="g-3 bg-light rounded p-2 pb-3" method="post" action="{% url 'mentor_remarks' mentor.id student.stu_id %}?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}">        
+    <form class="g-3 bg-light rounded p-2 pb-3" method="post" action="{% url 'mentor_remarks' mentor.id student.stu_id %}?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}">
         {% csrf_token %}
 
         <div class="row justify-content-evenly mt-3">
             <div class="col-md-3">
                 <label for="mentor_remark" class="form-label">Mentor Remarks</label>
                 <textarea class="form-control" name="mentor_remark" id="mentor_remark"></textarea>
+                                
+                <ul class="list-group">
+                    <li class="list-group-item bg-dark text-white list-group border-dark mt-2 mb-1">Negatives</li>
+
+                    <div  class="p-2 border rounded">
+                            {% for n_remark in negatives %}
+                            <li class="list-group-item ">
+                                <div class=" d-flex justify-content-between">
+                                    <label for="n_remark_mentor{{n_remark.id}}" class="text-decoration-none text-dark m-0" style="display: flex; justify-content: space-between;" target="_blank">
+                                        {{n_remark.name}}
+                                    </label>
+                                    <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;" name="n_remark_mentor[]" type="checkbox" value="{{n_remark.id}}" id="n_remark_mentor{{n_remark.id}}">
+                                </div>
+                            </li>
+                            {% endfor %}
+
+                            <li class="list-group-item bg-dark text-white list-group border-dark mt-2 mb-1">Positives</li>
+                            {% for p_remark in positives %}
+                            <li class="list-group-item ">
+                                <div class=" d-flex justify-content-between">
+                                    <label for="p_remark_mentor{{p_remark.id}}" class="text-decoration-none text-dark m-0" style="display: flex; justify-content: space-between;" target="_blank">
+                                        {{p_remark.name}}
+                                    </label>
+                                    <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;" name="p_remark_mentor[]" type="checkbox" value="{{p_remark.id}}" id="p_remark_mentor{{p_remark.id}}">
+                                </div>
+                            </li>
+                            {% endfor %}
+                    </div>
+                </ul>
+
             </div>
 
             <div class="col-md-3">
                 <label for="parent_remark" class="form-label">Parent Remarks</label>
                 <textarea class="form-control" name="parent_remark" id="parent_remark"></textarea>
+                
+                <ul class="list-group">
+                    <li class="list-group-item bg-dark text-white list-group border-dark mt-2 mb-1">Negatives</li>
+
+                    <div class="p-2 border rounded">
+                            {% csrf_token %}
+                            {% for n_remark in negatives %}
+                            <li class="list-group-item ">
+                                <div class=" d-flex justify-content-between">
+                                    <label for="n_remark_parent{{n_remark.id}}" class="text-decoration-none text-dark m-0" style="display: flex; justify-content: space-between;" target="_blank">
+                                        {{n_remark.name}}
+                                    </label>
+                                    <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;" name="n_remark_parent[]" type="checkbox" value="{{n_remark.id}}" id="n_remark_parent{{n_remark.id}}">
+                                </div>
+                            </li>
+                            {% endfor %}
+
+                            <li class="list-group-item bg-dark text-white list-group border-dark mt-2 mb-1">Positives</li>
+                            {% for p_remark in positives %}
+                            <li class="list-group-item ">
+                                <div class=" d-flex justify-content-between">
+                                    <label for="p_remark_parent{{p_remark.id}}" class="text-decoration-none text-dark m-0" style="display: flex; justify-content: space-between;" target="_blank">
+                                        {{p_remark.name}}
+                                    </label>
+                                    <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;" name="p_remark_parent[]" type="checkbox" value="{{p_remark.id}}" id="p_remark_parent{{p_remark.id}}">
+                                </div>
+                            </li>
+                            {% endfor %}
+                    </div>
+                </ul>
+
             </div>
         </div>
 

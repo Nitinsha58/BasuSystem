@@ -18,7 +18,10 @@ from registration.models import (
     ReportPeriod,
 
     MentorRemark,
-    Action, ActionSuggested
+    Action, ActionSuggested,
+
+    ReportNegative,
+    ReportPositive
     )
 from collections import defaultdict
 from django.db.models import Q
@@ -473,6 +476,49 @@ def mentor_remarks(request, mentor_id, student_id):
             mentor_remark = request.POST.get('mentor_remark')
             parent_remark = request.POST.get('parent_remark')
 
+            mentor_negatives = request.POST.getlist('n_remark_mentor[]')
+            mentor_positives = request.POST.getlist('p_remark_mentor[]')
+            parent_negatives = request.POST.getlist('n_remark_parent[]')
+            parent_positives = request.POST.getlist('p_remark_parent[]')
+
+            # Update positives and negatives
+            remark.mentor_positive.clear()
+            remark.mentor_negative.clear()
+
+            remark.parent_positive.clear()
+            remark.parent_negative.clear()
+
+            for pos_id in mentor_positives:
+                if pos_id:
+                    try:
+                        positive = ReportPositive.objects.get(id=pos_id)
+                        remark.mentor_positive.add(positive)
+                    except ReportPositive.DoesNotExist:
+                        continue
+
+            for neg_id in mentor_negatives:
+                if neg_id:
+                    try:
+                        negative = ReportNegative.objects.get(id=neg_id)
+                        remark.mentor_negative.add(negative)
+                    except ReportNegative.DoesNotExist:
+                        continue
+
+            for pos_id in parent_positives:
+                if pos_id:
+                    try:
+                        positive = ReportPositive.objects.get(id=pos_id)
+                        remark.parent_positive.add(positive)
+                    except ReportPositive.DoesNotExist:
+                        continue
+
+            for neg_id in parent_negatives:
+                if neg_id:
+                    try:
+                        negative = ReportNegative.objects.get(id=neg_id)
+                        remark.parent_negative.add(negative)
+                    except ReportNegative.DoesNotExist:
+                        continue
 
             remark.mentor_remark = mentor_remark
             remark.parent_remark = parent_remark
@@ -501,10 +547,11 @@ def mentor_remarks(request, mentor_id, student_id):
     if request.method == 'POST':
         mentor_remark = request.POST.get('mentor_remark')
         parent_remark = request.POST.get('parent_remark')
+        mentor_negatives = request.POST.getlist('n_remark_mentor[]')
+        mentor_positives = request.POST.getlist('p_remark_mentor[]')
+        parent_negatives = request.POST.getlist('n_remark_parent[]')
+        parent_positives = request.POST.getlist('p_remark_parent[]')
 
-        if not mentor_remark:
-            messages.error(request, "mentor remark is required.")
-            return redirect('mentor_remarks', mentor_id=mentor.id, student_id=student.stu_id)
 
         remark = MentorRemark.objects.create(
             mentor=mentor,
@@ -514,6 +561,38 @@ def mentor_remarks(request, mentor_id, student_id):
             mentor_remark=mentor_remark,
             parent_remark=parent_remark
         )
+
+        for pos_id in mentor_positives:
+            if pos_id:
+                try:
+                    positive = ReportPositive.objects.get(id=pos_id)
+                    remark.mentor_positive.add(positive)
+                except ReportPositive.DoesNotExist:
+                    continue
+
+        for neg_id in mentor_negatives:
+            if neg_id:
+                try:
+                    negative = ReportNegative.objects.get(id=neg_id)
+                    remark.mentor_negative.add(negative)
+                except ReportNegative.DoesNotExist:
+                    continue
+
+        for pos_id in parent_positives:
+            if pos_id:
+                try:
+                    positive = ReportPositive.objects.get(id=pos_id)
+                    remark.parent_positive.add(positive)
+                except ReportPositive.DoesNotExist:
+                    continue
+
+        for neg_id in parent_negatives:
+            if neg_id:
+                try:
+                    negative = ReportNegative.objects.get(id=neg_id)
+                    remark.parent_negative.add(negative)
+                except ReportNegative.DoesNotExist:
+                    continue
 
         remark.save()
 
@@ -545,4 +624,7 @@ def mentor_remarks(request, mentor_id, student_id):
         'stu_performance': stu_performance,
         'batches': batches,
         'student_test_report': student_test_report,
+
+        'positives': ReportPositive.objects.all().order_by('name'),
+        'negatives': ReportNegative.objects.all().order_by('name'),
     })
