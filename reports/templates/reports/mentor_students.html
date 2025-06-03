@@ -14,11 +14,15 @@
           {% for mentorship in mentorships %}
           <li style="position: relative;" class="list-group-item">
             <a class="text-decoration-none text-dark" style="display: flex; justify-content: space-between;"
-              target="_blank" href="{% url 'student_report' mentorship.student.stu_id %}">
+              target="_blank" href="{% url 'mentor_remarks' mentorship.student.active_mentorship.mentor.id mentorship.student.stu_id %}">
               <span class="">{{forloop.counter}}. {{mentorship.student.user.first_name}}
                 {{mentorship.student.user.last_name}}</span>
             </a>
             <p class="text-muted fw-normal m-0" style="font-size: 14px;">{{ mentorship.student.active_mentorship.mentor.user.first_name }} {{ mentorship.student.active_mentorship.mentor.user.last_name }}</p>
+            
+            {% if mentorship.student.has_latest_report %}
+              <div style="position: absolute; background-color: blue; border-radius: 50%; width: 12px; height: 12px; right: -6px; top: 50%;" class="indicator"></div>
+            {% endif %}
           </li>
           {% endfor %}
         </ul>
@@ -29,7 +33,7 @@
   {% endif %}
 </div>
 
-
+{% if students %}
 <div class="w-100 d-flex justify-content-center">
 
   <div class="container-md my-2 mx-0 p-0 w-100">
@@ -68,7 +72,12 @@
           {% for batch in student.batches_data %}
           <tr {% if forloop.first %} class="table-active" {% endif %} >
             {% if forloop.first %}
-            <th scope="row" rowspan="{{ student.batches_data.count }}"><a href="{% url 'student_report' student.student.stu_id %}" class="nav-link">{{outer_counter}}.  {{student.student_name}}</a></th>
+            <th scope="row" style="position: relative;" rowspan="{{ student.batches_data.count }}">
+              <a href="{% url 'student_report' student.student.stu_id %}" class="nav-link">{{outer_counter}}.  {{student.student_name}}</a>
+              {% if student.has_latest_report %}
+                <div style="position: absolute; background-color: blue; border-radius: 50%; width: 12px; height: 12px; left: 6px; top: 50%;" class="indicator"></div>
+              {% endif %}
+            </th>
             {% else %}
             <th scope="row" rowspan="{{ student.batches_data.count }}"></th>
             {% endif %}
@@ -90,8 +99,8 @@
     </div>
   </div>
 
-
 </div>
+{% endif %}
 
 
 <script src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js"

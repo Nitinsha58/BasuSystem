@@ -13,6 +13,8 @@ from registration.models import (
     QuestionResponse,
     Test,
     TestResult,
+    ReportPeriod,
+    MentorRemark
     )
 from django.db.models import Q
 from collections import defaultdict
@@ -452,6 +454,13 @@ def calculate_test_scores_percentage(student, batch, start_date, end_date) -> fl
     return 0.0
 
 
+def has_report(student, start_date, end_date):
+    """ check if student has any mentor report object in the given date range """
+    return MentorRemark.objects.filter(
+        student=student,
+        start_date = start_date,
+        end_date = end_date,
+    ).exists()
 
 
 def generate_group_report_data_v2(request, start_date: datetime.date, end_date: datetime.date,):
@@ -504,6 +513,7 @@ def generate_group_report_data_v2(request, start_date: datetime.date, end_date: 
             'student_name': f"{student.user.first_name} {student.user.last_name}".strip() or student.user.phone,
             'student_id': str(student.stu_id),
             'student': student,
+            'has_report': has_report(student, start_date, end_date),
             'batches_data': []
         }
 
@@ -569,7 +579,8 @@ def generate_single_student_report_data(student, start_date: date, end_date: dat
             'batch_id': batch.id,
             'attendance': attendance_perc,
             'homework': homework_perc,
-            'test_marks': test_scores_perc
+            'test_marks': test_scores_perc,
+            'has_report': has_report(student, start_date, end_date)
         }
         student_info['batches_data'].append(batch_data)
 

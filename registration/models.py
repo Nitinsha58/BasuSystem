@@ -117,6 +117,16 @@ class Student(models.Model):
 
     def __str__(self):
         return self.user.first_name + " " + self.user.last_name
+    
+    def has_latest_report(self):
+        latest_report_period = ReportPeriod.objects.order_by('-start_date').first()
+        if not latest_report_period:
+            return False
+        
+        start_date = latest_report_period.start_date
+        end_date = latest_report_period.end_date
+        # Check if the student has any reports in the latest report period
+        return self.mentor_remarks.filter(start_date=start_date, end_date=end_date).exists()
 
 class ParentDetails(models.Model):
     parent_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)

@@ -43,6 +43,7 @@ from .utility import (
     get_marks_percentage,
     get_batchwise_marks,
     get_student_test_report,
+    has_report,
 )
 
 from .teachers_utility import (
@@ -317,11 +318,11 @@ def mentor_students(request):
             )
         class_mentorships[class_name] = mentorships
     
-    students = generate_group_report_data_v2(request, start_date, end_date)
+    # students = generate_group_report_data_v2(request, start_date, end_date)
 
     return render(request, "reports/mentor_students.html", {
         'class_mentorships': class_mentorships,
-        'students': students,
+        # 'students': students,
         'start_date': start_date,
         'end_date': end_date,
     })
@@ -624,6 +625,7 @@ def mentor_remarks(request, mentor_id, student_id):
         'stu_performance': stu_performance,
         'batches': batches,
         'student_test_report': student_test_report,
+        'has_report': has_report(student, start_date, end_date),
 
         'positives': ReportPositive.objects.all().order_by('name'),
         'negatives': ReportNegative.objects.all().order_by('name'),
