@@ -1,6 +1,7 @@
 from django.db import models
 import uuid
 from django.db.models import Max
+from colorfield.fields import ColorField
 
 
 from center.models import ClassName, Subject, Section
@@ -479,6 +480,7 @@ class Action(models.Model):
     name = models.CharField(max_length=255, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    color = ColorField(null=True, blank=True, verbose_name='Color')
 
     def __str__(self):
         return self.name

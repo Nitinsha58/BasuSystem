@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load mathfilters %}
+{% load static %}
+
+{% block dashboard %}
+
+<style>
+    .dates-group {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+        overflow-x: auto;
+        display: flex;
+        gap: 2rem;
+    }
+</style>
+
+<div class="container-sm">
+    <div class="d-flex flex-wrap gap-4 w-100 pb-3 my-4">
+        {% for action, batch_map in data.items %}
+            <div class="card" style="min-width: 20rem; height: fit-content; border: none;">
+                <ul class="list-group">
+                    <!-- Action name -->
+                    <li style="background-color: {{action.color}};" class="list-group-item text-dark fw-bold rounded">
+                        {{ action.name|title }}
+                    </li>
+
+                    <!-- For each batch under the action -->
+                    {% for batch, students in batch_map.items %}
+                    <ul class="list-group">
+                        <li class="list-group-item bg-dark text-white list-group border-dark mt-2 mb-1">{{batch}}</li>
+
+                        <div class="p-2 border rounded">
+                            {% for student in students %}
+                            <li class="list-group-item ">
+                                <div class=" d-flex justify-content-between">
+                                    <label for="n_remark_parent{{n_remark.id}}" class="text-decoration-none text-dark m-0" style="display: flex; justify-content: space-between;" target="_blank">
+                                        {{student.user.first_name}} {{student.user.last_name}}
+                                    </label>
+                                    <!-- <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;" name="n_remark_parent[]" type="checkbox" value="{{n_remark.id}}" {% if n_remark in remark.parent_negative.all %} checked {% endif %}  id="n_remark_parent{{n_remark.id}}"> -->
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </div>
+                    </ul>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock dashboard %}

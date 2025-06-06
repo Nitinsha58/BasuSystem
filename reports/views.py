@@ -630,3 +630,23 @@ def mentor_remarks(request, mentor_id, student_id):
         'positives': ReportPositive.objects.all().order_by('name'),
         'negatives': ReportNegative.objects.all().order_by('name'),
     })
+
+def suggested_actions(request):
+    # Optimize DB hits
+    suggested_actions = ActionSuggested.objects.select_related(
+        'student__user', 'batch'
+    ).prefetch_related('action')
+
+    # Structure: data[action][batch] = list of students
+    data = defaultdict(lambda: defaultdict(list))
+
+    for sg_action in suggested_actions:
+        for action in sg_action.action.all():
+            data[action][sg_action.batch].append(sg_action.student)
+
+    data = {
+        action: dict(batch_map)  # Convert inner defaultdict to dict
+        for action, batch_map in data.items()
+    }
+
+    return render(request, 'reports/suggested_actions.html', {'data': dict(data)})

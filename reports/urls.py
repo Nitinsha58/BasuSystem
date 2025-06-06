@@ -10,6 +10,7 @@ from .views import (
     teachers_list,
     teacher_report,
     mentor_remarks,
+    suggested_actions
 )
 
 urlpatterns = [
@@ -24,4 +25,5 @@ urlpatterns = [
     path('teacher_report/<int:teacher_id>/', teacher_report, name='teacher_report'),
 
     path('mentor_remarks/<int:mentor_id>/<uuid:student_id>/', mentor_remarks, name='mentor_remarks'),
+    path('suggested_actions/', suggested_actions, name='suggested_actions')
 ]

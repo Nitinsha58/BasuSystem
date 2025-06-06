@@ -61,6 +61,16 @@
       <div class="col">
         <div class="card h-100">
           <div class="card-body">
+            <h3 class="card-title">Action Suggested</h3>
+            <p class="card-text">Action suggested to by Parents to students</p>
+            <a href="{% url 'suggested_actions' %}" class="btn btn-warning">Action Suggested</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="card h-100">
+          <div class="card-body">
             <h3 class="card-title">Absent Students</h3>
             <p class="card-text">Get List of Students who are regularly absent.</p>
             <a href="{% url 'regular_absent_students' %}" class="btn btn-danger">Absent Students</a>
