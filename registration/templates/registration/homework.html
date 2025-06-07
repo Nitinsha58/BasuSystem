@@ -84,12 +84,24 @@
                         </ul>
                     </div>
                 </div>
+                {% if un_marked_students %}
+                <li class="student list-group-item">
+                    <div class="form-check form-switch" style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
+                        <label class="form-check-label" for="student_{{forloop.counter}}">Mark all</label>
+                        <select class="form-select" id="mark-all-homework" style="width: fit-content;" name="homework[]" id="student_{{ student.stu_id }}">
+                            {% for status in homework_status %}
+                            <option value="{{ student.stu_id }}:{{ status.0 }}">{{ status.1 }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </li>
+                {% endif %}
                 <ul class="students-list list-group">
                     {% for student in un_marked_students %}
                     <li class="student list-group-item">
                         <div class="form-check form-switch" style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
                             <label class="form-check-label" for="student_{{forloop.counter}}">{{forloop.counter}}. {{ student.user.first_name }} {{ student.user.last_name }}</label>
-                            <select class="form-select" style="width: fit-content;" name="homework[]" id="student_{{ student.stu_id }}">
+                            <select class="form-select student-homework-select" style="width: fit-content;" name="homework[]" id="student_{{ student.stu_id }}">
                                 {% for status in homework_status %}
                                 <option value="{{ student.stu_id }}:{{ status.0 }}">{{ status.1 }}</option>
                                 {% endfor %}
@@ -159,6 +171,21 @@
         {% endif %}
     {% endif %}
 </div>  
+
+<script>
+document.getElementById("mark-all-homework").addEventListener("change", function () {
+    const selectedLabel = this.options[this.selectedIndex].text;
+
+    document.querySelectorAll(".student-homework-select").forEach(select => {
+        Array.from(select.options).forEach(option => {
+            if (option.text === selectedLabel) {
+                option.selected = true;
+            }
+        });
+    });
+});
+</script>
+
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
