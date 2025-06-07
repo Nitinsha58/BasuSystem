@@ -88,7 +88,7 @@
                 <li class="student list-group-item">
                     <div class="form-check form-switch" style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
                         <label class="form-check-label" for="student_{{forloop.counter}}">Mark all</label>
-                        <select class="form-select" id="mark-all-homework" style="width: fit-content;" name="homework[]" id="student_{{ student.stu_id }}">
+                        <select class="form-select" id="mark-all-homework" style="width: fit-content;" name="">
                             {% for status in homework_status %}
                             <option value="{{ student.stu_id }}:{{ status.0 }}">{{ status.1 }}</option>
                             {% endfor %}
