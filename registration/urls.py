@@ -43,6 +43,7 @@ from .views import (
     transport_list,
     transport_driver_list,
     grouped_transports,
+    add_driver,
 
     # Mentorship Assignment
     assign_mentor,
@@ -88,6 +89,7 @@ urlpatterns = [
     path('transport_list/', transport_list, name='transport_list'),
     path('transport_driver_list/', transport_driver_list, name='transport_driver_list'),
     path('grouped_transports/', grouped_transports, name='grouped_transports'),
+    path('add_driver/', add_driver, name='add_driver'),
 
 
     # Mentorship Assignment

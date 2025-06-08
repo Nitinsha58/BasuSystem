@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block dashboard %}
+<div class="container-sm p-4 ">
+    <div class="my-4 mt-2">
+        <h2 class="fw-normal text-dark"> Add Driver </h2>
+    </div>
+
+    <form class="g-3 bg-light rounded p-2 pb-3" method="post">
+        {% csrf_token %}
+        <div class="row justify-content-evenly mt-3">
+          <div class="col-md-3">
+            <label for="first_name" class="form-label">First name*</label>
+            <input type="text" class="form-control"  name="first_name" id="first_name" required>
+          </div>
+          <div class="col-md-3">
+            <label for="last_name" class="form-label">Last name</label>
+            <input type="text" class="form-control"  name="last_name" id="last_name" >
+          </div>
+      
+          <div class="col-md-3">
+            <label for="phone" class="form-label">Phone*</label>
+            <input type="number"  minlength="10" maxlength="10" class="form-control" name="phone" id="phone" required>
+          </div>
+        </div>
+
+        <div class="row justify-content-evenly mt-3">
+            <div class="col-md-3">
+            </div>
+            <div class="col-md-3">
+            </div>
+            <div class="col-md-3">
+                <label for="name" class="form-label">Name*</label>
+                <input type="text" class="form-control" name="name" id="name" required>
+            </div>
+          </div>
+        <div class="row justify-content-evenly mt-3">
+            <div class="col-md-3">
+            </div>
+            
+            <div class="col-md-3 mt-4">
+                <button class="btn btn-warning w-100" type="submit">Add Driver</button>
+            </div>
+            <div class="col-md-3">
+            </div>
+        </div>
+    </form>
+    <div class="g-3 bg-light rounded p-2 pb-3 mt-4">
+        
+
+        <div class="row justify-content-evenly mt-3">
+            <div class="row shuffle" data-masonry='{"percentPosition": true }' id="batches">
+                
+                <div class="col-sm-6 col-md-4 col-lg-3 category shuffle-item shuffle-item--visible mb-4">
+                    <div class="card">
+                        <ul class="list-group">
+                            <li class="list-group-item bg-dark text-white list-group border-dark">Drivers</li>
+                            {% for driver in drivers %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <a class="text-decoration-none text-dark">
+                                    <span class="">{{forloop.counter}}. {{driver.user.first_name}} {{driver.user.last_name}}</span>
+                                    <p class="text-muted fw-normal m-0" style="font-size: 14px;">{{driver.name}}</p>
+                                </a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+  document.getElementById('doj').valueAsDate = new Date();
+  
+  const input = document.getElementById('phone');
+  const aadhar = document.getElementById('aadhar_card_number')
+  
+  input.addEventListener("input", function () {
+      this.value = this.value.replace(/\D/g, "").slice(0, 10); // Remove non-digits and limit to 10
+  });
+  aadhar.addEventListener("input", function () {
+      this.value = this.value.replace(/\D/g, "").slice(0, 12); // Remove non-digits and limit to 10
+  });
+</script>
+
+{% endblock dashboard %}

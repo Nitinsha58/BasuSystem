@@ -1,28 +1,17 @@
 from django.shortcuts import render, redirect
 from .models import (
-    Student, 
-    ParentDetails,
-    FeeDetails, 
-    Installment, 
-    TransportDetails, 
-    Batch, 
-    Teacher, 
-    Attendance, 
-    Homework, 
-    Test, 
-    TestQuestion, 
-    Chapter, 
-    Remark, 
-    RemarkCount, 
-    QuestionResponse, 
-    TestResult, 
-    Day, 
-    Mentor,
-    Mentorship,
-    TransportPerson,
-    TransportMode
+    Student, ParentDetails,FeeDetails, 
+    Installment, TransportDetails, Batch, 
+    Teacher, Attendance, Homework, 
+    Test, TestQuestion, Chapter, 
+    Remark, RemarkCount,QuestionResponse, 
+    TestResult, Day, Mentor,
+    Mentorship, TransportPerson, TransportMode
     )
-from .forms import StudentRegistrationForm, StudentUpdateForm, ParentDetailsForm, TransportDetailsForm
+from .forms import (
+    StudentRegistrationForm, StudentUpdateForm, ParentDetailsForm, TransportDetailsForm,
+    )
+
 from center.models import Subject, ClassName
 from django.contrib import messages
 from django.db import transaction
@@ -1488,3 +1477,56 @@ def unassign_mentor(request, stu_id):
     messages.success(request, "Mentorship unassigned successfully.")
 
     return redirect('assign_mentor')
+
+@login_required(login_url='login')
+def add_driver(request):
+    if request.method == "POST":
+        first_name = request.POST.get("first_name")
+        last_name = request.POST.get("last_name")
+        phone = request.POST.get("phone")
+        password = "basu@123"
+        name = request.POST.get("name")
+
+        # Try to find existing BaseUser
+        user = BaseUser.objects.filter(phone=phone).first()
+
+        # Try to find existing TransportPerson
+        driver = TransportPerson.objects.filter(name=name).first()
+
+        if driver:
+            if driver.user:
+                messages.error(request, "Driver already exists and is linked to a user.")
+                return redirect("add_driver")
+            else:
+                if user:
+                    driver.user = user
+                    messages.success(request, "Linked existing user to the driver.")
+                else:
+                    # Create new BaseUser and link
+                    user = BaseUser.objects.create_user(
+                        phone=phone,
+                        password=password,
+                        first_name=first_name,
+                        last_name=last_name,
+                    )
+                    driver.user = user
+                    messages.success(request, "New user created and linked to existing driver.")
+                driver.save()
+        else:
+            if not user:
+                user = BaseUser.objects.create_user(
+                    phone=phone,
+                    password=password,
+                    first_name=first_name,
+                    last_name=last_name,
+                )
+                messages.success(request, "New user created.")
+
+            # Create new TransportPerson and link user
+            driver = TransportPerson.objects.create(name=name, user=user)
+            messages.success(request, "New driver created and linked with user.")
+
+        return redirect("add_driver")
+
+    drivers = TransportPerson.objects.all()
+    return render(request, "registration/add_driver.html", {'drivers': drivers})

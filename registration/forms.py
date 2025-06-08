@@ -278,6 +278,75 @@ class TeacherForm(forms.ModelForm):
 
         return teacher
 
+class TransportPersonForm(forms.ModelForm):
+    user = forms.ModelChoiceField(queryset=BaseUser.objects.all(), required=False)  # Optional user field
+    first_name = forms.CharField(max_length=255, required=False)
+    last_name = forms.CharField(max_length=255, required=False)
+    phone = forms.CharField(max_length=15, required=False)
+    name = forms.CharField(max_length=15)
+
+    class Meta:
+        model = TransportPerson
+        fields = ['user', 'first_name', 'last_name', 'phone', 'name']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # If updating an existing instance, populate fields
+        if self.instance and self.instance.pk:
+            self.fields['user'].initial = self.instance.user
+            self.fields['first_name'].initial = self.instance.user.first_name
+            self.fields['last_name'].initial = self.instance.user.last_name
+            self.fields['phone'].initial = self.instance.user.phone
+            self.fields['name'].initial = self.instance.user.name
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        user = cleaned_data.get('user')
+        first_name = cleaned_data.get('first_name')
+        last_name = cleaned_data.get('last_name')
+        phone = cleaned_data.get('phone')
+
+        # If no user is provided, first_name, last_name, and phone are required
+        if not user:
+            if not first_name:
+                self.add_error('first_name', "This field is required when no user is selected.")
+            if not last_name:
+                self.add_error('last_name', "This field is required when no user is selected.")
+            if not phone:
+                self.add_error('phone', "This field is required when no user is selected.")
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        cleaned_data = self.cleaned_data
+        user = cleaned_data.get('user')
+
+        if user:
+            driver = super().save(commit=False)
+            driver.user = user
+        else:
+            # Check if a user with the same phone already exists
+            existing_user = BaseUser.objects.filter(phone=cleaned_data['phone']).first()
+
+            if existing_user:
+                self.add_error("phone", "A user with this phone number already exists.")
+                return None  # Prevent saving
+
+            # Create a new BaseUser
+            base_user = BaseUser.objects.create(
+                first_name=cleaned_data['first_name'],
+                last_name=cleaned_data['last_name'],
+                phone=cleaned_data['phone'],
+            )
+            driver = super().save(commit=False)
+            driver.user = base_user
+
+        if commit:
+            driver.save()
+
+        return driver
+
 class MentorForm(forms.ModelForm):
     first_name = forms.CharField(max_length=255, required=False)
     last_name = forms.CharField(max_length=255, required=False)

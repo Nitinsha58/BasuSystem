@@ -202,6 +202,7 @@ class Installment(models.Model):
 class TransportPerson(models.Model):
     person_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     name = models.CharField(max_length=255)
+    user = models.ForeignKey(BaseUser, on_delete=models.CASCADE, related_name='transport_person', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
