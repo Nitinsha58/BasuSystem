@@ -1267,7 +1267,10 @@ def transport_driver_list(request):
     seen_students = set()  # to avoid duplicate inclusion
 
     for student in students:
-        if not student.transport or not student.transport.transport_person:
+        try:
+            if not student.transport or not student.transport.transport_person:
+                continue
+        except Student.transport.RelatedObjectDoesNotExist:
             continue
 
         # Get all batches on current_day
@@ -1371,7 +1374,10 @@ def transport_student_list(request):
     seen_students = set()  # to avoid duplicate inclusion
 
     for student in students:
-        if not student.transport or not student.transport.transport_person:
+        try:
+            if not student.transport or not student.transport.transport_person:
+                continue
+        except Student.transport.RelatedObjectDoesNotExist:
             continue
 
         # Get all batches on current_day
