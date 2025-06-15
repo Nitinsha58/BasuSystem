@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from .models import (
     Student, ParentDetails,FeeDetails, 
     Installment, TransportDetails, Batch, 
@@ -6,7 +6,7 @@ from .models import (
     Test, TestQuestion, Chapter, 
     Remark, RemarkCount,QuestionResponse, 
     TestResult, Day, Mentor,
-    Mentorship, TransportPerson, TransportMode
+    Mentorship, TransportPerson, TransportMode, TransportAttendance
     )
 from .forms import (
     StudentRegistrationForm, StudentUpdateForm, ParentDetailsForm, TransportDetailsForm,
@@ -1536,3 +1536,171 @@ def add_driver(request):
 
     drivers = TransportPerson.objects.all()
     return render(request, "registration/add_driver.html", {'drivers': drivers})
+
+def students_pick_drop(request):
+    try:
+        driver = TransportPerson.objects.filter(user=request.user).first()
+    except Exception:
+        messages.error(request, 'Invalid Driver')
+        return redirect('staff_dashboard')
+    
+    date_str = request.GET.get("date")
+    try:
+        date = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else datetime.now().date()
+    except ValueError:
+        messages.error(request, "Invalid date format.")
+        return redirect(f"?date={datetime.now().date()}")
+
+    prev_date = date - timedelta(days=1)
+    next_date = date + timedelta(days=1)
+
+    current_day = Day.objects.filter(name=date.strftime("%A")).first()
+    students = Student.objects.filter(
+        active=True,
+        fees__cab_fees__gt=0,
+        transport__transport_person=driver,
+        batches__days__name=current_day
+    ).prefetch_related(
+        'batches__days',
+        'batches'
+    ).distinct()
+
+    attendance_qs = TransportAttendance.objects.filter(
+        student__in=students,
+        date=date
+    )
+    # Build a lookup: {(student_id, time, action): attendance_obj}
+    attendance_lookup = {}
+    for att in attendance_qs:
+        attendance_lookup[(att.student_id, att.time, att.action)] = att
+
+    grouped = defaultdict(lambda: {"Pickup": [], "Drop": []})
+
+    for student in students:
+        batches_today = [b for b in student.batches.all() if current_day in b.days.all()]
+        if not batches_today:
+            continue
+
+        earliest = min(batches_today, key=lambda b: b.start_time)
+        latest = max(batches_today, key=lambda b: b.end_time)
+
+        # For Pickup
+        pickup_attendance = attendance_lookup.get((student.id, str(earliest.start_time), "Pickup"))
+        grouped[earliest.start_time]["Pickup"].append({
+            "student": student,
+            "attendance": pickup_attendance
+        })
+
+        # For Drop
+        drop_attendance = attendance_lookup.get((student.id, str(latest.end_time), "Drop"))
+        grouped[latest.end_time]["Drop"].append({
+            "student": student,
+            "attendance": drop_attendance
+        })
+
+    sorted_grouped = OrderedDict(sorted(grouped.items()))
+
+    return render(request, "registration/students_pick_drop.html", {
+        "current_day": current_day,
+        "date": date,
+        "prev_date": prev_date,
+        "next_date": next_date,
+        "driver": driver,
+        "grouped_transports": sorted_grouped,
+    })
+
+@login_required(login_url='login')
+def mark_transport_attendance(request):
+    if request.method == "POST":
+
+        student_id = request.POST.get("student_id")
+        date_str = request.POST.get("date")
+        time = request.POST.get("time")
+        action = request.POST.get("action")
+        is_present = request.POST.get("present") == "true"
+
+        driver = TransportPerson.objects.filter(user=request.user).first()
+
+        if not driver:
+            messages.error(request, 'Invalid Driver')
+            return redirect('staff_dashboard')
+
+        student = Student.objects.filter(id=student_id).first()
+        if not student:
+            messages.error(request, "Invalid Student")
+            return redirect('students_pick_drop')
+
+        try:
+            date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
+        except ValueError:
+            messages.error(request, "Invalid date format.")
+            return redirect('students_pick_drop')
+
+        attendance, created = TransportAttendance.objects.get_or_create(
+            student=student,
+            date=date_obj,
+            time=time,
+            action=action,
+            driver=driver,
+            defaults={'is_present': is_present}
+        )
+        if not created:
+            attendance.is_present = is_present
+            attendance.save()
+
+        if is_present:
+            messages.success(request, f"{action} marked as Present for {student.user.first_name} on {date_obj}.")
+        else:
+            messages.success(request, f"{action} marked as Absent for {student.user.first_name} on {date_obj}.")
+
+        return redirect(f"{reverse('students_pick_drop')}?date={date_obj}")
+    else:
+        messages.error(request, "Invalid request method.")
+        return redirect('students_pick_drop')
+
+
+@login_required(login_url='login')
+def delete_transport_attendance(request):
+    # Allow both superusers and drivers to delete attendance
+    if request.method == "POST":
+        student_id = request.POST.get("student_id")
+        date_str = request.POST.get("date")
+        time = request.POST.get("time")
+        action = request.POST.get("action")
+
+        driver = TransportPerson.objects.filter(user=request.user).first()
+
+        if not driver and not request.user.is_superuser:
+            messages.error(request, 'Invalid Driver')
+            return redirect('staff_dashboard')
+
+        student = Student.objects.filter(id=student_id).first()
+        if not student:
+            messages.error(request, "Invalid Student")
+            return redirect('students_pick_drop')
+
+        try:
+            date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
+        except ValueError:
+            messages.error(request, "Invalid date format.")
+            return redirect('students_pick_drop')
+
+        attendance_filter = {
+            'student': student,
+            'date': date_obj,
+            'time': time,
+            'action': action,
+        }
+        if not request.user.is_superuser:
+            attendance_filter['driver'] = driver
+
+        attendance = TransportAttendance.objects.filter(**attendance_filter).first()
+
+        if attendance:
+            attendance.delete()
+            messages.success(request, f"{action} attendance deleted for {student.user.first_name} on {date_obj}.")
+        else:
+            messages.error(request, "Attendance record not found.")
+        
+        return redirect(f"{reverse('students_pick_drop')}?date={date_obj}")
+    return redirect('students_pick_drop')

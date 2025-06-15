@@ -24,6 +24,7 @@ from .models import (
     MentorRemark,
     Action,
     ActionSuggested,
+    TransportAttendance,
 
 
     ReportNegative,
@@ -164,6 +165,21 @@ class MentorshipAdmin(admin.ModelAdmin):
         return f"{obj.student.user.first_name} {obj.student.user.last_name}"
     student_name.short_description = "Student"
 
+class TransportAttendanceAdmin(admin.ModelAdmin):
+    list_display = ['student_name', 'is_present', 'date', 'time', 'action', 'created_at', 'updated_at']
+    search_fields = [
+        'student__user__first_name',
+        'student__user__last_name',
+        'student__user__phone'
+    ]
+    list_filter = ['is_present', 'date', 'time', 'action']
+    ordering = ['-date', '-created_at']
+
+    def student_name(self, obj):
+        return f"{obj.student.user.first_name} {obj.student.user.last_name}"
+    student_name.short_description = "Student"
+
+admin.site.register(TransportAttendance, TransportAttendanceAdmin)
 admin.site.register(Student, StudentAdmin)
 admin.site.register(ParentDetails)
 admin.site.register(FeeDetails)

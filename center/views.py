@@ -9,10 +9,16 @@ from user.models import BaseUser
 from django.db.models import Count, Sum, F, ExpressionWrapper, FloatField, Avg, Q
 from collections import Counter, defaultdict
 from .models import TestResult, RemarkCount
+from registration.models import TransportPerson
 # Create your views here.
 
 @login_required(login_url='login')
 def staff_dashboard(request):
+    driver = TransportPerson.objects.filter(user=request.user).first()
+
+    if driver:
+        return redirect('students_pick_drop')
+
     return render(request, 'center/dashboard.html')
 
 @login_required(login_url='login')

@@ -88,6 +88,13 @@
                 </li>
                 {% endif %}
 
+                {% if request.user.transport_person and not request.user.is_superuser %}
+                <li class="nav-item m-2">
+                    <a class="nav-link bg-warning-subtle rounded d-inline px-3 p-2 m-1"
+                        href="{% url 'students_pick_drop' %}">Students</a>
+                </li>
+                {% endif %}
+
                 <!-- Student-specific links -->
                 {% if request.user.registered_student %}
                 <li class="nav-item m-2">

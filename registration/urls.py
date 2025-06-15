@@ -48,6 +48,9 @@ from .views import (
     # Mentorship Assignment
     assign_mentor,
     unassign_mentor,
+    students_pick_drop,
+    mark_transport_attendance,
+    delete_transport_attendance,
     )
 
 
@@ -117,4 +120,9 @@ urlpatterns = [
     path('update-result/<int:batch_id>/<int:test_id>/<int:student_id>/<int:response_id>', update_result, name="update_student_question_response"),
     path('delete-result/<int:batch_id>/<int:test_id>/<int:student_id>/<int:response_id>', delete_result, name="delete_student_question_response"),
     path('all-pending-response/<int:batch_id>/<int:test_id>/<int:student_id>', all_pending_response, name="all_pending_response"),
+
+    #Transport Person
+    path('students-pick-drop/', students_pick_drop, name="students_pick_drop"),
+    path('mark-transport-attendance/', mark_transport_attendance, name="mark_transport_attendance"),
+    path('delete_transport_attendance/', delete_transport_attendance, name="delete_transport_attendance"),
 ]

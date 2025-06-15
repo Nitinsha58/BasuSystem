@@ -504,3 +504,22 @@ class ActionSuggested(models.Model):
     class Meta:
         # unique_together cannot include ManyToMany fields like 'action'
         unique_together = ('student', 'batch', 'mentor_remark')
+
+class TransportAttendance(models.Model):
+    ATTENDANCE_CHOICES = [
+        ('Pickup', 'Pickup'),
+        ('Drop', 'Drop'),
+        ('None', 'None'),
+    ]
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="transport_attendance")
+    is_present = models.BooleanField()
+    driver = models.ForeignKey(TransportPerson, on_delete=models.CASCADE, related_name="transport_attendance", null=True, blank=True)
+    date = models.DateField()
+    time = models.CharField(max_length=10, choices=Batch.BATCH_TIME_CHOICES)
+    action = models.CharField(max_length=10, choices=ATTENDANCE_CHOICES, default='None')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.student.user.first_name} - {self.date}: {'Present' if self.is_present else 'Absent'}"
+    
