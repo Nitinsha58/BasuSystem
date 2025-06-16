@@ -30,7 +30,7 @@
     <div class="d-flex g-4 w-100 flex-column dates-group pb-3">
         
         {% for time, actions in grouped_transports.items %}
-        <h5 class="card-title">{{ time }}</h5>
+        <h5 class="card-title">{{ time|time:'h:i A' }}</h5>
         <div class="" data-masonry='{"percentPosition": true }' id="driver">
           <div class="category flex-wrap shuffle-item shuffle-item--visible mb-4 d-flex flex-md-row gap-2">
               {% for action, students in actions.items %}
@@ -49,7 +49,7 @@
                                     {% csrf_token %}
                                     <input type="date" hidden name="date" value="{{ date|date:'Y-m-d' }}">
                                     <input type="text" hidden name="action" value="{{ action }}">
-                                    <input type="text" hidden name="time" value="{{ time }}">
+                                    <input type="text" hidden name="time" value="{{ time|time:'h:i A' }}">
                                     <input type="text" hidden name="student_id" value="{{ student.student.id }}">
                                     <input type="hidden" name="present" value="true">
                                     <button class="btn btn-warning btn-sm" type="submit">Present</button>
@@ -59,7 +59,7 @@
                                     {% csrf_token %}
                                     <input type="date" hidden name="date" value="{{ date|date:'Y-m-d' }}">
                                     <input type="text" hidden name="action" value="{{ action }}">
-                                    <input type="text" hidden name="time" value="{{ time }}">
+                                    <input type="text" hidden name="time" value="{{ time|time:'h:i A' }}">
                                     <input type="text" hidden name="student_id" value="{{ student.student.id }}">
                                     <input type="hidden" name="present" value="false">
                                     <button class="btn btn-danger btn-sm" type="submit">Absent</button>
@@ -73,7 +73,7 @@
                                     {% csrf_token %}
                                     <input type="date" hidden name="date" value="{{ date|date:'Y-m-d' }}">
                                     <input type="text" hidden name="action" value="{{ action }}">
-                                    <input type="text" hidden name="time" value="{{ time }}">
+                                    <input type="text" hidden name="time" value="{{ time|time:'h:i A' }}">
                                     <input type="text" hidden name="student_id" value="{{ student.student.id }}">
                                     <button class="btn btn-danger btn-sm" type="submit" title="Delete Attendance">
                                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
@@ -99,3 +99,17 @@
 </div>
 
 {% endblock dashboard %}
+
+<script>
+    // Prevent double submission for all attendance forms
+    document.querySelectorAll('form[action*="mark_transport_attendance"]').forEach(function(form) {
+        form.addEventListener('submit', function(event) {
+            // Disable only the submit button in the submitted form
+            var btn = form.querySelector('button[type="submit"]');
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = 'Saving...';
+            }
+        });
+    });
+</script>

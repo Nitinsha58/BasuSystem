@@ -22,6 +22,7 @@ from django.contrib.auth.decorators import login_required
 
 from django.db.models import Q
 from django.urls import reverse
+import time as clock_time
 
 @login_required(login_url='login')
 def student_registration(request):
@@ -1613,15 +1614,19 @@ def students_pick_drop(request):
         latest = max(batches_today, key=lambda b: b.end_time)
 
         # For Pickup
+        pickup_time_obj = datetime.strptime(earliest.start_time, "%I:%M %p").time()
+
         pickup_attendance = attendance_lookup.get((student.id, str(earliest.start_time), "Pickup"))
-        grouped[earliest.start_time]["Pickup"].append({
+        grouped[pickup_time_obj]["Pickup"].append({
             "student": student,
             "attendance": pickup_attendance
         })
 
         # For Drop
+        drop_time_obj = datetime.strptime(latest.end_time, "%I:%M %p").time()
+
         drop_attendance = attendance_lookup.get((student.id, str(latest.end_time), "Drop"))
-        grouped[latest.end_time]["Drop"].append({
+        grouped[drop_time_obj]["Drop"].append({
             "student": student,
             "attendance": drop_attendance
         })
@@ -1640,6 +1645,8 @@ def students_pick_drop(request):
 @login_required(login_url='login')
 def mark_transport_attendance(request):
     if request.method == "POST":
+
+        # clock_time.sleep(5)        
 
         student_id = request.POST.get("student_id")
         date_str = request.POST.get("date")
