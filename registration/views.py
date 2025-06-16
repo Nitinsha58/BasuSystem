@@ -1072,7 +1072,29 @@ def add_result(request, batch_id, test_id, student_id=None, question_id = None):
         "remarks":remarks,
         "question_response": question_response,
         "result":result,
+        "test_types": TestResult.TEST_TYPE_CHOICES,
     })
+
+@login_required(login_url='login')
+def add_test_result_type(request, test_result_id):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
+    
+    test_result = TestResult.objects.filter(id=test_result_id).first()
+    if not test_result:
+        messages.error(request, "Invalid Test Result")
+        return redirect("result_templates")
+
+    if request.method == 'POST':
+        test_type = request.POST.get("test_type")
+        if test_type:
+            test_result.test_type = test_type
+            test_result.save()
+            messages.success(request, "Result Type Updated Successfully.")
+        else:
+            messages.error(request, "Invalid Result Type.")
+
+    return redirect("add_student_result", batch_id=test_result.test.batch.id, test_id=test_result.test.id, student_id=test_result.student.id)   
 
 
 @login_required(login_url='login')
