@@ -1087,6 +1087,12 @@ def add_test_result_type(request, test_result_id):
 
     if request.method == 'POST':
         test_type = request.POST.get("test_type")
+        previous_marks = request.POST.get("previous_marks")
+
+        if previous_marks and test_type == "Retest":
+            test_result.previous_marks = float(previous_marks)
+            test_result.save()
+        
         if test_type:
             test_result.test_type = test_type
             test_result.save()

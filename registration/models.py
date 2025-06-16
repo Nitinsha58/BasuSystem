@@ -345,12 +345,6 @@ class TestResult(models.Model):
     TEST_TYPE_CHOICES = [
         ('Regular', 'Regular'),
         ('Retest', 'Retest'),
-        # ('Mock', 'Mock'),
-        # ('Final', 'Final'),
-        # ('Revision', 'Revision'),
-        # ('Diagnostic', 'Diagnostic'),
-        # ('Practice', 'Practice'),
-        # ('Other', 'Other')
     ]
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="results")
     test = models.ForeignKey(Test, on_delete=models.CASCADE, related_name="results")
@@ -359,6 +353,7 @@ class TestResult(models.Model):
     total_max_marks = models.FloatField(default=0)
     percentage = models.FloatField(default=0)
     test_type = models.CharField(max_length=20, choices=TEST_TYPE_CHOICES, default='Regular')
+    previous_marks = models.FloatField(default=0, blank=True, null=True)  # For retest comparison
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
