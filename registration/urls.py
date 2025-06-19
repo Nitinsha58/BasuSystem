@@ -45,6 +45,8 @@ from .views import (
     transport_driver_list,
     grouped_transports,
     add_driver,
+    drivers_list,
+    transport_attendance,
 
     # Mentorship Assignment
     assign_mentor,
@@ -127,4 +129,6 @@ urlpatterns = [
     path('students-pick-drop/', students_pick_drop, name="students_pick_drop"),
     path('mark-transport-attendance/', mark_transport_attendance, name="mark_transport_attendance"),
     path('delete_transport_attendance/', delete_transport_attendance, name="delete_transport_attendance"),
+    path('drivers_list/', drivers_list, name='drivers_list'),
+    path('transport_attendance/<int:driver_id>/', transport_attendance, name='transport_attendance'),
 ]

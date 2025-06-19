@@ -1695,6 +1695,92 @@ def mark_transport_attendance(request):
 
 
 @login_required(login_url='login')
+def drivers_list(request):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
+
+    drivers = TransportPerson.objects.all().order_by('name')
+    return render(request, "registration/drivers_list.html", {'drivers': drivers})
+
+@login_required(login_url='login')
+def transport_attendance(request, driver_id):
+    try:
+        driver = TransportPerson.objects.get(id=driver_id)
+    except Exception:
+        messages.error(request, 'Invalid Driver')
+        return redirect('staff_dashboard')
+    
+    date_str = request.GET.get("date")
+    try:
+        date = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else datetime.now().date()
+    except ValueError:
+        messages.error(request, "Invalid date format.")
+        return redirect(f"?date={datetime.now().date()}")
+
+    prev_date = date - timedelta(days=1)
+    next_date = date + timedelta(days=1)
+
+    current_day = Day.objects.filter(name=date.strftime("%A")).first()
+    students = Student.objects.filter(
+        active=True,
+        fees__cab_fees__gt=0,
+        transport__transport_person=driver,
+        batches__days__name=current_day
+    ).prefetch_related(
+        'batches__days',
+        'batches'
+    ).distinct()
+
+    attendance_qs = TransportAttendance.objects.filter(
+        student__in=students,
+        date=date
+    )
+    # Build a lookup: {(student_id, time, action): attendance_obj}
+    attendance_lookup = {}
+    for att in attendance_qs:
+        attendance_lookup[(att.student_id, att.time, att.action)] = att
+
+    grouped = defaultdict(lambda: {"Pickup": [], "Drop": []})
+
+    for student in students:
+        batches_today = [b for b in student.batches.all() if current_day in b.days.all()]
+        if not batches_today:
+            continue
+
+        earliest = min(batches_today, key=lambda b: b.start_time)
+        latest = max(batches_today, key=lambda b: b.end_time)
+
+        # For Pickup
+        pickup_time_obj = datetime.strptime(earliest.start_time, "%I:%M %p").time()
+
+        pickup_attendance = attendance_lookup.get((student.id, str(earliest.start_time), "Pickup"))
+        grouped[pickup_time_obj]["Pickup"].append({
+            "student": student,
+            "attendance": pickup_attendance
+        })
+
+        # For Drop
+        drop_time_obj = datetime.strptime(latest.end_time, "%I:%M %p").time()
+
+        drop_attendance = attendance_lookup.get((student.id, str(latest.end_time), "Drop"))
+        grouped[drop_time_obj]["Drop"].append({
+            "student": student,
+            "attendance": drop_attendance
+        })
+
+    sorted_grouped = OrderedDict(sorted(grouped.items()))
+
+    return render(request, "registration/students_pick_drop.html", {
+        "current_day": current_day,
+        "date": date,
+        "prev_date": prev_date,
+        "next_date": next_date,
+        "driver": driver,
+        "grouped_transports": sorted_grouped,
+    })
+
+
+@login_required(login_url='login')
 def delete_transport_attendance(request):
     # Allow both superusers and drivers to delete attendance
     if request.method == "POST":
