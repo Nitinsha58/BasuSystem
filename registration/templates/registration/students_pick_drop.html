@@ -19,10 +19,19 @@
 
     <div class="row g-4 mx-2">
         <ul class="pagination">
-            <li class="page-item"><a class="page-link" href="?date={{ prev_date|date:'Y-m-d' }}">Previous</a></li>
-            <li class="page-item"><p class="page-link text-dark text-nowrap">{{date|date:'Y-m-d'}}</p></li> 
-            <li class="page-item"><a class="page-link" href="?date={{ next_date|date:'Y-m-d' }}">Next</a></li>
+            <li class="page-item m-0"><a class="m-0 page-link" href="?date={{ prev_date|date:'Y-m-d' }}">Previous</a></li>
+            <li class="page-item m-0"><p class="m-0 page-link text-dark text-nowrap">{{date|date:'Y-m-d'}}</p></li> 
+            <li class="page-item m-0"><a class="m-0 page-link" href="?date={{ next_date|date:'Y-m-d' }}">Next</a></li>
+            {% if request.user.is_superuser %}
+                <a href="{% url 'drivers_list' %}" style="height: fit-content;" class="btn btn-primary ms-2">Go Back</a>
+            {% endif %} 
         </ul>
+        
+        <div class="m-0 mb-2">
+            <h5 class="mb-1">Driver: {{ driver.name }}</h5>
+            <p class="mb-0">Phone: {{ driver.user.phone }}</p>
+        </div>
+
     </div>
 </div>  
 
@@ -40,10 +49,14 @@
                         <li class="list-group-item bg-dark text-white list-group border-dark text-nowrap"> {{action}}</li>
                         {% for student in students %}
                         <li style="position: relative;" class="list-group-item d-flex align-items-center justify-content-between {% if student.attendance.is_present == False %} bg-danger-subtle {% elif student.attendance.is_present %} bg-success-subtle {% endif %}">
-                            <span class="">{{forloop.counter}}. {{student.student.user.first_name}} {{student.student.user.last_name}}</span>
-                            <!-- <p class="text-muted fw-normal m-0 text-wrap" style="font-size: 14px;">{{student.transport.address}}</p> -->
                             
-                            {% if not student.attendance %}
+                            {% if request.user.is_superuser %}
+                            <a href="{% url 'student_transport_details' student.student.stu_id %}" class="nav-link">{{forloop.counter}}. {{student.student.user.first_name}} {{student.student.user.last_name}}</a>
+                            {% else %}
+                            <span >{{forloop.counter}}. {{student.student.user.first_name}} {{student.student.user.last_name}}</span>
+                            {% endif %}
+
+                            {% if not student.attendance and not request.user.is_superuser %}
                             <div class="d-flex gap-2">
                                 <form method="post" action="{% url 'mark_transport_attendance' %}">
                                     {% csrf_token %}
