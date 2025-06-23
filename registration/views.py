@@ -185,17 +185,6 @@ def student_fees_details(request, stu_id):
     fees_details = FeeDetails.objects.filter(student__stu_id=stu_id).first()
 
     if request.method == 'POST':
-        form_data = {
-            "registration_fee": request.POST.get("registration_fee") or 0,
-            "uniform_fees": request.POST.get("uniform_fees") or 0,
-            "cab_fees": request.POST.get("cab_fees") or 0,
-            "tuition_fees": request.POST.get("tuition_fees") or 0,
-            "num_installments": request.POST.get("num_installments") or 1,
-            "discount": request.POST.get("discount") or 0,
-            "total_fees": request.POST.get("total_fees") or 0,
-            "book_fees": request.POST.get("book_fees") or 0,
-            "installments": []
-        }
 
         try:
             with transaction.atomic():
@@ -263,9 +252,117 @@ def student_transport_details(request, stu_id):
     else:
         form = TransportDetailsForm(instance=instance)
 
+    WEEKDAYS = Day.objects.all()
+    batch_timings_by_weekday = {}
+    slots = []
+    min_slot_time = None
+    max_slot_time = None
+
+    for day in WEEKDAYS:
+        batches_by_day = student.batches.filter(days=day)
+        if not batches_by_day:
+            continue
+        earliest = min(batches_by_day, key=lambda b: datetime.strptime(b.start_time, "%I:%M %p").time())
+        latest = max(batches_by_day, key=lambda b: datetime.strptime(b.end_time, "%I:%M %p").time())
+        
+        if min_slot_time is None:
+            min_slot_time = earliest.start_time
+        else:
+            min_slot_time = min([min_slot_time, earliest.start_time], key=lambda time: datetime.strptime(time, "%I:%M %p").time())
+        if max_slot_time is None:
+            max_slot_time = latest.end_time
+        else:
+            max_slot_time = max([max_slot_time, latest.end_time], key=lambda time: datetime.strptime(time, "%I:%M %p").time())
+        
+
+        driver_capacity = None
+        assigned_driver = getattr(student.transport, "transport_person", None)
+        if assigned_driver and hasattr(assigned_driver, "capacity"):
+            driver_capacity = assigned_driver.capacity
+            
+            students_qs = Student.objects.filter(
+                transport__transport_person=assigned_driver,
+                active=True,
+                fees__cab_fees__gt=0,
+                batches__days=day,
+            ).distinct()
+            # Calculate pickup (earliest) and drop (latest) counts separately
+            pickup_count = 0
+            drop_count = 0
+            pickup_status = "0"
+            drop_status = "0"
+
+            if earliest and earliest.start_time:
+                pickup_students_qs = []
+                for other_student in students_qs:
+                    batches_on_day = other_student.batches.filter(days=day)
+                    if batches_on_day:
+                        first_batch = min(batches_on_day, key=lambda b: datetime.strptime(b.start_time, "%I:%M %p"))
+                        if first_batch.start_time == earliest.start_time:
+                            pickup_students_qs.append(other_student)
+
+                pickup_count = len(pickup_students_qs)
+
+            if latest and latest.end_time:
+                drop_students_qs = students_qs.filter(batches__end_time=latest.end_time).distinct()
+                drop_count = drop_students_qs.count()
+            
+                drop_students_qs = []
+                for other_student in students_qs:
+                    batches_on_day = other_student.batches.filter(days=day)
+                    if batches_on_day:
+                        last_batch = max(batches_on_day, key=lambda b: datetime.strptime(b.end_time, "%I:%M %p"))
+                        if last_batch.end_time == earliest.end_time:
+                            drop_students_qs.append(other_student)
+                drop_count = len(drop_students_qs)
+
+
+            if driver_capacity is not None:
+                pickup_diff = driver_capacity - pickup_count
+                drop_diff = driver_capacity - drop_count
+
+                pickup_status = {
+                    'diff': pickup_diff,  # keep raw number
+                    'display': f"{'+' if pickup_diff < 0 else '-'}{abs(pickup_diff)}"
+                }
+                drop_status = {
+                    'diff': drop_diff,
+                    'display': f"{'+' if drop_diff < 0 else '-'}{abs(drop_diff)}"
+                }
+
+            driver_status = {
+                "pickup": pickup_status,
+                "pickup_count": pickup_count,
+                "drop": drop_status,
+                "drop_count": drop_count,
+                "capacity": driver_capacity,
+            }
+        else:
+            driver_status = None
+
+        batch_timings_by_weekday[day.name] = {
+            'earliest_start': earliest.start_time if earliest else None,
+            'latest_end': latest.end_time if latest else None,
+            'driver_capacity': driver_capacity,
+            'driver_status': driver_status,
+        }
+
+    # Generate 15-minute time slots with a 15-minute buffer before and after
+    if min_slot_time and max_slot_time:
+        start_dt = datetime.combine(datetime.today(), datetime.strptime(min_slot_time, "%I:%M %p").time()) - timedelta(minutes=30)
+        end_dt = datetime.combine(datetime.today(), datetime.strptime(max_slot_time, "%I:%M %p").time()) + timedelta(minutes=30)
+        slots = []
+        current_time = start_dt
+        while current_time <= end_dt:
+            slots.append(current_time.strftime("%I:%M %p"))
+            current_time += timedelta(minutes=30)
+
     return render(request, "registration/student_transport_details.html", {
         'form': form,
         'student': student,
+        'time_slots': slots,
+        'batch_timings': batch_timings_by_weekday,
+        'weekdays': WEEKDAYS,
     })
 
     
@@ -1730,7 +1827,7 @@ def transport_attendance(request, driver_id):
         'batches__days',
         'batches'
     ).distinct()
-
+    
     attendance_qs = TransportAttendance.objects.filter(
         student__in=students,
         date=date
@@ -1743,7 +1840,14 @@ def transport_attendance(request, driver_id):
     grouped = defaultdict(lambda: {"Pickup": [], "Drop": []})
 
     for student in students:
-        batches_today = [b for b in student.batches.all() if current_day in b.days.all()]
+        filtered_batches = student.batches.exclude(
+            Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
+            Q(section__name='CBSE') &
+            Q(subject__name__in=['MATH', 'SCIENCE'])
+        )
+
+        batches_today = [b for b in filtered_batches if current_day in b.days.all()]
+
         if not batches_today:
             continue
 

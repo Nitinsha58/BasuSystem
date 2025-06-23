@@ -46,12 +46,13 @@
               {% if students %}
               <div class="w-sm-100">
                     <ul class="list-group {% if students|length > driver.capacity %} p-2 bg-danger {% endif %}">
-                        <li class="list-group-item bg-dark text-white list-group border-dark text-nowrap"> {{action}}</li>
+                        <li class="list-group-item bg-dark text-white list-group border-dark text-nowrap"> {{action}}  ({{driver.capacity}})</li>
                         {% for student in students %}
                         <li style="position: relative;" class="list-group-item d-flex align-items-center justify-content-between {% if student.attendance.is_present == False %} bg-danger-subtle {% elif student.attendance.is_present %} bg-success-subtle {% endif %}">
                             
                             {% if request.user.is_superuser %}
                             <a href="{% url 'student_transport_details' student.student.stu_id %}" class="nav-link">{{forloop.counter}}. {{student.student.user.first_name}} {{student.student.user.last_name}}</a>
+                            <span>{{student.student.all_batches}} </span>
                             {% else %}
                             <span >{{forloop.counter}}. {{student.student.user.first_name}} {{student.student.user.last_name}}</span>
                             {% endif %}

@@ -1,6 +1,25 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load form_tags %}
+{% load center_filters %}
+
+
+{% block style %}
+  <style>
+    th, td {
+      text-align: center;
+      vertical-align: middle;
+      font-size: 0.75rem;
+    }
+    th.time-col {
+      width: 80px;
+      background-color: #f8f9fa;
+    }
+    td {
+      height: 30px;
+    }
+  </style>
+{% endblock style %}
 
 {% block dashboard %}
 <div class="container-sm p-4 ">
@@ -14,7 +33,7 @@
     </div>
 
     <div class="my-4 mt-2">
-        <h2 class="fw-normal text-dark">Add Location</h2>
+      <h2 class="fw-normal text-dark">Add Location</h2>
     </div>
 
     <form class="d-flex flex-column align-items-center bg-light rounded p-2 pb-3" method="post">
@@ -49,7 +68,51 @@
       </div>
     </form>
     
-</div>
+    {% if student.transport and student.transport.transport_person %}
+    <div class="table-responsive p-4 bg-light rounded mt-4">
+      <table class="table table-bordered table-sm m-0">
+        <thead class="table-light">
+          <tr>
+            <th class="time-col">Time</th>
+            {% for day in weekdays %}
+              <th>{{ day|slice:":3" }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for time in time_slots %}
+          <tr>
+            <th class="time-col">{{ time }}</th>
+            {% for day in weekdays %}
+              {% with timing=batch_timings|get_item:day.name %}
+                {% if timing %}
+
+                  {% if timing.earliest_start == time %}
+                    <td class="{% if timing.driver_status.pickup.diff < 0 %} bg-danger {% else %} bg-success {% endif %} text-white">
+                      {{ timing.driver_status.pickup.display }}
+                    </td>
+                  {% elif timing.latest_end == time %}
+                    <td class="{% if timing.driver_status.drop.diff < 0 %} bg-danger {% else %} bg-primary {% endif %} text-white">
+                      {{ timing.driver_status.drop.display }}
+                    </td>
+                  {% else %}
+                    <td></td>
+                  {% endif %}
+
+                {% else %}
+                  <td>{{batch_timings|get_item:day.name}}</td>
+                {% endif %}
+              {% endwith %}
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+    </div>
+    {% endif %}
+
+  </div>
 </div>
 
 {% endblock dashboard %}

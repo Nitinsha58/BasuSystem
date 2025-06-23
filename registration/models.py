@@ -119,6 +119,11 @@ class Student(models.Model):
     def __str__(self):
         return self.user.first_name + " " + self.user.last_name
     
+    def all_batches(self):
+        """return string of all batches the student is enrolled in
+        """
+        return self.class_enrolled.name + "," + ", ".join([batch.section.name for batch in self.batches.all()])
+
     def has_latest_report(self):
         latest_report_period = ReportPeriod.objects.order_by('-start_date').first()
         if not latest_report_period:
