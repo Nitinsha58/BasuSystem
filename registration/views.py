@@ -1335,7 +1335,11 @@ def transport_list(request):
 
     current_day = weekdays[index]
     
-    batches = Batch.objects.filter(days__name=current_day).order_by('start_time', 'class_name__name', 'section')
+    batches = Batch.objects.filter(days__name=current_day).exclude(
+        Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
+        Q(section__name='CBSE') &
+        Q(subject__name__in=['MATH', 'SCIENCE'])
+    ).order_by('start_time', 'class_name__name', 'section')
 
     grouped_batches = {}
     for batch in batches:
@@ -1401,7 +1405,11 @@ def transport_driver_list(request):
 
         # Get all batches on current_day
         batches_today = [
-            batch for batch in student.batches.all()
+            batch for batch in student.batches.all().exclude(
+                Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
+                Q(section__name='CBSE') &
+                Q(subject__name__in=['MATH', 'SCIENCE'])
+            )
             if current_day in batch.days.all()
         ]
 
@@ -1703,7 +1711,14 @@ def students_pick_drop(request):
     grouped = defaultdict(lambda: {"Pickup": [], "Drop": []})
 
     for student in students:
-        batches_today = [b for b in student.batches.all() if current_day in b.days.all()]
+        filtered_batches = student.batches.exclude(
+            Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
+            Q(section__name='CBSE') &
+            Q(subject__name__in=['MATH', 'SCIENCE'])
+        )
+
+        batches_today = [b for b in filtered_batches if current_day in b.days.all()]
+
         if not batches_today:
             continue
 
