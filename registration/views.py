@@ -251,7 +251,11 @@ def student_transport_details(request, stu_id):
                     messages.error(request, f"{field}: {error}")
     else:
         form = TransportDetailsForm(instance=instance)
-
+    if not instance:
+        return render(request, "registration/student_transport_details.html", {
+            'form': form,
+            'student': student,
+        })
     WEEKDAYS = Day.objects.all()
     batch_timings_by_weekday = {}
     slots = []
