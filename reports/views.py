@@ -24,7 +24,7 @@ from registration.models import (
     ReportPositive
     )
 from collections import defaultdict
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 from django.contrib import messages
 from django.db.models import Count
 
@@ -330,40 +330,58 @@ def mentor_students(request):
 
 @login_required(login_url='login')
 def regular_absent_students(request):
-    start_date_str = request.GET.get('start_date')
+    latest_date_str = request.GET.get('latest_date')
     n_days = request.GET.get('n_days', 2)  # default 3 days if not provided
 
     try:
-        start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date() if start_date_str else date.today()
+        latest_date = datetime.strptime(latest_date_str, "%Y-%m-%d").date() if latest_date_str else date.today()
         n_days = int(n_days)
     except (ValueError, TypeError):
         messages.error(request, "Invalid date or number of days.")
         return redirect('some_dashboard_or_form_page')
+    
+    earliest_date = latest_date - timedelta(days=n_days*2)
 
-    end_date = start_date - timedelta(days=n_days - 1)
-    # date_range = [start_date - timedelta(days=i) for i in range(n_days)]
+    data = defaultdict(lambda: defaultdict(list))
+    batches = Batch.objects.prefetch_related(
+        Prefetch(
+            'attendance',
+            queryset=Attendance.objects.filter(date__lte=latest_date, date__gte=latest_date - timedelta(days=n_days*2))
+            .select_related('student', 'student__user', 'student__class_enrolled')
+            .order_by('-date'),
+            to_attr='recent_attendance'
+        )
+    )
 
-    # Filter attendance marked as 'A' in this date range
-    absent_students = Attendance.objects.filter(
-        date__range=(end_date, start_date),
-        is_present=False,
-        student__active=True,
-    ).values('student').annotate(
-        absent_count=Count('id')
-    ).filter(absent_count=n_days).values_list('student', flat=True)
+    for batch in batches:
+        student_attendance_map = defaultdict(list)
 
-    students = Student.objects.filter(id__in=absent_students).select_related('user', 'class_enrolled')
+        for att in batch.recent_attendance:
+            student_attendance_map[att.student].append(att)
+            if len(student_attendance_map[att.student]) == n_days:
+                continue  # only need last n
 
-    # Group students class-wise
-    classwise_data = {}
-    for student in students:
-        class_name = student.class_enrolled.name if student.class_enrolled else 'Unknown'
-        classwise_data.setdefault(class_name, []).append(student)
+        for student, records in student_attendance_map.items():
+            if len(records) < n_days:
+                continue
+            if all(not att.is_present for att in records[:n_days]):
+                class_name = student.class_enrolled.name if student.class_enrolled else "Unknown"
+                data[class_name][batch].append(student)
+
+    # Convert defaultdicts to normal dicts/lists for template compatibility
+    data = {
+        class_name: {
+            batch_name: list(students)
+            for batch_name, students in batch_map.items()
+        }
+        for class_name, batch_map in data.items()
+    }
 
     return render(request, 'reports/consistent_absentees.html', {
-        'class_students': classwise_data,
-        'start_date': start_date,
+        'absentees': data,
         'n_days': n_days,
+        'latest_date': latest_date,
+        'earliest_date': earliest_date,
     })
 
 

@@ -9,8 +9,8 @@
         <div class="">
             <form method="get" class="rounded p-2 pb-3 d-flex gap-2 align-items-end">
                 <div class="">
-                    <label for="start_date" class="form-label">Date: {{ start_date|date:'d M' }}</label>
-                    <input type="date" name="start_date" id="start_date" value="{{start_date|date:'Y-m-d'}}"
+                    <label for="latest_date" class="form-label">From: {{ earliest_date|date:'d M' }} To: {{ latest_date|date:'d M' }}</label>
+                    <input type="date" name="latest_date" id="latest_date" value="{{latest_date|date:'Y-m-d'}}"
                         class="form-control" required>
                 </div>
                 <div class="">
@@ -24,29 +24,33 @@
 </div>
 
 <div class="container p-4 bg-warning-subtle">
-    {% if class_students %}
-    <div class="row shuffle bg-warning-subtle" data-masonry='{"percentPosition": true }' id="batches">
-        {% for cls, students in class_students.items %}
-        <div class="col-sm-6 col-md-4 col-lg-3 category shuffle-item shuffle-item--visible mb-4">
-            <div class="card">
-                <ul class="list-group">
-                    <li class="list-group-item bg-dark text-white list-group border-dark"> {{cls}}</li>
-                    {% for student in students %}
-                    <li style="position: relative;"
-                        class="list-group-item d-flex justify-content-between align-items-center">
-                        <a class="text-decoration-none text-dark" style="display: flex; justify-content: space-between;"
-                            target="_blank" href="{% url 'student_report' student.stu_id %}">
-                            <span class="">{{forloop.counter}}. {{student.user.first_name}}
-                                {{student.user.last_name}}</span>
+    {% for class_name, batches in absentees.items %}
+        <h2 class="text-center text-dark">{{ class_name }}</h2>
+        {% if batches %}
+        <div class="row shuffle bg-warning-subtle" data-masonry='{"percentPosition": true }' id="batches">
+            {% for batch, students in batches.items %}
+            <div class="col-sm-6 col-md-4 col-lg-3 category shuffle-item shuffle-item--visible mb-4">
+                <div class="card">
+                    <ul class="list-group">
+                        <a href="{% url 'get_attendance' batch.id %}" class="list-group-item bg-dark text-white list-group border-dark"> 
+                            {{batch}}
                         </a>
-                    </li>
-                    {% endfor %}
-                </ul>
+                        {% for student in students %}
+                        <li style="position: relative;"
+                            class="list-group-item d-flex justify-content-between align-items-center">
+                            <a class="text-decoration-none text-dark" style="display: flex; justify-content: space-between;"
+                                target="_blank">
+                                <span class="">{{forloop.counter}}. {{student.user.first_name}} {{student.user.last_name}}</span>
+                            </a>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
             </div>
+            {% endfor %}
         </div>
-        {% endfor %}
-    </div>
-    {% endif %}
+        {% endif %}
+    {% endfor %}
 </div>
 
 

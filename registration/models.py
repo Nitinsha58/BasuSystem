@@ -46,6 +46,8 @@ class Batch(models.Model):
         subject = getattr(self.subject, 'name', 'N/A')
         return f"{class_name} {subject} {section}"
     
+
+    
     def last_attendance_date(self):
         last_attendance = self.attendance.aggregate(last_date=Max('date'))['last_date']
         return last_attendance
