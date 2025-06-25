@@ -1,8 +1,28 @@
-from django.db.models.signals import post_save, post_delete, pre_save
+from django.db.models.signals import post_save, post_delete, pre_save, m2m_changed
 from django.dispatch import receiver
 
-from .models import TestQuestion, Test, QuestionResponse, RemarkCount, TestResult
-from django.db import models
+from .models import TestQuestion, Test, QuestionResponse, RemarkCount, TestResult, StudentBatchLink, Student
+
+@receiver(m2m_changed, sender=Student.batches.through)
+def sync_student_batches(sender, instance, action, reverse, model, pk_set, **kwargs):
+    if action == 'post_add':
+        for batch_id in pk_set:
+            link, created = StudentBatchLink.objects.get_or_create(
+                student=instance,
+                batch_id=batch_id,
+                defaults={'active': True}
+            )
+            if not created and not link.active:
+                link.active = True
+                link.save()
+    elif action == 'post_remove':
+        for batch_id in pk_set:
+            StudentBatchLink.objects.filter(
+            student=instance,
+            batch_id=batch_id
+            ).update(active=False)
+    elif action == 'post_clear':
+        StudentBatchLink.objects.filter(student=instance).update(active=False)
 
 @receiver(pre_save, sender=TestQuestion)
 def question_pre_save(sender, instance, **kwargs):

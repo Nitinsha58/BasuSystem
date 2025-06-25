@@ -28,7 +28,8 @@ from .models import (
 
 
     ReportNegative,
-    ReportPositive
+    ReportPositive,
+    StudentBatchLink,
     )
 from .forms import TeacherForm, MentorForm
 import csv
@@ -179,6 +180,18 @@ class TransportAttendanceAdmin(admin.ModelAdmin):
         return f"{obj.student.user.first_name} {obj.student.user.last_name}"
     student_name.short_description = "Student"
 
+class StudentBatchLinkAdmin(admin.ModelAdmin):
+    list_display = ['student', 'batch', 'active', 'joined_at']
+    search_fields = [
+        'student__user__first_name',
+        'student__user__last_name',
+        'batch__class_name__name',
+        'batch__section__name',
+        'batch__subject__name'
+    ]
+    list_filter = ['active', 'batch']
+    ordering = ['-joined_at']
+
 admin.site.register(TransportAttendance, TransportAttendanceAdmin)
 admin.site.register(Student, StudentAdmin)
 admin.site.register(ParentDetails)
@@ -207,3 +220,5 @@ admin.site.register(ActionSuggested, ActionSuggestedAdmin)
 
 admin.site.register(ReportNegative, ReportNegativeAdmin)
 admin.site.register(ReportPositive, ReportPositiveAdmin)
+
+admin.site.register(StudentBatchLink, StudentBatchLinkAdmin)

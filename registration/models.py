@@ -136,6 +136,15 @@ class Student(models.Model):
         # Check if the student has any reports in the latest report period
         return self.mentor_remarks.filter(start_date=start_date, end_date=end_date).exists()
 
+class StudentBatchLink(models.Model):
+    student = models.ForeignKey('Student', on_delete=models.CASCADE, related_name='batch_links')
+    batch = models.ForeignKey('Batch', on_delete=models.CASCADE, related_name='student_links')
+    active = models.BooleanField(default=True)
+    joined_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('student', 'batch')
+
 class ParentDetails(models.Model):
     parent_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     student = models.OneToOneField(Student, on_delete=models.CASCADE, related_name='parent_details')
