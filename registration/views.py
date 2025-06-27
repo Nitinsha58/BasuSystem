@@ -91,7 +91,7 @@ def student_update(request, stu_id):
             "school_name": request.POST.get("school_name"),
             "class_enrolled": ClassName.objects.filter(id=request.POST.get("class_enrolled")).first() if request.POST.get("class_enrolled") else '',
             "subjects": request.POST.getlist("subjects"),  # ManyToMany field
-            "batches": request.POST.getlist("batches"),  # ManyToMany field
+            "batches": request.POST.getlist("batches[]"),  # ManyToMany field
             "marksheet_submitted": request.POST.get("marksheet_submitted") == "yes",
             "sat_score": request.POST.get("sat_score"),
             "remarks": request.POST.get("remarks"),

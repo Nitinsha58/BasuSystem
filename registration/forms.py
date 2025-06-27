@@ -160,8 +160,8 @@ class StudentUpdateForm(forms.ModelForm):
             if commit:
                 user.save()
                 student.save()
+                student.batches.set(self.cleaned_data['batches'])
                 self.cleaned_data['subjects'] and student.subjects.set(self.cleaned_data['subjects'])
-                self.cleaned_data['batches'] and student.batches.add(*self.cleaned_data['batches'])
 
         return student
 

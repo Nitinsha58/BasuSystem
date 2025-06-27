@@ -1,6 +1,42 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block style %}
+<style>
+  .checkbox-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .checkbox-btn {
+    position: relative;
+    cursor: pointer;
+  }
+
+  .checkbox-btn input[type="checkbox"] {
+    display: none;
+  }
+
+  .checkbox-btn span {
+    display: inline-block;
+    padding: 10px 20px;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    background: #f9f9f9;
+    transition: 0.2s;
+  }
+
+  .checkbox-btn input[type="checkbox"]:checked + span {
+    border-color: #007bff;
+    background: #e0f0ff;
+    color: #007bff;
+    /* font-weight: 600; */
+  }
+</style>
+
+{% endblock style %}
+
 {% block dashboard %}
 <div class="container-sm p-4 ">
     <div class="bg-success-subtle mx-auto p-1 d-flex rounded" style="width: fit-content;">
@@ -153,7 +189,7 @@
             <option value="Not Active" {% if not student.active %} selected {% endif %}>Not Active</option>
           </select>
         </div>
-        <div class="col-md-3">
+        <!-- <div class="col-md-3">
           <label for="batches" class="form-label">Batches</label>
           <select class="form-select" name="batches" id="batches" size="3" multiple>
             {% for batch in batches %}
@@ -163,6 +199,26 @@
             </option>
             {% endfor %}
           </select>
+        </div> -->
+      </div>
+
+      <div class="row justify-content-evenly mt-3 p-5">
+        <label for="batches" class="form-label">Selected Batches</label>
+        <div class="checkbox-buttons">
+          {% for batch in student.batches.all %}
+          <label class="checkbox-btn">
+            <input type="checkbox" name="batches[]"  checked value="{{batch.id}}">
+            <span>{{batch.subject.name}} {{batch.section.name}}</span>
+          </label>
+          {% endfor %}
+          {% for batch in batches %}
+            {% if batch not in student.batches.all %} 
+            <label class="checkbox-btn">
+              <input type="checkbox" name="batches[]" value="{{batch.id}}"> 
+              <span>{{batch.subject.name}} {{batch.section.name}}</span>
+            </label>
+            {% endif %} 
+          {% endfor %}
         </div>
       </div>
 
