@@ -141,7 +141,7 @@
                             <label for="marks_obtained" class="form-label self-align-end">Marks Deducted</label>
                             <div class="d-flex align-items-center">
                                 <input type="text" class="form-control w-25" id="marks_obtained" name="marks_obtained" required
-                                    value="0">
+                                    {% if test.objective %} value="{{item.question.max_marks}}" {% else %} value="0" {% endif %} >
                                 <p class="h4 ms-2 fw-normal">
                                 <p class="h3 fw-normal">/</p>{{item.question.max_marks}}</p>
                             </div>
