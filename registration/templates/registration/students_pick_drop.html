@@ -52,7 +52,6 @@
                             
                             {% if request.user.is_superuser %}
                             <a href="{% url 'student_transport_details' student.student.stu_id %}" class="nav-link">{{forloop.counter}}. {{student.student.user.first_name}} {{student.student.user.last_name}}</a>
-                            <span>{{student.student.all_batches}} </span>
                             {% else %}
                             <span >{{forloop.counter}}. {{student.student.user.first_name}} {{student.student.user.last_name}}</span>
                             {% endif %}

@@ -1945,6 +1945,9 @@ def delete_transport_attendance(request):
             messages.success(request, f"{action} attendance deleted for {student.user.first_name} on {date_obj}.")
         else:
             messages.error(request, "Attendance record not found.")
-        
+
+        if request.user and request.user.is_superuser:
+            return redirect(f"{reverse('transport_attendance', args=[student.transport.transport_person.id])}?date={date_obj}")
+            
         return redirect(f"{reverse('students_pick_drop')}?date={date_obj}")
     return redirect('students_pick_drop')
