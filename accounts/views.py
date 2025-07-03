@@ -7,6 +7,8 @@ from registration.models import Installment
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 
+from .utility import generate_whatsapp_link
+
 @login_required(login_url='login')
 def installments(request):
     if not request.user.is_superuser:
@@ -33,6 +35,55 @@ def installments(request):
     # Group installments by due date
     installments_by_date = defaultdict(list)
     for inst in installments:
+        # Determine reminder type based on due date and payment status
+        if not inst.paid:
+            amount_str = f"₹{inst.amount:,.0f}"
+            due_date_str = inst.due_date.strftime('%d %B %Y')
+            stu_name = inst.student.user.first_name + " " + inst.student.user.last_name
+            
+            try:
+                if inst.student.parent_details and inst.student.parent_details.mother_contact:
+                    phone = str(inst.student.parent_details.mother_contact)
+                else:
+                    raise AttributeError
+            except Exception:
+                messages.warning(request, f"No parent details for student {inst.student.user.first_name} {inst.student.user.last_name}.")
+                phone = str(inst.student.user.phone)
+            
+            if inst.due_date > today:
+                inst.reminder_type = 'upcoming'
+                inst.reminder_link = generate_whatsapp_link(
+                    f"Dear Parent,\n"
+                    f"This is a gentle reminder that {stu_name}'s next installment of {amount_str} is due on {due_date_str}.\n"
+                    "We kindly request you to plan the payment accordingly to ensure uninterrupted academic support.\n\n"
+                    "Thank you for your continued trust in BASU Classes.\n"
+                    "— BASU Classes",
+                    '91' + phone
+                )
+            elif inst.due_date == today:
+                inst.reminder_type = 'today'
+                inst.reminder_link = generate_whatsapp_link(
+                    f"Dear Parent,\n"
+                    f"A kind reminder that {stu_name}'s installment of {amount_str} is due today ({due_date_str}).\n"
+                    "We request you to complete the payment at your earliest convenience to avoid any disruption in academic services.\n\n"
+                    "Your timely support is sincerely appreciated.\n"
+                    "— BASU Classes",
+                    '91' + phone
+                )
+            elif inst.due_date < today:
+                inst.reminder_type = 'late'
+                inst.reminder_link = generate_whatsapp_link(
+                    f"Dear Parent,\n"
+                    f"We noticed that the installment of {amount_str}, due on {due_date_str}, is still pending.\n"
+                    f"We kindly request you to clear the payment at the earliest to maintain smooth academic progress for {stu_name}.\n\n"
+                    "Your timely support is sincerely appreciated.\n"
+                    "— BASU Classes",
+                    '91' + phone
+                )
+        else:
+            inst.reminder_type = None
+            inst.reminder_link = None
+
         installments_by_date[inst.due_date].append(inst)
 
     # Create final merged data for the template
@@ -46,6 +97,7 @@ def installments(request):
     # For previous/next month navigation
     prev_month = (start_date - timedelta(days=1)).replace(day=1)
     next_month = (end_date + timedelta(days=1)).replace(day=1)
+
 
     return render(request, 'accounts/installments.html', {
         'dates': merged_data,

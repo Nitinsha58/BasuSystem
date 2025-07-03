@@ -79,9 +79,24 @@
                                     {{subject.name|title}}
                                 {% endfor %}
                             </p>
-                            {% if inst.remark %}
-                            <small class="text-muted m-0 mb-2 text-sm">{{inst.remark}}</small>
-                            {% endif %}
+
+                            <div class="d-flex justify-content-between align-items-center">
+                                {% if inst.remark %}
+                                <small class="text-muted m-0 mb-2 text-sm">{{inst.remark}}</small>
+                                {% endif %}
+
+                                <div class="">
+                                    <a href="{{inst.reminder_link}}" target="_blank" class="btn 
+                                    {% if inst.reminder_type == 'late' %}
+                                    btn-danger
+                                    {% elif inst.reminder_type == 'today' %}
+                                    btn-warning
+                                    {% elif inst.reminder_type == 'upcoming' %}
+                                    btn-primary
+                                    {% endif %}
+                                    px-2 py-1">{{inst.reminder_type}}</a>
+                                </div>
+                            </div>
 
                             {% if inst.paid and inst.due_date %}
                             <p class="rounded px-2 py-1 m-0" id="status" name="status" style="background: #7AFF91; width: fit-content; ">Payment Done</p>
