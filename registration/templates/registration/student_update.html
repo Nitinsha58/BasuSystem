@@ -50,6 +50,22 @@
 
     <div class="my-4 mt-2">
         <h2 class="fw-normal text-dark">Student Details </h2>
+        <div class="d-flex align-items-center">
+            <p class="text-muted m-0">Share group links to parents and student.</p>
+            <div class="ms-2">
+              {% if wa_links.student %}
+              <a href="{{wa_links.student}}" target="_blank" class="btn btn-warning px-2 py-1">Student</a>
+              {% endif %}
+
+              {% if wa_links.father %}
+              <a href="{{wa_links.mother}}" target="_blank" class="btn btn-primary px-2 py-1">Mother</a>
+              {% endif %}
+              
+              {% if wa_links.mother %}
+              <a href="{{wa_links.father}}" target="_blank" class="btn btn-danger px-2 py-1">Father</a>
+              {% endif %}
+            </div>
+        </div>
     </div>
 
     <form class="g-3 bg-light rounded p-2 pb-3" method="post">
