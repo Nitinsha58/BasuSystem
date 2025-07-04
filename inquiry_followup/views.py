@@ -54,6 +54,7 @@ def inquiries(request):
         'current_month': first_day,
         'prev_month': (first_day - timedelta(days=1)),
         'next_month': (last_day + timedelta(days=1)),
+        'total_inquiries': Inquiry.objects.count(),
     })
 
 def inquiry(request, inquiry_id):
