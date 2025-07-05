@@ -141,7 +141,8 @@ class StudentBatchLink(models.Model):
     batch = models.ForeignKey('Batch', on_delete=models.CASCADE, related_name='student_links')
     active = models.BooleanField(default=True)
     joined_at = models.DateTimeField(auto_now_add=True)
-
+    updated_at = models.DateTimeField(auto_now=True)
+    
     class Meta:
         unique_together = ('student', 'batch')
 
