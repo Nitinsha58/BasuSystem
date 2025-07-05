@@ -365,6 +365,10 @@ def regular_absent_students(request):
         for student, records in student_attendance_map.items():
             if len(records) < n_days:
                 continue
+
+            if not batch in student.batches.all():
+                continue
+
             if all(not att.is_present for att in records[:n_days]):
                 class_name = student.class_enrolled.name if student.class_enrolled else "Unknown"
                 data[class_name][batch].append(student)
