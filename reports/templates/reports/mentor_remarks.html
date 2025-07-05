@@ -70,11 +70,70 @@
                         {% else %}
                              <td></td> 
                         {% endif %}
-                        <td>{{ test_data.test.name }}</td>
+                        <td class="d-flex flex-column">
+                            <a href="{% url 'add_student_result' batch.id test_data.test.id student.id %}" target="_blank" class="m-0 nav-link">{{ test_data.test.name }}</p> 
+                            <small class="text-dark">{{test_data.test.date}}</small>
+                        </td>
                         {% if test_data.result == 'AB' %}
                         <td class="text-danger" >{{ test_data.result }}</td>
                         {% else %}
                         <td>{{ test_data.result.total_marks_obtained }} / {{ test_data.result.total_max_marks }} ( {{ test_data.result.percentage|floatformat:2 }}%)</td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="g-3 d-flex justify-content-between">
+            <table class="table">
+                <thead class="table-dark">
+                    <tr>
+                        <th scope="col">Batch</th>
+                        <th scope="col">Test</th>
+                        <th scope="col">ReTest</th>
+                        <th scope="col">Previous Result</th>
+                        <th scope="col">Result</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for batch, tests in student_retest_report.items %}
+                    {% for test_data in tests %}
+                    <tr {% if forloop.first %} class="table-active" {% endif %}>
+                        {% if forloop.first %}
+                            <td>{{ batch }}</td>
+                        {% else %}
+                             <td></td> 
+                        {% endif %}
+                        <td class="d-flex flex-column">
+                            <a href="{% url 'add_student_result' batch.id test_data.test.id student.id %}" target="_blank" class="m-0 nav-link">{{ test_data.test.name }}</p> 
+                            <small class="text-dark">{{test_data.test.date}}</small>
+                        </td>
+                        
+                        <td class="">
+                            {% if test_data.retest_suggested and test_data.result.previous_marks %}
+                                <span class="bg-success rounded text-light mx-2 my-1 py-1 px-2">Taken </span>
+                            {% elif test_data.retest_suggested %}
+                                <span class="bg-danger rounded text-light mx-2 my-1 py-1 px-2">Suggested </span>
+                            {% endif %}
+                        </td>
+
+                        {% if test_data.result and test_data.result.previous_marks %}
+                        <td class="text-dark" >{{ test_data.result.previous_marks }}</td>
+                        {% elif test_data.result %}
+                        <td>{{ test_data.result.total_marks_obtained }} / {{ test_data.result.total_max_marks }} ( {{ test_data.result.percentage|floatformat:2 }}%)</td>
+                        {% else %}
+                        <td class="text-danger"></td>
+                        {% endif %}
+
+
+                        {% if test_data.result and not test_data.result.previous_marks %}
+                        <td class="text-danger"></td>
+                        {% elif test_data.result and test_data.result.previous_marks %}
+                        <td>{{ test_data.result.total_marks_obtained }} / {{ test_data.result.total_max_marks }} ( {{ test_data.result.percentage|floatformat:2 }}%)</td>
+                        {% else %}
+                        <td class="text-danger"></td>
                         {% endif %}
                     </tr>
                     {% endfor %}

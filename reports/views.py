@@ -43,6 +43,7 @@ from .utility import (
     get_marks_percentage,
     get_batchwise_marks,
     get_student_test_report,
+    get_student_retest_report,
     has_report,
 )
 
@@ -477,6 +478,7 @@ def mentor_remarks(request, mentor_id, student_id):
 
     stu_performance = generate_single_student_report_data(student, start_date, end_date)   
     student_test_report = get_student_test_report(student, start_date, end_date)
+    student_retest_report = get_student_retest_report(student)
 
     batches = student.batches.all().filter(class_name=student.class_enrolled).exclude(
         Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
@@ -643,6 +645,7 @@ def mentor_remarks(request, mentor_id, student_id):
         'stu_performance': stu_performance,
         'batches': batches,
         'student_test_report': student_test_report,
+        'student_retest_report': student_retest_report,
         'has_report': has_report(student, start_date, end_date),
 
         'positives': ReportPositive.objects.all().order_by('name'),

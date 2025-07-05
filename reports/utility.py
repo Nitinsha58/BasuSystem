@@ -625,3 +625,76 @@ def get_student_test_report(student, start_date, end_date):
             })
             
     return test_result
+
+def get_student_retest_report(student):
+    """
+    Generate retest suggestions for a student based on their test results.
+
+    Args:
+        student: The Student instance.
+
+    Returns:
+        A dictionary with batch as key and a list of dicts containing test, result, retest, and retest_marks.
+
+        it should include test result for which student has mandatory retest, or has given optional retest by checking 
+        if student has also given retest by checking test_type = 'retest' in TestResult model.
+    """
+
+    test_result = {}
+    student_batches = student.batches.all().exclude(
+        Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
+        Q(section__name='CBSE') &
+        Q(subject__name__in=['MATH', 'SCIENCE'])
+    )
+    for batch in student_batches:
+        tests = Test.objects.filter(
+            batch=batch
+        ).order_by('date')
+
+        test_result[batch] = []
+        for test in tests:
+            result = TestResult.objects.filter(test=test, student=student).first()
+            is_student_absent = is_absent(test, student)
+            
+            retest_suggested = None # is true when student is absent from the test or has scored less than 50% marks
+            retest_given = None # is true when student result has test_type = 'retest'
+
+            if is_student_absent or (result and result.percentage < 50):
+                retest_suggested = True
+                # Check if student has given retest
+                retest_result = TestResult.objects.filter(
+                    test=test,
+                    student=student,
+                    test_type='retest'
+                ).first()
+
+                if retest_result:
+                    retest_given = True
+                    retest_marks = retest_result.total_marks_obtained
+                else:
+                    retest_given = False
+                    retest_marks = None
+            else:
+                retest_suggested = False
+                retest_given = False
+                retest_marks = None
+
+            if retest_suggested:
+                test_result[batch].append({
+                    'test': test,
+                    'result': result if not is_student_absent else None,
+                    'retest_suggested': retest_suggested,
+                    'retest_given': retest_given,
+                    'retest_marks': retest_marks
+                })
+
+
+    if not test_result:
+        return {}
+
+    # Sort each batch's test results by date
+    for batch, results in test_result.items():
+        results.sort(key=lambda x: x['test'].date)
+
+    # Return the final test result dictionary
+    return test_result
