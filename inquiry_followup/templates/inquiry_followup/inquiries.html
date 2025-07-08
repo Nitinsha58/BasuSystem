@@ -96,7 +96,10 @@
                             {% if followup.inquiry.stationary_partner %}
                             <p class="m-0 me-2 mb-2 position-absolute end-0 bottom-0 bg-warning-subtle rounded p-1" style="font-size: 14px;">{{followup.inquiry.stationary_partner.name}}</p>
                             {% elif followup.admission_counsellor %}
-                            <p class="m-0 me-2 mb-2 position-absolute end-0 bottom-0" style="font-size: 14px;">{{followup.admission_counsellor.user.first_name}} {{followup.admission_counsellor.user.last_name}}</p>
+                            <div class="">
+                                <p class="m-0 me-2 mb-4 position-absolute end-0 bottom-0 text-bold" style="font-size: 14px;">{{followup.created_at|date:'h:i A'}}</p>
+                                <p class="m-0 me-2 mb-2 position-absolute end-0 bottom-0" style="font-size: 14px;">{{followup.admission_counsellor.user.first_name}} {{followup.admission_counsellor.user.last_name}}</p>
+                            </div>
                             {% endif %}
                         </a>
                     </li>
