@@ -62,7 +62,7 @@ class StudentAdmin(admin.ModelAdmin):
     list_filter = ['batches__class_name', 'batches__section', 'batches__subject']
     ordering = ['user__first_name', 'user__last_name']
     actions = ['export_students_csv']
-    list_per_page = 100
+    list_per_page = 500
 
     def user_full_name(self, obj):
         return f"{obj.user.first_name} {obj.user.last_name}"
@@ -74,12 +74,14 @@ class StudentAdmin(admin.ModelAdmin):
         writer = csv.writer(response)
         
         # Write header
-        writer.writerow(['Student Name', 'Phone'])
+        writer.writerow(['Student Name', 'Phone', 'Mother', 'Father'])
 
         for student in queryset.select_related('user').prefetch_related('batches__class_name'):
             writer.writerow([
             f"{student.user.first_name} {student.user.last_name}",
-            student.user.phone or ''
+            student.user.phone or '',
+            student.parent_details.mother_contact or '', 
+            student.parent_details.father_contact or '',
             ])
 
         return response
