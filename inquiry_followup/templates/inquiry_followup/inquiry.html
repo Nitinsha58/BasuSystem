@@ -78,11 +78,12 @@
         </form>
         <div class="d-flex justify-content-between ">
             <p  class="border-0 h2 rounded d-flex justify-content-center align-items-center">{{inquiry.student_name}} </p>
-            <div class="d-flex gap-2">
-                <butto id="update-inquiry-button" class="btn btn-warning px-4 py-2" style="height: fit-content;">Update Inquiry</butto>
+            <div class="d-flex gap-2 position-relative pb-4">
+                <button id="update-inquiry-button" class="btn btn-warning px-4 py-2" style="height: fit-content;">Update Inquiry</button>
                 <a href="{% url 'delete_inquiry' inquiry.id %}" class="btn btn-danger px-4 py-2" style="height: fit-content;">Delete Inquiry</a>
+                <span class="m-0 me-2 mt-2 position-absolute end-0 bottom-0" style="font-size: 14px; translate: transformY(-12);">On <span class="fw-semibold" id="next-followup-date-{{forloop.counter}}">{{inquiry.created_at|date:'d M Y, h:i A'}}</span></span>
             </div>
-        </div>
+        </div> 
         <p class="m-0 mb-1">
             {% with classes=inquiry.classes.all|join:", " subjects=inquiry.subjects.all|join:", " %}
                 {{ classes|title }} - {{ subjects|title }}
@@ -105,7 +106,7 @@
                 {% endif %}
             </p>
         </div>
-        <span class="m-0" style="font-size: 14px;">On <span class="fw-semibold" id="next-followup-date-{{forloop.counter}}">{{inquiry.created_at|date:'d M Y, h:i A'}}</span></span>
+        <p class="m-0" style="font-size: 14px;">Last Followup On <span class="fw-semibold" id="next-followup-date-{{forloop.counter}}">{{latest_followup.created_at|date:'d M Y, h:i A'}}</span></span>
     </div>
 
     <div class="d-flex g-4 w-100 dates-group pb-3">

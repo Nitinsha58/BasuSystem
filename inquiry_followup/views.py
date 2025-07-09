@@ -67,7 +67,8 @@ def inquiry(request, inquiry_id):
         messages.error(request, 'Invalid Inquiry')
         return redirect('inquiries')
     
-    followups = FollowUp.objects.filter(inquiry_id=inquiry_id).select_related('status')
+    followups = FollowUp.objects.filter(inquiry_id=inquiry_id).select_related('status').order_by('-created_at')
+    latest_followup = followups.first()
 
     # Fetch all statuses in order
     statuses = FollowUpStatus.objects.all().order_by('order')  # Change 'id' if there's a custom ordering field
@@ -110,7 +111,8 @@ def inquiry(request, inquiry_id):
         'classes':classes,
         'subjects':subjects,
         'referrals': referrals,
-        'lead_types': lead_types
+        'lead_types': lead_types,
+        'latest_followup': latest_followup,
     })
 
 def create_followup(request, inquiry_id):
