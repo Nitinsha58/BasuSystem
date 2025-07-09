@@ -89,7 +89,7 @@
                                     {{subject.name|title}}
                                 {% endfor %}
                             </p>
-                            <p class="m-0 mb-2 p-1 ps-2 d-inline-block text-truncate text-dark rounded" style="width:100%; max-width: 100%; font-size: 12px; {% if followup.status.color %} background: {{followup.status.color}}; {% endif %} "  >
+                            <p class="m-0 mb-2 p-1 ps-2 d-inline-block text-dark rounded" style="width:100%; max-width: 100%; font-size: 12px; {% if followup.status.color %} background: {{followup.status.color}}; {% endif %} "  >
                                 {{followup.description|title}}
                             </p>
                             <p class="rounded px-2 py-1 m-0" id="status" name="status"  {% if followup.status.color %} style="background: {{followup.status.color}}; width: fit-content; " {% endif %} required>{{followup.status.name}}</p>
