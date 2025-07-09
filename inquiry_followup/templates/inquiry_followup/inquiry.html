@@ -296,8 +296,30 @@
         updateInquiryButton.classList.remove("d-none");
     });
 
+</script>
 
+<script>
+function estimateRowsSimple(textarea) {
+  const avgCharWidth = 7.2; // average for ~16px font
+  const textLength = textarea.value.length;
+  const textareaWidth = textarea.clientWidth;
 
+  // Add line breaks (\n) as full rows
+  const newlines = textarea.value.split('\n').length - 1;
+
+  const estimatedWrappedRows = Math.ceil((textLength * avgCharWidth) / textareaWidth);
+  const estimatedTotalRows = Math.max(2, estimatedWrappedRows + newlines);
+  textarea.rows = estimatedTotalRows;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const textareas = document.querySelectorAll('textarea.form-control');
+    textareas.forEach(textarea => {
+        estimateRowsSimple(textarea);
+        textarea.addEventListener('input', () => estimateRowsSimple(textarea));
+        window.addEventListener('resize', () => estimateRowsSimple(textarea)); // Optional
+    });
+});
 </script>
 
 
