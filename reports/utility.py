@@ -612,6 +612,12 @@ def get_student_test_report(student, start_date, end_date):
             date__range=(start_date, end_date)
         ).order_by('date')
 
+        doj = getattr(student, 'doj', None)
+        if doj:
+            tests = tests.filter(date__gte=doj)
+
+        tests = tests.order_by('date')
+
         test_result[batch] = []
         for test in tests:
             result = TestResult.objects.filter(test=test, student=student).first()
@@ -649,7 +655,13 @@ def get_student_retest_report(student):
     for batch in student_batches:
         tests = Test.objects.filter(
             batch=batch
-        ).order_by('date')
+        )
+
+        doj = getattr(student, 'doj', None)
+        if doj:
+            tests = tests.filter(date__gte=doj)
+
+        tests = tests.order_by('date')
 
         test_result[batch] = []
         for test in tests:
