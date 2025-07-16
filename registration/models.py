@@ -208,6 +208,9 @@ class Installment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        ordering = ['due_date'] 
+
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         self.fee_details.save()
