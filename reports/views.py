@@ -137,7 +137,7 @@ def student_report(request, stu_id):
     combined_marks = get_marks_percentage(student, start_date, end_date)
     batchwise_marks = get_batchwise_marks(student, start_date, end_date)
 
-    calendar_data = get_monthly_calendar(student, start_date, end_date)
+    # calendar_data = get_monthly_calendar(student, start_date, end_date)
     return render(request, 'reports/student_report.html', {
         'student': student,
         'combined_attendance': combined_attendance,
@@ -147,7 +147,7 @@ def student_report(request, stu_id):
         'combined_marks': combined_marks,
         'batchwise_marks': batchwise_marks,
 
-        'calendar_data': calendar_data,
+        # 'calendar_data': calendar_data,
         'start_date': start_date,
         'end_date': end_date,
 

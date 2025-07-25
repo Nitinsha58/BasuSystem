@@ -1,5 +1,7 @@
 {% extends 'base.html' %}
+{% load mathfilters %}
 {% load static %}
+
 
 {% block style %}
 <style>
@@ -47,6 +49,64 @@
         /* justify-content: space-around; */
         align-items: center;
         gap: 20px;
+        justify-content: center;
+        width: fit-content;
+    }
+
+    .chart-box {
+        display: flex;
+        width: 250px;
+        max-width: 250px;
+        min-height: 50px;
+        background-color: aqua;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .graph-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 15px;
+    }
+
+    .graph-title {
+        font-size: 12px;
+        font-weight: 500;
+        margin-bottom: 5px;
+    }
+
+
+    .ratios {
+        flex: 1;
+        color: white;
+        text-align: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 12px;
+        color: white;
+        overflow: visible;
+        z-index: 1;
+    }
+
+    .red {
+        background-color: #dc3545;
+    }
+
+    .green {
+        background-color: #28a745;
+    }
+
+    .blue {
+        background-color: #17a2b8;
+    }
+
+    .stats-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
 </style>
 
@@ -57,10 +117,10 @@
 <div class="">
 
     <div class="g-3 bg-light rounded pb-3" id="student_reg_doc">
-        <div class="bg-success-subtle mx-auto p-1 d-flex rounded" style="width: fit-content;">
+        <!-- <div class="bg-success-subtle mx-auto p-1 d-flex rounded" style="width: fit-content;">
             <a href="" class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Weekly Report</a>
             <a href="" class="text-decoration-none text-dark  p-1 px-2 rounded mx-2 my-1">Monthly Report</a>
-        </div>
+        </div> -->
 
         <div class=" mt-4 donut_graph d-flex flex-column gap-2">
             {% if request.user.is_superuser or request.user.teachers %}
@@ -71,7 +131,7 @@
             {% endif %}
             <div class="bg-success-subtle p-4 d-flex flex-column flex-md-row align-items-start">
                 <div class="">
-                    <a href="{% url 'student_update' student.stu_id %}" style="text-decoration: none;" class="border-0 h2">{{student.user.first_name}} {{student.user.last_name}}</a>
+                    <p style="text-decoration: none;" class="border-0 h2">{{student.user.first_name}} {{student.user.last_name}}</p>
                     <p class="m-0 mb-1">{{student.class_enrolled}} - {{ student.subjects.all|join:", " }}</p>
                     <p class="m-0 mb-1">Joined On: {{student.doj|date:'d M Y'}}</p>
                 </div>
@@ -92,51 +152,150 @@
                 </div>
             </div>
 
-            <h3 class="">Attendance</h3>
-            <div class="attendance">
-                <div style="width: 200px;">
-                    <canvas id="attendanceChart"></canvas>
-                </div>
-                
-                {% for batch, atten in batchwise_attendance.items %}
-                {% if atten.present_percentage or atten.absent_percentage %}
-                <div style="width: 200px;">
-                    <canvas id="attendanceChart{{forloop.counter}}"></canvas>
-                </div>
-                {% endif %}
-                {% endfor %}
-            </div>
-            <h3 class="">Homework</h3>
-            <div class="homework">
-                <div style="width: 200px;">
-                    <canvas id="homeworkChart"></canvas>
-                </div>
-
-                {% for batch, hw in batchwise_homework.items %}
-                {% if hw.completed_percentage or hw.partial_done_percentage or hw.pending_percentage %} 
-                    <div style="width: 200px;">
-                        <canvas id="homeworkChart{{forloop.counter}}"></canvas>
+            <div class="stats-wrapper">
+                <h3 >Attendance</h3>
+                <div class="attendance">
+                    <div style="width: 250px;">
+                        <!-- <canvas id="attendanceChart"></canvas> -->
+                        <div class="graph-box">
+                            <p class="graph-title">Overall Attendance - {{combined_attendance.present_percentage}}%</p>
+                            <div class="chart-box">
+                                {% if combined_attendance.present_percentage %}
+                                <div class="ratios green" style="max-width: {{combined_attendance.present_percentage}}%; min-width: {{combined_attendance.present_percentage}}%;"> ({{combined_attendance.present_count}}) {{combined_attendance.present_percentage}}%  </div>
+                                {% endif %}
+                                {% if combined_attendance.absent_percentage %}
+                                <div class="ratios red" style="max-width: {{combined_attendance.absent_percentage}}%; min-width: {{combined_attendance.absent_percentage}}%;"> ({{combined_attendance.absent_count}}) {{combined_attendance.absent_percentage}}%  </div>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
-                {% endif %}
-                {% endfor %}
-            </div>
+                    
+                    {% for batch, atten in batchwise_attendance.items %}
+                    {% if atten.present_percentage or atten.absent_percentage %}
+                    <div style="width: 250px;">
+                        <!-- <canvas id="attendanceChart{{forloop.counter}}"></canvas> -->
+                        <div class="graph-box">
+                            <p class="graph-title"> {{batch.subject.name}} {{batch.section.name}} - {{atten.present_percentage}}% </p>
+                            <div class="chart-box">
+                                {% if atten.present_percentage %}
+                                <div class="ratios green" style="max-width: {{atten.present_percentage}}%; min-width: {{atten.present_percentage}}%;"> ({{atten.present_count}}) {{atten.present_percentage}}%  </div>
+                                {% endif %}
+                                {% if atten.absent_percentage %}
+                                <div class="ratios red" style="max-width: {{atten.absent_percentage}}%; min-width: {{atten.absent_percentage}}%;"> ({{atten.absent_count}}) {{atten.absent_percentage}}%  </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
 
-            <h3 class="">Test</h3>
-            <div class="test">
-                <div style="width: 200px;">
-                    <canvas id="testChart"></canvas>
                 </div>
 
-                {% for batch, test in batchwise_marks.items %}
-                {% if test.scored or test.deducted %}
-                <div style="width: 200px;">
-                    <canvas id="testChart{{forloop.counter}}"></canvas> 
+                <h3 class="">Homework</h3>
+                <div class="homework">
+                    <div style="width: 250px;">
+                        <!-- <canvas id="homeworkChart"></canvas> -->
+                        <div class="graph-box">
+                            <p class="graph-title">Overall Homework Status</p>
+                            <div class="chart-box">
+                                {% if combined_homework.completed_percentage %}
+                                <div class="ratios green" style="max-width: {{combined_homework.completed_percentage}}%; min-width: {{combined_homework.completed_percentage}}%;"> ({{combined_homework.completed_count}}) {{combined_homework.completed_percentage}}%  </div>
+                                {% endif %}
+                                {% if combined_homework.partial_done_percentage %}
+                                <div class="ratios blue" style="max-width: {{combined_homework.partial_done_percentage}}%; min-width: {{combined_homework.partial_done_percentage}}%;"> ({{combined_homework.partial_done_count}}) {{combined_homework.partial_done_percentage}}%  </div>
+                                {% endif %}
+                                {% if combined_homework.pending_percentage %}
+                                <div class="ratios red" style="max-width: {{combined_homework.pending_percentage}}%; min-width: {{combined_homework.pending_percentage}}%;"> ({{combined_homework.pending_count}}) {{combined_homework.pending_percentage}}%  </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    {% for batch, hw in batchwise_homework.items %}
+                    {% if hw.completed_percentage or hw.partial_done_percentage or hw.pending_percentage %} 
+                        <div style="width: 250px;">
+                            <!-- <canvas id="homeworkChart{{forloop.counter}}"></canvas> -->
+                            <div class="graph-box">
+                            <p class="graph-title"> {{batch.subject.name}} {{batch.section.name}} </p>
+                            <div class="chart-box">
+                                {% if hw.completed_percentage %}
+                                <div class="ratios green" style="max-width: {{hw.completed_percentage}}%; min-width: {{hw.completed_percentage}}%;"> ({{hw.completed_count}}) {{hw.completed_percentage}}%  </div>
+                                {% endif %}
+                                {% if hw.partial_done_percentage %}
+                                <div class="ratios blue" style="max-width: {{hw.partial_done_percentage}}%; min-width: {{hw.partial_done_percentage}}%;"> ({{hw.partial_done_count}}) {{hw.partial_done_percentage}}%  </div>
+                                {% endif %}
+                                {% if hw.pending_percentage %}
+                                <div class="ratios red" style="max-width: {{hw.pending_percentage}}%; min-width: {{hw.pending_percentage}}%;"> ({{hw.pending_count}}) {{hw.pending_percentage}}%  </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        </div>
+                    {% endif %}
+                    {% endfor %}
                 </div>
-                {% endif %}
-                {% endfor %}
+
+                <h3 class="">Test</h3>
+                <div class="test">
+                    <div style="width: 250px;">
+                        <!-- <canvas id="testChart"></canvas> -->
+                        <div class="graph-box">
+                            <p class="graph-title">Overall Test - {{combined_marks.scored}}%</p>
+                            <div class="chart-box">
+                                {% if combined_marks.scored %}
+                                <div class="ratios green" style="max-width: {{combined_marks.scored}}%; min-width: {{combined_marks.scored}}%;"> {{combined_marks.scored}} %  </div>
+                                {% endif %}
+                                {% if 100|sub:combined_marks.scored %}
+                                <div class="ratios red" style="max-width: calc(100 - {{combined_marks.scored}}%); min-width: calc(100 - {{combined_marks.scored}}%);" >{{100|sub:combined_marks.scored|floatformat:2}}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="graph-box">
+                            <p class="graph-title">Overall Test Attendance </p>
+                            <div class="chart-box" style="height: 25px; min-height: 25px;">
+                                {% if combined_marks.present %}
+                                <div class="ratios green" style="max-width: {{combined_marks.present_percentage}}%; min-width: {{combined_marks.present_percentage}}%;"> {{combined_marks.present}}  </div>
+                                {% endif %}
+                                {% if combined_marks.absent %}
+                                <div class="ratios red" style="max-width: {{combined_marks.absent_percentage}}%; min-width: {{combined_marks.absent_percentage}}%;"> {{combined_marks.absent}}  </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    {% for batch, test in batchwise_marks.items %}
+                    {% if test.scored or test.deducted %}
+                    <div style="width: 250px;">
+                        <!-- <canvas id="testChart{{forloop.counter}}"></canvas>  -->
+                        <div class="graph-box">
+                            <p class="graph-title">{{batch.subject.name}} {{batch.section.name}} - {{test.scored}} </p>
+                            <div class="chart-box">
+                                {% if test.scored %}
+                                <div class="ratios green" style="max-width: {{test.scored}}%; min-width: {{test.scored}}%;"> {{test.scored}} %  </div>
+                                {% endif %}
+                                {% if 100|sub:test.scored %}
+                                <div class="ratios red" style="max-width: calc(100 - {{test.scored}}%); min-width: calc(100 - {{test.scored}}%);" >{{100|sub:test.scored|floatformat:2}}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="graph-box">
+                            <p class="graph-title"> {{batch.subject.name}} {{batch.section.name}} Test Attendance </p>
+                            <div class="chart-box" style="height: 25px; min-height: 25px;">
+                                {% if test.present %}
+                                <div class="ratios green" style="max-width: {{test.present_percentage}}%; min-width: {{test.present_percentage}}%;"> {{test.present}}  </div>
+                                {% endif %}
+                                {% if test.absent %}
+                                <div class="ratios red" style="max-width: {{test.absent_percentage}}%; min-width: {{test.absent_percentage}}%;"> {{test.absent}}  </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
             </div>
+
         </div>
-
+<!-- 
         <h3 class="mt-4">Daily Attendance </h3>
         <div class="calendars d-flex gap-4" style="flex-wrap: wrap;">
 
@@ -234,7 +393,7 @@
 
             {% endfor %}
 
-        </div>
+        </div> -->
 
         <h3 class="mt-4">Weekly Tests</h3>
         {% for batch, reports in batch_wise_tests.items %}

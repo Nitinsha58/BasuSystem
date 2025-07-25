@@ -271,6 +271,8 @@ def get_marks_percentage(student, start_date, end_date):
         'deducted': percentage_deducted,
         'present': present_count,
         'absent': absent_count,
+        'present_percentage': round((present_count / (present_count + absent_count) * 100) if (present_count + absent_count) > 0 else 0, 2),
+        'absent_percentage': round((absent_count / (present_count + absent_count) * 100) if (present_count + absent_count) > 0 else 0, 2),
     }
 
 def get_batchwise_marks(student, start_date, end_date):
@@ -319,7 +321,9 @@ def get_batchwise_marks(student, start_date, end_date):
             'scored': round(scored, 2),
             'deducted': round(deducted, 2),
             'present': present_count or 0,
-            'total': absent_count or 0,
+            'absent': absent_count or 0,
+            'present_percentage': round((present_count / (present_count + absent_count) * 100) if (present_count + absent_count) > 0 else 0, 2),
+            'absent_percentage': round((absent_count / (present_count + absent_count) * 100) if (present_count + absent_count) > 0 else 0, 2),
         }
 
     return result
