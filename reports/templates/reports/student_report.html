@@ -312,7 +312,7 @@
                 </a>
 
                 <h2 class="">Test</h2>
-                <div class="test">
+                <a  href="{% url 'student_test_summary_report' student.stu_id %}" class="test">
                     <div class="graph-container">
                         <!-- <canvas id="testChart"></canvas> -->
                         <div class="graph-box">
@@ -344,7 +344,7 @@
                     <div class="graph-container">
                         <!-- <canvas id="testChart{{forloop.counter}}"></canvas>  -->
                         <div class="graph-box">
-                            <p class="graph-title">{{batch.subject.name}} {{batch.section.name}} - {{test.scored}} </p>
+                            <p class="graph-title">{{batch.subject.name}} {{batch.section.name}} - {{test.scored}}% </p>
                             <div class="chart-box">
                                 {% if test.scored %}
                                 <div class="ratios green" style="max-width: {{test.scored}}%; min-width: {{test.scored}}%;"> {{test.scored}} %  </div>
@@ -368,7 +368,7 @@
                     </div>
                     {% endif %}
                     {% endfor %}
-                </div>
+                </a>
             </div>
 
         </div>
@@ -472,7 +472,7 @@
 
         </div> -->
 
-        <h2 class="mt-4">Weekly Tests</h2>
+        <!-- <h2 class="mt-4">Weekly Tests</h2> -->
         {% for batch, reports in batch_wise_tests.items %}
             {% for test in reports %}
             {% if test.test.is_data_complete_for_graph %}

@@ -14,7 +14,8 @@ from registration.models import (
     Test,
     TestResult,
     ReportPeriod,
-    MentorRemark
+    MentorRemark,
+    Chapter
     )
 from django.db.models import Q
 from collections import defaultdict
@@ -291,6 +292,85 @@ def get_batch_homework_calendar(student, batch, start_date, end_date):
     return monthly_data
 
 
+def get_batch_test_calendar(student, batch, start_date, end_date):
+    """
+    Returns a monthly calendar for test attendance (Present/Absent) for a student in a batch.
+    Each day contains the test attendance status: 'Present', 'Absent', or None.
+    Also returns monthly counts and percentages for each status.
+    Skips months with no test data.
+    """
+    monthly_data = []
+
+    # Use student's DOJ if available
+    start_date = max(start_date, student.doj) if getattr(student, 'doj', None) else start_date
+
+    current = date(start_date.year, start_date.month, 1)
+    last_date = date(end_date.year, end_date.month, calendar.monthrange(end_date.year, end_date.month)[1])
+
+    while current <= last_date:
+        year, month = current.year, current.month
+        first_weekday, total_days = calendar.monthrange(year, month)
+        first_weekday = (first_weekday + 1) % 7
+
+        calendar_data = []
+        week = [None] * first_weekday
+        present_c, absent_c = 0, 0
+
+        for day in range(1, total_days + 1):
+            current_date = date(year, month, day)
+
+            test_status = None
+            if start_date <= current_date <= end_date:
+                # Only consider tests for this batch and date
+                test = Test.objects.filter(batch=batch, date=current_date).first()
+                if test:
+                    from .utility import is_absent  # avoid circular import if needed
+                    if is_absent(test, student):
+                        test_status = 'Absent'
+                        absent_c += 1
+                    else:
+                        test_status = 'Present'
+                        present_c += 1
+            week.append({
+                'date': current_date,
+                'attendance': test_status,
+            })
+
+            if len(week) == 7:
+                calendar_data.append(week)
+                week = []
+
+        if week:
+            while len(week) < 7:
+                week.append(None)
+            calendar_data.append(week)
+
+        if len(calendar_data) == 5:
+            calendar_data.append([None] * 7)
+
+        total = present_c + absent_c
+
+        # Only append month if there is any test data
+        if total > 0:
+            monthly_data.append({
+                'calendar': calendar_data,
+                'present_count': present_c,
+                'absent_count': absent_c,
+                'present_percentage': round((present_c / total * 100) if total > 0 else 0, 1),
+                'absent_percentage': round((absent_c / total * 100) if total > 0 else 0, 1),
+                'month_name': calendar.month_name[month],
+                'year': year,
+            })
+
+        # Move to next month
+        if month == 12:
+            current = date(year + 1, 1, 1)
+        else:
+            current = date(year, month + 1, 1)
+
+    return monthly_data
+
+
 def get_monthly_calendar(student, start_date, end_date):
     monthly_data = []
 
@@ -472,6 +552,8 @@ def get_batchwise_marks(student, start_date, end_date):
             'absent': absent_count or 0,
             'present_percentage': round((present_count / (present_count + absent_count) * 100) if (present_count + absent_count) > 0 else 0, 2),
             'absent_percentage': round((absent_count / (present_count + absent_count) * 100) if (present_count + absent_count) > 0 else 0, 2),
+            'batch_calendar': get_batch_test_calendar(student, batch, start_date, end_date),
+            'batch_summary': calculate_batchwise_chapter_remarks(student, batch, start_date, end_date),
         }
 
     return result
@@ -496,6 +578,54 @@ def calculate_testwise_remarks(testwise_responses, test_chapters):
             response.question.max_marks - response.marks_obtained
         )
     return dict(chapter_wise_remarks)
+
+def calculate_batchwise_chapter_remarks(student, batch, start_date, end_date):
+    """
+    Calculates chapterwise remarks for all tests of a student in a batch within a date range.
+    Returns a dict: {remark: [deducted_marks_per_chapter]}
+    """
+    chapters = {
+        ch.chapter_no: ch.chapter_name
+        for ch in Chapter.objects.filter(
+            class_name=batch.class_name,
+            subject=batch.subject
+        ).order_by('chapter_no')
+    }
+
+    questions_responses = QuestionResponse.objects.filter(
+        student=student,
+        test__batch=batch,
+        test__date__range=(start_date, end_date)
+    ).select_related('question')
+
+    chapter_wise_remarks = defaultdict(lambda: [0] * len(chapters))
+    remarks_count = defaultdict(int)
+
+    for response in questions_responses:
+        remark = response.remark
+        if not remark:
+            continue
+        ch_no = response.question.chapter_no
+        if ch_no not in chapters:
+            continue  # Skip if chapter is not in the batch
+        idx = list(chapters.keys()).index(ch_no)
+        chapter_wise_remarks[remark][idx] += ( response.question.max_marks - response.marks_obtained )
+        remarks_count[remark] += 1
+    
+    total_remarks_sum = sum(remarks_count.values())
+    if total_remarks_sum > 0:
+        remarks_count = {
+            k: round((v / total_remarks_sum) * 100, 1)
+            for k, v in remarks_count.items()
+        }
+    chapter_wise_remarks = dict(sorted(chapter_wise_remarks.items(), key=lambda d: d[1], reverse=True))
+    remarks_count = dict(sorted(remarks_count.items(), key=lambda d: d[1], reverse=True))
+
+    return {
+        'chapters': chapters,
+        'remarks_count': remarks_count,
+        'chapter_wise_remarks': chapter_wise_remarks,
+    }
 
 def calculate_marks(testwise_responses, test_chapters):
     max_marks = 0

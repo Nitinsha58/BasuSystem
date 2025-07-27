@@ -1,0 +1,454 @@
+{% extends 'base.html' %}
+{% load mathfilters %}
+{% load static %}
+
+
+{% block style %}
+<style>
+    .student_reg_doc {
+        position: relative;
+    }
+
+    .photo-frame {
+        position: absolute;
+        right: 0;
+        width: 100px;
+        height: 120px;
+        border: 1px solid #000;
+        margin: 0 auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+
+    p {
+        white-space: wrap;
+    }
+
+    @media print {
+        #toggle-btn {
+            display: none;
+        }
+
+        .navbar {
+            display: none;
+        }
+    }
+
+    .divider {
+        height: 100%;
+        width: 2px;
+        background-color: #000;
+        margin: 0 auto;
+    }
+
+    .attendance, .homework, .test {
+        display: flex;
+        flex-wrap: wrap;
+        /* justify-content: space-around; */
+        align-items: center;
+        gap: 20px;
+        justify-content: center;
+        width: fit-content;
+    }
+
+    .chart-box {
+        display: flex;
+        width: 100%;
+        min-width: 250px;
+        min-height: 50px;
+        max-width: 250px;
+        background-color: aqua;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .graph-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .graph-title {
+        font-size: 12px;
+        font-weight: 500;
+        margin-bottom: 5px;
+    }
+
+    h2 {
+        font-weight: 600;
+        margin-bottom: 10px;
+        margin-top: 2rem;
+    }
+
+
+    .ratios {
+        flex: 1;
+        color: white;
+        text-align: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 12px;
+        color: white;
+        overflow: visible;
+        z-index: 1;
+    }
+
+    .red {
+        background-color: #dc3545;
+    }
+
+    .green {
+        background-color: #28a745;
+    }
+
+    .blue {
+        background-color: #17a2b8;
+    }
+
+    .stats-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .stats-text {
+        width: 100%;
+        font-size: 14px;
+    }
+
+    .green-text {
+        color: #28a745;
+    }
+    .blue-text {
+        color: #17a2b8;
+    }
+    .red-text {
+        color: #dc3545;
+    }
+
+    @media screen and (max-width: 520px) {
+        .graph-box {
+            width: 100%;
+            max-width: 100%;
+            min-width: 100%;
+        }
+        .graph-container {
+            width: calc(100% - 30px);
+        }
+        .chart-box {
+            width: 100%;
+            min-width: 100%;
+            max-width: 100%;
+        }
+
+        .row {
+            justify-content: space-around;
+        }
+
+        .calendar_container {
+            width: 100%;
+            max-width: 300px;
+
+            margin: 15px;
+        }
+    }
+
+</style>
+
+{% endblock style %}
+
+{% block dashboard %}
+
+<div class="">
+
+    <div class="g-3 bg-light rounded pb-3" id="student_reg_doc">
+
+        <div class=" mt-4 donut_graph d-flex flex-column gap-2">
+            {% if request.user.is_superuser or request.user.teachers %}
+                <div class="bg-success-subtle p-1 d-flex rounded gap-2" style="width: fit-content;">
+                    <a href="{% url 'student_report' student.stu_id %}" class="btn btn-primary">Go Back</a>
+                </div>
+            {% endif %}
+            <div class="bg-success-subtle p-4 d-flex flex-column flex-md-row align-items-start">
+                <div class="">
+                    <p style="text-decoration: none;" class="border-0 h2">{{student.user.first_name}} {{student.user.last_name}}</p>
+                    <p class="m-0 mb-1">{{student.class_enrolled}} - {{ student.subjects.all|join:", " }}</p>
+                    <p class="m-0 mb-1">Joined On: {{student.doj|date:'d M Y'}}</p>
+                </div>
+                <div class="ms-md-4 w-100">
+                    <form method="get" class="rounded p-md-2 pb-3 d-flex flex-md-row flex-md-row gap-2 align-items-end w-100" style="flex-wrap: wrap;">
+                        <div class="">
+                            <label for="start_date" class="form-label text-nowrap m-0 text-align-center">Start Date: {{ start_date|date:'d M' }}</label>
+                            <input type="date" name="start_date" id="start_date" value="{{start_date|date:'Y-m-d'}}" class="form-control" style="max-width: 150px" required>
+                        </div>
+                        
+                        <div class="">
+                            <label for="end_date" class="form-label text-nowrap m-0 text-align-center">End Date: {{ end_date|date:'d M' }}</label>
+                            <input type="date" name="end_date" id="end_date" value="{{end_date|date:'Y-m-d'}}" class="form-control" style="max-width: 150px" required>
+                        </div>
+                        <button style="height: fit-content;" class="px-2 btn btn-warning" type="submit">Filter</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="stats-wrapper">
+                <h2>Test Report</h2>
+                <div class="test">
+                    <div class="graph-container">
+                        <!-- <canvas id="testChart"></canvas> -->
+                        <div class="graph-box">
+                            <p class="graph-title">Overall Test - {{combined_marks.scored}}%</p>
+                            <div class="chart-box">
+                                {% if combined_marks.scored %}
+                                <div class="ratios green" style="max-width: {{combined_marks.scored}}%; min-width: {{combined_marks.scored}}%;"> {{combined_marks.scored}} %  </div>
+                                {% endif %}
+                                {% if 100|sub:combined_marks.scored %}
+                                <div class="ratios red" style="max-width: calc(100 - {{combined_marks.scored}}%); min-width: calc(100 - {{combined_marks.scored}}%);" >{{100|sub:combined_marks.scored|floatformat:2}}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="graph-box">
+                            <p class="graph-title">Overall Test Attendance </p>
+                            <div class="chart-box" style="height: 25px; min-height: 25px;">
+                                {% if combined_marks.present %}
+                                <div class="ratios green" style="max-width: {{combined_marks.present_percentage}}%; min-width: {{combined_marks.present_percentage}}%;"> {{combined_marks.present}}  </div>
+                                {% endif %}
+                                {% if combined_marks.absent %}
+                                <div class="ratios red" style="max-width: {{combined_marks.absent_percentage}}%; min-width: {{combined_marks.absent_percentage}}%;"> {{combined_marks.absent}}  </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    {% for batch, test in batchwise_marks.items %}
+                    {% if test.scored or test.deducted %}
+                    <div class="graph-container">
+                        <!-- <canvas id="testChart{{forloop.counter}}"></canvas>  -->
+                        <div class="graph-box">
+                            <p class="graph-title">{{batch.subject.name}} {{batch.section.name}} - {{test.scored}}% </p>
+                            <div class="chart-box">
+                                {% if test.scored %}
+                                <div class="ratios green" style="max-width: {{test.scored}}%; min-width: {{test.scored}}%;"> {{test.scored}} %  </div>
+                                {% endif %}
+                                {% if 100|sub:test.scored %}
+                                <div class="ratios red" style="max-width: calc(100 - {{test.scored}}%); min-width: calc(100 - {{test.scored}}%);" >{{100|sub:test.scored|floatformat:2}}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="graph-box">
+                            <p class="graph-title"> {{batch.subject.name}} {{batch.section.name}} Test Attendance </p>
+                            <div class="chart-box" style="height: 25px; min-height: 25px;">
+                                {% if test.present %}
+                                <div class="ratios green" style="max-width: {{test.present_percentage}}%; min-width: {{test.present_percentage}}%;"> {{test.present}}  </div>
+                                {% endif %}
+                                {% if test.absent %}
+                                <div class="ratios red" style="max-width: {{test.absent_percentage}}%; min-width: {{test.absent_percentage}}%;"> {{test.absent}}  </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="calendars d-flex flex-column gap-4 justify-content-center align-items-center mt-4">
+            <div class="w-100 d-flex flex-column gap-4 justify-content-center align-items-center">
+                {% for batch, test in batchwise_marks.items %}
+                    {% if test.scored or test.deducted %}
+                    <div class="graph-container mt-4">
+                        <div class="graph-box">
+                            <h2> {{batch.subject.name}} {{batch.section.name}} - {{test.scored}}% </h2>
+                            <div class="chart-box">
+                                {% if test.scored %}
+                                <div class="ratios green" style="max-width: {{test.scored}}%; min-width: {{test.scored}}%;"> {{test.scored}} %  </div>
+                                {% endif %}
+                                {% if 100|sub:test.scored %}
+                                <div class="ratios red" style="max-width: calc(100 - {{test.scored}}%); min-width: calc(100 - {{test.scored}}%);" >{{100|sub:test.scored|floatformat:2}}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="graph-box">
+                            <p class="graph-title"> {{batch.subject.name}} {{batch.section.name}} Test Attendance </p>
+                            <div class="chart-box" style="height: 25px; min-height: 25px;">
+                                {% if test.present %}
+                                <div class="ratios green" style="max-width: {{test.present_percentage}}%; min-width: {{test.present_percentage}}%;"> {{test.present}}  </div>
+                                {% endif %}
+                                {% if test.absent %}
+                                <div class="ratios red" style="max-width: {{test.absent_percentage}}%; min-width: {{test.absent_percentage}}%;"> {{test.absent}}  </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="d-flex gap-4 justify-content-center" style="flex-wrap: wrap; width: 100%;">
+                    {% for month_data in test.batch_calendar %}
+                        <div class="calendar_container ">
+                            <div class="d-flex justify-content-center align-items-center">
+                                <p class="m-0" style="font-weight: 500; font-size: 20px;">
+                                    {{ month_data.month_name }} {{ month_data.year }}
+                                </p>
+                            </div>
+                            <div class="row text-center font-weight-bold mx-1 mb-1" style="font-size: 12px; font-weight: 500;">
+                                <div class="col" style="max-width: 30px;">S</div>
+                                <div class="col" style="max-width: 30px;">M</div>
+                                <div class="col" style="max-width: 30px;">T</div>
+                                <div class="col" style="max-width: 30px;">W</div>
+                                <div class="col" style="max-width: 30px;">T</div>
+                                <div class="col" style="max-width: 30px;">F</div>
+                                <div class="col" style="max-width: 30px;">S</div>
+                            </div>
+                        
+                            <div class="bg-white rounded py-1">
+                                {% for week in month_data.calendar %}
+                                <div class="row text-center mx-1">
+                                    {% for day in week %}
+                                    <div class="col"
+                                        style="height: 30px; max-width: 30px; display: flex; justify-content: center; align-items: center;">
+                                        {% if day %}
+                                        <p class="text-small m-0 
+                                            {% if day.attendance == 'Present' %}
+                                                bg-success-subtle
+                                            {% elif day.attendance == 'Absent' %}
+                                                bg-danger-subtle
+                                            {% else %}
+                                                bg-light
+                                            {% endif %}
+                                        p-0 rounded-circle text-dark"
+                                            style="height: 20px; min-width: 20px; font-size: 10px; display: flex; justify-content: center; align-items: center;">
+                                            {{ day.date.day }}</p>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <div class="mt-2 d-flex justify-content-center align-items-center">
+                                <p class="m-0">Overall ({{ month_data.present_count }}/{{ month_data.present_count|add:month_data.absent_count }}) {{ month_data.percentage }}%</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                
+                
+                    </div>
+
+                    <div class="graph-container mt-4 w-100">
+                        <div class="container-md my-4 w-100 d-flex flex-column justify-content-center align-items-center">
+                            <div  class="g-3 relative w-100" style="overflow-x: auto;">
+                                <canvas id="remarkProgress_{{batch.id}}" class="w-100 h-auto" style="min-width: 700px;" ></canvas>
+                            </div>
+                            <div class="m-sm-2 p-sm-2 absolute w-100 remarks-container" style="max-width: 500px;">
+                                <ul class="list-group">
+                                    <li class="list-group-item bg-dark text-white border-dark">Batch Remarks</li>
+                                    {% for remark, count in test.batch_summary.remarks_count.items %}
+                                    <li class="list-group-item d-flex justify-content-between" style="font-size: 14px;" style="font-size: 12px;">
+                                        <span class="">{{remark.name}}</span> <span class="fw-normal" >{{count}}%</span> 
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+<script>
+    // Save date range to localStorage when form is submitted
+    document.querySelector("form").addEventListener("submit", function () {
+      const start = document.getElementById("start_date").value;
+      const end = document.getElementById("end_date").value;
+      localStorage.setItem("start_date", start);
+      localStorage.setItem("end_date", end);
+    });
+  
+    // On page load, set input values from localStorage if present
+    window.addEventListener("DOMContentLoaded", function () {
+      const start = localStorage.getItem("start_date");
+      const end = localStorage.getItem("end_date");
+  
+      if (start) document.getElementById("start_date").value = start;
+      if (end) document.getElementById("end_date").value = end;
+    });
+</script>
+
+
+<script>
+    {% for batch, test in batchwise_marks.items %}
+    
+    const ctx_{{batch.id}} = document.getElementById('remarkProgress_{{batch.id}}')
+    
+    new Chart(ctx_{{batch.id}}, {
+      type: 'bar',
+      data: {
+        labels: [{% for ch_no, ch_name in test.batch_summary.chapters.items %} '{{ch_name}} {{ch_no}}', {% endfor %}].map(label => label.split(' ')),
+        datasets: [
+            {% for remark, counts in test.batch_summary.chapter_wise_remarks.items %}
+            {
+                label: '{{remark}}',
+                data: {{counts}},
+                borderWidth: 1
+            },
+            {% endfor %}
+        
+        ]
+      },
+      options: {
+            responsive: false, // To ensure responsiveness (set to true)
+            maintainAspectRatio: true, // Adjusts based on container size, if needed
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                tooltip: {
+                    enabled: true
+                }
+            },
+            scales: {
+                x: {
+                    stacked: true, // Enable stacking on the X-axis
+                    ticks: {
+                        autoSkip: false,
+                        maxRotation: 0, // Rotation of the tick labels on Y-axis
+                        minRotation: 0,
+                        font: {
+                            size: 10
+                        }
+                    },
+                },
+                y: {
+                    stacked: true, // Enable stacking on the Y-axis
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 2, // Set custom step size
+                        font: {
+                            size: 10
+                        }
+                    }
+                }
+            }
+        }
+    });
+    {% endfor %}
+</script>
+  
+
+{% endblock dashboard %}
