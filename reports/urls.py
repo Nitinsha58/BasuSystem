@@ -5,6 +5,8 @@ from .views import (
     mentor_students,
     student_personal_report,
     regular_absent_students,
+    student_attendance_report,
+    student_homework_report,
 
     # Teachers Reports
     teachers_list,
@@ -15,6 +17,9 @@ from .views import (
 
 urlpatterns = [
     path('student/<uuid:stu_id>/', student_report, name='student_report'),
+    path('student_attendance/<uuid:stu_id>/', student_attendance_report, name='student_attendance_report'),
+    path('student_homework/<uuid:stu_id>/', student_homework_report, name='student_homework_report'),
+
     path('personal_report/<uuid:stu_id>/', student_personal_report , name='student_personal_report'),
     path('batchwise_students/', batchwise_students, name='batchwise_students'),
     path('mentor_students/', mentor_students, name='mentor_students'),

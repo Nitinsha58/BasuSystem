@@ -82,6 +82,7 @@ def get_batchwise_attendance(student, start_date, end_date):
             'absent_count': absent,
             'present_percentage': round((present / total * 100) if total > 0 else 0, 1),
             'absent_percentage': round((absent / total * 100) if total > 0 else 0, 1),
+            'batch_calendar': get_batch_calendar(student, batch, start_date, end_date)
         }
     return result
 
@@ -139,8 +140,155 @@ def get_batchwise_homework(student, start_date, end_date):
             'partial_done_count': partial,
             'pending_count': pending,
             'total_count': total,
+            'batch_calendar': get_batch_homework_calendar(student, batch, start_date, end_date)
         }
     return result
+
+
+def get_batch_calendar(student, batch, start_date, end_date):
+    monthly_data = []
+
+    # Use student's DOJ if available
+    start_date = max(start_date, student.doj) if getattr(student, 'doj', None) else start_date
+
+    current = date(start_date.year, start_date.month, 1)
+    last_date = date(end_date.year, end_date.month, calendar.monthrange(end_date.year, end_date.month)[1])
+
+    while current <= last_date:
+        year, month = current.year, current.month
+        first_weekday, total_days = calendar.monthrange(year, month)
+        first_weekday = (first_weekday + 1) % 7
+
+        calendar_data = []
+        week = [None] * first_weekday
+        present_c, absent_c = 0, 0
+
+        for day in range(1, total_days + 1):
+            current_date = date(year, month, day)
+
+            attendance_status = None
+            if start_date <= current_date <= end_date:
+                # Only consider attendance for this batch
+                attendance = Attendance.objects.filter(student=student, batch=batch, date=current_date).first()
+                if attendance:
+                    attendance_status = 'Present' if attendance.is_present else 'Absent'
+                    if attendance.is_present:
+                        present_c += 1
+                    else:
+                        absent_c += 1
+            week.append({
+                'date': current_date,
+                'attendance': attendance_status,
+            })
+
+            if len(week) == 7:
+                calendar_data.append(week)
+                week = []
+
+        if week:
+            while len(week) < 7:
+                week.append(None)
+            calendar_data.append(week)
+
+        if len(calendar_data) == 5:
+            calendar_data.append([None] * 7)
+
+        monthly_data.append({
+            'calendar': calendar_data,
+            'present_count': present_c,
+            'absent_count': absent_c,
+            'percentage': round((present_c / (present_c + absent_c) * 100) if (present_c + absent_c) > 0 else 0, 1),
+            'month_name': calendar.month_name[month],
+            'year': year,
+        })
+
+        # Move to next month
+        if month == 12:
+            current = date(year + 1, 1, 1)
+        else:
+            current = date(year, month + 1, 1)
+
+    return monthly_data
+
+def get_batch_homework_calendar(student, batch, start_date, end_date):
+    """
+    Returns a monthly calendar for homework status for a student in a batch.
+    Each day contains the homework status: 'Pending', 'Partial Done', 'Completed', or None.
+    Also returns monthly counts and percentages for each status.
+    Skips months with no homework data.
+    """
+    monthly_data = []
+
+    # Use student's DOJ if available
+    start_date = max(start_date, student.doj) if getattr(student, 'doj', None) else start_date
+
+    current = date(start_date.year, start_date.month, 1)
+    last_date = date(end_date.year, end_date.month, calendar.monthrange(end_date.year, end_date.month)[1])
+
+    while current <= last_date:
+        year, month = current.year, current.month
+        first_weekday, total_days = calendar.monthrange(year, month)
+        first_weekday = (first_weekday + 1) % 7
+
+        calendar_data = []
+        week = [None] * first_weekday
+        pending_c, partial_c, completed_c = 0, 0, 0
+
+        for day in range(1, total_days + 1):
+            current_date = date(year, month, day)
+
+            homework_status = None
+            if start_date <= current_date <= end_date:
+                # Only consider homework for this batch
+                homework = Homework.objects.filter(student=student, batch=batch, date=current_date).first()
+                if homework:
+                    homework_status = homework.status
+                    if homework_status == 'Pending':
+                        pending_c += 1
+                    elif homework_status == 'Partial Done':
+                        partial_c += 1
+                    elif homework_status == 'Completed':
+                        completed_c += 1
+            week.append({
+                'date': current_date,
+                'homework': homework_status,
+            })
+
+            if len(week) == 7:
+                calendar_data.append(week)
+                week = []
+
+        if week:
+            while len(week) < 7:
+                week.append(None)
+            calendar_data.append(week)
+
+        if len(calendar_data) == 5:
+            calendar_data.append([None] * 7)
+
+        total = pending_c + partial_c + completed_c
+
+        # Only append month if there is any homework data
+        if total > 0:
+            monthly_data.append({
+                'calendar': calendar_data,
+                'pending_count': pending_c,
+                'partial_done_count': partial_c,
+                'completed_count': completed_c,
+                'pending_percentage': round((pending_c / total * 100) if total > 0 else 0, 1),
+                'partial_done_percentage': round((partial_c / total * 100) if total > 0 else 0, 1),
+                'completed_percentage': round((completed_c / total * 100) if total > 0 else 0, 1),
+                'month_name': calendar.month_name[month],
+                'year': year,
+            })
+
+        # Move to next month
+        if month == 12:
+            current = date(year + 1, 1, 1)
+        else:
+            current = date(year, month + 1, 1)
+
+    return monthly_data
 
 
 def get_monthly_calendar(student, start_date, end_date):

@@ -1,0 +1,392 @@
+{% extends 'base.html' %}
+{% load mathfilters %}
+{% load static %}
+
+
+{% block style %}
+<style>
+    .student_reg_doc {
+        position: relative;
+    }
+
+    .photo-frame {
+        position: absolute;
+        right: 0;
+        width: 100px;
+        height: 120px;
+        border: 1px solid #000;
+        margin: 0 auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+
+    p {
+        white-space: wrap;
+    }
+
+    @media print {
+        #toggle-btn {
+            display: none;
+        }
+
+        .navbar {
+            display: none;
+        }
+    }
+
+    .divider {
+        height: 100%;
+        width: 2px;
+        background-color: #000;
+        margin: 0 auto;
+    }
+
+    .attendance, .homework, .test {
+        display: flex;
+        flex-wrap: wrap;
+        /* justify-content: space-around; */
+        align-items: center;
+        gap: 20px;
+        justify-content: center;
+        width: fit-content;
+    }
+
+    .chart-box {
+        display: flex;
+        width: 100%;
+        min-width: 250px;
+        min-height: 50px;
+        max-width: 250px;
+        background-color: aqua;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .graph-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .graph-title {
+        font-size: 12px;
+        font-weight: 500;
+        margin-bottom: 5px;
+    }
+
+    h2 {
+        font-weight: 600;
+        margin-bottom: 10px;
+        margin-top: 2rem;
+    }
+
+
+    .ratios {
+        flex: 1;
+        color: white;
+        text-align: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 12px;
+        color: white;
+        overflow: visible;
+        z-index: 1;
+    }
+
+    .red {
+        background-color: #dc3545;
+    }
+
+    .green {
+        background-color: #28a745;
+    }
+
+    .blue {
+        background-color: #17a2b8;
+    }
+
+    .stats-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .stats-text {
+        width: 100%;
+        font-size: 14px;
+    }
+
+    .green-text {
+        color: #28a745;
+    }
+    .blue-text {
+        color: #17a2b8;
+    }
+    .red-text {
+        color: #dc3545;
+    }
+
+    @media screen and (max-width: 520px) {
+        .graph-box {
+            width: 100%;
+            max-width: 100%;
+            min-width: 100%;
+        }
+        .graph-container {
+            width: calc(100% - 30px);
+        }
+        .chart-box {
+            width: 100%;
+            min-width: 100%;
+            max-width: 100%;
+        }
+
+        .row {
+            justify-content: space-around;
+        }
+
+        .calendar_container {
+            width: 100%;
+            max-width: 300px;
+
+            margin: 15px;
+        }
+    }
+
+</style>
+
+{% endblock style %}
+
+{% block dashboard %}
+
+<div class="">
+
+    <div class="g-3 bg-light rounded pb-3" id="student_reg_doc">
+
+        <div class=" mt-4 donut_graph d-flex flex-column gap-2">
+            {% if request.user.is_superuser or request.user.teachers %}
+                <div class="bg-success-subtle p-1 d-flex rounded gap-2" style="width: fit-content;">
+                    <a href="{% url 'student_report' student.stu_id %}" class="btn btn-primary">Go Back</a>
+                </div>
+            {% endif %}
+            <div class="bg-success-subtle p-4 d-flex flex-column flex-md-row align-items-start">
+                <div class="">
+                    <p style="text-decoration: none;" class="border-0 h2">{{student.user.first_name}} {{student.user.last_name}}</p>
+                    <p class="m-0 mb-1">{{student.class_enrolled}} - {{ student.subjects.all|join:", " }}</p>
+                    <p class="m-0 mb-1">Joined On: {{student.doj|date:'d M Y'}}</p>
+                </div>
+                <div class="ms-md-4 w-100">
+                    <form method="get" class="rounded p-md-2 pb-3 d-flex flex-column flex-md-row gap-2 align-items-start w-100">
+                        <div class="d-flex justify-content-between w-100">
+                            <label for="start_date" class="form-label text-nowrap m-0 text-align-center">Start Date: {{ start_date|date:'d M' }}</label>
+                            <input type="date" name="start_date" id="start_date" value="{{start_date|date:'Y-m-d'}}" class="form-control" style="max-width: 150px" required>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between w-100">
+                            <label for="end_date" class="form-label text-nowrap m-0 text-align-center">End Date: {{ end_date|date:'d M' }}</label>
+                            <input type="date" name="end_date" id="end_date" value="{{end_date|date:'Y-m-d'}}" class="form-control" style="max-width: 150px" required>
+                        </div>
+                        <button style="height: fit-content;" class="px-2 mt-2 btn btn-warning" type="submit">Filter</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="stats-wrapper">
+                <h2>Homework</h2>
+                <div class="homework">
+                    <div class="graph-container">
+                        <div class="graph-box">
+                            <p class="graph-title">Overall Homework Status</p>
+                            <div class="chart-box">
+                                {% if combined_homework.completed_percentage %}
+                                <div class="ratios green" style="max-width: {{combined_homework.completed_percentage}}%; min-width: {{combined_homework.completed_percentage}}%;"> {{combined_homework.completed_count}} </div>
+                                {% endif %}
+                                {% if combined_homework.partial_done_percentage %}
+                                <div class="ratios blue" style="max-width: {{combined_homework.partial_done_percentage}}%; min-width: {{combined_homework.partial_done_percentage}}%;"> {{combined_homework.partial_done_count}}  </div>
+                                {% endif %}
+                                {% if combined_homework.pending_percentage %}
+                                <div class="ratios red" style="max-width: {{combined_homework.pending_percentage}}%; min-width: {{combined_homework.pending_percentage}}%;"> {{combined_homework.pending_count}} </div>
+                                {% endif %}
+                            </div>
+                            <div class="d-flex justify-content-around stats-text">
+                                {% if combined_homework.completed_percentage %}
+                                <span class="green-text"> {{combined_homework.completed_percentage}}% </span>
+                                {% endif %}
+                                {% if combined_homework.partial_done_percentage %}
+                                <span class="blue-text"> {{combined_homework.partial_done_percentage}}% </span>
+                                {% endif %}
+                                {% if combined_homework.pending_percentage %}
+                                <span class="red-text"> {{combined_homework.pending_percentage}}%</span>
+                                {% endif %}
+                            </div>
+
+                        </div>
+                    </div>
+
+                    {% for batch, hw in batchwise_homework.items %}
+                    {% if hw.completed_percentage or hw.partial_done_percentage or hw.pending_percentage %} 
+                        <div class="graph-container">
+                            <!-- <canvas id="homeworkChart{{forloop.counter}}"></canvas> -->
+                            <div class="graph-box">
+                            <p class="graph-title"> {{batch.subject.name}} {{batch.section.name}} </p>
+                            <div class="chart-box">
+                                {% if hw.completed_percentage %}
+                                <div class="ratios green" style="max-width: {{hw.completed_percentage}}%; min-width: {{hw.completed_percentage}}%;"> {{hw.completed_count}} </div>
+                                {% endif %}
+                                {% if hw.partial_done_percentage %}
+                                <div class="ratios blue" style="max-width: {{hw.partial_done_percentage}}%; min-width: {{hw.partial_done_percentage}}%;"> {{hw.partial_done_count}} </div>
+                                {% endif %}
+                                {% if hw.pending_percentage %}
+                                <div class="ratios red" style="max-width: {{hw.pending_percentage}}%; min-width: {{hw.pending_percentage}}%;"> {{hw.pending_count}} </div>
+                                {% endif %}
+                            </div>
+                            <div class="d-flex justify-content-around stats-text">
+                                {% if hw.completed_percentage %}
+                                <span class="green-text"> {{hw.completed_percentage}}% </span>
+                                {% endif %}
+                                {% if hw.partial_done_percentage %}
+                                <span class="blue-text"> {{hw.partial_done_percentage}}% </span>
+                                {% endif %}
+                                {% if hw.pending_percentage %}
+                                <span class="red-text"> {{hw.pending_percentage}}%</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="calendars d-flex flex-column gap-4 justify-content-center align-items-center mt-4">
+            <div class="w-100 d-flex flex-column gap-4 justify-content-center align-items-center">
+                {% for batch, hw in batchwise_homework.items %}
+                    {% if hw.completed_percentage or hw.partial_done_percentage or hw.pending_percentage %}
+                    <div class="graph-container mt-4">
+                        <div class="graph-box">
+                            <h2> {{batch.subject.name}} {{batch.section.name}} </h2>
+                            <div class="chart-box">
+                                {% if hw.completed_percentage %}
+                                <div class="ratios green" style="max-width: {{hw.completed_percentage}}%; min-width: {{hw.completed_percentage}}%;"> {{hw.completed_count}} </div>
+                                {% endif %}
+                                {% if hw.partial_done_percentage %}
+                                <div class="ratios blue" style="max-width: {{hw.partial_done_percentage}}%; min-width: {{hw.partial_done_percentage}}%;"> {{hw.partial_done_count}} </div>
+                                {% endif %}
+                                {% if hw.pending_percentage %}
+                                <div class="ratios red" style="max-width: {{hw.pending_percentage}}%; min-width: {{hw.pending_percentage}}%;"> {{hw.pending_count}} </div>
+                                {% endif %}
+                            </div>
+                            <div class="d-flex justify-content-around stats-text">
+                                {% if hw.completed_percentage %}
+                                <span class="green-text"> {{hw.completed_percentage}}% </span>
+                                {% endif %}
+                                {% if hw.partial_done_percentage %}
+                                <span class="blue-text"> {{hw.partial_done_percentage}}% </span>
+                                {% endif %}
+                                {% if hw.pending_percentage %}
+                                <span class="red-text"> {{hw.pending_percentage}}%</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="d-flex gap-4 justify-content-center" style="flex-wrap: wrap; width: 100%;">
+                    {% for month_data in hw.batch_calendar %}
+                        <div class="ms-4 mb-4 calendar_container">
+                            <div class="d-flex justify-content-center align-items-center">
+                                <p class="m-0" style="font-weight: 500; font-size: 20px;">
+                                    {{ month_data.month_name }} {{ month_data.year }}
+                                </p>
+                            </div>
+                            <div class="row text-center font-weight-bold mx-1 mb-1" style="font-size: 12px; font-weight: 500;">
+                                <div class="col" style="max-width: 30px;">S</div>
+                                <div class="col" style="max-width: 30px;">M</div>
+                                <div class="col" style="max-width: 30px;">T</div>
+                                <div class="col" style="max-width: 30px;">W</div>
+                                <div class="col" style="max-width: 30px;">T</div>
+                                <div class="col" style="max-width: 30px;">F</div>
+                                <div class="col" style="max-width: 30px;">S</div>
+                            </div>
+                        
+                            <div class="bg-white rounded py-1">
+                                {% for week in month_data.calendar %}
+                                <div class="row text-center mx-1">
+                                    {% for day in week %}
+                                    <div class="col"
+                                        style="height: 30px; max-width: 30px; display: flex; justify-content: center; align-items: center;">
+                                        {% if day %}
+                                        <p class="text-small m-0 
+                                            {% if day.homework == 'Completed' %}
+                                                bg-success-subtle
+                                            {% elif day.homework == 'Partial Done' %}
+                                                bg-info-subtle
+                                            {% elif day.homework == 'Pending' %}
+                                                bg-danger-subtle
+                                            {% else %}
+                                                bg-light
+                                            {% endif %}
+                                        p-0 rounded-circle text-dark"
+                                            style="height: 20px; min-width: 20px; font-size: 10px; display: flex; justify-content: center; align-items: center;">
+                                            {{ day.date.day }}</p>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                            <div class="mt-2 d-flex justify-content-center align-items-center">
+                                <p class="m-0">
+                                    {% if month_data.completed_count %}
+                                    <span class="green-text">Done: {{ month_data.completed_count }}</span>
+                                    {% endif %}
+
+                                    {% if month_data.partial_done_count %}
+                                    <span class="blue-text">Partial: {{ month_data.partial_done_count }} </span>
+                                    {% endif %}
+
+                                    {% if month_data.pending_count %}
+                                    <span class="red-text">Pending: {{ month_data.pending_count }} </span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+<script>
+    // Save date range to localStorage when form is submitted
+    document.querySelector("form").addEventListener("submit", function () {
+      const start = document.getElementById("start_date").value;
+      const end = document.getElementById("end_date").value;
+      localStorage.setItem("start_date", start);
+      localStorage.setItem("end_date", end);
+    });
+  
+    // On page load, set input values from localStorage if present
+    window.addEventListener("DOMContentLoaded", function () {
+      const start = localStorage.getItem("start_date");
+      const end = localStorage.getItem("end_date");
+  
+      if (start) document.getElementById("start_date").value = start;
+      if (end) document.getElementById("end_date").value = end;
+    });
+  </script>
+  
+
+{% endblock dashboard %}
