@@ -12,6 +12,9 @@ from .forms import (
     StudentRegistrationForm, StudentUpdateForm, ParentDetailsForm, TransportDetailsForm,
     )
 
+from lesson.models import ChapterSequence, Lesson, Holiday
+from django.utils.timezone import now
+
 from center.models import Subject, ClassName
 from django.contrib import messages
 from django.db import transaction
@@ -605,8 +608,33 @@ def mark_attendance(request, class_id=None, batch_id=None):
     else:
         batches = None
 
+    def get_upcoming_batch_dates(batch, days=7):
+        today = now().date()
+        end_date = today + timedelta(days=days - 1)
+
+        # Get batch days in lowercase (e.g., ['monday', 'wednesday'])
+        batch_days = batch.days.values_list('name', flat=True)
+        batch_day_numbers = {
+            'monday': 0, 'tuesday': 1, 'wednesday': 2, 'thursday': 3,
+            'friday': 4, 'saturday': 5, 'sunday': 6
+        }
+        active_day_indexes = [batch_day_numbers[d.lower()] for d in batch_days]
+
+        # Fetch all holidays in this range
+        holidays = Holiday.objects.filter(date__range=(today, end_date)).values_list('date', flat=True)
+
+        dates = []
+        for i in range(days):
+            date = today + timedelta(days=i)
+            if date.weekday() in active_day_indexes and date not in holidays:
+                dates.append(date)
+
+        return dates
+    
+
     if batch_id:
         batch = Batch.objects.filter(id=batch_id).first()
+        print(get_upcoming_batch_dates(batch))
 
     if batch_id and not batch:
         messages.error(request, "Invalid Batch")

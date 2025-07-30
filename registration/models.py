@@ -34,6 +34,8 @@ class Batch(models.Model):
     days = models.ManyToManyField('Day', related_name="batches", blank=True)
     start_time = models.CharField(max_length=10, choices=BATCH_TIME_CHOICES, blank=True, null=True)
     end_time = models.CharField(max_length=10, choices=BATCH_TIME_CHOICES, blank=True, null=True)
+    start_date = models.DateField(blank=True, null=True)
+    end_date = models.DateField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
