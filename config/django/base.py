@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'registration.apps.RegistrationConfig',
     'accounts.apps.AccountsConfig',
     'reports.apps.ReportsConfig',
+    'lesson.apps.LessonConfig',
 ]
 
 MIDDLEWARE = [

@@ -78,6 +78,16 @@
         </div>
       </div>
 
+      <div class="col">
+        <div class="card h-100">
+          <div class="card-body">
+            <h3 class="card-title">Lesson Plan</h3>
+            <p class="card-text">Managed Batch Chapters and Lesson Sequence</p>
+            <a href="{% url 'lesson_plan' %}" class="btn btn-warning">Lesson Plan</a>
+          </div>
+        </div>
+      </div>
+
       {% endif %}
 
       {% if request.user.mentor_profile or request.user.is_superuser %}
