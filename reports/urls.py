@@ -13,7 +13,8 @@ from .views import (
     teachers_list,
     teacher_report,
     mentor_remarks,
-    suggested_actions
+    suggested_actions,
+    compare_student_performance,
 )
 
 urlpatterns = [
@@ -21,6 +22,10 @@ urlpatterns = [
     path('student_attendance/<uuid:stu_id>/', student_attendance_report, name='student_attendance_report'),
     path('student_homework/<uuid:stu_id>/', student_homework_report, name='student_homework_report'),
     path('student_test_summary/<uuid:stu_id>/', student_test_summary_report, name='student_test_summary_report'),
+
+    path('compare_performance/', compare_student_performance, name='compare_performance'),
+    path('compare_performance/<int:class_id>/', compare_student_performance, name='compare_class'),
+    path('compare_performance/<int:class_id>/<int:batch_id>/', compare_student_performance, name='compare_batch'),
 
     path('personal_report/<uuid:stu_id>/', student_personal_report , name='student_personal_report'),
     path('batchwise_students/', batchwise_students, name='batchwise_students'),

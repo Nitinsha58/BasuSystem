@@ -45,6 +45,7 @@ from .utility import (
     get_student_test_report,
     get_student_retest_report,
     has_report,
+    compare_student_performance_by_week,
 )
 
 from .teachers_utility import (
@@ -824,3 +825,61 @@ def suggested_actions(request):
     }
 
     return render(request, 'reports/suggested_actions.html', {'data': dict(data)})
+
+
+@login_required(login_url='login')
+def compare_student_performance(request, class_id=None, batch_id=None):
+    cls = None
+    batch = None
+    week = None
+    tests = []
+    students_list = []
+    compare_result = {}
+
+    if class_id and not ClassName.objects.filter(id=class_id).exists():
+        messages.error(request, "Invalid Class")
+        return redirect('compare_performance')
+
+    if batch_id and not Batch.objects.filter(id=batch_id).exists():
+        messages.error(request, "Invalid Batch")
+        return redirect('compare_class', class_id=class_id)
+
+    if class_id:
+        cls = ClassName.objects.filter(id=class_id).first()
+        batches = Batch.objects.filter(class_name=cls).order_by('created_at').exclude(
+            Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
+            Q(section__name='CBSE') &
+            Q(subject__name__in=['MATH', 'SCIENCE'])
+        )
+    else:
+        batches = None
+
+    if batch_id:
+        batch = Batch.objects.filter(id=batch_id).first()
+
+    if batch_id and not batch:
+        messages.error(request, "Invalid Batch")
+        return redirect('compare_class', class_id=class_id)
+
+    classes = ClassName.objects.all().order_by('created_at')
+
+    if batch and request.method == 'POST':
+        week = int(request.POST.get('week'))
+        if not week:
+            messages.error(request, "Please select a week to compare performance.")
+            return redirect('compare_student_performance', class_id=class_id, batch_id=batch_id)
+        
+        compare_result = compare_student_performance_by_week(batch, week)
+        students_list = compare_result.get('students_list', [])
+        tests = compare_result.get('tests', [])
+
+    return render(request, 'reports/compare_student_performance.html', {
+        'classes': classes,
+        'batches': batches,
+        'cls': cls,
+        'batch': batch,
+        'students_list': students_list,
+        'compare_result': compare_result,
+        'week': week,
+        'tests': tests
+    })

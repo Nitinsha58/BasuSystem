@@ -992,3 +992,117 @@ def get_student_retest_report(student):
 
     # Return the final test result dictionary
     return test_result
+
+
+def get_week_date_range(week_number):
+    """
+    Returns the start and end date for the given week_number.
+    week_number=1: current week (Mon-Sun), week_number=2: previous week (Mon-Sun)
+    """
+    today = date.today() - timedelta(weeks=week_number - 1)
+    weekday = today.weekday()
+    start_of_week = today - timedelta(days=weekday)
+    start_date = start_of_week
+    end_date = start_of_week + timedelta(days=6)
+
+    return start_date, end_date
+
+def compare_student_performance_by_week(batch, week_number):
+    """
+    For a given batch and week_number (1=current, 2=previous), returns:
+    - tests in that week
+    - for each student: their percentage in each test, and their average percentage for the week
+    - also returns the average percentage for each test across all students
+    - for each student: their attendance percentage for the week in this batch
+    - for each student: their homework completion percentage (only 'Completed' status) for the week in this batch
+    """
+    start_date, end_date = get_week_date_range(week_number)
+    tests = Test.objects.filter(batch=batch, date__range=(start_date, end_date)).order_by('date')
+    students = Student.objects.filter(batches=batch, active=True)
+    students_list = []
+
+    # Pre-fetch all results for efficiency
+    test_results = TestResult.objects.filter(test__in=tests, student__in=students)
+    results_lookup = {(tr.student_id, tr.test_id): tr for tr in test_results}
+
+    # Pre-fetch attendance for all students in this batch and week
+    attendance_qs = Attendance.objects.filter(
+        batch=batch,
+        student__in=students,
+        date__range=(start_date, end_date)
+    )
+    attendance_lookup = {}
+    for att in attendance_qs:
+        attendance_lookup.setdefault(att.student_id, []).append(att.is_present)
+
+    # Pre-fetch homework for all students in this batch and week (only 'Completed')
+    homework_qs = Homework.objects.filter(
+        batch=batch,
+        student__in=students,
+        date__range=(start_date, end_date)
+    )
+    homework_lookup = {}
+    for hw in homework_qs:
+        homework_lookup.setdefault(hw.student_id, []).append(hw.status)
+
+    for stu in students:
+        stu_obj = {}
+        total_marks_obtained = 0
+        total_max_marks = 0
+
+        for test in tests:
+            result = results_lookup.get((stu.id, test.id))
+            if not result or result.percentage == 0:
+                stu_obj[test] = -1
+                continue
+
+            total_marks_obtained += result.total_marks_obtained
+            total_max_marks += result.total_max_marks
+            stu_obj[test] = round(result.percentage, 1)
+
+        # Attendance percentage for this week in this batch
+        att_list = attendance_lookup.get(stu.id, [])
+        total_att = len(att_list)
+        present_att = sum(1 for x in att_list if x)
+        attendance_perc = round((present_att / total_att) * 100, 1) if total_att > 0 else 0.0
+
+        # Homework completion percentage (only 'Completed')
+        hw_list = homework_lookup.get(stu.id, [])
+        total_hw = len(hw_list)
+        completed_hw = sum(1 for x in hw_list if x == 'Completed')
+        homework_perc = round((completed_hw / total_hw) * 100, 1) if total_hw > 0 else 0.0
+
+        stu_obj['student'] = {
+            'stu': stu,
+            'percentage': round((total_marks_obtained / (total_max_marks or 1)) * 100, 1),
+            'attendance_percentage': attendance_perc,
+            'attendance_present': present_att,
+            'attendance_total': total_att,
+            'homework_percentage': homework_perc,
+            'homework_completed': completed_hw,
+            'homework_total': total_hw,
+        }
+        students_list.append(stu_obj)
+
+    students_list = sorted(students_list, key=lambda item: item['student']['percentage'], reverse=True)
+
+    # Calculate average percentage for each test across all students
+    test_averages = {}
+    for test in tests:
+        percentages = [
+            stu_obj[test]
+            for stu_obj in students_list
+            if stu_obj.get(test, -1) != -1
+        ]
+        if percentages:
+            test_averages[test] = round(sum(percentages) / len(percentages), 1)
+        else:
+            test_averages[test] = None
+
+    return {
+        'tests': tests,
+        'students_list': students_list,
+        'test_averages': test_averages,
+        'start_date': start_date,
+        'end_date': end_date,
+    }

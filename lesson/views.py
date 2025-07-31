@@ -138,7 +138,6 @@ def lesson_plan(request, class_id=None, batch_id=None):
             chapter_sequence = get_object_or_404(ChapterSequence, id=seq_id, batch=batch)
             chapter_sequence.sequence = seq_no
             chapter_sequence.save()
-            print(seq_no, chapter_sequence.chapter.chapter_no)
             
         messages.success(request, "Chapters Updated.")
 

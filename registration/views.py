@@ -634,7 +634,7 @@ def mark_attendance(request, class_id=None, batch_id=None):
 
     if batch_id:
         batch = Batch.objects.filter(id=batch_id).first()
-        print(get_upcoming_batch_dates(batch))
+    
 
     if batch_id and not batch:
         messages.error(request, "Invalid Batch")

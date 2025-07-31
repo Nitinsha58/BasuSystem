@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+{% load mathfilters %}
+{% load center_filters %}
+{% load static %}
+
+{% block dashboard %}
+<style>
+  .parent {
+    position: relative;
+    width: auto;
+    height: 24px;
+    background-color: whitesmoke;
+    margin: 15px 2rem;
+    border-radius: 7px;
+    overflow: hidden;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .child {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 50%;
+    background-color: rgba(74, 212, 231, 0.161);
+    justify-content: center;
+    align-items: center;
+    border-radius: 0 5px 5px 0;
+  }
+
+  .progress_text {
+    position: absolute;
+    color: #000000e7;
+    font-size: 14px;
+    margin: 0;
+  }
+  canvas {
+
+  }
+</style>
+
+<div class="mx-5 px-5">
+    <div class="w-75 m-2 p-2 mb-4">
+        <p class="h2 fw-normal">Compare Progress</p>
+
+        {% if classes and not cls %}
+        <div class="row g-2">
+            {% for c in classes %}
+            <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+                <a href="{% url 'compare_class' c.id %}" class="nav-link">
+                    <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        {% if cls %}
+        <div class="row g-2">
+            <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+                <a href="{% url 'compare_performance' %}" class="nav-link">
+                    <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{cls.name}}</div>
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if batches and cls and not batch %}
+        <h2 class="heading m-2">Select Batch</h2>
+        <div class="row g-2">
+            {% for b in batches %}
+            <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+                <a href="{% url 'compare_batch' cls.id b.id %}" class="nav-link">
+                    <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{b.section.name}} {{b.subject.name}}</div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if cls and batch %}
+        <div class="row g-2 mt-1">
+            <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+                <a href="{% url 'compare_class' cls.id %}" class="nav-link">
+                    <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{batch.section.name}} {{batch.subject.name}}</div>
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="d-flex g-4 w-100">
+        <div class="m-2 p-2 ps-4">
+            {% if batch %}
+            <div class="">
+                <p class="h4 fw-normal ">{{batch.class_name|title}}th {{batch.subject|title}} ({{batch.section}})</p>
+            </div>
+
+
+            <div class="container-md my-2 mx-0 p-0 w-100">
+                <form class="d-flex gap-3 " method="POST">
+                    {% csrf_token %}
+                    <select class="form-select" style="width: fit-content;" name="week" required >
+                        <option value="1" {% if week == 1 %} selected {% endif %} >Week 1</option>
+                        <option value="2" {% if week == 2 %} selected {% endif %} >Week 2</option>
+                        <option value="3" {% if week == 3 %} selected {% endif %} >Week 3</option>
+                        <option value="4" {% if week == 4 %} selected {% endif %} >Week 4</option>
+                        <option value="5" {% if week == 5 %} selected {% endif %} >Week 5</option>
+                        <option value="6" {% if week == 6 %} selected {% endif %} >Week 6</option>
+                        <option value="7" {% if week == 8 %} selected {% endif %} >Week 7</option>
+                        <option value="8" {% if week == 8 %} selected {% endif %} >Week 8</option>
+                        <option value="9" {% if week == 9 %} selected {% endif %} >Week 9</option>
+                        <option value="10" {% if week == 10 %} selected {% endif %} >Week 10</option>
+                    </select>
+                    <button class="btn btn-warning">Create Comparison</button>
+                </form>
+                <p class="m-0 mb-2 fw-normal mb-4 mt-2">Start Date: {{compare_result.start_date|date:'d M Y'}} - End Date: {{compare_result.end_date|date:'d M Y'}}</p>
+
+                <div  class="g-3 d-flex justify-content-between">
+                    <div class="h-auto d-flex flex-1">
+                        {% if students_list %}
+                        <ul class="list-group me-3" style="min-width: fit-content;">
+                            <li class="list-group-item bg-dark text-white border-dark">Students</li>
+                            {% if request.user.is_superuser %}
+                            {% for stu in students_list %}
+                                
+                                <li class="list-group-item d-flex justify-content-between " style="font-size: 14px;">
+                                    <span class="">{{stu.student.stu.user.first_name}} {{stu.student.stu.user.last_name}}</span> 
+                                    {% if not tests %}
+                                    <!-- <span class="fw-normal btn bg-danger-subtle px-2 py-0" style="font-size: 12px;" ></span>  -->
+                                    {% elif stu.student.percentage == 0 %}
+                                    <span class="fw-normal btn bg-danger-subtle px-2 py-0" style="font-size: 12px;" >Absent</span> 
+                                    {% else %}
+                                    <span class="fw-normal
+                                    {% if stu.student.percentage > 75 %} text-success
+                                    {% elif stu.student.percentage <= 50 and stu.student.percentage > 25 %} text-warning
+                                    {% elif stu.student.percentage <= 75 and stu.student.percentage > 50 %} text-primary
+                                    {% elif stu.student.percentage <= 25 %} text-danger {% endif %}
+                                    " > {{stu.student.percentage}}%</span> 
+                                    {% endif %}
+                                </li>
+                            
+                            {% endfor %}
+                            {% endif %}
+                        </ul>
+                        {% endif %}
+
+                        <div class="w-100 d-flex gap-3" style="overflow-x: scroll;">
+                            {% for test in tests %}
+                            <ul class="list-group" style="min-width: fit-content;">
+                                <li class="list-group-item bg-dark text-white border-dark">{{test.name}}</li>
+                                {% for data in students_list %}
+
+                                    <li class="list-group-item d-flex justify-content-center " style="font-size: 14px;">
+                                        {% if data|get_item:test == 0 %}
+                                            {{data|get_item:test}}
+                                        {% elif data|get_item:test == -1 %}
+                                        <span class="fw-normal" style="opacity: 0;" >T</span> 
+                                        <span class="fw-normal btn bg-danger-subtle px-2 py-0" style="font-size: 12px;" >Absent</span> 
+                                        <span class="fw-normal" style="opacity: 0;" >T</span> 
+                                        {% elif data|get_item:test == -2 %}
+                                        <span class="fw-normal" style="opacity: 0;" >T</span> 
+                                        <span class="fw-normal btn bg-primary-subtle px-2 py-0" style="font-size: 12px;" >No Data</span> 
+                                        <span class="fw-normal" style="opacity: 0;" >T</span> 
+                                        {% else %}
+                                        <span class="fw-normal 
+                                        {% if data|get_item:test > 75 %} text-success
+                                        {% elif data|get_item:test <= 50 and data|get_item:test > 25 %} text-warning
+                                        {% elif data|get_item:test <= 75 and data|get_item:test > 50 %} text-primary
+                                        {% elif data|get_item:test <= 25 %} text-danger {% endif %}
+
+                                        " >{{data|get_item:test}}%</span> 
+                                        {% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                            {% endfor %}
+
+                            <ul class="list-group" style="min-width: fit-content;">
+                                <li class="list-group-item bg-dark text-white border-dark">Weekly Attendance</li>
+                                {% for data in students_list %}
+                                    <li class="list-group-item d-flex justify-content-center 
+                                        {% if data.student.attendance_present < data.student.attendance_total and data.student.attendance_percentage < 51 and data.student.attendance_percentage > 34 %} text-warning
+                                        {% elif data.student.attendance_present == data.student.attendance_total and data.student.attendance_percentage == 100 %} text-success
+                                        {% elif data.student.attendance_present < data.student.attendance_total and data.student.attendance_percentage <= 34 %} text-danger {% endif %}
+                                        " style="font-size: 14px;">
+                                        <span class="fw-normal" > ({{data.student.attendance_present}}/{{data.student.attendance_total}}) {{data.student.attendance_percentage}}% </span> 
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                           
+                            <ul class="list-group" style="min-width: fit-content;">
+                                <li class="list-group-item bg-dark text-white border-dark">Weekly Homework</li>
+                                {% for data in students_list %}
+                                    <li class="list-group-item d-flex justify-content-center 
+                                    {% if data.student.homework_completed == data.student.homework_total and data.student.homework_percentage == 100 %} text-success 
+                                    {% elif data.student.homework_completed < data.student.homework_total and data.student.homework_percentage < 51 %} text-danger {% endif %}
+                                    " style="font-size: 14px;">
+                                        <span class="fw-normal" > ({{data.student.homework_completed}}/{{data.student.homework_total}}) {{data.student.homework_percentage}}% </span> 
+                                    </li>
+                                {% endfor %}
+                            </ul>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if batch %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+{% endif %}
+
+{% endblock dashboard %}
