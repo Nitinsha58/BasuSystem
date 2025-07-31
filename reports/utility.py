@@ -993,21 +993,7 @@ def get_student_retest_report(student):
     # Return the final test result dictionary
     return test_result
 
-
-def get_week_date_range(week_number):
-    """
-    Returns the start and end date for the given week_number.
-    week_number=1: current week (Mon-Sun), week_number=2: previous week (Mon-Sun)
-    """
-    today = date.today() - timedelta(weeks=week_number - 1)
-    weekday = today.weekday()
-    start_of_week = today - timedelta(days=weekday)
-    start_date = start_of_week
-    end_date = start_of_week + timedelta(days=6)
-
-    return start_date, end_date
-
-def compare_student_performance_by_week(batch, week_number):
+def compare_student_performance_by_week(batch, start_date, end_date):
     """
     For a given batch and week_number (1=current, 2=previous), returns:
     - tests in that week
@@ -1016,7 +1002,6 @@ def compare_student_performance_by_week(batch, week_number):
     - for each student: their attendance percentage for the week in this batch
     - for each student: their homework completion percentage (only 'Completed' status) for the week in this batch
     """
-    start_date, end_date = get_week_date_range(week_number)
     tests = Test.objects.filter(batch=batch, date__range=(start_date, end_date)).order_by('date')
     students = Student.objects.filter(batches=batch, active=True)
     students_list = []

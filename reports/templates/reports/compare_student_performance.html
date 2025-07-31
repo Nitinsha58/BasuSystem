@@ -101,23 +101,18 @@
 
 
             <div class="container-md my-2 mx-0 p-0 w-100">
-                <form class="d-flex gap-3 " method="POST">
-                    {% csrf_token %}
-                    <select class="form-select" style="width: fit-content;" name="week" required >
-                        <option value="1" {% if week == 1 %} selected {% endif %} >Week 1</option>
-                        <option value="2" {% if week == 2 %} selected {% endif %} >Week 2</option>
-                        <option value="3" {% if week == 3 %} selected {% endif %} >Week 3</option>
-                        <option value="4" {% if week == 4 %} selected {% endif %} >Week 4</option>
-                        <option value="5" {% if week == 5 %} selected {% endif %} >Week 5</option>
-                        <option value="6" {% if week == 6 %} selected {% endif %} >Week 6</option>
-                        <option value="7" {% if week == 8 %} selected {% endif %} >Week 7</option>
-                        <option value="8" {% if week == 8 %} selected {% endif %} >Week 8</option>
-                        <option value="9" {% if week == 9 %} selected {% endif %} >Week 9</option>
-                        <option value="10" {% if week == 10 %} selected {% endif %} >Week 10</option>
-                    </select>
-                    <button class="btn btn-warning">Create Comparison</button>
+                <form method="get" class="rounded p-md-2 pb-3 d-flex flex-md-row flex-md-row gap-2 align-items-end w-100" style="flex-wrap: wrap;">
+                        <div class="">
+                            <label for="start_date" class="form-label text-nowrap m-0 text-align-center">Start Date: {{ start_date|date:'d M' }}</label>
+                            <input type="date" name="start_date" id="start_date" value="{{start_date|date:'Y-m-d'}}" class="form-control" style="max-width: 150px" required>
+                        </div>
+                        
+                        <div class="">
+                            <label for="end_date" class="form-label text-nowrap m-0 text-align-center">End Date: {{ end_date|date:'d M' }}</label>
+                            <input type="date" name="end_date" id="end_date" value="{{end_date|date:'Y-m-d'}}" class="form-control" style="max-width: 150px" required>
+                        </div>
+                        <button style="height: fit-content;" class="px-2 btn btn-warning" type="submit">Filter</button>
                 </form>
-                <p class="m-0 mb-2 fw-normal mb-4 mt-2">Start Date: {{compare_result.start_date|date:'d M Y'}} - End Date: {{compare_result.end_date|date:'d M Y'}}</p>
 
                 <div  class="g-3 d-flex justify-content-between">
                     <div class="h-auto d-flex flex-1">

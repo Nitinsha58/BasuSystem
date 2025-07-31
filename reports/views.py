@@ -89,47 +89,6 @@ def student_report(request, stu_id):
             Q(section__name='CBSE') &
             Q(subject__name__in=['MATH', 'SCIENCE'])
         ).order_by('-created_at')
-    # batch_wise_tests = {}
-
-    # for batch in batches:
-    #     tests = Test.objects.filter(batch=batch, date__range=(start_date, end_date)).order_by('-date')
-    #     test_reports = []
-
-    #     for test in tests:
-    #         test_chapters = get_chapters_from_questions(test)
-    #         responses = QuestionResponse.objects.filter(test=test, student=student).select_related('question', 'remark')
-    #         test_result = TestResult.objects.filter(test=test, student=student).first()
-
-    #         # If no responses and no result, mark as absent
-    #         if not responses.exists() and not test_result:
-    #             test_reports.append({
-    #                 'test': test,
-    #                 'chapters': test_chapters,
-    #                 'absent': True,
-    #             })
-    #             continue
-
-    #         chapter_remarks = calculate_testwise_remarks(responses, test_chapters)
-    #         marks_data = calculate_marks(responses, test_chapters)
-
-    #         test_reports.append({
-    #             'test': test,
-    #             'chapters': test_chapters,
-    #             'marks_total': marks_data['total'],
-    #             'marks_deducated': marks_data['deducted'],
-    #             'marks_obtained': marks_data['obtained'],
-    #             'remarks': marks_data['remarks'],
-    #             'max_marks': marks_data['max_marks'],
-    #             'marks': {
-    #                 'percentage': marks_data['percentage'],
-    #                 'obtained_marks': marks_data['obtained_total'],
-    #                 'max_marks': marks_data['total_max'],
-    #             },
-    #             'chapter_wise_test_remarks': chapter_remarks,
-    #             'absent': False,
-    #         })
-
-    #     batch_wise_tests[batch] = test_reports
 
     combined_attendance = get_combined_attendance(student, start_date, end_date)
     batchwise_attendance = get_batchwise_attendance(student,start_date, end_date)
@@ -863,13 +822,29 @@ def compare_student_performance(request, class_id=None, batch_id=None):
 
     classes = ClassName.objects.all().order_by('created_at')
 
-    if batch and request.method == 'POST':
-        week = int(request.POST.get('week'))
-        if not week:
-            messages.error(request, "Please select a week to compare performance.")
-            return redirect('compare_student_performance', class_id=class_id, batch_id=batch_id)
-        
-        compare_result = compare_student_performance_by_week(batch, week)
+
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+
+    if start_date_str and end_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+        except ValueError:
+            messages.error(request, "Invalid date format")
+            return redirect('mentor_students')
+    else:
+        period = ReportPeriod.objects.all().order_by('-start_date').first()
+        if period:
+            start_date = period.start_date
+            end_date = period.end_date
+        else:
+            today = date.today()
+            start_date = today.replace(day=1)
+            end_date = today
+
+    if batch:
+        compare_result = compare_student_performance_by_week(batch, start_date, end_date)
         students_list = compare_result.get('students_list', [])
         tests = compare_result.get('tests', [])
 
@@ -881,5 +856,7 @@ def compare_student_performance(request, class_id=None, batch_id=None):
         'students_list': students_list,
         'compare_result': compare_result,
         'week': week,
-        'tests': tests
+        'tests': tests,
+        'start_date': start_date,
+        'end_date': end_date,
     })
