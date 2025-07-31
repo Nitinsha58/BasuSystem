@@ -175,7 +175,7 @@
                             {% endfor %}
 
                             <ul class="list-group" style="min-width: fit-content;">
-                                <li class="list-group-item bg-dark text-white border-dark">Weekly Attendance</li>
+                                <li class="list-group-item bg-dark text-white border-dark">Attendance</li>
                                 {% for data in students_list %}
                                     <li class="list-group-item d-flex justify-content-center 
                                         {% if data.student.attendance_present < data.student.attendance_total and data.student.attendance_percentage < 51 and data.student.attendance_percentage > 34 %} text-warning
@@ -188,7 +188,7 @@
                             </ul>
                            
                             <ul class="list-group" style="min-width: fit-content;">
-                                <li class="list-group-item bg-dark text-white border-dark">Weekly Homework</li>
+                                <li class="list-group-item bg-dark text-white border-dark">Homework</li>
                                 {% for data in students_list %}
                                     <li class="list-group-item d-flex justify-content-center 
                                     {% if data.student.homework_completed == data.student.homework_total and data.student.homework_percentage == 100 %} text-success 
