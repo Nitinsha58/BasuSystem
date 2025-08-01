@@ -1001,6 +1001,7 @@ def compare_student_performance_by_week(batch, start_date, end_date):
     - also returns the average percentage for each test across all students
     - for each student: their attendance percentage for the week in this batch
     - for each student: their homework completion percentage (only 'Completed' status) for the week in this batch
+    Considers student's join date (doj): if test is before join date, test value is blank.
     """
     tests = Test.objects.filter(batch=batch, date__range=(start_date, end_date)).order_by('date')
     students = Student.objects.filter(batches=batch, active=True)
@@ -1034,8 +1035,14 @@ def compare_student_performance_by_week(batch, start_date, end_date):
         stu_obj = {}
         total_marks_obtained = 0
         total_max_marks = 0
+        doj = getattr(stu, 'doj', None)
 
         for test in tests:
+            # If test is before student's join date, leave blank
+            if doj and test.date < doj:
+                stu_obj[test] = ''
+                continue
+
             result = results_lookup.get((stu.id, test.id))
             if not result or result.percentage == 0:
                 stu_obj[test] = -1
@@ -1077,7 +1084,7 @@ def compare_student_performance_by_week(batch, start_date, end_date):
         percentages = [
             stu_obj[test]
             for stu_obj in students_list
-            if stu_obj.get(test, -1) != -1
+            if stu_obj.get(test, -1) not in ('', -1)
         ]
         if percentages:
             test_averages[test] = round(sum(percentages) / len(percentages), 1)
