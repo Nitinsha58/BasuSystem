@@ -5,9 +5,6 @@ from registration.models import ClassName, Subject
 class ChapterSequence(models.Model):
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='chapter_sequences')
 
-
-    class_name = models.ForeignKey(ClassName, on_delete=models.CASCADE, null=True, blank=True)
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, null=True, blank=True)
     chapter_no = models.IntegerField(null=True, blank=True)
     chapter_name = models.CharField(max_length=255, null=True, blank=True)
 

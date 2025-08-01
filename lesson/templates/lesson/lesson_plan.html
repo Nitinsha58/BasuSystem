@@ -98,7 +98,7 @@
     {% endif %}
 
     {% if cls and batch %}
-    <div id="updateModal" class="my-4 d-none">
+    <!-- <div id="updateModal" class="my-4 d-none">
         <form action="" method="post" class="bg-white rounded-lg p-2 py-md-4 p-md-4 rounded">
             {% csrf_token %}
             <div class="d-flex justify-content-between align-items-center">
@@ -120,9 +120,77 @@
                 </ul>
             </div>
 
+        </form>        
+    </div> -->
+    
+    {% if chapters %}
+    <div id="updateModal" class="my-4 d-none">
+        <form action="" method="post" class="bg-white rounded-lg p-2 py-md-4 p-md-4 rounded">
+            {% csrf_token %}
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="text-xl font-semibold ">Update Sequence</h3>
+                <div class="d-flex justify-content-end mt-4">
+                    <div id="cancelButton" class="px-4 py-2 btn btn-primary me-2">Cancel</div>
+                    <button id="confirmButton" type="submit" class="px-4 py-2 btn  btn-warning ">Save</button>
+                </div>
+            </div>
+            <div class="container mt-3">
+                <ul class="list-group drag-container">
+                    {% for chapter in chapters %}
+                    <li draggable="true" class="draggable list-group-item d-flex align-items-md-center">
+                        <p  class="m-0 me-3 sequence-no"> {{chapter.sequence}}.</p>
+                        <div class="d-flex gap-2 gap-md-4 flex-column flex-md-row w-100">
+                            <input class="form-control chapter-no" style="max-width: 4rem;" type="text" name="chapters[][chapter_no]" value="{{ chapter.chapter_no }}" placeholder="no.." required>
+                            <input class="form-control chapter-name" type="text" name="chaters[][name]" value="{{ chapter.chapter_name }}" placeholder="name..." required>
+                            <input type="hidden" class="chapter-data" name="chapters[]" value="{{ chapter.sequence }}:{{ chapter.id }}:{{ chapter.chapter_no }}:{{ chapter.chapter_name }}" required>
+                            
+                            <div  class="px-2 py-2 d-flex align-items-center justify-content-center btn btn-outline-danger fw-semibold text-decoration-none" onclick="deleteSequence(event)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"></path>
+                                    <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
 
+                </ul>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex justify-content-end mt-4">
+                    <div id="add-lesson" onclick="addSequence()"  class="px-4 py-2 btn btn-success me-2">Add Lesson</div>
+                </div>
+            </div>
+            
         </form>
     </div>
+    {% else %}
+    <div id="updateModal" class="my-4">
+        <form action="" method="post" class="bg-white rounded-lg p-2 py-md-4 p-md-4 rounded">
+            {% csrf_token %}
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="text-xl font-semibold ">Update Sequence</h3>
+                <div class="d-flex justify-content-end mt-4">
+                    <div id="cancelButton" class="px-4 py-2 btn btn-primary me-2">Cancel</div>
+                    <button id="confirmButton" type="submit" class="px-4 py-2 btn  btn-warning ">Save</button>
+                </div>
+            </div>
+            <div class="container mt-3">
+                <ul class="list-group drag-container">
+
+                </ul>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex justify-content-end mt-4">
+                    <div id="add-lesson" onclick="addSequence()"  class="px-4 py-2 btn btn-success me-2">Add Chapter</div>
+                </div>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+
     {% endif %}
 </div>
 
@@ -253,6 +321,165 @@
 
       });
     });
+</script>
+
+
+<script>
+// DOM Selectors
+const sequenceModal = document.getElementById('updateModal');
+const dragContainers = document.querySelectorAll('.drag-container');
+
+// Utility
+function createElementFromHTML(html) {
+    const div = document.createElement('div');
+    div.innerHTML = html.trim();
+    return div.firstChild;
+}
+
+function getSequenceHTML() {
+    return `
+        <li draggable="true" class="draggable list-group-item d-flex align-items-md-center">
+            <p  class="m-0 me-3 sequence-no"></p>
+            <div class="d-flex gap-2 gap-md-4 flex-column flex-md-row w-100">
+                <input class="form-control chapter-no" style="max-width: 4rem;" type="text" name="chapters[][chapter_no]" value="" placeholder="no.." required>
+                <input class="form-control chapter-name" type="text" name="chaters[][name]" value="" placeholder="name..." required>
+                <input type="hidden" class="chapter-data" name="chapters[]" value="" required>
+                
+                <div  class="px-2 py-2 d-flex align-items-center justify-content-center btn btn-outline-danger fw-semibold text-decoration-none" onclick="deleteSequence(event)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"></path>
+                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
+                    </svg>
+                </div>
+            </div>
+        </li>
+    `;
+}
+
+// Actions
+function addSequence() {
+    const newSequence = createElementFromHTML(getSequenceHTML());
+    sequenceModal.querySelector('.drag-container').appendChild(newSequence);
+    updateSequenceInputs();
+    bindSequenceInputListeners();
+    bindDraggable(newSequence);
+}
+
+function deleteSequence(event) {
+    const sequenceItem = event.target.closest('.draggable');
+    if (sequenceItem) {
+        sequenceItem.remove();
+        updateSequenceInputs();
+    }
+}
+
+function updateSequenceInputs() {
+    const items = document.querySelectorAll('.draggable');
+    const sequences = [];
+
+    items.forEach((item, index) => {
+        item.querySelector('.sequence-no').textContent = `${index + 1}.`;
+
+        const chapter_no = item.querySelector('.chapter-no').value.trim();
+        const chapter_name = item.querySelector('.chapter-name').value.trim();
+
+        const hiddenInput = item.querySelector('.chapter-data');
+        const parts = hiddenInput.value.split(':');
+        const id = parts[1] || "";
+        hiddenInput.value = `${index + 1}:${id}:${chapter_no}:${chapter_name}`;
+
+        sequences.push({ id, sequence: index + 1, chapter_no, chapter_name });
+    });
+
+}
+
+function bindSequenceInputListeners() {
+    document.querySelectorAll('.draggable').forEach(item => {
+        ['.chapter-no', '.chapter-name'].forEach(sel => {
+            item.querySelector(sel)?.addEventListener('input', updateSequenceInputs);
+        });
+    });
+}
+
+function bindDraggable(item) {
+    item.addEventListener('dragstart', () => item.classList.add('dragging'));
+    item.addEventListener('dragend', () => {
+        item.classList.remove('dragging');
+        updateSequenceInputs();
+    });
+
+    item.addEventListener('touchstart', e => {
+        startY = e.touches[0].clientY;
+        longPressTimer = setTimeout(() => {
+            touchDraggable = item;
+            item.classList.add('dragging');
+        }, 200);
+    });
+
+    item.addEventListener('touchend', () => {
+        clearTimeout(longPressTimer);
+        if (touchDraggable) {
+            touchDraggable.classList.remove('dragging');
+            touchDraggable = null;
+        }
+        updateSequenceInputs();
+    });
+
+    item.addEventListener('touchmove', e => {
+        if (!touchDraggable) {
+            clearTimeout(longPressTimer);
+            return;
+        }
+        const touch = e.touches[0];
+        const container = [...dragContainers].find(c => c.contains(touchDraggable));
+        const afterElement = getDragAfterElement(container, touch.clientY);
+        if (afterElement == null) {
+            container.appendChild(touchDraggable);
+        } else {
+            container.insertBefore(touchDraggable, afterElement);
+        }
+        e.preventDefault();
+    });
+}
+
+function bindAllDraggables() {
+    document.querySelectorAll('.draggable').forEach(bindDraggable);
+}
+
+function getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll('.draggable:not(.dragging)')];
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        return (offset < 0 && offset > closest.offset) ? { offset, element: child } : closest;
+    }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
+}
+
+// Drag Events
+function bindDragContainers() {
+    dragContainers.forEach(container => {
+        container.addEventListener('dragover', e => {
+            e.preventDefault();
+            const afterElement = getDragAfterElement(container, e.clientY);
+            const draggable = document.querySelector('.dragging');
+            if (afterElement == null) {
+                container.appendChild(draggable);
+            } else {
+                container.insertBefore(draggable, afterElement);
+            }
+            updateSequenceInputs();
+        });
+    });
+}
+
+// Initialize
+bindSequenceInputListeners();
+bindAllDraggables();
+bindDragContainers();
+
+{% if not chapters %}
+addSequence(); // Add initial lesson if none exist
+{% endif %}
 </script>
 
 {% endblock dashboard %}

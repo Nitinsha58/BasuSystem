@@ -9,8 +9,8 @@ class HolidayAdmin(admin.ModelAdmin):
 
 @admin.register(ChapterSequence)
 class ChapterSequenceAdmin(admin.ModelAdmin):
-    list_display = ('batch', 'chapter_no', 'chapter_name', 'sequence')
-    list_filter = ('batch', 'class_name', 'subject')
+    list_display = ('batch', 'chapter_no', 'sequence')
+    list_filter = ('batch__class_name', 'batch__subject', 'batch__section')
     search_fields = ('batch__name', 'chapter_name')
     ordering = ('batch', 'sequence')
 

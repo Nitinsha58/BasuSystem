@@ -109,36 +109,47 @@ def lesson_plan(request, class_id=None, batch_id=None):
         messages.error(request, "Invalid Batch")
         return redirect('attendance_class', class_id=class_id)
 
-    # Handle date input
-    date_str = request.GET.get("date")
-    try:
-        date = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else datetime.now().date()
-    except ValueError:
-        messages.error(request, "Invalid date format.")
-        return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={datetime.now().date()}")
-    
-    # Compute previous and next dates
-    prev_date = date - timedelta(days=1)
-    next_date = date + timedelta(days=1)
-
-    if not Teacher.objects.filter(user=request.user).exists() and not request.user.is_superuser:
-        messages.error(request, "You are not authorized to mark attendance.")
-        return redirect('students_list')
-
     classes = ClassName.objects.all().order_by('created_at')
-
     chapters = ChapterSequence.objects.filter(batch=batch).order_by('sequence') if batch else ChapterSequence.objects.none()
-    
 
     if batch_id and request.method == 'POST':
-        sequence_data = request.POST.getlist('sequence_ids[]')
+        chapters_data = request.POST.getlist('chapters[]')
+ 
+        # Collect submitted ChapterSequence IDs
+        submitted_ids = set()
+        for chapter_data in chapters_data:
+            parts = chapter_data.split(':')
+            seq_id = int(parts[1]) if len(parts) > 1 and parts[1] else None
+            if seq_id:
+                submitted_ids.add(seq_id)
 
-        for data in sequence_data:
-            seq_no, seq_id = map(int, data.split(':'))
-            chapter_sequence = get_object_or_404(ChapterSequence, id=seq_id, batch=batch)
-            chapter_sequence.sequence = seq_no
-            chapter_sequence.save()
+        # Delete ChapterSequences not in submitted_ids
+        existing_ids = set(chapters.values_list('id', flat=True))
+        to_delete = existing_ids - submitted_ids
+        if to_delete:
+            ChapterSequence.objects.filter(id__in=to_delete, batch=batch).delete()
+
+        # Update or create ChapterSequences
+        for chapter_data in chapters_data:
+            parts = chapter_data.split(':')
+            sequence = int(parts[0])
+            chapter_no = int(parts[2])
+            chapter_name = parts[3]
+            seq_id = parts[1]
             
+            if seq_id:
+                chapter_sequence = get_object_or_404(ChapterSequence, id=seq_id, batch=batch)
+                chapter_sequence.sequence = sequence
+                chapter_sequence.chapter_no = chapter_no
+                chapter_sequence.chapter_name = chapter_name
+                chapter_sequence.save()
+            else:
+                ChapterSequence.objects.create(
+                    batch=batch,
+                    sequence=sequence,
+                    chapter_no=chapter_no,
+                    chapter_name=chapter_name
+                )
         messages.success(request, "Chapters Updated.")
 
     return render(request, 'lesson/lesson_plan.html', {
@@ -146,9 +157,6 @@ def lesson_plan(request, class_id=None, batch_id=None):
         'batches': batches,
         'cls': cls,
         'batch': batch,
-        'date': date,
-        'prev_date': prev_date,
-        'next_date': next_date,
 
         'chapters': chapters,
     })
