@@ -79,7 +79,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center">
                         <p class="m-0 me-2">{{forloop.counter}}. </p>
-                        <p class="m-0"> Ch-{{sq.chapter.chapter_no}}. {{sq.chapter.chapter_name}}</p>
+                        <p class="m-0"> Ch-{{sq.chapter_no}}. {{sq.chapter_name}}</p>
                     </div>
                     <a href="{% url 'lesson' sq.id cls.id batch.id %}" class="btn btn-warning">Lesson</a>
                 </div>
@@ -113,7 +113,7 @@
                     {% for sq in chapters %}
                     <li draggable="true" class="draggable list-group-item d-flex align-items-center">
                         <p  class="m-0 me-3 sequence-no"> {{sq.sequence}}.</p>
-                        <p class="m-0 sequence-content "> Ch-{{sq.chapter.chapter_no}}. {{sq.chapter.chapter_name}}</p>
+                        <p class="m-0 sequence-content "> Ch-{{sq.chapter_no}}. {{sq.chapter_name}}</p>
                         <input  type="hidden" name="sequence_ids[]" value="{{ sq.sequence }}:{{ sq.id }}">
                     </li>
                     {% endfor %}

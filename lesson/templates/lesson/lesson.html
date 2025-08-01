@@ -23,7 +23,7 @@
 
 {% block dashboard %}
 <div class="content-container m-2 m container mx-auto">
-    <h2 class="heading m-2">Lessons Ch-{{sq.chapter.chapter_no}}. {{sq.chapter.chapter_name}} - {{sq.batch.subject.name}} {{sq.batch.section.name}}</h2>
+    <h2 class="heading m-2">Lessons Ch-{{sq.chapter_no}}. {{sq.chapter_name}} - {{sq.batch.subject.name}} {{sq.batch.section.name}}</h2>
 
     {% if lessons %}
     <div id="updateModal" class="my-4">

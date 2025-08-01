@@ -9,19 +9,19 @@ class HolidayAdmin(admin.ModelAdmin):
 
 @admin.register(ChapterSequence)
 class ChapterSequenceAdmin(admin.ModelAdmin):
-    list_display = ('batch', 'chapter', 'sequence')
-    list_filter = ('batch', 'chapter')
-    search_fields = ('batch__name', 'chapter__name')
+    list_display = ('batch', 'chapter_no', 'chapter_name', 'sequence')
+    list_filter = ('batch', 'class_name', 'subject')
+    search_fields = ('batch__name', 'chapter_name')
     ordering = ('batch', 'sequence')
 
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related('batch', 'chapter')
+        return super().get_queryset(request).select_related('batch')
         
 @admin.register(Lesson)
 class LessonAdmin(admin.ModelAdmin):
     list_display = ('chapter_sequence', 'sequence', 'topic')
     list_filter = ('chapter_sequence__batch',)
-    search_fields = ('topic', 'chapter_sequence__batch__name', 'chapter_sequence__chapter__name')
+    search_fields = ('topic', 'chapter_sequence__batch__name', 'chapter_sequence__chapter_name')
     ordering = ('chapter_sequence__sequence', 'sequence')
 
 

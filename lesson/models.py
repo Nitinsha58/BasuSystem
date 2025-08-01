@@ -1,17 +1,23 @@
 from django.db import models
 from registration.models import Batch, Chapter
+from registration.models import ClassName, Subject
 
 class ChapterSequence(models.Model):
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='chapter_sequences')
-    chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE, related_name='chapter_sequences')
+
+
+    class_name = models.ForeignKey(ClassName, on_delete=models.CASCADE, null=True, blank=True)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, null=True, blank=True)
+    chapter_no = models.IntegerField(null=True, blank=True)
+    chapter_name = models.CharField(max_length=255, null=True, blank=True)
+
     sequence = models.PositiveIntegerField()
 
     class Meta:
-        unique_together = ('batch', 'chapter', 'sequence')
         ordering = ['batch', 'sequence']
 
     def __str__(self):
-        return f"{self.batch} - {self.chapter} (Sequence: {self.sequence})"
+        return f"{self.batch} - {self.chapter_no} -  {self.chapter_name} (Sequence: {self.sequence})"
 
 class Lesson(models.Model):
     chapter_sequence = models.ForeignKey(ChapterSequence, on_delete=models.CASCADE, related_name='lessons')
