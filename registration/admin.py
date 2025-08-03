@@ -26,7 +26,7 @@ from .models import (
     ActionSuggested,
     TransportAttendance,
 
-
+    Recommendation,
     ReportNegative,
     ReportPositive,
     StudentBatchLink,
@@ -194,6 +194,8 @@ class StudentBatchLinkAdmin(admin.ModelAdmin):
     list_filter = ['active', 'batch']
     ordering = ['-joined_at']
 
+
+admin.site.register(Recommendation)
 admin.site.register(TransportAttendance, TransportAttendanceAdmin)
 admin.site.register(Student, StudentAdmin)
 admin.site.register(ParentDetails)

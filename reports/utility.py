@@ -14,6 +14,7 @@ from registration.models import (
     Test,
     TestResult,
     ReportPeriod,
+    Recommendation,
     MentorRemark,
     Chapter
     )
@@ -1063,6 +1064,23 @@ def compare_student_performance_by_week(batch, start_date, end_date):
         total_hw = len(hw_list)
         completed_hw = sum(1 for x in hw_list if x == 'Completed')
         homework_perc = round((completed_hw / total_hw) * 100, 1) if total_hw > 0 else 0.0
+        # Get the latest active recommendation for the student, if any
+        recommendation = Recommendation.objects.filter(
+            student=stu,
+            active=True
+        ).order_by('-date').first()
+
+        if recommendation:
+            recommendation = recommendation.action
+        
+        remark = MentorRemark.objects.filter( 
+            student=stu, start_date=start_date, end_date=end_date
+        ).order_by('-created_at').first()
+
+        if remark and remark.recommendation:
+            recommendation_label = dict(Recommendation.ACTION_CHOICES).get(remark.recommendation.action, '') if remark.recommendation else ''
+        else:
+            recommendation_label = ''
 
         stu_obj['student'] = {
             'stu': stu,
@@ -1073,6 +1091,9 @@ def compare_student_performance_by_week(batch, start_date, end_date):
             'homework_percentage': homework_perc,
             'homework_completed': completed_hw,
             'homework_total': total_hw,
+            'recommendation': recommendation,
+            'recommendation_label': recommendation_label,
+            'remark': remark
         }
         students_list.append(stu_obj)
 

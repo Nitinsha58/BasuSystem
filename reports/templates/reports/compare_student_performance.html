@@ -40,6 +40,13 @@
   canvas {
 
   }
+
+  li {
+    list-style: none;
+    height: 2.5rem;
+    display: flex;
+    justify-content: center;
+  }
 </style>
 
 <div class="mx-5 px-5">
@@ -144,6 +151,36 @@
                         {% endif %}
 
                         <div class="w-100 d-flex gap-3" style="overflow-x: scroll;">
+                            <ul class="list-group" style="min-width: fit-content;">
+                                <li class="list-group-item bg-dark text-white border-dark">Recommend</li>
+                                {% for data in students_list %}
+                                    <li class="list-group-item d-flex justify-content-center p-1" style="font-size: 14px;">
+                                        <form 
+                                            hx-post="{% url 'update-recommendation' %}" 
+                                            hx-target="this" 
+                                            hx-swap="outerHTML"
+                                            hx-trigger="change" 
+                                        >
+                                            {% csrf_token %}
+
+                                            {% if data.student.recommendation_label and data.student.remark.recommendation %}
+                                            <select class="form-select form-select-sm" name="action" style="font-size: 13px;" disabled>
+                                                <option value="{{data.student.stu.stu_id}}:{{data.student.remark.recommendation.action}}" selected>{{data.student.recommendation_label}}</option>
+                                                <option value="{{data.student.stu.stu_id}}:PTM" >PTM</option>
+                                                <option value="{{data.student.stu.stu_id}}:MENTOR" >Mentor Meeting</option>
+                                            </select>
+                                            {% else %}
+
+                                            <select class="form-select form-select-sm" name="action" style="font-size: 13px;">
+                                                <option value="{{data.student.stu.stu_id}}:">------</option>
+                                                <option value="{{data.student.stu.stu_id}}:PTM" {% if data.student.recommendation == "PTM" %}selected{% endif %} >PTM</option>
+                                                <option value="{{data.student.stu.stu_id}}:MENTOR" {% if data.student.recommendation == "MENTOR" %}selected{% endif %} >Mentor Meeting</option>
+                                            </select>
+                                            {% endif %}
+                                        </form>
+                                    </li>
+                                {% endfor %}
+                            </ul>
                             {% for test in tests %}
                             <ul class="list-group" style="min-width: fit-content;">
                                 <li class="list-group-item bg-dark text-white border-dark">{{test.name}}</li>

@@ -9,7 +9,13 @@
         <a href="{% url 'mentor_students' %}" class="btn btn-primary">Go Back</a>
         <div class="mb-2">
             <a href="{% url 'student_report' student.stu_id %}" target="_blank" class="border-0 h2" style="text-decoration: none;">{{student.user.first_name}} {{student.user.last_name}}'s Remark    ({{ start_date|date:'d M' }} - {{ end_date|date:'d M' }})</a>
-            <p class="m-0 mb-1">{{student.class_enrolled}} - {{ student.subjects.all|join:", " }}</p>
+            <p class="m-0 mb-1">{{student.class_enrolled}} - {{ student.subjects.all|join:", " }} 
+                {% if remark.recommendation %}
+                <p class="btn btn-warning m-0">Recommended for {{recommendation_label}}</p> 
+                {% else %}
+                <p class="btn btn-warning m-0">Recommend for {{recommendation_label}}</p>
+                {% endif %} 
+            </p>
         </div>
         <div class="mb-3">
             <p class="m-0 mb-1">Joined On: {{student.doj|date:'d M Y'}}</p>

@@ -1,0 +1,14 @@
+<form 
+    hx-post="{% url 'update-recommendation' %}" 
+    hx-target="this" 
+    hx-swap="outerHTML"
+    hx-trigger="change" 
+>
+    {% csrf_token %}
+
+    <select class="form-select form-select-sm" name="action" style="font-size: 13px;">
+        <option value="{{student.stu_id}}:" >------</option>
+        <option value="{{student.stu_id}}:PTM" {% if recommendation == "PTM" %}selected{% endif %} >PTM</option>
+        <option value="{{student.stu_id}}:MENTOR" {% if recommendation == "MENTOR" %}selected{% endif %} >Mentor Meeting</option>
+    </select>
+</form>

@@ -21,12 +21,21 @@ from registration.models import (
     Action, ActionSuggested,
 
     ReportNegative,
-    ReportPositive
+    ReportPositive,
+    Recommendation
     )
+from django.utils import timezone
 from collections import defaultdict
 from django.db.models import Q, Prefetch
 from django.contrib import messages
 from django.db.models import Count
+
+from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse, HttpResponseBadRequest
+from django.template.loader import render_to_string
+from django.utils.dateparse import parse_date
+
+
 
 from .utility import (
     get_combined_attendance,
@@ -569,9 +578,9 @@ def mentor_remarks(request, mentor_id, student_id):
         messages.error(request, "Invalid Mentor or Student")
         return redirect('mentor_students')
 
+    # Date range handling
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
-
     if start_date and end_date:
         try:
             start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
@@ -582,13 +591,12 @@ def mentor_remarks(request, mentor_id, student_id):
     else:
         period = ReportPeriod.objects.all().order_by('-start_date').first()
         if period:
-            start_date = period.start_date
-            end_date = period.end_date
+            start_date, end_date = period.start_date, period.end_date
         else:
             today = date.today()
-            start_date = today.replace(day=1)
-            end_date = today
+            start_date, end_date = today.replace(day=1), today
 
+    # Data prep
     stu_performance = generate_single_student_report_data(student, start_date, end_date)   
     student_test_report = get_student_test_report(student, start_date, end_date)
     student_retest_report = get_student_retest_report(student)
@@ -598,156 +606,98 @@ def mentor_remarks(request, mentor_id, student_id):
         Q(section__name='CBSE') &
         Q(subject__name__in=['MATH', 'SCIENCE'])
     ).order_by('-created_at')
+
     remark = MentorRemark.objects.filter(
-        mentor=mentor,
-        student=student,
-        start_date = start_date,
-        end_date = end_date
-    ).order_by('-start_date').first()
+        mentor=mentor, student=student,
+        start_date=start_date, end_date=end_date
+    ).order_by('-created_at').first()
 
-    if remark:
-        if request.method == 'POST':
-            mentor_remark = request.POST.get('mentor_remark')
-            parent_remark = request.POST.get('parent_remark')
-
-            mentor_negatives = request.POST.getlist('n_remark_mentor[]')
-            mentor_positives = request.POST.getlist('p_remark_mentor[]')
-            parent_negatives = request.POST.getlist('n_remark_parent[]')
-            parent_positives = request.POST.getlist('p_remark_parent[]')
-
-            # Update positives and negatives
-            remark.mentor_positive.clear()
-            remark.mentor_negative.clear()
-
-            remark.parent_positive.clear()
-            remark.parent_negative.clear()
-
-            for pos_id in mentor_positives:
-                if pos_id:
-                    try:
-                        positive = ReportPositive.objects.get(id=pos_id)
-                        remark.mentor_positive.add(positive)
-                    except ReportPositive.DoesNotExist:
-                        continue
-
-            for neg_id in mentor_negatives:
-                if neg_id:
-                    try:
-                        negative = ReportNegative.objects.get(id=neg_id)
-                        remark.mentor_negative.add(negative)
-                    except ReportNegative.DoesNotExist:
-                        continue
-
-            for pos_id in parent_positives:
-                if pos_id:
-                    try:
-                        positive = ReportPositive.objects.get(id=pos_id)
-                        remark.parent_positive.add(positive)
-                    except ReportPositive.DoesNotExist:
-                        continue
-
-            for neg_id in parent_negatives:
-                if neg_id:
-                    try:
-                        negative = ReportNegative.objects.get(id=neg_id)
-                        remark.parent_negative.add(negative)
-                    except ReportNegative.DoesNotExist:
-                        continue
-
-            remark.mentor_remark = mentor_remark
-            remark.parent_remark = parent_remark
-            remark.save()
-
-            # Update ActionSuggested for each batch
-            for batch in student.batches.all():
-                action_ids = request.POST.getlist(f'actions_{batch.id}')
-                if action_ids:
-                    actions = Action.objects.filter(id__in=action_ids)
-                    action_suggested, created = ActionSuggested.objects.get_or_create(
-                        student=student,
-                        batch=batch,
-                        mentor_remark=remark,
-                        defaults={}
-                    )
-                    action_suggested.action.set(actions)
-                    action_suggested.save()
-                else:
-                    # If no actions selected, remove existing ActionSuggested for this batch and remark
-                    ActionSuggested.objects.filter(student=student, batch=batch, mentor_remark=remark).delete()
-
-            messages.success(request, "Remark updated successfully.")
-            return redirect('mentor_remarks', mentor_id=mentor.id, student_id=student.stu_id)
+    recommendation = Recommendation.objects.filter(student=student, active=True).order_by('-date').first()
 
     if request.method == 'POST':
         mentor_remark = request.POST.get('mentor_remark')
         parent_remark = request.POST.get('parent_remark')
+
         mentor_negatives = request.POST.getlist('n_remark_mentor[]')
         mentor_positives = request.POST.getlist('p_remark_mentor[]')
         parent_negatives = request.POST.getlist('n_remark_parent[]')
         parent_positives = request.POST.getlist('p_remark_parent[]')
 
+        if not remark:
+            # Create new remark
+            remark = MentorRemark.objects.create(
+                mentor=mentor, student=student,
+                start_date=start_date, end_date=end_date,
+                mentor_remark=mentor_remark, parent_remark=parent_remark
+            )
+        else:
+            # Update existing remark
+            remark.mentor_remark = mentor_remark
+            remark.parent_remark = parent_remark
+            remark.mentor_positive.clear()
+            remark.mentor_negative.clear()
+            remark.parent_positive.clear()
+            remark.parent_negative.clear()
 
-        remark = MentorRemark.objects.create(
-            mentor=mentor,
-            student=student,
-            start_date=start_date,
-            end_date=end_date,
-            mentor_remark=mentor_remark,
-            parent_remark=parent_remark
-        )
-
+        # Add positives and negatives
         for pos_id in mentor_positives:
             if pos_id:
                 try:
-                    positive = ReportPositive.objects.get(id=pos_id)
-                    remark.mentor_positive.add(positive)
+                    remark.mentor_positive.add(ReportPositive.objects.get(id=pos_id))
                 except ReportPositive.DoesNotExist:
                     continue
 
         for neg_id in mentor_negatives:
             if neg_id:
                 try:
-                    negative = ReportNegative.objects.get(id=neg_id)
-                    remark.mentor_negative.add(negative)
+                    remark.mentor_negative.add(ReportNegative.objects.get(id=neg_id))
                 except ReportNegative.DoesNotExist:
                     continue
 
         for pos_id in parent_positives:
             if pos_id:
                 try:
-                    positive = ReportPositive.objects.get(id=pos_id)
-                    remark.parent_positive.add(positive)
+                    remark.parent_positive.add(ReportPositive.objects.get(id=pos_id))
                 except ReportPositive.DoesNotExist:
                     continue
 
         for neg_id in parent_negatives:
             if neg_id:
                 try:
-                    negative = ReportNegative.objects.get(id=neg_id)
-                    remark.parent_negative.add(negative)
+                    remark.parent_negative.add(ReportNegative.objects.get(id=neg_id))
                 except ReportNegative.DoesNotExist:
                     continue
 
+        # Assign recommendation only if not already assigned
+        if recommendation and not remark.recommendation:
+            recommendation.active = False
+            recommendation.save()
+            remark.recommendation = recommendation
+
         remark.save()
 
-        # Add ActionSuggested for each batch
+        # Handle ActionSuggested per batch
         for batch in student.batches.all():
             action_ids = request.POST.getlist(f'actions_{batch.id}')
             if action_ids:
                 actions = Action.objects.filter(id__in=action_ids)
-                action_suggested, created = ActionSuggested.objects.get_or_create(
-                    student=student,
-                    batch=batch,
-                    mentor_remark=remark,
-                    defaults={}
+                action_suggested, _ = ActionSuggested.objects.get_or_create(
+                    student=student, batch=batch, mentor_remark=remark
                 )
                 action_suggested.action.set(actions)
                 action_suggested.save()
+            else:
+                ActionSuggested.objects.filter(student=student, batch=batch, mentor_remark=remark).delete()
 
-        messages.success(request, "Remark added successfully.")
+        messages.success(request, "Remark saved successfully.")
         return redirect('mentor_remarks', mentor_id=mentor.id, student_id=student.stu_id)
 
-    # If GET request, render the form with existing remark
+    # For GET: Display label only
+    recommendation_label = dict(Recommendation.ACTION_CHOICES).get(recommendation.action, '') if recommendation else ''
+    if remark and remark.recommendation:
+        recommendation_label = dict(Recommendation.ACTION_CHOICES).get(remark.recommendation.action, '') if remark.recommendation else ''
+
+
     return render(request, 'reports/mentor_remarks.html', {
         'mentor': mentor,
         'student': student,
@@ -760,10 +710,12 @@ def mentor_remarks(request, mentor_id, student_id):
         'student_test_report': student_test_report,
         'student_retest_report': student_retest_report,
         'has_report': has_report(student, start_date, end_date),
-
+        'recommendation': recommendation,
+        'recommendation_label': recommendation_label,
         'positives': ReportPositive.objects.all().order_by('name'),
         'negatives': ReportNegative.objects.all().order_by('name'),
     })
+
 
 def suggested_actions(request):
     # Optimize DB hits
@@ -860,3 +812,49 @@ def compare_student_performance(request, class_id=None, batch_id=None):
         'start_date': start_date,
         'end_date': end_date,
     })
+
+@csrf_exempt
+def update_recommendation(request):
+    if request.method == "POST":
+
+        try:
+            action_raw = request.POST.get("action")  # value like "student_id:PTM"
+            if not action_raw or ":" not in action_raw:
+                return HttpResponseBadRequest("Invalid action format")
+
+            student_id, action = action_raw.split(":", 1)
+
+            # handle default (blank)
+            if action == "" or not action.strip():
+                action = None
+
+            # You'll need to determine `date` (hardcoded, today's date, or from URL)
+            date = timezone.now().date()
+
+            student = Student.objects.get(stu_id=student_id)
+
+            if not action:
+                Recommendation.objects.filter(student=student, date=date).delete()
+            else:
+                latest_rec = Recommendation.objects.filter(student=student, date=date).order_by('-id').first()
+                if latest_rec and latest_rec.active:
+                    latest_rec.action = action
+                    latest_rec.date = date
+                    latest_rec.save()
+                else:
+                    Recommendation.objects.create(student=student, date=date, action=action, active=True)
+
+            context = {
+                "student": student,
+                "recommendation": action
+            }
+
+            html = render_to_string("reports/recommendation_select.html", context)
+            return HttpResponse(html)
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return HttpResponse(f"Server error: {e}", status=500)
+
+    return HttpResponseBadRequest("Only POST allowed")

@@ -25,7 +25,23 @@ class Lesson(models.Model):
 
     class Meta:
         ordering = ['chapter_sequence__sequence', 'sequence']
-    
+
+class Lecture(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+    ]
+
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='lectures')
+    date = models.DateField()
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+
+    class Meta:
+        unique_together = ('lesson', 'date')
+        ordering = ['-date', 'lesson']
+
+    def __str__(self):
+        return f"Lecture for {self.lesson.topic} on {self.date} ({self.status})"
 
 class Holiday(models.Model):
     name = models.CharField(max_length=255,null=True, blank=True)
