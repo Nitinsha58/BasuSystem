@@ -225,7 +225,7 @@ def lecture_plan(request, class_id=None, batch_id=None):
             # Determine lesson position compared to latest completed lecture
             if (chapter.sequence, lesson.sequence) < (latest_chapter_seq, latest_lesson_seq):
                 lesson_info['is_behind_latest'] = True
-            elif latest_completed_lecture.lesson.next() and latest_completed_lecture.lesson.next() == lesson:
+            elif latest_completed_lecture and latest_completed_lecture.lesson.next() and latest_completed_lecture.lesson.next() == lesson:
                 lesson_info['is_next_lecture'] = True
 
 
