@@ -1,8 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from registration.models import (  
     Batch, 
-    Teacher,
-    Chapter, 
     )
 
 from lesson.models import ChapterSequence, Lesson, Holiday
@@ -10,14 +8,11 @@ from django.utils.timezone import now
 
 from registration.models import Subject, ClassName
 from django.contrib import messages
-
-from datetime import datetime, timedelta
-
-
 from django.contrib.auth.decorators import login_required
-
 from django.db.models import Q
-from django.urls import reverse
+from collections import defaultdict
+from .models import Lesson, Lecture
+
 
 @login_required(login_url='login')
 def lesson(request, sequence_id, class_id, batch_id):
@@ -158,5 +153,103 @@ def lesson_plan(request, class_id=None, batch_id=None):
         'cls': cls,
         'batch': batch,
 
+        'chapters': chapters,
+    })
+
+
+@login_required(login_url='login')
+def lecture_plan(request, class_id=None, batch_id=None):
+    cls = None
+    batch = None
+
+    if class_id and not ClassName.objects.filter(id=class_id).exists():
+        messages.error(request, "Invalid Class")
+        return redirect('lecture_plan')
+    
+    if batch_id and not Batch.objects.filter(id=batch_id).exists():
+        messages.error(request, "Invalid Batch")
+        return redirect('lecture_plan_class', class_id=class_id)
+
+    if class_id:
+        cls = ClassName.objects.filter(id=class_id).first()
+        batches = Batch.objects.filter(class_name=cls).order_by('created_at').exclude(
+            Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
+            Q(section__name='CBSE') &
+            Q(subject__name__in=['MATH', 'SCIENCE'])
+        )
+    else:
+        batches = None
+    
+    if batch_id:
+        batch = Batch.objects.filter(id=batch_id).first()
+
+    if batch_id and not batch:
+        messages.error(request, "Invalid Batch")
+        return redirect('attendance_class', class_id=class_id)
+
+    classes = ClassName.objects.all().order_by('created_at')
+    chapters = ChapterSequence.objects.filter(batch=batch).order_by('sequence') if batch else ChapterSequence.objects.none()
+
+    data = defaultdict(list)
+
+    all_lectures = Lecture.objects.filter(
+        lesson__chapter_sequence__batch=batch
+    ).select_related('lesson__chapter_sequence').order_by(
+        'date',
+        'lesson__chapter_sequence__sequence',
+        'lesson__sequence'
+    )
+
+
+    latest_completed_lecture = all_lectures.filter(status='completed').last()
+    latest_chapter_seq = latest_completed_lecture.lesson.chapter_sequence.sequence if latest_completed_lecture else -1
+    latest_lesson_seq = latest_completed_lecture.lesson.sequence if latest_completed_lecture else -1
+
+    # Build a map of lesson.id -> lectures
+    lecture_map = defaultdict(list)
+    for lecture in all_lectures:
+        lecture_map[lecture.lesson.id].append(lecture)
+
+    # Loop through each chapter and lesson to build structured data
+    for chapter in chapters:
+        for lesson in chapter.lessons.all().order_by('sequence'):
+            lesson_info = {
+                'lesson': lesson,
+                'status': '',
+                'date': None,
+                'is_completed': False,
+                'is_behind_latest': False,
+                'is_next_lecture': False,
+            }
+
+            # Determine lesson position compared to latest completed lecture
+            if (chapter.sequence, lesson.sequence) < (latest_chapter_seq, latest_lesson_seq):
+                lesson_info['is_behind_latest'] = True
+            elif latest_completed_lecture.lesson.next() and latest_completed_lecture.lesson.next() == lesson:
+                lesson_info['is_next_lecture'] = True
+
+
+            # Check if this lesson has lectures
+            lectures = lecture_map.get(lesson.id)
+            if lectures:
+                # Get latest lecture for this lesson
+                latest_lecture = lectures[-1]
+                lesson_info['status'] = latest_lecture.status
+                lesson_info['date'] = latest_lecture.date
+                if latest_lecture.status == 'completed':
+                    lesson_info['is_completed'] = True
+
+            data[chapter].append(lesson_info)
+        
+        if not chapter.lessons.all():
+            data[chapter] = []
+
+    return render(request, 'lesson/lecture_plan.html', {
+        'classes': classes,
+        'batches': batches,
+        'cls': cls,
+        'batch': batch,
+        'data': dict(data),
+        
         'chapters': chapters,
     })

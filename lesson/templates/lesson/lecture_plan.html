@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block style %}
+<style>
+    html {
+      scroll-behavior: auto !important;
+    }
+
+    .draggable {
+        padding: 1rem;
+        /* border: 1px solid black; */
+        cursor: move;
+        user-select: none;
+    }
+
+    .draggable.dragging {
+        opacity: .8;
+        border: 2px dashed #3863f4;
+    }
+
+</style>
+{% endblock style %}
+
+{% block dashboard %}
+<div class="content-container m-2 m container mx-auto">
+    <h2 class="heading m-2">Lecture Plan</h2>
+    {% if classes and not cls %}
+    <div class="row g-2">
+        {% for c in classes %}
+        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+            <a href="{% url 'lecture_plan_class' c.id %}" class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if batches and cls and not batch %}
+    <h2 class="heading m-2">Select Batch</h2>
+    <div class="row g-2">
+        {% for b in batches %}
+        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+            <a href="{% url 'lecture_plan_batch' cls.id b.id %}" class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{b.section.name}} {{b.subject.name}}</div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if cls and batch %}
+    <div class="row g-2">
+        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+            <a href="{% url 'lecture_plan' %}" class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{cls.name}}</div>
+            </a>
+        </div>
+        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+            <a href="{% url 'lecture_plan_class' cls.id %}" class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{batch.section.name}} {{batch.subject.name}}</div>
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+
+    {% if cls and batch %}
+    <div class="mt-3 px-md-4" id="lessonPlanContainer">
+        <ul class="list-group ">
+            {% for sq, lectures in data.items %}
+            <li class="list-group-item p-3 gap-3 d-flex flex-column">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <p class="m-0 me-2">{{forloop.counter}}. </p>
+                        <p class="m-0"> Ch-{{sq.chapter_no}}. {{sq.chapter_name}}</p>
+                    </div>
+                </div>
+                {% if lectures %}
+                <div class="d-flex justify-content-between align-items-center">
+                    <ul class="list-group w-100">
+                        {% for lecture in lectures %}
+                        <li class="list-group-item 
+                        {% if lecture.status == 'pending' %}
+                            bg-danger-subtle
+                        {% elif lecture.status == 'completed' %}
+                            bg-success-subtle
+                        {% elif lecture.is_behind_latest %}
+                            bg-light
+                        {% elif lecture.is_next_lecture %}
+                            bg-warning
+                        {% endif %}
+                        ">{{lecture.lesson.sequence}}. {{lecture.lesson.topic}}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    
+    <div class="mt-3 px-md-4" id="lessonPlanContainer">
+        <ul class="list-group">
+            {% for sq, lessons in lesson_plans.items %}
+            <li class="list-group-item p-3 gap-3 d-flex flex-column">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <p class="m-0 me-2">{{forloop.counter}}. </p>
+                        <p class="m-0"> Ch-{{sq.chapter_no}}. {{sq.chapter_name}}</p>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <ul class="list-group w-100">
+                        {% for lesson in lessons %}
+                        <li class="list-group-item">{{lesson.sequence}}. {{lesson.topic}}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    {% if cls and batch %}
+
+    {% endif %}
+</div>
+
+
+{% endblock dashboard %}

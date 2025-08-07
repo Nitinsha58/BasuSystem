@@ -8,6 +8,8 @@ from .models import (
     TestResult, Day, Mentor,
     Mentorship, TransportPerson, TransportMode, TransportAttendance
     )
+from lesson.models import Lecture
+
 from .forms import (
     StudentRegistrationForm, StudentUpdateForm, ParentDetailsForm, TransportDetailsForm,
     )
@@ -589,6 +591,7 @@ def search_students(request):
 def mark_attendance(request, class_id=None, batch_id=None):
     cls = None
     batch = None
+    lesson_info = None
 
     if class_id and not ClassName.objects.filter(id=class_id).exists():
         messages.error(request, "Invalid Class")
@@ -662,34 +665,105 @@ def mark_attendance(request, class_id=None, batch_id=None):
     marked_students = students.filter(attendance__date=date, attendance__batch=batch).order_by('created_at')
     marked_attendance = list(Attendance.objects.filter(batch=batch, date=date, student__active=True).order_by('student__created_at'))
     un_marked_students = list(students.exclude(id__in=marked_students.values_list('id', flat=True)))
+    
+    if batch_id:
+        all_lectures = Lecture.objects.filter(
+            lesson__chapter_sequence__batch=batch
+        ).select_related('lesson__chapter_sequence').order_by(
+            'date',
+            'lesson__chapter_sequence__sequence',
+            'lesson__sequence'
+        )
+
+        if date == datetime.today().date():
+            # Check if lecture already exists for today
+            lecture_today = all_lectures.filter(date=date).first()
+
+            if lecture_today:
+                lesson_info = {
+                    'lecture': lecture_today,
+                    'editable': True,
+                    'suggested_lesson': None,
+                }
+            else:
+                # Get last completed lecture before today
+                last_completed = all_lectures.filter(
+                    status='completed',
+                    date__lt=date
+                ).order_by('-date').first()
+
+                
+                last_lesson = last_completed.lesson if last_completed else None
+                next_lesson = last_lesson.next() if last_lesson else None
+                is_delayed = Lecture.objects.filter(lesson=next_lesson, status='pending').first()
+                lesson_info = {
+                    'lecture': None,
+                    'editable': True,
+                    'suggested_lesson': next_lesson,
+                    'is_delayed': is_delayed if True else False,
+                }
+        else:
+            # For past/future dates (non-editable)
+            lecture = all_lectures.filter(date=date).first()
+
+            lesson_info = {
+                'lecture': lecture,
+                'editable': False,
+                'suggested_lesson': None,
+            }
 
     if batch_id and request.method == 'POST':
         attendance_data = request.POST.getlist('attendance[]')
         marked_students_set = set()
+    
+        status_data = request.POST.get('status', '')
+        
+        lecture_id, lesson_id, status = status_data.split(':')
+
+        if status and date == datetime.today().date():
+            status = int(status)
+            if lecture_id:
+                try:
+                    lecture = Lecture.objects.get(id=lecture_id)
+                    lecture.status = 'completed' if status == 2 else 'pending'
+                    lecture.save()
+                except Lecture.DoesNotExist:
+                    messages.error(request, "Lecture doesn't exists.")
+                    return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={date}")
+
+            if lesson_id and not lecture_id:
+                try:
+                    lesson = Lesson.objects.get(id=lesson_id)
+                    lecture = Lecture.objects.create(
+                        lesson=lesson,
+                        date = date,
+                        status = 'completed' if status == 2 else 'pending'
+                    )
+                    lecture.save()
+
+                except Lesson.DoesNotExist:
+                    messages.error(request, "Lesson doesn't exists.")
+                    return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={date}")
 
         for data in attendance_data:
             stu_id, status = data.split(':')
             student = Student.objects.filter(stu_id=stu_id, batches=batch, active=True).first()
             if student:
-                Attendance.objects.create(
-                    student=student,
-                    batch=batch,
-                    is_present=(status == 'present'),
-                    date=date
-                )
-                marked_students_set.add(student.stu_id)
-
-        # Mark absent for unmarked students
-        for student in students:
-            if student.stu_id not in marked_students_set:
-                # Only create an absent record if not already marked for this student/date/batch
-                if not Attendance.objects.filter(student=student, batch=batch, date=date).exists():
+                if status == '3':
                     Attendance.objects.create(
-                    student=student,
-                    batch=batch,
-                    is_present=False,
-                    date=date
-                )
+                        student=student,
+                        batch=batch,
+                        is_present=False,
+                        date=date
+                    )
+                elif status == '2':
+                    Attendance.objects.create(
+                        student=student,
+                        batch=batch,
+                        is_present=True,
+                        date=date
+                    )
+                marked_students_set.add(student.stu_id)
 
         messages.success(request, "Attendance marked successfully.")
         return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={date}")
@@ -705,6 +779,7 @@ def mark_attendance(request, class_id=None, batch_id=None):
         'date': date,
         'prev_date': prev_date,
         'next_date': next_date,
+        'lesson_info': lesson_info,
     })
 
 

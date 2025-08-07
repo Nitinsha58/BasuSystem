@@ -1,6 +1,6 @@
 from django.db import models
 from registration.models import Batch, Chapter
-from registration.models import ClassName, Subject
+from django.db.models import Q
 
 class ChapterSequence(models.Model):
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='chapter_sequences')
@@ -26,6 +26,21 @@ class Lesson(models.Model):
     class Meta:
         ordering = ['chapter_sequence__sequence', 'sequence']
 
+    def next(self):
+        return Lesson.objects.filter(
+            chapter_sequence__batch=self.chapter_sequence.batch,
+            chapter_sequence__sequence__gte=self.chapter_sequence.sequence,
+        ).filter(
+            Q(chapter_sequence__sequence__gt=self.chapter_sequence.sequence) |
+            Q(sequence__gt=self.sequence)
+        ).order_by(
+            'chapter_sequence__sequence',
+            'sequence'
+        ).first()
+
+    def __str__(self):
+        return f"{self.chapter_sequence.chapter_no}. {self.chapter_sequence.chapter_name} - {self.topic}"
+
 class Lecture(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -37,8 +52,7 @@ class Lecture(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
 
     class Meta:
-        unique_together = ('lesson', 'date')
-        ordering = ['-date', 'lesson']
+        ordering = ['-date', 'lesson__chapter_sequence__sequence', 'lesson__sequence']
 
     def __str__(self):
         return f"Lecture for {self.lesson.topic} on {self.date} ({self.status})"

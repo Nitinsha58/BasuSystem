@@ -131,6 +131,15 @@
           </div>
         </div>
       </div>
+      <div class="col">
+        <div class="card h-100">
+          <div class="card-body">
+            <h3 class="card-title">Lecture Plan</h3>
+            <p class="card-text">Status of Lessons and Lectures completed in attendance.</p>
+            <a href="{% url 'lecture_plan' %}" class="btn btn-warning">Lecture Plan</a>
+          </div>
+        </div>
+      </div>
       {% endif %}
 
       {% if request.user.registered_student %}

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import ChapterSequence, Lesson, Holiday
+from .models import ChapterSequence, Lesson, Holiday, Lecture
 
 @admin.register(Holiday)
 class HolidayAdmin(admin.ModelAdmin):
@@ -25,3 +25,8 @@ class LessonAdmin(admin.ModelAdmin):
     ordering = ('chapter_sequence__sequence', 'sequence')
 
 
+@admin.register(Lecture)
+class LectureAdmin(admin.ModelAdmin):
+    list_diaplay = ('lesson', 'date', 'status')
+    list_filter = ('lesson', 'status')
+    search_fields = ('lesson__topic', 'lesson__chapter_sequence__chapter_name')
