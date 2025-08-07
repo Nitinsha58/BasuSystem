@@ -4,7 +4,7 @@ from registration.models import (
     )
 
 from lesson.models import ChapterSequence, Lesson, Holiday
-from django.utils.timezone import now
+from django.utils.timezone import now, datetime
 
 from registration.models import Subject, ClassName
 from django.contrib import messages
@@ -12,7 +12,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from collections import defaultdict
 from .models import Lesson, Lecture
-
+from django.urls import reverse
 
 @login_required(login_url='login')
 def lesson(request, sequence_id, class_id, batch_id):
@@ -220,6 +220,7 @@ def lecture_plan(request, class_id=None, batch_id=None):
                 'is_completed': False,
                 'is_behind_latest': False,
                 'is_next_lecture': False,
+                'lecture': None
             }
 
             # Determine lesson position compared to latest completed lecture
@@ -236,6 +237,7 @@ def lecture_plan(request, class_id=None, batch_id=None):
                 latest_lecture = lectures[-1]
                 lesson_info['status'] = latest_lecture.status
                 lesson_info['date'] = latest_lecture.date
+                lesson_info['lecture'] = latest_lecture
                 if latest_lecture.status == 'completed':
                     lesson_info['is_completed'] = True
 
@@ -253,3 +255,34 @@ def lecture_plan(request, class_id=None, batch_id=None):
         
         'chapters': chapters,
     })
+
+@login_required(login_url='login')
+def delete_lecture(request, class_id, batch_id, lecture_id):
+    obj = Lecture.objects.filter(id=lecture_id).first()
+    if obj:
+        obj.delete()
+        messages.success(request, "Lecture Deleted.")
+    else:
+        messages.error(request, "Invalid Lecture Id.")
+    return redirect(f"{reverse('lecture_plan_batch', args=[class_id, batch_id])}")
+
+
+@login_required(login_url='login')
+def add_lecture(request, class_id, batch_id, lesson_id):
+    lesson = Lesson.objects.filter(id=lesson_id).first()
+    if not lesson:
+        messages.error(request, "Invalid Lesson")
+        return redirect(f"{reverse('lecture_plan_batch', args=[class_id, batch_id])}")
+
+    date = datetime.today()
+    lecture = Lecture.objects.create(
+        lesson = lesson,
+        date = date,
+        status = 'completed'
+    )
+    lecture.save()
+
+    messages.error(request, "Lecture Created.")
+    return redirect(f"{reverse('lecture_plan_batch', args=[class_id, batch_id])}")
+
+

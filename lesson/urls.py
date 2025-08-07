@@ -2,7 +2,10 @@ from django.urls import path
 from .views import (
     lesson,
     lesson_plan,
-    lecture_plan
+    lecture_plan,
+
+    add_lecture,
+    delete_lecture,
 )
 
 urlpatterns = [
@@ -14,4 +17,7 @@ urlpatterns = [
     path('lecture-plan/', lecture_plan, name='lecture_plan'),
     path('lecture-plan/<int:class_id>/', lecture_plan, name='lecture_plan_class'),
     path('lecture-plan/<int:class_id>/<int:batch_id>/', lecture_plan, name='lecture_plan_batch'),
+
+    path('add-lecture/<int:class_id>/<int:batch_id>/<int:lesson_id>/', add_lecture, name="add_lecture"),
+    path('delete-lecture/<int:class_id>/<int:batch_id>/<int:lecture_id>/', delete_lecture, name="delete_lecture"),
 ]
