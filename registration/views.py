@@ -717,33 +717,34 @@ def mark_attendance(request, class_id=None, batch_id=None):
         marked_students_set = set()
     
         status_data = request.POST.get('status', '')
-        
-        lecture_id, lesson_id, status = status_data.split(':')
 
-        if status and date == datetime.today().date():
-            status = int(status)
-            if lecture_id:
-                try:
-                    lecture = Lecture.objects.get(id=lecture_id)
-                    lecture.status = 'completed' if status == 2 else 'pending'
-                    lecture.save()
-                except Lecture.DoesNotExist:
-                    messages.error(request, "Lecture doesn't exists.")
-                    return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={date}")
+        if status_data:
+            lecture_id, lesson_id, status = status_data.split(':')
 
-            if lesson_id and not lecture_id:
-                try:
-                    lesson = Lesson.objects.get(id=lesson_id)
-                    lecture = Lecture.objects.create(
-                        lesson=lesson,
-                        date = date,
-                        status = 'completed' if status == 2 else 'pending'
-                    )
-                    lecture.save()
+            if status and date == datetime.today().date():
+                status = int(status)
+                if lecture_id:
+                    try:
+                        lecture = Lecture.objects.get(id=lecture_id)
+                        lecture.status = 'completed' if status == 2 else 'pending'
+                        lecture.save()
+                    except Lecture.DoesNotExist:
+                        messages.error(request, "Lecture doesn't exists.")
+                        return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={date}")
 
-                except Lesson.DoesNotExist:
-                    messages.error(request, "Lesson doesn't exists.")
-                    return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={date}")
+                if lesson_id and not lecture_id:
+                    try:
+                        lesson = Lesson.objects.get(id=lesson_id)
+                        lecture = Lecture.objects.create(
+                            lesson=lesson,
+                            date = date,
+                            status = 'completed' if status == 2 else 'pending'
+                        )
+                        lecture.save()
+
+                    except Lesson.DoesNotExist:
+                        messages.error(request, "Lesson doesn't exists.")
+                        return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={date}")
 
         for data in attendance_data:
             stu_id, status = data.split(':')
