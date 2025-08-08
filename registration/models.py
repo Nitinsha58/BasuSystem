@@ -68,6 +68,12 @@ class Teacher(models.Model):
     def __str__(self):
         full_name = f"{self.user.first_name} {self.user.last_name}".strip()
         return f"{full_name  or self.user.phone}"
+    
+    def get_classes(self):
+        classes = set()
+        for batch in self.batches.all():
+            classes.add(batch.class_name)
+        return classes
 
 class Student(models.Model):
     GENDER_CHOICE = [('Male', 'Male'), ('Female', 'Female'), ('Other', 'Other')]

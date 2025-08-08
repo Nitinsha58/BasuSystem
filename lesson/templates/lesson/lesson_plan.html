@@ -37,6 +37,16 @@
     </div>
     {% endif %}
 
+    {% if cls and not batch %}
+    <div class="row g-2">
+        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+            <a href="{% url 'lesson_plan' %}" class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{cls.name}}</div>
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
     {% if batches and cls and not batch %}
     <h2 class="heading m-2">Select Batch</h2>
     <div class="row g-2">

@@ -27,26 +27,56 @@
     <h2 class="heading m-2">Lecture Plan</h2>
     {% if classes and not cls %}
     <div class="row g-2">
-        {% for c in classes %}
+        {% if request.user.teachers %}
+            {% for c in request.user.teachers.get_classes %}
+            <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+                <a href="{% url 'lecture_plan_class' c.id %}" class="nav-link">
+                    <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
+                </a>
+            </div>
+            {% endfor %}
+        {% else %}    
+            {% for c in classes %}
+            <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+                <a href="{% url 'lecture_plan_class' c.id %}" class="nav-link">
+                    <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
+                </a>
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if cls and not batch %}
+    <div class="row g-2">
         <div class="col-6 col-md-3 flex justify-content-center align-items-center">
-            <a href="{% url 'lecture_plan_class' c.id %}" class="nav-link">
-                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
+            <a href="{% url 'lecture_plan' %}" class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{cls.name}}</div>
             </a>
         </div>
-        {% endfor %}
     </div>
     {% endif %}
 
     {% if batches and cls and not batch %}
     <h2 class="heading m-2">Select Batch</h2>
     <div class="row g-2">
-        {% for b in batches %}
-        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
-            <a href="{% url 'lecture_plan_batch' cls.id b.id %}" class="nav-link">
-                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{b.section.name}} {{b.subject.name}}</div>
-            </a>
-        </div>
-        {% endfor %}
+        {% if request.user.teachers %}
+            {% for c in request.user.teachers.get_classes %}
+            <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+                <a href="{% url 'homework_class' c.id %}" class="nav-link">
+                    <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
+                </a>
+            </div>
+            {% endfor %}
+        {% else %}    
+            {% for c in classes %}
+            <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+                <a href="{% url 'homework_class' c.id %}" class="nav-link">
+                    <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
+                </a>
+            </div>
+            {% endfor %}
+        {% endif %}
     </div>
     {% endif %}
 
