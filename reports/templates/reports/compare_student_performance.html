@@ -55,13 +55,23 @@
 
         {% if classes and not cls %}
         <div class="row g-2">
-            {% for c in classes %}
-            <div class="col-6 col-md-3 flex justify-content-center align-items-center">
-                <a href="{% url 'compare_class' c.id %}" class="nav-link">
-                    <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
-                </a>
-            </div>
-            {% endfor %}
+            {% if request.user.teachers %}
+                {% for c in request.user.teachers.get_classes %}
+                <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+                    <a href="{% url 'compare_class' c.id %}" class="nav-link">
+                        <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
+                    </a>
+                </div>
+                {% endfor %}
+            {% else %}    
+                {% for c in classes %}
+                <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+                    <a href="{% url 'compare_class' c.id %}" class="nav-link">
+                        <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
+                    </a>
+                </div>
+                {% endfor %}
+            {% endif %}
         </div>
         {% endif %}
         
@@ -78,13 +88,25 @@
         {% if batches and cls and not batch %}
         <h2 class="heading m-2">Select Batch</h2>
         <div class="row g-2">
-            {% for b in batches %}
-            <div class="col-6 col-md-3 flex justify-content-center align-items-center">
-                <a href="{% url 'compare_batch' cls.id b.id %}" class="nav-link">
-                    <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{b.section.name}} {{b.subject.name}}</div>
-                </a>
-            </div>
-            {% endfor %}
+            {% if request.user.teachers %}
+                {% for b in request.user.teachers.batches.all %}
+                    {% if b.class_name == cls %}
+                    <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+                        <a href="{% url 'compare_batch' cls.id b.id %}" class="nav-link">
+                            <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{b.section.name}} {{b.subject.name}}</div>
+                        </a>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                {% for b in batches %}
+                    <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+                        <a href="{% url 'compare_batch' cls.id b.id %}" class="nav-link">
+                            <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{b.section.name}} {{b.subject.name}}</div>
+                        </a>
+                    </div>
+                {% endfor %}
+            {% endif %}
         </div>
         {% endif %}
 
@@ -126,7 +148,6 @@
                         {% if students_list %}
                         <ul class="list-group me-3" style="min-width: fit-content;">
                             <li class="list-group-item bg-dark text-white border-dark">Students</li>
-                            {% if request.user.is_superuser %}
                             {% for stu in students_list %}
                                 
                                 <li class="list-group-item d-flex justify-content-between " style="font-size: 14px;">
@@ -146,7 +167,6 @@
                                 </li>
                             
                             {% endfor %}
-                            {% endif %}
                         </ul>
                         {% endif %}
 

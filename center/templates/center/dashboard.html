@@ -87,17 +87,6 @@
           </div>
         </div>
       </div>
-
-      <div class="col">
-        <div class="card h-100">
-          <div class="card-body">
-            <h3 class="card-title">Compare Student</h3>
-            <p class="card-text">Compare Student Progress in Homework, Test and Attendance</p>
-            <a href="{% url 'compare_performance' %}" class="btn btn-primary">Compare Students</a>
-          </div>
-        </div>
-      </div>
-
       {% endif %}
 
       {% if request.user.mentor_profile or request.user.is_superuser %}
@@ -140,6 +129,17 @@
           </div>
         </div>
       </div>
+      
+      <div class="col">
+        <div class="card h-100">
+          <div class="card-body">
+            <h3 class="card-title">Compare Student</h3>
+            <p class="card-text">Compare Student Progress in Homework, Test and Attendance</p>
+            <a href="{% url 'compare_performance' %}" class="btn btn-primary">Compare Students</a>
+          </div>
+        </div>
+      </div>
+
       {% endif %}
 
       {% if request.user.registered_student %}
