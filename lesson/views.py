@@ -161,6 +161,7 @@ def lesson_plan(request, class_id=None, batch_id=None):
 def lecture_plan(request, class_id=None, batch_id=None):
     cls = None
     batch = None
+    today = datetime.today()
 
     if class_id and not ClassName.objects.filter(id=class_id).exists():
         messages.error(request, "Invalid Class")
@@ -238,6 +239,7 @@ def lecture_plan(request, class_id=None, batch_id=None):
                 lesson_info['status'] = latest_lecture.status
                 lesson_info['date'] = latest_lecture.date
                 lesson_info['lecture'] = latest_lecture
+                lesson_info['lectures'] = lectures[:-1]
                 if latest_lecture.status == 'completed':
                     lesson_info['is_completed'] = True
 
@@ -252,6 +254,7 @@ def lecture_plan(request, class_id=None, batch_id=None):
         'cls': cls,
         'batch': batch,
         'data': dict(data),
+        'today': today,
         
         'chapters': chapters,
     })
@@ -274,15 +277,19 @@ def add_lecture(request, class_id, batch_id, lesson_id):
         messages.error(request, "Invalid Lesson")
         return redirect(f"{reverse('lecture_plan_batch', args=[class_id, batch_id])}")
 
-    date = datetime.today()
-    lecture = Lecture.objects.create(
-        lesson = lesson,
-        date = date,
-        status = 'completed'
-    )
-    lecture.save()
+    if request.method == 'POST':
+        date = request.POST.get('date')
+        if not date:
+            date = datetime.today()
+        else:
+            date = datetime.strptime(date, "%Y-%m-%d").date()
+        lecture = Lecture.objects.create(
+            lesson = lesson,
+            date = date,
+            status = 'completed'
+        )
+        lecture.save()
 
     messages.error(request, "Lecture Created.")
     return redirect(f"{reverse('lecture_plan_batch', args=[class_id, batch_id])}")
-
 
