@@ -30,6 +30,7 @@ from .models import (
     ReportNegative,
     ReportPositive,
     StudentBatchLink,
+    StudentTestRemark,
     )
 from .forms import TeacherForm, MentorForm
 import csv
@@ -195,6 +196,7 @@ class StudentBatchLinkAdmin(admin.ModelAdmin):
     ordering = ['-joined_at']
 
 
+admin.site.register(StudentTestRemark)
 admin.site.register(Recommendation)
 admin.site.register(TransportAttendance, TransportAttendanceAdmin)
 admin.site.register(Student, StudentAdmin)

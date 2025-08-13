@@ -22,7 +22,8 @@ from registration.models import (
 
     ReportNegative,
     ReportPositive,
-    Recommendation
+    Recommendation,
+    StudentTestRemark,
     )
 from django.utils import timezone
 from collections import defaultdict
@@ -857,4 +858,43 @@ def update_recommendation(request):
             traceback.print_exc()
             return HttpResponse(f"Server error: {e}", status=500)
 
+    return HttpResponseBadRequest("Only POST allowed")
+
+
+@csrf_exempt
+def update_remark(request, test_id, student_id):
+    if request.method == "POST":
+        try:
+            remark_text = request.POST.get("remark", "").strip()
+            test = Test.objects.get(id=test_id)
+            student = Student.objects.get(stu_id=student_id)
+
+            # Update or create the remark
+            if remark_text == "":
+                # If remark is empty, delete existing remark if it exists
+                StudentTestRemark.objects.filter(test=test, student=student).delete()
+            
+            # Otherwise, update or create the remark
+            remark, created = StudentTestRemark.objects.update_or_create(
+                test=test,
+                student=student,
+                defaults={'remark': remark_text}
+            )
+
+            context = {
+                'remark': remark.remark,
+                'test': test,
+                'student': student,
+            }
+            html = render_to_string("reports/student_test_remark.html", context)
+            return HttpResponse(html)
+
+        except Student.DoesNotExist:
+            return HttpResponseBadRequest("Invalid student ID")
+        except Test.DoesNotExist:
+            return HttpResponseBadRequest("Invalid test ID")
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return HttpResponse(f"Server error: {e}", status=500)
     return HttpResponseBadRequest("Only POST allowed")

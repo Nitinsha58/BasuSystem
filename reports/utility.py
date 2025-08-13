@@ -16,7 +16,8 @@ from registration.models import (
     ReportPeriod,
     Recommendation,
     MentorRemark,
-    Chapter
+    Chapter,
+    StudentTestRemark,
     )
 from django.db.models import Q
 from collections import defaultdict
@@ -1002,6 +1003,7 @@ def compare_student_performance_by_week(batch, start_date, end_date):
     - also returns the average percentage for each test across all students
     - for each student: their attendance percentage for the week in this batch
     - for each student: their homework completion percentage (only 'Completed' status) for the week in this batch
+    - for each student: test-wise remarks (from StudentTestRemark)
     Considers student's join date (doj): if test is before join date, test value is blank.
     """
     tests = Test.objects.filter(batch=batch, date__range=(start_date, end_date)).order_by('date')
@@ -1031,6 +1033,15 @@ def compare_student_performance_by_week(batch, start_date, end_date):
     homework_lookup = {}
     for hw in homework_qs:
         homework_lookup.setdefault(hw.student_id, []).append(hw.status)
+
+    # Pre-fetch StudentTestRemark for all students and tests in this batch and week
+    remarks_qs = StudentTestRemark.objects.filter(
+        student__in=students,
+        test__in=tests
+    )
+    remarks_lookup = {}
+    for r in remarks_qs:
+        remarks_lookup[(r.student_id, r.test_id)] = r.remark
 
     for stu in students:
         stu_obj = {}
@@ -1082,6 +1093,11 @@ def compare_student_performance_by_week(batch, start_date, end_date):
         else:
             recommendation_label = ''
 
+        # Collect test-wise remarks for this student
+        test_remarks = {}
+        for test in tests:
+            test_remarks[test] = remarks_lookup.get((stu.id, test.id), None)
+
         stu_obj['student'] = {
             'stu': stu,
             'percentage': round((total_marks_obtained / (total_max_marks or 1)) * 100, 1),
@@ -1093,7 +1109,8 @@ def compare_student_performance_by_week(batch, start_date, end_date):
             'homework_total': total_hw,
             'recommendation': recommendation,
             'recommendation_label': recommendation_label,
-            'remark': remark
+            'remark': remark,
+            'test_remarks': test_remarks
         }
         students_list.append(stu_obj)
 

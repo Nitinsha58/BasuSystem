@@ -1,0 +1,9 @@
+<form class=""
+    hx-post="{% url 'update-remark' test.id student.stu_id %}" 
+    hx-target="this" 
+    hx-swap="outerHTML"
+    hx-trigger="keyup changed delay:1000ms"
+>
+    {% csrf_token %}
+    <textarea type="text" class="form-control p-1 border-0" style="font-size: 12px; resize: none;" id="update-remark" name="remark" rows="1" >{{remark}}</textarea>
+</form>

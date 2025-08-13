@@ -121,7 +121,7 @@
         {% endif %}
     </div>
 
-    <div class="d-flex g-4 w-100">
+    <div class="d-flex g-4 w-100 overflow-auto">
         <div class="m-2 p-2 ps-4">
             {% if batch %}
             <div class="">
@@ -143,7 +143,7 @@
                         <button style="height: fit-content;" class="px-2 btn btn-warning" type="submit">Filter</button>
                 </form>
 
-                <div  class="g-3 d-flex justify-content-between">
+                <div  class="g-3 d-flex justify-content-between overflow-auto">
                     <div class="h-auto d-flex flex-1">
                         {% if students_list %}
                         <ul class="list-group me-3" style="min-width: fit-content;">
@@ -201,6 +201,31 @@
                                     </li>
                                 {% endfor %}
                             </ul>
+
+                            <ul class="list-group" style="min-width: fit-content;">
+                                <li class="list-group-item bg-dark text-white border-dark">Attendance</li>
+                                {% for data in students_list %}
+                                    <li class="list-group-item d-flex justify-content-center 
+                                        {% if data.student.attendance_present < data.student.attendance_total and data.student.attendance_percentage < 51 and data.student.attendance_percentage > 34 %} text-warning
+                                        {% elif data.student.attendance_present == data.student.attendance_total and data.student.attendance_percentage == 100 %} text-success
+                                        {% elif data.student.attendance_present < data.student.attendance_total and data.student.attendance_percentage <= 34 %} text-danger {% endif %}
+                                        " style="font-size: 14px;">
+                                        <span class="fw-normal" > ({{data.student.attendance_present}}/{{data.student.attendance_total}}) {{data.student.attendance_percentage}}% </span> 
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                           
+                            <ul class="list-group" style="min-width: fit-content;">
+                                <li class="list-group-item bg-dark text-white border-dark">Homework</li>
+                                {% for data in students_list %}
+                                    <li class="list-group-item d-flex justify-content-center 
+                                    {% if data.student.homework_completed == data.student.homework_total and data.student.homework_percentage == 100 %} text-success 
+                                    {% elif data.student.homework_completed < data.student.homework_total and data.student.homework_percentage < 51 %} text-danger {% endif %}
+                                    " style="font-size: 14px;">
+                                        <span class="fw-normal" > ({{data.student.homework_completed}}/{{data.student.homework_total}}) {{data.student.homework_percentage}}% </span> 
+                                    </li>
+                                {% endfor %}
+                            </ul>
                             {% for test in tests %}
                             <ul class="list-group" style="min-width: fit-content;">
                                 <li class="list-group-item bg-dark text-white border-dark">{{test.name}}</li>
@@ -229,32 +254,30 @@
                                     </li>
                                 {% endfor %}
                             </ul>
+                            <ul class="list-group" style="min-width: fit-content;">
+                                <li class="list-group-item bg-dark text-white border-dark">Remarks</li>
+                                {% for data in students_list %}
+                                    <li class="list-group-item d-flex justify-content-center p-0" style="font-size: 14px;">
+                                        <form class=""
+                                            hx-post="{% url 'update-remark' test.id data.student.stu.stu_id %}" 
+                                            hx-target="this" 
+                                            hx-swap="outerHTML"
+                                            hx-trigger="keyup changed delay:1000ms"
+                                        >
+                                            {% csrf_token %}
+
+                                            {% if data.student.test_remarks and data.student.test_remarks|get_item:test %}
+                                            <textarea type="text" class="form-control p-1 border-0" style="font-size: 12px; resize: none;" id="update-remark" name="remark" rows="1" >{{data.student.test_remarks|get_item:test}}</textarea>
+                                            {% else %}
+
+                                            <textarea type="text" class="form-control p-1 border-0" style="font-size: 12px; resize: none;" id="update-remark" name="remark" rows="1" ></textarea>
+                                            {% endif %}
+                                        </form>
+                                    </li>
+                                {% endfor %}
+                            </ul>
                             {% endfor %}
 
-                            <ul class="list-group" style="min-width: fit-content;">
-                                <li class="list-group-item bg-dark text-white border-dark">Attendance</li>
-                                {% for data in students_list %}
-                                    <li class="list-group-item d-flex justify-content-center 
-                                        {% if data.student.attendance_present < data.student.attendance_total and data.student.attendance_percentage < 51 and data.student.attendance_percentage > 34 %} text-warning
-                                        {% elif data.student.attendance_present == data.student.attendance_total and data.student.attendance_percentage == 100 %} text-success
-                                        {% elif data.student.attendance_present < data.student.attendance_total and data.student.attendance_percentage <= 34 %} text-danger {% endif %}
-                                        " style="font-size: 14px;">
-                                        <span class="fw-normal" > ({{data.student.attendance_present}}/{{data.student.attendance_total}}) {{data.student.attendance_percentage}}% </span> 
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                           
-                            <ul class="list-group" style="min-width: fit-content;">
-                                <li class="list-group-item bg-dark text-white border-dark">Homework</li>
-                                {% for data in students_list %}
-                                    <li class="list-group-item d-flex justify-content-center 
-                                    {% if data.student.homework_completed == data.student.homework_total and data.student.homework_percentage == 100 %} text-success 
-                                    {% elif data.student.homework_completed < data.student.homework_total and data.student.homework_percentage < 51 %} text-danger {% endif %}
-                                    " style="font-size: 14px;">
-                                        <span class="fw-normal" > ({{data.student.homework_completed}}/{{data.student.homework_total}}) {{data.student.homework_percentage}}% </span> 
-                                    </li>
-                                {% endfor %}
-                            </ul>
 
                         </div>
 
