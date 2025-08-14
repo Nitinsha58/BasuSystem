@@ -113,49 +113,70 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <ul class="list-group w-100">
                         {% for lecture in lectures %}
-                        <li class="list-group-item d-flex justify-content-between
-                        {% if lecture.status == 'pending' %}
-                            bg-danger-subtle
-                        {% elif lecture.status == 'completed' %}
-                            bg-success-subtle
-                        {% elif lecture.is_behind_latest %}
-                            bg-light
-                        {% elif lecture.is_next_lecture %}
-                            bg-warning
-                        {% endif %}
-                        ">
-                        <div class="d-flex justify-content-between align-items-center w-100">
-                            <p class="m-0">
-                                {{lecture.lesson.sequence}}. {{lecture.lesson.topic}}
-                            </p>
-                            <p class="m-0 me-2">{{lecture.lecture.date|date:'Y-m-d'}}</p>
-                        </div>
-                        {% if request.user.is_superuser %}
-                        <div class="d-flex gap-2">
-                            {% if request.user and request.user.is_superuser and not lecture.lecture %}
-                            <form action="{% url 'add_lecture' cls.id batch.id lecture.lesson.id %}" class="d-flex gap-2" method="post">
-                                {% csrf_token %}
-                                <input type="date" class="form-control" name="date" id="date-{{lecture.lecture.id}}" value="{{today|date:'Y-m-d'}}">
-                                <button class="d-flex justify-content-center align-items-center py-2 px-2 btn bg-success btn-outline-light fw-semibold text-decoration-none">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-square" viewBox="0 0 16 16">
-                                        <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
-                                        <path d="M10.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/>
+                        <li class="list-group-item rounded-2 d-flex justify-content-between
+                            {% if lecture.status == 'pending' %}
+                                bg-danger-subtle
+                            {% elif lecture.status == 'completed' %}
+                                bg-success-subtle
+                            {% elif lecture.is_behind_latest %}
+                                bg-light
+                            {% elif lecture.is_next_lecture %}
+                                bg-warning
+                            {% endif %}
+                            ">
+                            <div class="d-flex justify-content-between align-items-center w-100">
+                                <p class="m-0">
+                                    {{lecture.lesson.sequence}}. {{lecture.lesson.topic}} 
+                                    {% if lecture.lecture %}
+                                        ({{lecture.lecture.status}})
+                                    {% endif %}
+                                </p>
+                                <p class="m-0 me-2">{{lecture.lecture.date|date:'Y-m-d'}}</p>
+                            </div>
+                            {% if request.user.is_superuser %}
+                            <div class="d-flex gap-2">
+                                {% if request.user and request.user.is_superuser and not lecture.lecture %}
+                                <form action="{% url 'add_lecture' cls.id batch.id lecture.lesson.id %}" class="d-flex gap-2" method="post">
+                                    {% csrf_token %}
+                                    <input type="date" class="form-control" name="date" id="date-{{lecture.lecture.id}}" value="{{today|date:'Y-m-d'}}">
+                                    <button class="d-flex justify-content-center align-items-center py-2 px-2 btn bg-success btn-outline-light fw-semibold text-decoration-none">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-square" viewBox="0 0 16 16">
+                                            <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
+                                            <path d="M10.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/>
+                                        </svg>
+                                    </button>
+                                </form>
+                                {% endif %}
+                                {% if request.user and request.user.is_superuser and lecture.lecture %}
+                                <a data-batch_id="{{batch.id}}" data-cls_id="{{cls.id}}" data-lecture_id="{{lecture.lecture.id}}" class="delete-link d-flex justify-content-center align-items-center py-2 px-2 btn bg-danger btn-outline-light fw-semibold text-decoration-none">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"></path>
+                                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
                                     </svg>
-                                </button>
-                            </form>
+                                </a>
+                                {% endif %}
+                            </div>
                             {% endif %}
-                            {% if request.user and request.user.is_superuser and lecture.lecture %}
-                            <a data-batch_id="{{batch.id}}" data-cls_id="{{cls.id}}" data-lecture_id="{{lecture.lecture.id}}" class="delete-link d-flex justify-content-center align-items-center py-2 px-2 btn bg-danger btn-outline-light fw-semibold text-decoration-none">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"></path>
-                                    <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
-                                </svg>
-                            </a>
-                            {% endif %}
+                        </li>
+                        <div class="d-flex flex-column gap-1 ps-3 py-2">
+                            {% for lec in lecture.lectures %}
+                            <li class="list-group-item d-flex justify-content-between
+                                {% if lec.status == 'pending' %}
+                                    bg-danger-subtle
+                                {% elif lec.status == 'completed' %}
+                                    bg-success-subtle
+                                {% endif %}
+                                rounded-2
+                                ">
+                                <div class="d-flex justify-content-between align-items-center w-100">
+                                    <p class="m-0 ms-3">
+                                        {{lec.lesson.topic}} ({{lec.status}})
+                                    </p>
+                                    <p class="m-0 me-2">{{lec.date|date:'Y-m-d'}}</p>
+                                </div>
+                            </li>
+                            {% endfor %}
                         </div>
-                        {% endif %}
-
-                    </li>
                         {% endfor %}
                     </ul>
                 </div>
