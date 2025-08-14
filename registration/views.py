@@ -678,28 +678,32 @@ def mark_attendance(request, class_id=None, batch_id=None):
         if date == datetime.today().date():
             # Check if lecture already exists for today
             lecture_today = all_lectures.filter(date=date).first()
+            previous_lecture = all_lectures.filter(date__lt=date).order_by('-date').first()
+
+            # Get last completed lecture before today
+            last_completed = all_lectures.filter(
+                status='completed',
+                date__lt=date
+            ).order_by('-date').first()
+            last_lesson = last_completed.lesson if last_completed else None
+            next_lesson = last_lesson.next() if last_lesson else None
 
             if lecture_today:
                 lesson_info = {
+                    'previous_lecture': previous_lecture,
                     'lecture': lecture_today,
                     'editable': True,
                     'suggested_lesson': None,
+                    'next_lesson': lecture_today.lesson.next() if lecture_today.lesson else None,
                 }
             else:
-                # Get last completed lecture before today
-                last_completed = all_lectures.filter(
-                    status='completed',
-                    date__lt=date
-                ).order_by('-date').first()
-
-                
-                last_lesson = last_completed.lesson if last_completed else None
-                next_lesson = last_lesson.next() if last_lesson else None
                 is_delayed = Lecture.objects.filter(lesson=next_lesson, status='pending').first()
                 lesson_info = {
+                    'previous_lecture': previous_lecture,
                     'lecture': None,
                     'editable': True,
                     'suggested_lesson': next_lesson,
+                    'next_lesson': next_lesson.next() if next_lesson else None,
                     'is_delayed': is_delayed if True else False,
                 }
         else:

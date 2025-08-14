@@ -110,11 +110,16 @@
             {% if lesson_info %}
             <ul class="students-list list-group">
                 <h3 class="fw-semibold mb-2">Lessons</h3>
-                {% if lesson_info.previous and lesson_info.today == date %}
-                <li class="student list-group-item p-2 bg-success-subtle">
+                {% if lesson_info and lesson_info.previous_lecture %}
+                <li class="student list-group-item p-2 
+                    {% if lesson_info.previous_lecture.status == 'pending' %}
+                        bg-danger-subtle
+                    {% else %}
+                        bg-success-subtle
+                    {% endif %} ">
                     <div class="form-check form-switch " style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
-                        <p class="form-check-label m-0" id="all-label" for="all-input"><b>{{lesson_info.previous.lesson.chapter_sequence.chapter_name}}:</b> {{lesson_info.previous.lesson.topic}} (Previous)</p>
-                        <p class="form-check-label m-0" id="all-label" for="all-input">{{lesson_info.previous.date|date:'d M Y'}}</p>
+                        <p class="form-check-label m-0" id="all-label" for="all-input"><b>{{lesson_info.previous_lecture.lesson.chapter_sequence.chapter_name}}:</b> {{lesson_info.previous_lecture.lesson.topic}} (Previous)</p>
+                        <p class="form-check-label m-0" id="all-label" for="all-input">{{lesson_info.previous_lecture.date|date:'d M Y'}}</p>
                     </div>
                 </li>
                 {% endif %}
@@ -160,7 +165,7 @@
                     {% else %}
                         bg-warning-subtle
                     {% endif %} ">
-                    <div class="form-check form-switch" style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
+                    <div class="form-check form-switch d-flex justify-content-between align-items-center p-0">
                         <p class="form-check-label m-0" id="all-label" for="all-input"><b>{{lesson_info.suggested_lesson.chapter_sequence.chapter_name}}:</b> {{lesson_info.suggested_lesson.topic}} (Today)</p>
                         <input type="hidden" 
                                 name="status" 
@@ -177,12 +182,13 @@
 
                     </div>
                 </li>
+                
                 {% endif %}
-
-                {% if lesson_info.next and lesson_info.today == date %}
+                
+                {% if lesson_info and lesson_info.next_lesson %}
                 <li class="student list-group-item p-2">
                     <div class="form-check form-switch" style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
-                        <p class="form-check-label m-0" id="all-label" for="all-input"><b>{{lesson_info.next.chapter_sequence.chapter_name}}:</b> {{lesson_info.next.topic}} (Next)</p>
+                        <p class="form-check-label m-0" id="all-label" for="all-input"><b>{{lesson_info.next_lesson.chapter_sequence.chapter_name}}:</b> {{lesson_info.next_lesson.topic}} (Next)</p>
                     </div>
                 </li>
                 {% endif %}
