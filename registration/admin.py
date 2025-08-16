@@ -86,6 +86,32 @@ class StudentAdmin(admin.ModelAdmin):
             ])
 
         return response
+    
+    def export_students_with_subject_csv(self, request, queryset):
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="students_with_subjects.csv"'
+        writer = csv.writer(response)
+
+        # Write header
+        writer.writerow(['Student Name', 'Phone', 'Mother', 'Father', 'Subjects'])
+
+        for student in queryset.select_related('user').prefetch_related('batches__subject'):
+            subjects = set()
+            for batch in student.batches.all():
+                if batch.subject and batch.subject.name:
+                    subjects.add(batch.subject.name)
+            writer.writerow([
+                f"{student.user.first_name} {student.user.last_name}",
+                student.user.phone or '',
+                student.parent_details.mother_contact or '', 
+                student.parent_details.father_contact or '',
+                ",".join(subjects)
+            ])
+
+        return response
+
+    export_students_with_subject_csv.short_description = "Export students with subjects as CSV"
+    actions.append('export_students_with_subject_csv')
 
     export_students_csv.short_description = "Export students as CSV"
 
