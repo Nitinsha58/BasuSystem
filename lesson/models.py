@@ -1,5 +1,5 @@
 from django.db import models
-from registration.models import Batch, Chapter
+from registration.models import Batch, Chapter, Teacher
 from django.db.models import Q
 
 class ChapterSequence(models.Model):
@@ -64,3 +64,33 @@ class Holiday(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.date}"
+
+
+class LectureDate(models.Model):
+    batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='lecture_dates')
+    date = models.DateField()
+    
+    class Meta:
+        unique_together = ('batch', 'date')
+        ordering = ['batch', 'date']
+
+    def __str__(self):
+        return f"{self.batch} - {self.date}"
+
+class LectureMismatch(models.Model):
+    REASON_CHOICES = [
+        ('Cancelled', 'Cancelled'), 
+        ('Substitute', 'Substitute'),
+        ('Extra Class', 'Extra Class'),
+        ('Other', 'Other'),
+    ]
+
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='mismatches')
+    reason = models.CharField(max_length=20, choices=REASON_CHOICES)
+    remark = models.TextField(null=True, blank=True)
+    date = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-date']

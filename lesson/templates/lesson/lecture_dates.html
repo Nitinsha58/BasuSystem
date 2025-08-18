@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block style %}
+<style>
+    html {
+      scroll-behavior: auto !important;
+    }
+
+    .draggable {
+        padding: 1rem;
+        /* border: 1px solid black; */
+        cursor: move;
+        user-select: none;
+    }
+
+    .draggable.dragging {
+        opacity: .8;
+        border: 2px dashed #3863f4;
+    }
+
+</style>
+{% endblock style %}
+
+{% block dashboard %}
+<div class="content-container m-2 m container mx-auto">
+    <h2 class="heading m-2">Lecture Dates</h2>
+    {% if classes and not cls %}
+    <div class="row g-2">
+        {% for c in classes %}
+        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+            <a href="{% url 'add_bulk_lecture_dates_class' c.id %}" class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if cls and not batch %}
+    <div class="row g-2">
+        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+            <a href="{% url 'add_bulk_lecture_dates' %}" class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{cls.name}}</div>
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if batches and cls and not batch %}
+    <h2 class="heading m-2">Select Batch</h2>
+    <div class="row g-2">
+        {% for b in batches %}
+        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+            <a href="{% url 'add_bulk_lecture_dates_batch' cls.id b.id %}" class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{b.section.name}} {{b.subject.name}}</div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if cls and batch %}
+    <div class="row g-2">
+        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+            <a href="{% url 'add_bulk_lecture_dates' %}" class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{cls.name}}</div>
+            </a>
+        </div>
+        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+            <a href="{% url 'add_bulk_lecture_dates_class' cls.id %}" class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{batch.section.name}} {{batch.subject.name}}</div>
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+
+    {% if cls and batch %}
+    <div class="mt-3 px-md-4" id="lessonPlanContainer">
+        <div class="d-flex w-100 gap-3 flex-column flex-md-row">
+            <ul class="list-group w-100">
+                <li class="list-group-item p-3 gap-3 d-flex flex-column">
+                    <form id="bulkDateForm" method="post">
+                        {% csrf_token %}
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <p class="m-0 me-2">Add Dates in Bulk</p>
+                            </div>
+                            <button type="submit" class="btn btn-warning">Save</button>
+                        </div>
+                        <textarea class="form-control my-2" rows="8" name="dates" id="dates" placeholder="Enter dates (one per line, comma-separated, or space-separated)"></textarea>
+                    </form>
+                </li>
+            </ul>
+
+            <ul class="list-group w-100" id="lessonPlanList">
+                <li class="list-group-item p-3 gap-3 d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center">
+                            <p class="m-0 me-2">Dates Preview</p>
+                        </div>
+                        <span id="dateCount" class="badge bg-primary">0 Dates</span>
+                    </div>
+                    <ul class="list-group w-100" id="previewList"></ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if cls and batch %}
+    
+    {% if batch.lecture_dates.all %}
+        <div class="mt-3 px-md-4" id="lessonPlanContainer">
+            <ul class="list-group w-100">
+                {% for date in batch.lecture_dates.all %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>{{forloop.counter}}. {{ date.date|date:"d M Y" }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    {% endif %}
+</div>
+
+<script>
+    document.getElementById("bulkDateForm").addEventListener("input", function(e) {
+        e.preventDefault();
+
+        const input = document.getElementById("dates").value;
+        const previewList = document.getElementById("previewList");
+        const dateCount = document.getElementById("dateCount");
+
+        // Clear old entries
+        previewList.innerHTML = "";
+
+        // Normalize input: split by commas, newlines, or spaces
+        const dates = input
+            .split(/[\n, ]+/)
+            .map(date => date.trim())
+            .filter(date => date.length > 0)
+            .map(dateStr => {
+            // Try to parse date
+            const d = new Date(dateStr);
+            if (isNaN(d)) return dateStr; // If invalid, keep original
+            // Format: 07 June 2025
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = d.toLocaleString('default', { month: 'short' });
+            const year = d.getFullYear();
+            return `${day} ${month} ${year}`;
+            });
+
+        // Render preview
+        dates.forEach(date => {
+            const li = document.createElement("li");
+            li.className = "list-group-item";
+            li.textContent = date;
+            previewList.appendChild(li);
+        });
+
+        // Update count
+        dateCount.textContent = `${dates.length} Date${dates.length !== 1 ? 's' : ''}`;
+    });
+</script>
+
+{% endblock dashboard %}

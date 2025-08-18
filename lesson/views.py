@@ -3,7 +3,7 @@ from registration.models import (
     Batch, 
     )
 
-from lesson.models import ChapterSequence, Lesson, Holiday
+from lesson.models import ChapterSequence, Lesson, Holiday, LectureDate
 from django.utils.timezone import now, datetime
 
 from registration.models import Subject, ClassName
@@ -13,6 +13,7 @@ from django.db.models import Q
 from collections import defaultdict
 from .models import Lesson, Lecture
 from django.urls import reverse
+import re
 
 @login_required(login_url='login')
 def lesson(request, sequence_id, class_id, batch_id):
@@ -293,3 +294,66 @@ def add_lecture(request, class_id, batch_id, lesson_id):
     messages.error(request, "Lecture Created.")
     return redirect(f"{reverse('lecture_plan_batch', args=[class_id, batch_id])}")
 
+
+@login_required(login_url='login')
+def add_bulk_lecture_dates(request, class_id=None, batch_id=None):
+    cls = None
+    batch = None
+
+    if class_id and not ClassName.objects.filter(id=class_id).exists():
+        messages.error(request, "Invalid Class")
+        return redirect('lecture_plan')
+
+    if batch_id and not Batch.objects.filter(id=batch_id).exists():
+        messages.error(request, "Invalid Batch")
+        return redirect('lecture_plan_class', class_id=class_id)
+
+    if class_id:
+        cls = ClassName.objects.filter(id=class_id).first()
+        batches = Batch.objects.filter(class_name=cls).order_by('created_at').exclude(
+            Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
+            Q(section__name='CBSE') &
+            Q(subject__name__in=['MATH', 'SCIENCE'])
+        )
+    else:
+        batches = None
+
+    if batch_id:
+        batch = Batch.objects.filter(id=batch_id).first()
+
+    if batch_id and not batch:
+        messages.error(request, "Invalid Batch")
+        return redirect('lecture_plan_class', class_id=class_id)
+
+    if batch_id and request.method == 'POST':
+        dates_input = request.POST.get('dates', '')
+        # Split by comma, newline, or space
+        date_strings = re.split(r'[,\s]+', dates_input.strip())
+        lecture_dates = []
+        invalid_dates = []
+        for date_str in date_strings:
+            if date_str:
+                try:
+                    date = datetime.strptime(date_str, "%m/%d/%Y").date()
+                    lecture_dates.append(LectureDate(batch=batch, date=date))
+                except ValueError:
+                    invalid_dates.append(date_str)
+        if lecture_dates:
+            LectureDate.objects.bulk_create(lecture_dates)
+        added_count = len(lecture_dates)
+        for invalid in invalid_dates:
+            messages.error(request, f"Invalid date format: {invalid}. Use MM/DD/YYYY format.")
+        if added_count:
+            messages.success(request, f"{added_count} Lecture Dates Added Successfully.")
+        else:
+            messages.error(request, "No valid dates were added.")
+        return redirect(f"{reverse('add_bulk_lecture_dates_batch', args=[class_id, batch_id])}")
+
+    classes = ClassName.objects.all().order_by('created_at')
+
+    return render(request, 'lesson/lecture_dates.html', {
+        'classes': classes,
+        'batches': batches,
+        'cls': cls,
+        'batch': batch,
+    })

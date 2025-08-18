@@ -1,5 +1,19 @@
 from django.contrib import admin
-from .models import ChapterSequence, Lesson, Holiday, Lecture
+from .models import ChapterSequence, Lesson, Holiday, Lecture, LectureMismatch, LectureDate
+
+@admin.register(LectureMismatch)
+class LectureMismatchAdmin(admin.ModelAdmin):
+    list_display = ('lesson', 'reason', 'date', 'created_at')
+    list_filter = ('reason', 'date')
+    search_fields = ('lesson__topic', 'reason')
+    ordering = ('-date',)
+
+@admin.register(LectureDate)
+class LectureDateAdmin(admin.ModelAdmin):
+    list_display = ('batch', 'date')
+    list_filter = ('batch__class_name', 'batch__subject', 'batch__section')
+    search_fields = ('batch__name',)
+    ordering = ('batch', 'date')
 
 @admin.register(Holiday)
 class HolidayAdmin(admin.ModelAdmin):
@@ -30,3 +44,4 @@ class LectureAdmin(admin.ModelAdmin):
     list_diaplay = ('lesson', 'date', 'status')
     list_filter = ('lesson', 'status')
     search_fields = ('lesson__topic', 'lesson__chapter_sequence__chapter_name')
+

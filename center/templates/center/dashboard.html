@@ -87,6 +87,16 @@
           </div>
         </div>
       </div>
+
+      <div class="col">
+        <div class="card h-100">
+          <div class="card-body">
+            <h3 class="card-title">Lecture Date</h3>
+            <p class="card-text">Add lecture dates for future classes.</p>
+            <a href="{% url 'add_bulk_lecture_dates' %}" class="btn btn-danger">Lecture Date</a>
+          </div>
+        </div>
+      </div>
       {% endif %}
 
       {% if request.user.mentor_profile or request.user.is_superuser %}
