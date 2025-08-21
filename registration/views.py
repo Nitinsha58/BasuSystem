@@ -611,30 +611,6 @@ def mark_attendance(request, class_id=None, batch_id=None):
     else:
         batches = None
 
-    def get_upcoming_batch_dates(batch, days=7):
-        today = now().date()
-        end_date = today + timedelta(days=days - 1)
-
-        # Get batch days in lowercase (e.g., ['monday', 'wednesday'])
-        batch_days = batch.days.values_list('name', flat=True)
-        batch_day_numbers = {
-            'monday': 0, 'tuesday': 1, 'wednesday': 2, 'thursday': 3,
-            'friday': 4, 'saturday': 5, 'sunday': 6
-        }
-        active_day_indexes = [batch_day_numbers[d.lower()] for d in batch_days]
-
-        # Fetch all holidays in this range
-        holidays = Holiday.objects.filter(date__range=(today, end_date)).values_list('date', flat=True)
-
-        dates = []
-        for i in range(days):
-            date = today + timedelta(days=i)
-            if date.weekday() in active_day_indexes and date not in holidays:
-                dates.append(date)
-
-        return dates
-    
-
     if batch_id:
         batch = Batch.objects.filter(id=batch_id).first()
     
@@ -645,6 +621,11 @@ def mark_attendance(request, class_id=None, batch_id=None):
 
     # Handle date input
     date_str = request.GET.get("date")
+    attendance_type = request.GET.get("type")
+
+    attendance_type_choices = Attendance.ATTENDANCE_TYPE
+    selected_type = attendance_type if attendance_type in dict(attendance_type_choices) else 'Regular'
+
     try:
         date = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else datetime.now().date()
     except ValueError:
@@ -662,8 +643,19 @@ def mark_attendance(request, class_id=None, batch_id=None):
     classes = ClassName.objects.all().order_by('created_at')
     students = Student.objects.filter(batches=batch, active=True)
 
-    marked_students = students.filter(attendance__date=date, attendance__batch=batch).order_by('created_at')
-    marked_attendance = list(Attendance.objects.filter(batch=batch, date=date, student__active=True).order_by('student__created_at'))
+    marked_students = students.filter(
+        attendance__date=date,
+        attendance__batch=batch,
+        attendance__type=selected_type
+    ).order_by('created_at')
+    marked_attendance = list(
+        Attendance.objects.filter(
+            batch=batch,
+            date=date,
+            student__active=True,
+            type=selected_type
+        ).order_by('student__created_at')
+    )
     un_marked_students = list(students.exclude(id__in=marked_students.values_list('id', flat=True)))
     
     if batch_id:
@@ -759,19 +751,21 @@ def mark_attendance(request, class_id=None, batch_id=None):
                         student=student,
                         batch=batch,
                         is_present=False,
-                        date=date
+                        date=date,
+                        type=selected_type
                     )
                 elif status == '2':
                     Attendance.objects.create(
                         student=student,
                         batch=batch,
                         is_present=True,
-                        date=date
+                        date=date,
+                        type=selected_type
                     )
                 marked_students_set.add(student.stu_id)
 
         messages.success(request, "Attendance marked successfully.")
-        return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={date}")
+        return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={date}&type={selected_type}")
 
     return render(request, 'registration/attendance.html', {
         'classes': classes,
@@ -785,6 +779,8 @@ def mark_attendance(request, class_id=None, batch_id=None):
         'prev_date': prev_date,
         'next_date': next_date,
         'lesson_info': lesson_info,
+        'type_choices': attendance_type_choices,
+        'selected_type': selected_type,
     })
 
 
@@ -926,18 +922,27 @@ def update_homework(request, class_id, batch_id):
 @login_required(login_url='login')
 def mark_present(request, class_id, batch_id, attendance_id):
     day = request.GET.get('date')
-    obj = Attendance.objects.filter(id=attendance_id).first()
+    selected_type = request.GET.get('type')
+    if not selected_type:
+        messages.error(request, "Attendance type not specified.")
+        return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={day}")
+    obj = Attendance.objects.filter(id=attendance_id, type=selected_type).first()
     obj.is_present = True 
     obj.save()
-    return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={day}")
+    return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?type={selected_type}&date={day}")
 
 @login_required(login_url='login')
 def mark_absent(request, class_id, batch_id, attendance_id):
     day = request.GET.get('date')
-    obj = Attendance.objects.filter(id=attendance_id).first()
-    obj.is_present = False 
+    selected_type = request.GET.get('type')
+    if not selected_type:
+        messages.error(request, "Attendance type not specified.")
+        return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={day}")
+
+    obj = Attendance.objects.filter(id=attendance_id, type=selected_type).first()
+    obj.is_present = False
     obj.save()
-    return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={day}")
+    return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?type={selected_type}&date={day}")
 
 @login_required(login_url='login')
 def get_attendance(request, batch_id):
@@ -1035,13 +1040,18 @@ def get_homework(request, batch_id):
 @login_required(login_url='login')
 def delete_attendance(request, class_id, batch_id, attendance_id):
     day = request.GET.get('date')
-    obj = Attendance.objects.filter(id=attendance_id).first()
+    selected_type = request.GET.get('type')
+    if not selected_type:
+        messages.error(request, "Attendance type not specified.")
+        return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={day}")
+
+    obj = Attendance.objects.filter(id=attendance_id, type=selected_type).first()
     if obj:
         obj.delete()
         messages.success(request, "Attendance Deleted.")
     else:
         messages.error(request, "Invalid Attendance Id.")
-    return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={day}")
+    return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?type={selected_type}&date={day}")
 
 @login_required(login_url='login')
 def delete_homework(request, class_id, batch_id, homework_id):

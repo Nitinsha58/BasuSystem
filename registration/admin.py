@@ -53,7 +53,7 @@ class AttendanceAdmin(admin.ModelAdmin):
         'batch__section__name',
         'batch__subject__name'
     ]
-    list_filter = ['batch', 'is_present']
+    list_filter = ['batch', 'is_present', 'type']
     
 
 class StudentAdmin(admin.ModelAdmin):
