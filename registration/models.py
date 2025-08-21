@@ -2,6 +2,7 @@ from django.db import models
 import uuid
 from django.db.models import Max
 from colorfield.fields import ColorField
+from .manager import AttendanceManager
 
 
 from center.models import ClassName, Subject, Section
@@ -260,15 +261,26 @@ class TransportDetails(models.Model):
         return f"Transport details for {self.student.user.first_name}"
 
 class Attendance(models.Model):
+    ATTENDANCE_TYPE = [
+        ('Regular', 'Regular'),
+        ('Retest', 'Retest'),
+        ('Test', 'Test'),
+        ('Extra Class', 'Extra Class'),
+    ]
+
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="attendance")
+    type = models.CharField(max_length=20, choices=ATTENDANCE_TYPE, default='Regular')
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name="attendance")
     is_present = models.BooleanField()
     date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    # class Meta:
-    #     unique_together = ('student', 'batch', 'date')
+    objects = AttendanceManager()
+
+
+    class Meta:
+        unique_together = ('student', 'batch', 'date', 'type')
 
     def __str__(self):
         return f"{self.student} - {self.created_at}: {'Present' if self.is_present else 'Absent'}"
