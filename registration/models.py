@@ -266,6 +266,8 @@ class Attendance(models.Model):
         ('Retest', 'Retest'),
         ('Test', 'Test'),
         ('Extra Class', 'Extra Class'),
+        ('Personal Class', 'Personal Class'),
+        ('Practice Session', 'Practice Session'),
     ]
 
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="attendance")
