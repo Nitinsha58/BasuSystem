@@ -6,19 +6,6 @@
     html {
       scroll-behavior: auto !important;
     }
-
-    .draggable {
-        padding: 1rem;
-        /* border: 1px solid black; */
-        cursor: move;
-        user-select: none;
-    }
-
-    .draggable.dragging {
-        opacity: .8;
-        border: 2px dashed #3863f4;
-    }
-
 </style>
 {% endblock style %}
 
@@ -100,6 +87,11 @@
 
     {% if cls and batch %}
     <div class="mt-3 px-md-4" id="lessonPlanContainer">
+        <div class="my-4">
+            <div class="col-12 d-flex justify-content-end">
+                <button type="submit" id="mismatchesBtn" class="btn btn-info">Mismatches</button>
+            </div>
+        </div>
         <ul class="list-group ">
             {% for sq, lectures in data.items %}
             <li class="list-group-item p-3 gap-3 d-flex flex-column">
@@ -210,50 +202,202 @@
         </ul>
     </div>
     
+    {% if mismatches %}
+    <div id="mismatchesModal" class="my-4 d-none">
+        <form action="" method="post" class="bg-white rounded-lg p-2 py-md-4 p-md-4 rounded">
+            {% csrf_token %}
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="text-xl font-semibold ">Mismatch</h3>
+                <div class="d-flex justify-content-end mt-4">
+                    <div id="cancelButton" class="px-4 py-2 btn btn-primary me-2">Cancel</div>
+                    <button id="confirmButton" type="submit" class="px-4 py-2 btn btn-warning ">Save</button>
+                </div>
+            </div>
+            <div class="container mt-3">
+                <ul class="list-group drag-container">
+                    {% for mismatch in mismatches %}
+                    <li draggable="true" class="draggable list-group-item d-flex align-items-md-center">
+                        <p class="m-0 me-2">{{forloop.counter}}. </p>
+                        <div class="d-flex gap-2 gap-md-4 flex-column flex-md-row w-100">
+                            <select class="form-select mismatch_reason" style="width: fit-content;" name="mismatch_reason" required>
+                                {% for reason in mismatch_reason_choices %}
+                                <option value="{{mismatch.reason}}" {% if reason.0 == mismatch.reason %} selected {% endif %}>{{reason.0}}</option>
+                                {% endfor %}
+                            </select>
+                            <input type="date" class="form-control mismatch_date" style="width: fit-content;" id="" value="{{mismatch.date|date:'Y-m-d'}}" required>
+                            <input type="text" class="form-control mismatch_remark" value="{{mismatch.remark}}" placeholder="remark...">
+                            <input type="hidden" class="form-control mismatch_data" name="mismatches[]" value="{{mismatch.id}}:{{mismatch.reason}}:{{mismatch.date}}:{{mismatch.remark}}" required>
+                            
+                            <div  class="px-2 py-2 d-flex align-items-center justify-content-center btn btn-outline-danger fw-semibold text-decoration-none" onclick="deleteMismatch(event)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"></path>
+                                    <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
 
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex justify-content-end mt-4">
+                    <div id="add-mismatch" onclick=""  class="px-4 py-2 btn btn-success me-2">Add Mismatch</div>
+                </div>
+            </div>
+        </form>
+    </div>
+    {% else %}
+        <div id="mismatchesModal" class="my-4 d-none">
+            <form action="" method="post" class="bg-white rounded-lg p-2 py-md-4 p-md-4 rounded">
+                {% csrf_token %}
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3 class="text-xl font-semibold ">Mismatch</h3>
+                    <div class="d-flex justify-content-end mt-4">
+                        <div id="cancelButton" class="px-4 py-2 btn btn-primary me-2">Cancel</div>
+                        <button id="confirmButton" type="submit" class="px-4 py-2 btn btn-warning ">Save</button>
+                    </div>
+                </div>
+                <div class="container mt-3">
+                    <ul class="list-group drag-container">
+                        <li draggable="true" class="draggable list-group-item d-flex align-items-md-center">
+                            <div class="d-flex gap-2 gap-md-4 flex-column flex-md-row w-100">
+                                <select class="form-select mismatch_reason" style="width: fit-content;" name="mismatch_reason" required>
+                                    <option value="">Select reason</option>                 
+                                    {% for reason in mismatch_reason_choices %}
+                                    <option value="{{mismatch.reason}}">{{reason.0}}</option>
+                                    {% endfor %}
+                                </select>
+                                <input type="date" class="form-control mismatch_date" style="width: fit-content;" id="" value="" required>
+                                <input type="text" class="form-control mismatch_remark" value="" placeholder="remark...">
+                                <input type="hidden" class="form-control mismatch_data" name="mismatches[]" value=":::" required>
+                                
+                                <div  class="px-2 py-2 d-flex align-items-center justify-content-center btn btn-outline-danger fw-semibold text-decoration-none" onclick="deleteMismatch(event)">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"></path>
+                                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex justify-content-end mt-4">
+                        <div id="add-mismatch" onclick=""  class="px-4 py-2 btn btn-success me-2">Add Mismatch</div>
+                    </div>
+                </div>
+            </form>
+        </div>
     {% endif %}
-
-    {% if cls and batch %}
 
     {% endif %}
 </div>
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-      const deleteLinks = document.querySelectorAll(".delete-link");
-      const modal = document.getElementById("deleteConfirmationModal");
-      const confirmButton = document.getElementById("confirmDeleteButton");
+      const mismatchesBtn = document.getElementById("mismatchesBtn");
+      const lessonPlanContainer = document.getElementById("lessonPlanContainer");
+      const modal = document.getElementById("mismatchesModal");
+      const confirmButton = document.getElementById("confirmButton");
       const cancelButton = document.getElementById("cancelButton");
-  
-      let deleteUrl = "";
-  
-      deleteLinks.forEach(link => {
-        link.addEventListener("click", function (event) {
-          event.preventDefault();
-          document.getElementsByTagName('html')[0].style.overflow = 'hidden';
-          document.getElementsByTagName('body')[0].style.overflow = 'hidden';
-          deleteUrl = `/lesson/delete-lecture/${this.dataset.cls_id}/${this.dataset.batch_id}/${this.dataset.lecture_id}`; // Construct the delete URL
 
-          const scrollPosition = window.scrollY || document.documentElement.scrollTop;
-          modal.style.top = `${scrollPosition}px`;
-          modal.classList.remove('d-none');
-        });
-      });
-  
-      confirmButton.addEventListener("click", function () {
-        if (deleteUrl) {
-          window.location.href = deleteUrl; // Redirect to the delete URL
-        }
+    mismatchesBtn.addEventListener("click", function () {
+        lessonPlanContainer.classList.add("d-none");
+
+        const scrollPosition = window.scrollY || document.documentElement.scrollTop;
+        modal.style.top = `${scrollPosition}px`;
+        modal.classList.remove('d-none');
       });
   
       cancelButton.addEventListener("click", function () {
         modal.classList.add("d-none");
         document.getElementsByTagName('html')[0].style.overflow = 'auto';
         document.getElementsByTagName('body')[0].style.overflow = 'auto';
+        lessonPlanContainer.classList.remove("d-none");
+
       });
     });
 </script>
 
+<script>
+function getMismatchHTML() {
+    // Use template literals and Django template tags for reasons
+    return `
+        <li draggable="true" class="draggable list-group-item d-flex align-items-md-center">
+            <div class="d-flex gap-2 gap-md-4 flex-column flex-md-row w-100">
+                <select class="form-select mismatch_reason" style="width: fit-content;" name="mismatch_reason" required>
+                    <option value="">Select reason</option>
+                    {% for reason in mismatch_reason_choices %}
+                    <option value="{{reason.0}}">{{reason.0}}</option>
+                    {% endfor %}
+                </select>
+                <input type="date" class="form-control mismatch_date" style="width: fit-content;" required>
+                <input type="text" class="form-control mismatch_remark" value="" placeholder="remark...">
+                <input type="hidden" class="form-control mismatch_data" name="mismatches[]" value=": : :" required>
+                <div class="px-2 py-2 d-flex align-items-center justify-content-center btn btn-outline-danger fw-semibold text-decoration-none" onclick="deleteMismatch(event)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"></path>
+                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
+                    </svg>
+                </div>
+            </div>
+        </li>
+    `;
+}
 
+function createElementFromHTML(htmlString) {
+    var div = document.createElement('div');
+    div.innerHTML = htmlString.trim();
+    return div.firstChild;
+}
+
+function addMismatch() {
+    const container = document.querySelector('#mismatchesModal .drag-container');
+    const newMismatch = createElementFromHTML(getMismatchHTML());
+    container.appendChild(newMismatch);
+    bindMismatchInputListeners(newMismatch);
+    updateMismatchInputs();
+}
+
+function updateMismatchInputs() {
+    const items = document.querySelectorAll('#mismatchesModal .draggable');
+    items.forEach((item) => {
+        const reason = item.querySelector('.mismatch_reason').value.trim();
+        const date = item.querySelector('.mismatch_date').value.trim();
+        const remark = item.querySelector('.mismatch_remark').value.trim();
+        const hiddenInput = item.querySelector('.mismatch_data');
+        // For new mismatches, id is empty
+        hiddenInput.value = `:${reason}:${date}:${remark}`;
+    });
+}
+
+function bindMismatchInputListeners(item) {
+    // If item is provided, bind only to that item, else bind to all
+    const items = item ? [item] : document.querySelectorAll('#mismatchesModal .draggable');
+    items.forEach((itm) => {
+        itm.querySelector('.mismatch_reason').addEventListener('change', updateMismatchInputs);
+        itm.querySelector('.mismatch_date').addEventListener('input', updateMismatchInputs);
+        itm.querySelector('.mismatch_remark').addEventListener('input', updateMismatchInputs);
+    });
+}
+
+function deleteMismatch(event) {
+    const li = event.target.closest('li.draggable');
+    if (li) {
+        li.remove();
+        updateMismatchInputs();
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    const addMismatchBtn = document.getElementById("add-mismatch");
+    if (addMismatchBtn) {
+        addMismatchBtn.addEventListener("click", addMismatch);
+    }
+    bindMismatchInputListeners();
+});
+</script>
 
 {% endblock dashboard %}

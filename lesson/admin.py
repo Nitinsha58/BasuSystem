@@ -3,9 +3,9 @@ from .models import ChapterSequence, Lesson, Holiday, Lecture, LectureMismatch, 
 
 @admin.register(LectureMismatch)
 class LectureMismatchAdmin(admin.ModelAdmin):
-    list_display = ('lesson', 'reason', 'date', 'created_at')
+    list_display = ('reason', 'date', 'created_at')
     list_filter = ('reason', 'date')
-    search_fields = ('lesson__topic', 'reason')
+    search_fields = ('date', 'reason')
     ordering = ('-date',)
 
 @admin.register(LectureDate)

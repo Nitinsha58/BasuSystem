@@ -79,13 +79,12 @@ class LectureDate(models.Model):
 
 class LectureMismatch(models.Model):
     REASON_CHOICES = [
-        ('Cancelled', 'Cancelled'), 
+        ('Cancelled', 'Cancelled'),
         ('Substitute', 'Substitute'),
         ('Extra Class', 'Extra Class'),
         ('Other', 'Other'),
     ]
-
-    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='mismatches')
+    batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name='lecture_mismatches')
     reason = models.CharField(max_length=20, choices=REASON_CHOICES)
     remark = models.TextField(null=True, blank=True)
     date = models.DateField()

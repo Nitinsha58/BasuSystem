@@ -3,7 +3,7 @@ from registration.models import (
     Batch, 
     )
 
-from lesson.models import ChapterSequence, Lesson, Holiday, LectureDate
+from lesson.models import ChapterSequence, Lesson, Holiday, LectureDate, LectureMismatch
 from django.utils.timezone import now, datetime
 
 from registration.models import Subject, ClassName
@@ -202,6 +202,68 @@ def lecture_plan(request, class_id=None, batch_id=None):
     latest_completed_lecture = get_latest_completed_lecture(batch) if batch else None
     available_dates = get_upcoming_available_dates(batch, all_lectures) if batch else []
     data = build_lesson_data(chapters, all_lectures, latest_completed_lecture, available_dates) if batch else {}
+    mismatches = LectureMismatch.objects.filter(batch=batch).order_by('date') if batch else LectureMismatch.objects.none()
+
+    if batch and request.method == 'POST':
+        # Handle mismatch creation, update, deletion using mismatches[]
+        mismatches_data = request.POST.getlist('mismatches[]')
+
+        submitted_ids = set()
+        parsed_mismatches = []
+
+        for mismatch_str in mismatches_data:
+            # Expected format: id:reason:date:remark
+            parts = mismatch_str.split(':')
+            mismatch_id = parts[0] if len(parts) > 0 and parts[0] else None
+            reason = parts[1] if len(parts) > 1 else ''
+            date_str = parts[2] if len(parts) > 2 else ''
+            remark = parts[3] if len(parts) > 3 else ''
+
+            try:
+                date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            except Exception:
+                messages.error(request, f"Invalid date format for mismatch: {date_str}")
+                continue
+
+            if mismatch_id:
+                submitted_ids.add(int(mismatch_id))
+                parsed_mismatches.append({
+                    'id': int(mismatch_id),
+                    'reason': reason,
+                    'date': date,
+                    'remark': remark
+                })
+            else:
+                parsed_mismatches.append({
+                    'id': None,
+                    'reason': reason,
+                    'date': date,
+                    'remark': remark
+                })
+
+        # Delete mismatches not in submitted_ids
+        existing_ids = set(mismatches.values_list('id', flat=True))
+        to_delete = existing_ids - submitted_ids
+        if to_delete:
+            LectureMismatch.objects.filter(id__in=to_delete, batch=batch).delete()
+
+        # Update or create mismatches
+        for mismatch in parsed_mismatches:
+            if mismatch['id']:
+                obj = get_object_or_404(LectureMismatch, id=mismatch['id'], batch=batch)
+                obj.reason = mismatch['reason']
+                obj.date = mismatch['date']
+                obj.remark = mismatch['remark']
+                obj.save()
+            else:
+                LectureMismatch.objects.create(
+                    batch=batch,
+                    reason=mismatch['reason'],
+                    date=mismatch['date'],
+                    remark=mismatch['remark']
+                )
+        messages.success(request, "Lecture mismatches updated.")
+        return redirect(reverse('lecture_plan_batch', args=[class_id, batch_id]))
 
     return render(request, 'lesson/lecture_plan.html', {
         'classes': classes,
@@ -211,6 +273,8 @@ def lecture_plan(request, class_id=None, batch_id=None):
         'data': dict(data),
         'today': today,
         'chapters': chapters,
+        'mismatches': mismatches,
+        'mismatch_reason_choices': LectureMismatch.REASON_CHOICES,
     })
 
 @login_required(login_url='login')
@@ -310,3 +374,4 @@ def add_bulk_lecture_dates(request, class_id=None, batch_id=None):
         'cls': cls,
         'batch': batch,
     })
+
