@@ -202,7 +202,7 @@ def lecture_plan(request, class_id=None, batch_id=None):
     latest_completed_lecture = get_latest_completed_lecture(batch) if batch else None
     available_dates = get_upcoming_available_dates(batch, all_lectures) if batch else []
     data = build_lesson_data(chapters, all_lectures, latest_completed_lecture, available_dates) if batch else {}
-    mismatches = LectureMismatch.objects.filter(batch=batch).order_by('date') if batch else LectureMismatch.objects.none()
+    mismatches = LectureMismatch.objects.filter(batch=batch).order_by('-date') if batch else LectureMismatch.objects.none()
 
     if batch and request.method == 'POST':
         # Handle mismatch creation, update, deletion using mismatches[]

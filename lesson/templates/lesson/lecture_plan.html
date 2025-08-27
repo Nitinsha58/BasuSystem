@@ -216,7 +216,15 @@
             <div class="container mt-3">
                 <ul class="list-group drag-container">
                     {% for mismatch in mismatches %}
-                    <li draggable="true" class="draggable list-group-item d-flex align-items-md-center">
+                    <li draggable="true" class="draggable list-group-item d-flex align-items-md-center 
+                        {% if mismatch.reason == 'Cancelled' %}
+                            bg-danger-subtle
+                        {% elif mismatch.reason == 'Extra Class' %}
+                            bg-success-subtle
+                        {% elif mismatch.reason == 'Substitute' %}
+                            bg-warning-subtle
+                        {% endif %}
+                    ">
                         <p class="m-0 me-2">{{forloop.counter}}. </p>
                         <div class="d-flex gap-2 gap-md-4 flex-column flex-md-row w-100">
                             <select class="form-select mismatch_reason" style="width: fit-content;" name="mismatch_reason" required>
