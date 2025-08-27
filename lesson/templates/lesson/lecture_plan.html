@@ -225,18 +225,17 @@
                             bg-warning-subtle
                         {% endif %}
                     ">
-                        <p class="m-0 me-2">{{forloop.counter}}. </p>
                         <div class="d-flex gap-2 gap-md-4 flex-column flex-md-row w-100">
                             <select class="form-select mismatch_reason" style="width: fit-content;" name="mismatch_reason" required>
+                                <option value="">Select reason</option>
                                 {% for reason in mismatch_reason_choices %}
-                                <option value="{{mismatch.reason}}" {% if reason.0 == mismatch.reason %} selected {% endif %}>{{reason.0}}</option>
+                                <option value="{{reason.0}}" {% if reason.0 == mismatch.reason %} selected {% endif %} >{{reason.0}}</option>
                                 {% endfor %}
                             </select>
-                            <input type="date" class="form-control mismatch_date" style="width: fit-content;" id="" value="{{mismatch.date|date:'Y-m-d'}}" required>
+                            <input type="date" class="form-control mismatch_date" style="width: fit-content;" value="{{mismatch.date|date:'Y-m-d'}}" required>
                             <input type="text" class="form-control mismatch_remark" value="{{mismatch.remark}}" placeholder="remark...">
-                            <input type="hidden" class="form-control mismatch_data" name="mismatches[]" value="{{mismatch.id}}:{{mismatch.reason}}:{{mismatch.date}}:{{mismatch.remark}}" required>
-                            
-                            <div  class="px-2 py-2 d-flex align-items-center justify-content-center btn btn-outline-danger fw-semibold text-decoration-none" onclick="deleteMismatch(event)">
+                            <input type="hidden" class="form-control mismatch_data" name="mismatches[]" value="{{mismatch.id}}:{{mismatch.reason}}:{{mismatch.date|date:'Y-m-d'}}:{{mismatch.remark}}" required>
+                            <div class="px-2 py-2 d-flex align-items-center justify-content-center btn btn-outline-danger fw-semibold text-decoration-none" onclick="deleteMismatch(event)">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
                                     <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"></path>
                                     <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
@@ -268,19 +267,18 @@
                 </div>
                 <div class="container mt-3">
                     <ul class="list-group drag-container">
-                        <li draggable="true" class="draggable list-group-item d-flex align-items-md-center">
+                        <li draggable="true" class="draggable list-group-item d-flex align-items-md-center ">
                             <div class="d-flex gap-2 gap-md-4 flex-column flex-md-row w-100">
                                 <select class="form-select mismatch_reason" style="width: fit-content;" name="mismatch_reason" required>
-                                    <option value="">Select reason</option>                 
+                                    <option value="">Select reason</option>
                                     {% for reason in mismatch_reason_choices %}
                                     <option value="{{reason.0}}">{{reason.0}}</option>
                                     {% endfor %}
                                 </select>
-                                <input type="date" class="form-control mismatch_date" style="width: fit-content;" id="" value="" required>
+                                <input type="date" class="form-control mismatch_date" style="width: fit-content;" required>
                                 <input type="text" class="form-control mismatch_remark" value="" placeholder="remark...">
-                                <input type="hidden" class="form-control mismatch_data" name="mismatches[]" value=":::" required>
-                                
-                                <div  class="px-2 py-2 d-flex align-items-center justify-content-center btn btn-outline-danger fw-semibold text-decoration-none" onclick="deleteMismatch(event)">
+                                <input type="hidden" class="form-control mismatch_data" name="mismatches[]" value=": : :" required>
+                                <div class="px-2 py-2 d-flex align-items-center justify-content-center btn btn-outline-danger fw-semibold text-decoration-none" onclick="deleteMismatch(event)">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
                                         <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"></path>
                                         <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
@@ -333,7 +331,7 @@
 function getMismatchHTML() {
     // Use template literals and Django template tags for reasons
     return `
-        <li draggable="true" class="draggable list-group-item d-flex align-items-md-center">
+        <li draggable="true" class="draggable list-group-item d-flex align-items-md-center ">
             <div class="d-flex gap-2 gap-md-4 flex-column flex-md-row w-100">
                 <select class="form-select mismatch_reason" style="width: fit-content;" name="mismatch_reason" required>
                     <option value="">Select reason</option>
@@ -376,8 +374,18 @@ function updateMismatchInputs() {
         const date = item.querySelector('.mismatch_date').value.trim();
         const remark = item.querySelector('.mismatch_remark').value.trim();
         const hiddenInput = item.querySelector('.mismatch_data');
-        // For new mismatches, id is empty
-        hiddenInput.value = `:${reason}:${date}:${remark}`;
+        console.log("Updated Mismatched Triggered. Reason:", reason, "Date:", date, "Remark:", remark);
+        if (hiddenInput) {
+            // If the hidden input already has an ID prefix, retain it
+
+            const parts = hiddenInput.value.split(':');
+            const idPart = parts[0] || '';
+            hiddenInput.value = `${idPart}:${reason}:${date}:${remark}`;
+        } else {
+            hiddenInput.value = `:${reason}:${date}:${remark}`;
+        }
+
+        console.log("Hidden Input Value Updated:", hiddenInput.value);
     });
 }
 
@@ -404,6 +412,8 @@ document.addEventListener("DOMContentLoaded", function () {
     if (addMismatchBtn) {
         addMismatchBtn.addEventListener("click", addMismatch);
     }
+
+    // Initial binding for existing mismatches
     bindMismatchInputListeners();
 });
 </script>
