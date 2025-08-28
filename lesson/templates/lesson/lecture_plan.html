@@ -22,6 +22,16 @@
                 </a>
             </div>
             {% endfor %}
+        {% elif request.user.registered_student %}
+            {% for c in classes %}
+                {% if c == request.user.registered_student.class_enrolled %}
+                <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+                    <a href="{% url 'lecture_plan_class' c.id %}" class="nav-link">
+                        <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
+                    </a>
+                </div>
+                {% endif %}
+            {% endfor %}
         {% else %}    
             {% for c in classes %}
             <div class="col-6 col-md-3 flex justify-content-center align-items-center">
@@ -57,6 +67,15 @@
                 </div>
                 {% endif %}
             {% endfor %}
+        {% elif request.user.registered_student %}
+            {% for b in request.user.registered_student.batches.all %}
+                <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+                    <a href="{% url 'lecture_plan_batch' cls.id b.id %}" class="nav-link">
+                        <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{b.section.name}} {{b.subject.name}}</div>
+                    </a>
+                </div>
+            {% endfor %}
+
         {% else %}
             {% for b in batches %}
                 <div class="col-6 col-md-3 flex justify-content-center align-items-center">
@@ -87,11 +106,13 @@
 
     {% if cls and batch %}
     <div class="mt-3 px-md-4" id="lessonPlanContainer">
+        {% if not request.user.registered_student %}
         <div class="my-4">
             <div class="col-12 d-flex justify-content-end">
                 <button type="submit" id="mismatchesBtn" class="btn btn-info">Mismatches</button>
             </div>
         </div>
+        {% endif %}
         <ul class="list-group ">
             {% for sq, lectures in data.items %}
             <li class="list-group-item p-3 gap-3 d-flex flex-column">
