@@ -434,7 +434,8 @@ def mentor_students(request):
         else:
             mentorships = Mentorship.objects.filter(
                 active=True,
-                student__class_enrolled=class_name
+                student__class_enrolled=class_name,
+                student__active=True,
             )
         class_mentorships[class_name] = mentorships
     
