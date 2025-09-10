@@ -57,10 +57,19 @@ class AttendanceAdmin(admin.ModelAdmin):
     
 
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ['user_full_name', 'created_at', 'updated_at']
-    search_fields = ['user__first_name', 'user__last_name', 'user__phone',
-                     'batches__class_name__name', 'batches__section__name', 'batches__subject__name']
-    list_filter = ['batches__class_name', 'batches__section', 'batches__subject']
+    list_display = [
+        'user_full_name', 'email', 'user__phone', 'gender', 'dob', 'doj', 'school_name',
+        'class_enrolled', 'course', 'program_duration', 'marksheet_submitted', 'sat_score',
+        'active', 'created_at', 'updated_at'
+    ]
+    search_fields = [
+        'user__first_name', 'user__last_name', 'user__phone', 'email',
+        'school_name', 'aadhar_card_number'
+    ]
+    list_filter = [
+        'gender', 'course', 'program_duration', 'class_enrolled',
+        'marksheet_submitted', 'active', 'created_at'
+    ]
     ordering = ['user__first_name', 'user__last_name']
     actions = ['export_students_csv']
     list_per_page = 500
@@ -109,6 +118,35 @@ class StudentAdmin(admin.ModelAdmin):
             ])
 
         return response
+
+    def export_students_with_section_csv(self, request, queryset):
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="students_with_sections.csv"'
+        writer = csv.writer(response)
+
+        # Write header
+        writer.writerow(['Student Name', 'Phone', 'Mother', 'Father', 'Sections (Section - Subject)'])
+
+        for student in queryset.select_related('user').prefetch_related('batches__section', 'batches__subject'):
+            sections = set()
+            for batch in student.batches.all():
+                section_name = batch.section.name if batch.section and batch.section.name else ''
+                subject_name = batch.subject.name if batch.subject and batch.subject.name else ''
+                if section_name or subject_name:
+                    combined = f"{section_name} - {subject_name}" if section_name and subject_name else section_name or subject_name
+                    sections.add(combined)
+            writer.writerow([
+                f"{student.user.first_name} {student.user.last_name}",
+                student.user.phone or '',
+                student.parent_details.mother_contact or '',
+                student.parent_details.father_contact or '',
+                ",".join(sections)
+            ])
+
+        return response
+
+    export_students_with_section_csv.short_description = "Export students with sections (Section - Subject) as CSV"
+    actions.append('export_students_with_section_csv')
 
     export_students_with_subject_csv.short_description = "Export students with subjects as CSV"
     actions.append('export_students_with_subject_csv')
