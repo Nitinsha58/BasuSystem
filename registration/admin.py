@@ -125,11 +125,16 @@ class StudentAdmin(admin.ModelAdmin):
         writer = csv.writer(response)
 
         # Write header
-        writer.writerow(['Student Name', 'Phone', 'Mother', 'Father', 'Sections (Section - Subject)'])
+        writer.writerow(['Student Name', 'Phone', 'Mother', 'Father', 'Classes', 'Sections (Section - Subject)'])
 
-        for student in queryset.select_related('user').prefetch_related('batches__section', 'batches__subject'):
+        for student in queryset.select_related('user').prefetch_related('batches__class_name', 'batches__section', 'batches__subject'):
+            classes = set()
             sections = set()
             for batch in student.batches.all():
+                # Collect class names
+                if batch.class_name and batch.class_name.name:
+                    classes.add(batch.class_name.name)
+                # Collect section-subject combinations
                 section_name = batch.section.name if batch.section and batch.section.name else ''
                 subject_name = batch.subject.name if batch.subject and batch.subject.name else ''
                 if section_name or subject_name:
@@ -140,12 +145,13 @@ class StudentAdmin(admin.ModelAdmin):
                 student.user.phone or '',
                 student.parent_details.mother_contact or '',
                 student.parent_details.father_contact or '',
+                ",".join(classes),
                 ",".join(sections)
             ])
 
         return response
 
-    export_students_with_section_csv.short_description = "Export students with sections (Section - Subject) as CSV"
+    export_students_with_section_csv.short_description = "Export students with classes and sections (Section - Subject) as CSV"
     actions.append('export_students_with_section_csv')
 
     export_students_with_subject_csv.short_description = "Export students with subjects as CSV"
