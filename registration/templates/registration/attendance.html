@@ -117,7 +117,7 @@
             </div>
 
             {% if lesson_info %}
-            <ul class="students-list list-group">
+            <ul class="students-list list-group" id="lesson_info">
                 <h3 class="fw-semibold mb-2">Lessons</h3>
                 {% if lesson_info and lesson_info.previous_lecture %}
                 <li class="student list-group-item p-2 
@@ -316,6 +316,28 @@ document.getElementById("all-input").addEventListener("change", function() {
 });
 </script>
 {% endif %}
+
+
+<script>
+    // get lesson_info element
+    const lessonInfo = document.getElementById('lesson_info');
+    function updateLessonInfoVisibility() {
+        const typeOption = document.getElementById('type-option');
+        const selectedType = typeOption.value;
+        if (lessonInfo) {
+            if (selectedType === 'Regular' || selectedType === 'Extra Class') {
+                lessonInfo.style.display = 'block';
+            } else {
+                lessonInfo.style.display = 'none';
+            }
+        }
+    }
+    // Initial check
+    updateLessonInfoVisibility();
+    // Listen for changes
+    document.getElementById('type-option').addEventListener('input', updateLessonInfoVisibility);
+    document.getElementById('type-option').addEventListener('change', updateLessonInfoVisibility);
+</script>
 
 <script>
     const statusLabels = {

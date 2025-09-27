@@ -717,7 +717,7 @@ def mark_attendance(request, class_id=None, batch_id=None):
         if status_data:
             lecture_id, lesson_id, status = status_data.split(':')
 
-            if status and date == datetime.today().date():
+            if status and date == datetime.today().date() and (selected_type == 'Regular' or selected_type == 'Extra Class'):
                 status = int(status)
                 if lecture_id:
                     try:
