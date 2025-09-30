@@ -230,7 +230,7 @@
             <div class="d-flex justify-content-between align-items-center">
                 <h3 class="text-xl font-semibold ">Mismatch</h3>
                 <div class="d-flex justify-content-end mt-4">
-                    <div id="cancelButton" class="px-4 py-2 btn btn-primary me-2">Cancel</div>
+                    <div id="cancelButtonMis" class="px-4 py-2 btn btn-primary me-2">Cancel</div>
                     <button id="confirmButton" type="submit" class="px-4 py-2 btn btn-warning ">Save</button>
                 </div>
             </div>
@@ -282,7 +282,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <h3 class="text-xl font-semibold ">Mismatch</h3>
                     <div class="d-flex justify-content-end mt-4">
-                        <div id="cancelButton" class="px-4 py-2 btn btn-primary me-2">Cancel</div>
+                        <div id="cancelButtonMis" class="px-4 py-2 btn btn-primary me-2">Cancel</div>
                         <button id="confirmButton" type="submit" class="px-4 py-2 btn btn-warning ">Save</button>
                     </div>
                 </div>
@@ -328,7 +328,7 @@
       const lessonPlanContainer = document.getElementById("lessonPlanContainer");
       const modal = document.getElementById("mismatchesModal");
       const confirmButton = document.getElementById("confirmButton");
-      const cancelButton = document.getElementById("cancelButton");
+      const cancelButtonMis = document.getElementById("cancelButtonMis");
 
     mismatchesBtn.addEventListener("click", function () {
         lessonPlanContainer.classList.add("d-none");
@@ -338,7 +338,7 @@
         modal.classList.remove('d-none');
       });
   
-      cancelButton.addEventListener("click", function () {
+      cancelButtonMis.addEventListener("click", function () {
         modal.classList.add("d-none");
         document.getElementsByTagName('html')[0].style.overflow = 'auto';
         document.getElementsByTagName('body')[0].style.overflow = 'auto';
@@ -437,6 +437,43 @@ document.addEventListener("DOMContentLoaded", function () {
     // Initial binding for existing mismatches
     bindMismatchInputListeners();
 });
+</script>
+
+
+<script>
+      document.addEventListener("DOMContentLoaded", function () {
+      const deleteLinks = document.querySelectorAll(".delete-link");
+      const deleteModal = document.getElementById("deleteConfirmationModal");
+      const confirmButton = document.getElementById("confirmDeleteButton");
+      const deleteCancelButton = document.getElementById("cancelButton");
+  
+      let deleteUrl = "";
+  
+      deleteLinks.forEach(link => {
+        link.addEventListener("click", function (event) {
+          event.preventDefault();
+          document.getElementsByTagName('html')[0].style.overflow = 'hidden';
+          document.getElementsByTagName('body')[0].style.overflow = 'hidden';
+          deleteUrl = `/lesson/delete-lecture/${this.dataset.cls_id}/${this.dataset.batch_id}/${this.dataset.lecture_id}/`; // Construct the delete URL
+
+          const scrollPosition = window.scrollY || document.documentElement.scrollTop;
+          deleteModal.style.top = `${scrollPosition}px`;
+          deleteModal.classList.remove('d-none');
+        });
+      });
+  
+      confirmButton.addEventListener("click", function () {
+        if (deleteUrl) {
+          window.location.href = deleteUrl; // Redirect to the delete URL
+        }
+      });
+  
+      deleteCancelButton.addEventListener("click", function () {
+        deleteModal.classList.add("d-none");
+        document.getElementsByTagName('html')[0].style.overflow = 'auto';
+        document.getElementsByTagName('body')[0].style.overflow = 'auto';
+      });
+    });
 </script>
 
 {% endblock dashboard %}
