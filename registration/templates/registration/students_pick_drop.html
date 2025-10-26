@@ -20,13 +20,19 @@
     <div class="row g-4 mx-2">
         <ul class="pagination">
             <li class="page-item m-0"><a class="m-0 page-link" href="?date={{ prev_date|date:'Y-m-d' }}">Previous</a></li>
-            <li class="page-item m-0"><p class="m-0 page-link text-dark text-nowrap">{{date|date:'Y-m-d'}}</p></li> 
+            <li class="page-item m-0">
+                <p class="m-0 page-link text-dark text-nowrap">{{date|date:'D'}}: {{date|date:'Y-m-d'}}</p>
+            </li> 
             <li class="page-item m-0"><a class="m-0 page-link" href="?date={{ next_date|date:'Y-m-d' }}">Next</a></li>
             {% if request.user.is_superuser %}
                 <a href="{% url 'drivers_list' %}" style="height: fit-content;" class="btn btn-primary ms-2">Go Back</a>
             {% endif %} 
         </ul>
+        <div class="m-0 mb-2">
+            <p class="mb-0">{{date|date:'D'}}</p>
+        </div>
         
+
         <div class="m-0 mb-2">
             <h5 class="mb-1">Driver: {{ driver.name }}</h5>
             <p class="mb-0">Phone: {{ driver.user.phone }}</p>
