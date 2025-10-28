@@ -15,6 +15,8 @@
                 {% else %}
                 <p class="btn btn-warning m-0">Recommend for {{recommendation_label}}</p>
                 {% endif %} 
+                
+                <p class="btn btn-danger m-0" id="mentor-remarks-btn">Mentor Remarks</p>
             </p>
         </div>
         <div class="mb-3">
@@ -361,6 +363,87 @@
     {% endif %}
 
 </div>
+
+<div id="MentorRemarksModal"
+    class="d-none position-absolute start-0 w-100 vh-100 position-absolute d-flex items-center align-items-center justify-content-center bg-black bg-opacity-50">
+    <div class="bg-white rounded-lg shadow-lg p-4 rounded " style="max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
+        <h3 class="text-xl font-semibold mb-1">{{student.user.first_name}} {{student.user.last_name}}'s Remarks</h3>
+        <p class="mb-4">Add remarks or details about parent discussion.</p>
+        
+        <div class="search-form ">
+            <form class="d-flex flex-column" action="{% url 'add-student-remarks' mentor.id student.stu_id %}" method="POST" id="add-remark-form">
+                {% csrf_token %}
+                <textarea name="student_remark" class="form-control search-input p-2 my-2" rows="4" id="search-stu-input" 
+                    placeholder="Add remarks..." autocomplete="off" ></textarea>
+
+                <div class="d-flex justify-content-between">
+                    <button id="cancelButton" class="px-4 py-2 btn btn-primary me-2">Cancel</button>
+                    <button class="btn btn-warning text-nowrap" id="add-remark-btn">Add Remark</button>
+                </div>
+            </form>
+
+            <ul class="p-0 mt-5 rounded" id="remarks-list">
+                {% for remark in student_remarks %}
+                <li class="list-group-item list-group-item-action align-items-center d-flex w-100 mb-3 gap-2">
+                    <div class="bg-light p-2 rounded w-100">
+                        <p class="mb-1">{{forloop.counter}}. {{remark.remark}}</p>
+                        <small>Added by {{remark.added_by.first_name}}</small>
+                        <div class="d-flex w-100 justify-content-end">
+                            <small> {{remark.created_at|date:'d M Y'}}</small>
+                        </div>
+                    </div>
+                    {% if request.user.is_superuser %}
+                    <div class="bg-light p-2 rounded">
+                        <a href="{% url 'delete-student-remark' remark.id mentor.id student.stu_id %}" data-mentor_id="{{mentor.id}}" data-remark_id="{{remark.id}}" data-stu_id="{{student.stu_id}}" class="delete-link btn btn-danger btn-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"></path>
+                                <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
+                            </svg>
+                        </a>
+                    </div>
+                    {% endif %}
+
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const mentorRemarksBtn = document.querySelector("#mentor-remarks-btn");
+        const modal = document.getElementById("MentorRemarksModal");
+        const cancelButton = document.getElementById("cancelButton");
+        let scrollPosition = 0;
+
+        if (mentorRemarksBtn && modal) {
+            mentorRemarksBtn.addEventListener("click", function (event) {
+                event.preventDefault();
+                scrollPosition = window.scrollY || document.documentElement.scrollTop || 0;
+                modal.style.top = `${scrollPosition}px`;
+                modal.classList.remove("d-none");
+
+                // Stop body/html scrolling
+                document.documentElement.style.overflow = "hidden";
+                document.body.style.overflow = "hidden";
+            });
+        }
+
+        if (cancelButton && modal) {
+            cancelButton.addEventListener("click", function () {
+                modal.classList.add("d-none");
+
+                // Re-enable scrolling
+                document.documentElement.style.overflow = "";
+                document.body.style.overflow = "";
+
+                // Optional: ensure page stays at previous scroll position (usually not needed)
+                window.scrollTo(0, scrollPosition);
+            });
+        }
+    });
+</script>
 
 <script>
     document.getElementById('doj').valueAsDate = new Date();

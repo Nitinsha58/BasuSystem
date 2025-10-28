@@ -525,6 +525,16 @@ class MentorRemark(models.Model):
     class Meta:
         unique_together = ('mentor', 'student', 'start_date', 'end_date')
 
+class StudentRemark(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="student_remarks")
+    remark = models.TextField(blank=True, null=True)
+    added_by = models.ForeignKey(BaseUser, on_delete=models.CASCADE, related_name="added_student_remarks")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.student.user.first_name} - Remark by {self.added_by.first_name}"
+
 class StudentTestRemark(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="test_remarks")
     test = models.ForeignKey(Test, on_delete=models.CASCADE, related_name="test_remarks")

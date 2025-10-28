@@ -17,6 +17,8 @@ from .views import (
     compare_student_performance,
     update_recommendation,
     update_remark,
+    add_student_remarks,
+    delete_student_remark,
 )
 
 urlpatterns = [
@@ -43,4 +45,7 @@ urlpatterns = [
 
     path("update-recommendation/", update_recommendation, name="update-recommendation"),
     path("update-remark/<int:test_id>/<uuid:student_id>/", update_remark, name="update-remark"),
+
+    path("add-student-remarks/<int:mentor_id>/<uuid:stu_id>/", add_student_remarks, name="add-student-remarks"),
+    path("delete-student-remark/<int:remark_id>/<int:mentor_id>/<uuid:stu_id>/",delete_student_remark, name="delete-student-remark"),
 ]

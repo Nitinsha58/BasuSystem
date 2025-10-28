@@ -31,6 +31,7 @@ from .models import (
     ReportPositive,
     StudentBatchLink,
     StudentTestRemark,
+    StudentRemark,
     )
 from .forms import TeacherForm, MentorForm
 import csv
@@ -201,6 +202,12 @@ class MentorRemarkAdmin(admin.ModelAdmin):
     list_filter = ['mentor', 'student']
     ordering = ['created_at']
 
+class StudentRemarkAdmin(admin.ModelAdmin):
+    list_display = ['student', 'added_by', 'remark', 'created_at']
+    search_fields = ['student__user__first_name', 'student__user__last_name', 'added_by__first_name', 'added_by__last_name']
+    list_filter = ['student', 'added_by']
+    ordering = ['created_at']
+
 class ActionAdmin(admin.ModelAdmin):
     list_display = ['name', 'created_at']
     search_fields = ['name']
@@ -298,3 +305,4 @@ admin.site.register(ReportNegative, ReportNegativeAdmin)
 admin.site.register(ReportPositive, ReportPositiveAdmin)
 
 admin.site.register(StudentBatchLink, StudentBatchLinkAdmin)
+admin.site.register(StudentRemark, StudentRemarkAdmin)

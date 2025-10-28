@@ -24,6 +24,7 @@ from registration.models import (
     ReportPositive,
     Recommendation,
     StudentTestRemark,
+    StudentRemark,
     )
 from django.utils import timezone
 from collections import defaultdict
@@ -575,6 +576,7 @@ def teacher_report(request, teacher_id):
 def mentor_remarks(request, mentor_id, student_id):
     mentor = Mentor.objects.filter(id=mentor_id).first()
     student = Student.objects.filter(stu_id=student_id).first()
+    student_remarks = StudentRemark.objects.filter(student=student).order_by('-created_at')
 
     if not mentor or not student:
         messages.error(request, "Invalid Mentor or Student")
@@ -716,6 +718,7 @@ def mentor_remarks(request, mentor_id, student_id):
         'recommendation_label': recommendation_label,
         'positives': ReportPositive.objects.all().order_by('name'),
         'negatives': ReportNegative.objects.all().order_by('name'),
+        'student_remarks': student_remarks,
     })
 
 
@@ -899,3 +902,33 @@ def update_remark(request, test_id, student_id):
             traceback.print_exc()
             return HttpResponse(f"Server error: {e}", status=500)
     return HttpResponseBadRequest("Only POST allowed")
+
+@login_required(login_url='login')
+def add_student_remarks(request, mentor_id, stu_id):
+    student = Student.objects.filter(stu_id=stu_id).first()
+    if stu_id and not student:
+        messages.error(request, "Invalid Student")
+        return redirect('student_report', stu_id=stu_id)
+
+    if request.method == 'POST':
+        remark_text = request.POST.get('student_remark')
+        if remark_text:
+            StudentRemark.objects.create(
+                student=student,
+                remark=remark_text,
+                added_by=request.user
+            )
+            messages.success(request, "Remark added successfully")
+            return redirect('mentor_remarks', mentor_id=mentor_id, student_id=stu_id)
+
+    return redirect('mentor_remarks', mentor_id=mentor_id, student_id=stu_id)
+
+@login_required(login_url='login')
+def delete_student_remark(request, remark_id, mentor_id, stu_id):
+    remark = StudentRemark.objects.filter(id=remark_id).first()
+    if remark:
+        remark.delete()
+        messages.success(request, "Remark deleted successfully")
+    else:
+        messages.error(request, "Remark not found")
+    return redirect('mentor_remarks', mentor_id=mentor_id, student_id=stu_id)
