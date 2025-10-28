@@ -32,10 +32,17 @@ def installments(request):
         .filter(due_date__range=(start_date, end_date), student__active=True) \
         .order_by('due_date')
 
+    status_type = request.GET.get('status_type', 'all')  # default is 'all'
+
+
     # Group installments by due date
     installments_by_date = defaultdict(list)
     for inst in installments:
-        # Determine reminder type based on due date and payment status
+        if status_type == 'pending' and inst.paid:
+            continue
+        if status_type == 'done' and not inst.paid:
+            continue
+
         if not inst.paid:
             amount_str = f"₹{inst.amount:,.0f}"
             due_date_str = inst.due_date.strftime('%d %B %Y')
@@ -98,6 +105,18 @@ def installments(request):
     prev_month = (start_date - timedelta(days=1)).replace(day=1)
     next_month = (end_date + timedelta(days=1)).replace(day=1)
 
+    type_monthly_collection = None
+    payment_types = Installment.PAYMENT_CHOICES
+
+    if 'type_of_payment' in request.GET:
+        type_of_payment = request.GET.get('type_of_payment')
+        # calculate the total amount collected for the selected payment type
+        type_monthly_collection = sum(
+            inst.amount for inst in installments
+            if inst.paid and inst.payment_type == type_of_payment
+        )
+
+        print(type_of_payment, type_monthly_collection)
 
     return render(request, 'accounts/installments.html', {
         'dates': merged_data,
@@ -107,5 +126,9 @@ def installments(request):
         'next_month': {'year': next_month.year, 'month': next_month.month},
         'monthly_collected': monthly_collection,
         'monthly_pending': monthly_pending,
-        'total' : total
+        'total' : total,
+        'type_monthly_collection': type_monthly_collection,
+        'payment_types': payment_types,
+        'selected_type': request.GET.get('type_of_payment', None),
+        'status_type': status_type,
     })

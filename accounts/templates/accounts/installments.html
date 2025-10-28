@@ -28,7 +28,31 @@
         </ul>
       </div>
     </div>
-    <div></div>
+
+    <div >
+        <form id="" action="" method="get" class="d-flex gap-4">
+            <div>
+                <select class="form-select" name="type_of_payment" aria-label="Default select example" onchange="this.form.submit()">
+                    {% for key, value in payment_types %}
+                        <option value="{{ key }}" {% if selected_type == key %} selected {% endif %}>{{ value }}</option>
+                    {% endfor %}
+                </select>
+    
+                {% if type_monthly_collection %}
+                    <p class="mt-2">Collected: {{ type_monthly_collection }}</p>
+                {% endif %}
+
+            </div>
+            <div>
+                <select class="form-select" name="status_type" aria-label="Default select example" id="status_type" onchange="this.form.submit()">
+                        <option value="all" {% if status_type == 'all' %} selected {% endif %}>All</option>
+                        <option value="pending" {% if status_type == 'pending' %} selected {% endif %}>Pending</option>
+                        <option value="done" {% if status_type == 'done' %} selected {% endif %}>Done</option>
+                </select>
+            </div>
+        </form>
+    </div>
+
     <div class="">
         <h2>{{ current_month|date:"F Y" }}</h2>
         <div class="stats d-flex justify-content-between align-items-center">
@@ -103,11 +127,7 @@
                             {% elif not inst.paid and inst.due_date < today %}
                             <p class="rounded px-2 py-1 m-0" id="status" name="status"  style="background: #FF7C7C; width: fit-content; ">Pending Payment</p>
                             {% endif %}
-                            {% if followup.inquiry.stationary_partner %}
-                            <p class="m-0 me-2 mb-2 position-absolute end-0 bottom-0 bg-warning-subtle rounded p-1" style="font-size: 14px;">{{followup.inquiry.stationary_partner.name}}</p>
-                            {% elif followup.admission_counsellor %}
-                            <p class="m-0 me-2 mb-2 position-absolute end-0 bottom-0" style="font-size: 14px;">{{followup.admission_counsellor.user.first_name}} {{followup.admission_counsellor.user.last_name}}</p>
-                            {% endif %}
+                            
                         </a>
                     </li>
                 {% endfor %}
