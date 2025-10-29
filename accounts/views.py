@@ -110,13 +110,26 @@ def installments(request):
 
     if 'type_of_payment' in request.GET:
         type_of_payment = request.GET.get('type_of_payment')
-        # calculate the total amount collected for the selected payment type
-        type_monthly_collection = sum(
-            inst.amount for inst in installments
-            if inst.paid and inst.payment_type == type_of_payment
-        )
 
-        print(type_of_payment, type_monthly_collection)
+        # First filter by status
+        filtered_installments = []
+        for inst in installments:
+            if status_type == 'pending' and not inst.paid:
+                filtered_installments.append(inst)
+            elif status_type == 'done' and inst.paid:
+                filtered_installments.append(inst)
+            elif status_type == 'all':
+                filtered_installments.append(inst)
+
+        # Then filter by payment type
+        if type_of_payment == 'any':
+            type_monthly_collection = sum(inst.amount for inst in filtered_installments if inst.paid)
+        else:
+            type_monthly_collection = sum(
+                inst.amount for inst in filtered_installments 
+                if inst.payment_type == type_of_payment
+            )
+
 
     return render(request, 'accounts/installments.html', {
         'dates': merged_data,

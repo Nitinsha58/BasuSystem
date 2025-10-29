@@ -33,16 +33,17 @@
         <form id="" action="" method="get" class="d-flex gap-4">
             <div>
                 <select class="form-select" name="type_of_payment" aria-label="Default select example" onchange="this.form.submit()">
+                    <option value="any" {% if selected_type == 'any' %} selected {% endif %}>Any</option>
                     {% for key, value in payment_types %}
                         <option value="{{ key }}" {% if selected_type == key %} selected {% endif %}>{{ value }}</option>
                     {% endfor %}
                 </select>
     
                 {% if type_monthly_collection %}
-                    <p class="mt-2">Collected: {{ type_monthly_collection }}</p>
+                    <p class="mt-2">{{ type_monthly_collection }}</p>
                 {% endif %}
-
             </div>
+
             <div>
                 <select class="form-select" name="status_type" aria-label="Default select example" id="status_type" onchange="this.form.submit()">
                         <option value="all" {% if status_type == 'all' %} selected {% endif %}>All</option>
@@ -50,6 +51,11 @@
                         <option value="done" {% if status_type == 'done' %} selected {% endif %}>Done</option>
                 </select>
             </div>
+
+            <input type="number" name="year" hidden id="" value="{{ current_month.year }}">
+            <input type="number" name="month" hidden id="" value="{{ current_month.month }}">
+
+
         </form>
     </div>
 
