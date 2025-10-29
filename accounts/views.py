@@ -123,7 +123,7 @@ def installments(request):
 
         # Then filter by payment type
         if type_of_payment == 'any':
-            type_monthly_collection = sum(inst.amount for inst in filtered_installments if inst.paid)
+            type_monthly_collection = sum(inst.amount for inst in filtered_installments)
         else:
             type_monthly_collection = sum(
                 inst.amount for inst in filtered_installments 
