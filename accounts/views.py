@@ -35,12 +35,18 @@ def installments(request):
     status_type = request.GET.get('status_type', 'all')  # default is 'all'
 
 
+    type_of_payment = request.GET.get('type_of_payment')
+
     # Group installments by due date
     installments_by_date = defaultdict(list)
     for inst in installments:
         if status_type == 'pending' and inst.paid:
             continue
         if status_type == 'done' and not inst.paid:
+            continue
+            
+        # Filter by payment type if specified
+        if type_of_payment and type_of_payment != 'any' and inst.payment_type != type_of_payment:
             continue
 
         if not inst.paid:
