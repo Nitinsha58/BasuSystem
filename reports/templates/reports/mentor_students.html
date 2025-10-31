@@ -4,6 +4,9 @@
 
 {% block dashboard %}
 <div class="container p-4 bg-warning-subtle">
+  <div class="my-2">
+    <a href="{% url 'staff_dashboard' %}" class="btn btn-primary">Go Back</a>
+  </div>
   {% if class_mentorships %}
   <div class="row shuffle bg-warning-subtle" data-masonry='{"percentPosition": true }' id="batches">
     {% for cls, mentorships in class_mentorships.items %}

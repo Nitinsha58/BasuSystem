@@ -451,6 +451,46 @@ def mentor_students(request):
 
 
 @login_required(login_url='login')
+def teacher_students(request):
+    teacher = getattr(request.user, 'teachers', None)
+
+    if not (teacher or request.user.is_superuser):
+        messages.error(request, "You are not authorized to view this page.")
+        return redirect('staff_dashboard')
+
+    classes = ClassName.objects.all().order_by('created_at')
+    class_students = {}
+
+    for class_name in classes:
+        # batches for this class assigned to the teacher (or all batches if superuser)
+        if teacher:
+            batches = teacher.batches.filter(class_name=class_name).order_by('-created_at')
+        else:
+            batches = Batch.objects.filter(class_name=class_name).order_by('-created_at')
+
+        # build batchwise student lists and a deduplicated classwise list
+        class_student_set = []
+        seen = set()
+        for batch in batches:
+            students_qs = Student.objects.filter(batches=batch, active=True).order_by(
+                '-created_at', 'user__first_name', 'user__last_name'
+            ).distinct()
+            students = list(students_qs)
+            for s in students:
+                if s.stu_id not in seen:
+                    seen.add(s.stu_id)
+                    class_student_set.append(s)
+
+        # only add classes that have at least one batch or student
+        if class_student_set:
+            class_students[class_name] = class_student_set
+
+    return render(request, 'reports/teacher_students.html', {
+        'teacher': teacher,
+        'class_students': class_students,
+    })
+
+@login_required(login_url='login')
 def regular_absent_students(request):
     latest_date_str = request.GET.get('latest_date')
     n_days = request.GET.get('n_days', 2)  # default 3 days if not provided

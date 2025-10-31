@@ -6,7 +6,12 @@
 
 <div class="container-sm p-4 ">
     <div class="my-4 mt-2 g-3 bg-light rounded p-2 pb-3">
-        <a href="{% url 'mentor_students' %}" class="btn btn-primary">Go Back</a>
+        <div class="">
+            <a href="{% url 'mentor_students' %}" class="btn btn-primary">Go Back to Mentor List</a>
+            {% if request.user.teachers %}
+            <a href="{% url 'teacher_students' %}" class="btn btn-warning">Go Back to Students</a>
+            {% endif %}
+        </div>
         <div class="mb-2">
             <a href="{% url 'student_report' student.stu_id %}" target="_blank" class="border-0 h2" style="text-decoration: none;">{{student.user.first_name}} {{student.user.last_name}}'s Remark    ({{ start_date|date:'d M' }} - {{ end_date|date:'d M' }})</a>
             <p class="m-0 mb-1">{{student.class_enrolled}} - {{ student.subjects.all|join:", " }} 
@@ -16,7 +21,7 @@
                 <p class="btn btn-warning m-0">Recommend for {{recommendation_label}}</p>
                 {% endif %} 
                 
-                <p class="btn btn-danger m-0" id="mentor-remarks-btn">Mentor Remarks</p>
+                <p class="btn btn-danger m-0" id="mentor-remarks-btn">Student Remarks</p>
             </p>
         </div>
         <div class="mb-3">

@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load center_filters %}
+
+{% block dashboard %}
+<div class="container p-4 bg-warning-subtle">
+  <div class="my-2">
+      <a href="{% url 'staff_dashboard' %}" class="btn btn-primary">Go Back</a>
+  </div>
+  {% if class_students %}
+  <div class="row shuffle bg-warning-subtle" data-masonry='{"percentPosition": true }' id="batches">
+    {% for cls, students in class_students.items %}
+    <div class="col-sm-6 col-md-4 col-lg-3 category shuffle-item shuffle-item--visible mb-4">
+      <div class="card">
+        <ul class="list-group">
+          <li class="list-group-item bg-dark text-white list-group border-dark"> {{cls.name}}</li>
+          {% for student in students %}
+          <li style="position: relative;" class="list-group-item">
+            {% if student.active_mentorship %}
+            <a class="text-decoration-none text-dark" style="display: flex; justify-content: space-between;"
+              target="_blank" href="{% url 'mentor_remarks' student.active_mentorship.mentor.id student.stu_id %}">
+              <span class="">{{forloop.counter}}. {{student.user.first_name}}
+                {{student.user.last_name}}</span>
+            </a>
+            {% else %}
+            <span class="">{{forloop.counter}}. {{student.user.first_name}}
+              {{student.user.last_name}} 
+              <span class="text-danger">(No Mentor)</span>
+            </span>
+            {% endif %}
+            <p class="text-muted fw-normal m-0" style="font-size: 14px;">{{ student.user.first_name }} {{ student.user.last_name }}</p>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js"
+  integrity="sha384-GNFwBvfVxBkLMJpYMOABq3c+d3KnQxudP/mGPkzpZSTYykLBNsZEnG2D9G/X/+7D" crossorigin="anonymous" async>
+  </script>
+
+{% endblock dashboard %}

@@ -3,6 +3,7 @@ from .views import (
     student_report,
     batchwise_students,
     mentor_students,
+    teacher_students,
     student_personal_report,
     regular_absent_students,
     student_attendance_report,
@@ -37,6 +38,8 @@ urlpatterns = [
     path('regular_absent_students/', regular_absent_students, name='regular_absent_students'),
 
     # Teachers Reports
+    path('teacher_students/', teacher_students, name='teacher_students'),
+
     path('teachers_list/', teachers_list, name='teachers_list'),
     path('teacher_report/<int:teacher_id>/', teacher_report, name='teacher_report'),
 
