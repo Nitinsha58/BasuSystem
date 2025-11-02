@@ -109,6 +109,47 @@ def student_report(request, stu_id):
     batchwise_marks = get_batchwise_marks(student, start_date, end_date)
 
     # calendar_data = get_monthly_calendar(student, start_date, end_date)
+    batch_wise_tests = {}
+
+    for batch in batches:
+        tests = Test.objects.filter(batch=batch, date__range=(start_date, end_date)).order_by('-date')
+        test_reports = []
+
+        for test in tests:
+            test_chapters = get_chapters_from_questions(test)
+            responses = QuestionResponse.objects.filter(test=test, student=student).select_related('question', 'remark')
+            test_result = TestResult.objects.filter(test=test, student=student).first()
+
+            # If no responses and no result, mark as absent (same as student_report)
+            if not responses.exists() and not test_result:
+                test_reports.append({
+                    'test': test,
+                    'chapters': test_chapters,
+                    'absent': True,
+                })
+                continue
+
+            chapter_remarks = calculate_testwise_remarks(responses, test_chapters)
+            marks_data = calculate_marks(responses, test_chapters)
+
+            test_reports.append({
+                'test': test,
+                'chapters': test_chapters,
+                'marks_total': marks_data['total'],
+                'marks_deducated': marks_data['deducted'],
+                'marks_obtained': marks_data['obtained'],
+                'remarks': marks_data['remarks'],
+                'max_marks': marks_data['max_marks'],
+                'marks': {
+                    'percentage': marks_data['percentage'],
+                    'obtained_marks': marks_data['obtained_total'],
+                    'max_marks': marks_data['total_max'],
+                },
+                'chapter_wise_test_remarks': chapter_remarks,
+                'absent': False,
+            })
+
+        batch_wise_tests[batch] = test_reports
     return render(request, 'reports/student_report.html', {
         'student': student,
         'combined_attendance': combined_attendance,
@@ -122,7 +163,7 @@ def student_report(request, stu_id):
         'start_date': start_date,
         'end_date': end_date,
 
-        # 'batch_wise_tests': batch_wise_tests,
+        'batch_wise_tests': batch_wise_tests,
         'batches': batches,
     })
 
