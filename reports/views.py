@@ -1059,8 +1059,8 @@ def admin_report(request):
     ) if batches else dict()
 
     # Merge all batch data and filter/sort based on GET parameters
-    order_by = request.GET.get('order_by', 'attendance')  # Default sort by batch name
-    order_type = request.GET.get('order_type', 'asc')  # Default ascending
+    order_by = request.GET.get('order_by', 'test')  # Default sort by batch name
+    order_type = request.GET.get('order_type', 'desc')  # Default ascending
     # filter_by = request.GET.get('filter_by', 'all')  # Default show all metrics
 
     batch_data = []

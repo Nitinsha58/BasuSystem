@@ -115,7 +115,7 @@
     .stats-wrapper {
         display: flex;
         flex-direction: column;
-        align-items: center;
+        /* align-items: center; */
     }
 
     .stats-text {
@@ -197,7 +197,7 @@
                 </div>
             </div>
 
-            <div class="stats-wrapper">
+            <div class="stats-wrapper p-4">
                 <div  class="g-3 d-flex">
                     <div class="h-auto d-flex flex-1">
                         {% if batch_data %}
@@ -228,7 +228,7 @@
                                         {% if data.test %}
                                         <span class="fw-normal" >{{data.test}}%</span> 
                                         {% else %}
-                                        <span class="fw-normal btn bg-danger-subtle px-2 py-0" style="font-size: 12px;" >No Test</span> 
+                                        <span class="fw-normal btn bg-danger-subtle px-2 py-0" style="font-size: 14px; border: none;" >No Test</span> 
                                         {% endif %}
                                     </li>
                                 {% endfor %}
@@ -241,11 +241,11 @@
                                         {% elif data.attendance > 75 %} text-success
                                         {% elif data.attendance <= 50 and data.attendance > 25 %} text-warning
                                         {% elif data.attendance <= 75 and data.attendance > 50 %} text-primary
-                                        {% elif data.attendance <= 25 %} text-danger {% endif %}" style="font-size: 14px;">
+                                        {% elif data.attendance <= 25 %} text-danger {% endif %}" style="font-size: 14px; ">
                                         {% if data.attendance %}
                                         <span class="fw-normal" >{{data.attendance}}%</span> 
                                         {% else %}
-                                        <span class="fw-normal btn bg-danger-subtle px-2 py-0" style="font-size: 12px;" >No Attendance</span> 
+                                        <span class="fw-normal btn bg-danger-subtle px-2 py-0" style="font-size: 14px; border: none;" >No Attendance</span> 
                                         {% endif %}
                                     </li>
                                 {% endfor %}
@@ -264,7 +264,7 @@
                                         {% if data.homework %}
                                         <span class="fw-normal" >{{data.homework}}%</span> 
                                         {% else %}
-                                        <span class="fw-normal btn bg-danger-subtle px-2 py-0" style="font-size: 12px;" >No Homework</span> 
+                                        <span class="fw-normal btn bg-danger-subtle px-2 py-0" style="font-size: 14px; border: none;" >No Homework</span> 
                                         {% endif %}
                                     </li>
                                 {% endfor %}
