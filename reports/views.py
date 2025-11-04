@@ -57,6 +57,7 @@ from .utility import (
     get_student_retest_report,
     has_report,
     compare_student_performance_by_week,
+    get_batch_performance_over_time,
 )
 
 from .teachers_utility import (
@@ -65,7 +66,10 @@ from .teachers_utility import (
     get_teacher_combined_homework_performance,
     get_teacher_batchwise_homework_performance,
     get_teacher_marks_percentage,
-    get_teacher_batchwise_marks_performance
+    get_teacher_batchwise_marks_performance,
+    get_batches_test_performance,
+    get_batches_attendance_performance,
+    get_batches_homework_performance,
 )
 
 @login_required(login_url='login')
@@ -1013,3 +1017,141 @@ def delete_student_remark(request, remark_id, mentor_id, stu_id):
     else:
         messages.error(request, "Remark not found")
     return redirect('mentor_remarks', mentor_id=mentor_id, student_id=stu_id)
+
+
+@login_required(login_url='login')
+def admin_report(request):
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+
+    if start_date_str and end_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+        except ValueError:
+            messages.error(request, "Invalid date format")
+            return redirect('staff_dashboard')
+    else:
+        period = ReportPeriod.objects.all().order_by('-start_date').first()
+        if period:
+            start_date = period.start_date
+            end_date = period.end_date
+        else:
+            today = date.today()
+            start_date = today.replace(day=1)
+            end_date = today
+    
+    batches = Batch.objects.all()
+
+    batch_performance = get_batches_test_performance(
+        start_date,
+        end_date
+    ) if batches else dict()
+
+    batch_attendance = get_batches_attendance_performance(
+        start_date,
+        end_date
+    ) if batches else dict()
+
+    batch_homework = get_batches_homework_performance(
+        start_date,
+        end_date
+    ) if batches else dict()
+
+    # Merge all batch data and filter/sort based on GET parameters
+    order_by = request.GET.get('order_by', 'attendance')  # Default sort by batch name
+    order_type = request.GET.get('order_type', 'asc')  # Default ascending
+    # filter_by = request.GET.get('filter_by', 'all')  # Default show all metrics
+
+    batch_data = []
+    for batch in batches:
+        data = {
+            'batch': batch,
+            'attendance': batch_attendance.get(batch, 0),
+            'homework': batch_homework.get(batch, 0), 
+            'test': batch_performance.get(batch, 0)
+        }
+        batch_data.append(data)
+
+    # # Filter data if needed
+    # if filter_by == 'attendance':
+    #     batch_data = [d for d in batch_data if d['attendance'] > 0]
+    # elif filter_by == 'homework':
+    #     batch_data = [d for d in batch_data if d['homework'] > 0]
+    # elif filter_by == 'test':
+    #     batch_data = [d for d in batch_data if d['test'] > 0]
+
+    # Sort the data
+    reverse = order_type == 'desc'
+    if order_by == 'name':
+        batch_data.sort(key=lambda x: x['batch'].name, reverse=reverse)
+    elif order_by == 'attendance':
+        batch_data.sort(key=lambda x: x['attendance'], reverse=reverse)
+    elif order_by == 'homework':
+        batch_data.sort(key=lambda x: x['homework'], reverse=reverse)
+    elif order_by == 'test':
+        batch_data.sort(key=lambda x: x['test'], reverse=reverse)
+
+    return render(request, 'reports/admin_report.html', {
+        'batch_data': batch_data,
+        'order_by': order_by,
+        'order_type': order_type,
+        # 'filter_by': filter_by,
+        'start_date': start_date,
+        'end_date': end_date,
+    })
+    # return HttpResponse("Admin Report Page - Under Construction")
+
+# @login_required(login_url='login')
+# def teacher_report(request, teacher_id):
+#     teacher = Teacher.objects.filter(id=teacher_id).first()
+#     if not teacher:
+#         messages.error(request, "Invalid Teacher")
+#         return redirect('teachers_list')
+
+#     start_date_str = request.GET.get('start_date')
+#     end_date_str = request.GET.get('end_date')
+
+#     if start_date_str and end_date_str:
+#         try:
+#             start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+#             end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+#         except ValueError:
+#             messages.error(request, "Invalid date format")
+#             return redirect('teacher_report', teacher_id=teacher_id)
+#     else:
+#         period = ReportPeriod.objects.all().order_by('-start_date').first()
+#         if period:
+#             start_date = period.start_date
+#             end_date = period.end_date
+#         else:
+#             today = date.today()
+#             start_date = today.replace(day=1)
+#             end_date = today
+
+#     combined_attendance = get_teacher_attendance_performance(teacher, start_date, end_date)
+#     batchwise_attendance = get_teacher_batchwise_attendance_performance(teacher,start_date, end_date)
+#     combined_homework = get_teacher_combined_homework_performance(teacher, start_date, end_date)
+#     batchwise_homework = get_teacher_batchwise_homework_performance(teacher, start_date, end_date)
+#     combined_marks = get_teacher_marks_percentage(teacher, start_date, end_date)
+#     batchwise_marks = get_teacher_batchwise_marks_performance(teacher, start_date, end_date)
+
+#     return render(request, 'reports/teacher_report.html', {
+#         'teacher': teacher,
+#         'start_date': start_date,
+#         'end_date': end_date,
+
+#         'batches': teacher.batches.all().exclude(
+#             Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
+#             Q(section__name='CBSE') &
+#             Q(subject__name__in=['MATH', 'SCIENCE'])
+#         ),
+
+#         'combined_attendance': combined_attendance,
+#         'batchwise_attendance': batchwise_attendance,
+#         'combined_homework': combined_homework,
+#         'batchwise_homework': batchwise_homework,
+#         'combined_marks': combined_marks,
+#         'batchwise_marks': batchwise_marks,
+#     })
+

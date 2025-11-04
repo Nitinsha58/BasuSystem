@@ -20,6 +20,7 @@ from .views import (
     update_remark,
     add_student_remarks,
     delete_student_remark,
+    admin_report,
 )
 
 urlpatterns = [
@@ -39,6 +40,8 @@ urlpatterns = [
 
     # Teachers Reports
     path('teacher_students/', teacher_students, name='teacher_students'),
+    path('admin-report/', admin_report, name='admin_report'),
+
 
     path('teachers_list/', teachers_list, name='teachers_list'),
     path('teacher_report/<int:teacher_id>/', teacher_report, name='teacher_report'),

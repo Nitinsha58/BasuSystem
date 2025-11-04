@@ -14,6 +14,9 @@ from django.db import models
 from django.contrib import messages
 from django.shortcuts import render, redirect
 
+from datetime import date, timedelta
+import calendar
+
 def exclude_special_batches(batches):
     return batches.exclude(
         Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
@@ -234,3 +237,131 @@ def get_teacher_batchwise_marks_performance(teacher, start_date, end_date):
         }
 
     return result
+
+def get_batches_test_performance(start_date, end_date):
+    # default start date and enddate if not provided
+    if not start_date:
+        start_date = date.today() - timedelta(days=30)
+    if not end_date:
+        end_date = date.today()
+
+    batches = Batch.objects.all()
+    result = {}
+
+    for batch in batches:
+        tests = Test.objects.filter(batch=batch, date__range=(start_date, end_date))
+        students = Student.objects.filter(batches=batch, active=True)
+
+        if not tests.exists() or not students.exists():
+            continue
+
+        total_score = 0
+        total_tests = 0
+
+        for test in tests:
+            test_results_qs = TestResult.objects.filter(test=test, student__in=students)
+            if not test_results_qs.exists():
+                continue
+            avg_score = test_results_qs.aggregate(avg_score=models.Avg('percentage'))['avg_score'] or 0
+            total_score += avg_score
+            total_tests += 1
+
+        if total_tests == 0:
+            continue
+
+        avg_batch_score = total_score / total_tests
+        result[batch] = round(avg_batch_score, 2)
+
+    # return results sorted in descending order by average score
+    sorted_result = dict(sorted(result.items(), key=lambda kv: kv[1], reverse=True))
+    return sorted_result
+
+def get_batches_attendance_performance(start_date, end_date):
+    # default start date and enddate if not provided
+    if not start_date:
+        start_date = date.today() - timedelta(days=30)
+    if not end_date:
+        end_date = date.today()
+
+    batches = Batch.objects.all()
+    result = {}
+
+    for batch in batches:
+        students = Student.objects.filter(batches=batch, active=True)
+        if not students.exists():
+            continue
+
+        # consider each distinct session (date + type) as one attendance session
+        sessions = Attendance.objects.filter(batch=batch, date__range=(start_date, end_date)).values('date', 'type').distinct()
+        if not sessions:
+            continue
+
+        total_session_percentage = 0
+        session_count = 0
+
+        for s in sessions:
+            session_qs = Attendance.objects.filter(
+                batch=batch,
+                date=s['date'],
+                type=s['type'],
+                student__in=students
+            )
+            total_marked = session_qs.count()
+            if total_marked == 0:
+                continue
+            present_count = session_qs.filter(is_present=True).count()
+            session_percentage = (present_count / total_marked) * 100
+            total_session_percentage += session_percentage
+            session_count += 1
+
+        if session_count == 0:
+            continue
+
+        avg_batch_attendance = total_session_percentage / session_count
+        result[batch] = round(avg_batch_attendance, 2)
+
+    sorted_result = dict(sorted(result.items(), key=lambda kv: kv[1], reverse=True))
+    return sorted_result
+
+
+def get_batches_homework_performance(start_date, end_date):
+    # default start date and enddate if not provided
+    if not start_date:
+        start_date = date.today() - timedelta(days=30)
+    if not end_date:
+        end_date = date.today()
+
+    batches = Batch.objects.all()
+    result = {}
+
+    for batch in batches:
+        students = Student.objects.filter(batches=batch, active=True)
+        if not students.exists():
+            continue
+
+        # consider each distinct homework date as one homework session
+        homework_dates = Homework.objects.filter(batch=batch, date__range=(start_date, end_date)).values_list('date', flat=True).distinct()
+        if not homework_dates:
+            continue
+
+        total_date_percentage = 0
+        date_count = 0
+
+        for hw_date in homework_dates:
+            hw_qs = Homework.objects.filter(batch=batch, date=hw_date, student__in=students)
+            total_homeworks = hw_qs.count()
+            if total_homeworks == 0:
+                continue
+            completed_count = hw_qs.filter(status='Completed').count()
+            date_percentage = (completed_count / total_homeworks) * 100
+            total_date_percentage += date_percentage
+            date_count += 1
+
+        if date_count == 0:
+            continue
+
+        avg_batch_homework = total_date_percentage / date_count
+        result[batch] = round(avg_batch_homework, 2)
+
+    sorted_result = dict(sorted(result.items(), key=lambda kv: kv[1], reverse=True))
+    return sorted_result

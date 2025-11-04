@@ -1136,3 +1136,52 @@ def compare_student_performance_by_week(batch, start_date, end_date):
         'start_date': start_date,
         'end_date': end_date,
     }
+
+
+def get_batch_performance_over_time(batch, start_date, end_date):
+    """
+    For a given batch and date range, returns monthly average test percentages
+    for all students in the batch. it should create a list of batches with their average percentage, attendance, homework completion etc.
+    """
+    monthly_performance = []
+
+    current = date(start_date.year, start_date.month, 1)
+    last_date = date(end_date.year, end_date.month, calendar.monthrange(end_date.year, end_date.month)[1])
+
+    while current <= last_date:
+        tests_in_month = Test.objects.filter(
+            batch=batch,
+            date__range=(current, last_date)
+        )
+
+        students = Student.objects.filter(batches=batch, active=True)
+        total_percentage = 0
+        student_count = 0
+
+        for stu in students:
+            total_marks_obtained = 0
+            total_max_marks = 0
+            doj = getattr(stu, 'doj', None)
+
+            for test in tests_in_month:
+                if doj and test.date < doj:
+                    continue
+
+                result = TestResult.objects.filter(test=test, student=stu).first()
+                if result:
+                    total_marks_obtained += result.total_marks_obtained
+                    total_max_marks += result.total_max_marks
+
+            if total_max_marks > 0:
+                student_percentage = (total_marks_obtained / total_max_marks) * 100
+                total_percentage += student_percentage
+                student_count += 1
+
+        average_percentage = round((total_percentage / student_count), 2) if student_count > 0 else 0.0
+
+        monthly_performance.append({
+            'average_percentage': average_percentage,
+            'student_count': student_count,
+        })
+
+    return monthly_performance

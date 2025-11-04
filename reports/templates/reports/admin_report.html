@@ -1,0 +1,444 @@
+{% extends 'base.html' %}
+{% load mathfilters %}
+{% load static %}
+{% load center_filters %}
+
+
+{% block style %}
+<style>
+    .student_reg_doc {
+        position: relative;
+    }
+
+    .photo-frame {
+        position: absolute;
+        right: 0;
+        width: 100px;
+        height: 120px;
+        border: 1px solid #000;
+        margin: 0 auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+
+    p {
+        white-space: wrap;
+    }
+
+    @media print {
+        #toggle-btn {
+            display: none;
+        }
+
+        .navbar {
+            display: none;
+        }
+    }
+
+    .divider {
+        height: 100%;
+        width: 2px;
+        background-color: #000;
+        margin: 0 auto;
+    }
+
+    .attendance, .homework, .test {
+        display: flex;
+        flex-wrap: wrap;
+        /* justify-content: space-around; */
+        align-items: center;
+        gap: 20px;
+        justify-content: center;
+        width: fit-content;
+        text-decoration: none;
+        color: black;
+    }
+
+    .chart-box {
+        display: flex;
+        width: 100%;
+        min-width: 250px;
+        min-height: 50px;
+        max-width: 250px;
+        background-color: aqua;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .graph-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .graph-title {
+        font-size: 12px;
+        font-weight: 500;
+        margin-bottom: 5px;
+    }
+
+    h2 {
+        font-weight: 600;
+        margin-bottom: 10px;
+        margin-top: 2rem;
+    }
+
+
+    .ratios {
+        flex: 1;
+        color: white;
+        text-align: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 12px;
+        color: white;
+        overflow: visible;
+        z-index: 1;
+    }
+
+    .red {
+        background-color: #dc3545;
+    }
+
+    .green {
+        background-color: #28a745;
+    }
+
+    .blue {
+        background-color: #17a2b8;
+    }
+
+    .stats-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .stats-text {
+        width: 100%;
+        font-size: 14px;
+    }
+
+    .green-text {
+        color: #28a745;
+    }
+    .blue-text {
+        color: #17a2b8;
+    }
+    .red-text {
+        color: #dc3545;
+    }
+
+    @media screen and (max-width: 520px) {
+        .graph-box {
+            width: 100%;
+            max-width: 100%;
+            min-width: 100%;
+        }
+        .graph-container {
+            width: calc(100% - 30px);
+        }
+        .chart-box {
+            width: 100%;
+            min-width: 100%;
+            max-width: 100%;
+        }
+    }
+
+</style>
+
+{% endblock style %}
+
+{% block dashboard %}
+
+<div class="">
+
+    <div class="g-3 bg-light rounded pb-3" id="student_reg_doc">
+
+        <div class=" mt-4 donut_graph d-flex flex-column gap-2">
+            {% if request.user.is_superuser or request.user.teachers %}
+                <div class="bg-success-subtle p-1 d-flex rounded gap-2" style="width: fit-content;">
+                    <a href="{% url 'staff_dashboard' %}" class="btn btn-primary">Go Back</a>
+                </div>
+            {% endif %}
+            <div class="bg-success-subtle p-4 d-flex flex-column flex-md-row align-items-start">
+                <div class="ms-md-4 w-100">
+                    <form method="get" class="rounded p-md-2 pb-3 d-flex flex-md-row flex-md-row gap-2 align-items-end w-100" style="flex-wrap: wrap;">
+                        <div>
+                            <label for="order_by" class="form-label text-nowrap m-0 text-align-center">Order By</label>
+                            <select class="form-select" name="order_by" id="order_by" onchange="this.form.submit()">
+                                <option value="test" {% if order_by == 'test' %} selected {% endif %}>Test</option>
+                                <option value="attendance" {% if order_by == 'attendance' %} selected {% endif %}>Attendance</option>
+                                <option value="homework" {% if order_by == 'homework' %} selected {% endif %}>Homework</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="order_type" class="form-label text-nowrap m-0 text-align-center">Order Type</label>
+                            <select class="form-select" name="order_type" id="order_type" onchange="this.form.submit()">
+                                <option value="desc" {% if order_type == 'desc' %} selected {% endif %}>Desc</option>
+                                <option value="aesc" {% if order_type == 'aesc' %} selected {% endif %}>Aesc</option>
+                            </select>
+                        </div>
+                        <div class="">
+                            <label for="start_date" class="form-label text-nowrap m-0 text-align-center">Start Date: {{ start_date|date:'d M' }}</label>
+                            <input type="date" name="start_date" id="start_date" value="{{start_date|date:'Y-m-d'}}" class="form-control" style="max-width: 150px" required>
+                        </div>
+                        
+                        <div class="">
+                            <label for="end_date" class="form-label text-nowrap m-0 text-align-center">End Date: {{ end_date|date:'d M' }}</label>
+                            <input type="date" name="end_date" id="end_date" value="{{end_date|date:'Y-m-d'}}" class="form-control" style="max-width: 150px" required>
+                        </div>
+                        <button style="height: fit-content;" class="px-2 btn btn-warning" type="submit">Filter</button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="stats-wrapper">
+                <div  class="g-3 d-flex">
+                    <div class="h-auto d-flex flex-1">
+                        {% if batch_data %}
+                        <ul class="list-group me-3" style="min-width: fit-content;">
+                            <li class="list-group-item bg-dark text-white border-dark">Students</li>
+                            {% if request.user.is_superuser %}
+                            {% for data in batch_data %}
+                                
+                                <li class="list-group-item d-flex justify-content-between " style="font-size: 14px;">
+                                    <span class="">{{data.batch}}</span> 
+                                </li>
+                            
+                            {% endfor %}
+                            {% endif %}
+                        </ul>
+                        {% endif %}
+                        
+                        <div class="w-100 d-flex gap-3" style="overflow-x: scroll;">
+                            <ul class="list-group" style="min-width: fit-content;">
+                                <li class="list-group-item bg-dark text-white border-dark">Test</li>
+                                {% for data in batch_data %}
+                                    <li class="list-group-item d-flex justify-content-center fw-normal
+                                    {% if data.test == None %} text-danger
+                                    {% elif data.test > 75 %} text-success
+                                    {% elif data.test <= 50 and data.test > 25 %} text-warning
+                                    {% elif data.test <= 75 and data.test > 50 %} text-primary
+                                    {% elif data.test <= 25 %} text-danger {% endif %}" style="font-size: 14px;">
+                                        {% if data.test %}
+                                        <span class="fw-normal" >{{data.test}}%</span> 
+                                        {% else %}
+                                        <span class="fw-normal btn bg-danger-subtle px-2 py-0" style="font-size: 12px;" >No Test</span> 
+                                        {% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                            <ul class="list-group" style="min-width: fit-content;">
+                                <li class="list-group-item bg-dark text-white border-dark">Attendance</li>
+                                {% for data in batch_data %}
+                                    <li class="list-group-item d-flex justify-content-center 
+                                        {% if data.test == None %} text-danger
+                                        {% elif data.attendance > 75 %} text-success
+                                        {% elif data.attendance <= 50 and data.attendance > 25 %} text-warning
+                                        {% elif data.attendance <= 75 and data.attendance > 50 %} text-primary
+                                        {% elif data.attendance <= 25 %} text-danger {% endif %}" style="font-size: 14px;">
+                                        {% if data.attendance %}
+                                        <span class="fw-normal" >{{data.attendance}}%</span> 
+                                        {% else %}
+                                        <span class="fw-normal btn bg-danger-subtle px-2 py-0" style="font-size: 12px;" >No Attendance</span> 
+                                        {% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                            <ul class="list-group" style="min-width: fit-content;">
+                                <li class="list-group-item bg-dark text-white border-dark">Homework</li>
+                                {% for data in batch_data %}
+                                    <li class="list-group-item d-flex justify-content-center 
+                                        {% if data.test == None %} text-danger
+                                        {% elif data.homework > 75 %} text-success
+                                        {% elif data.homework <= 50 and data.homework > 25 %} text-warning
+                                        {% elif data.homework <= 75 and data.homework > 50 %} text-primary
+                                        {% elif data.homework <= 25 %} text-danger {% endif %}"
+
+                                     style="font-size: 14px;">
+                                        {% if data.homework %}
+                                        <span class="fw-normal" >{{data.homework}}%</span> 
+                                        {% else %}
+                                        <span class="fw-normal btn bg-danger-subtle px-2 py-0" style="font-size: 12px;" >No Homework</span> 
+                                        {% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+
+<script>
+{% for batch, reports in batch_wise_tests.items %}   
+{% for report in reports %}
+    {% if report.test.is_data_complete_for_graph %}
+  const ctx1{{batch.id}}{{ forloop.counter }} = document.getElementById('test_chart_1{{batch.id}}{{ forloop.counter }}').getContext('2d');
+  new Chart(ctx1{{batch.id}}{{forloop.counter}}, {
+      type: 'bar',
+      data: {
+        labels: [{% for ch_no, ch_name in report.chapters.items %} '{{ch_name}} {{ch_no}}', {% endfor %}].map(label => label.split(' ')),
+        datasets: [
+            {% for remark, counts in report.chapter_wise_test_remarks.items %}
+            {
+                label: '{{remark}}',
+                data: {{counts}},
+                borderWidth: 1,
+                maxBarThickness: 60,
+            },
+            {% endfor %}
+        
+        ]
+      },
+      options: {
+                responsive: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    tooltip: {
+                        enabled: true
+                    }
+                },
+                scales: {
+                    responsive: false,
+                    maintainAspectRatio: true,
+                    x: {
+                        stacked: true, // Enable stacking on the X-axis
+                        ticks: {
+                            autoSkip: false,
+                            maxRotation: 0,
+                            minRotation: 0,
+                            font: {
+                                size: 10
+                            }
+                        },
+                    },
+                    y: {
+                        stacked: true, // Enable stacking on the Y-axis
+                        beginAtZero: true,
+                        ticks: {
+                            font: {
+                                size: 10
+                            }
+                        },
+                    }
+                }
+            }
+    });
+
+
+    {% endif %}
+  {% endfor %}
+  {% endfor %}
+</script>
+
+
+
+<script>
+
+    create_pie_chart = (id, labels_list, dataset_label, dataset_data_points, bg_dataset_data_points, title_text = "Demo Chart") => {
+        var ctx1 = document.getElementById(id).getContext('2d');
+        var attendanceChart = new Chart(ctx1, {
+            type: 'pie',
+            data: {
+                labels: labels_list,
+                datasets: [{
+                    label: dataset_label,
+                    data: dataset_data_points, 
+                    backgroundColor: bg_dataset_data_points,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12, 
+                            boxHeight: 12,
+                            font: {
+                                size: 10,
+                            }
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: title_text
+                    }
+                }
+            }
+        });
+
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+        create_pie_chart('attendanceChart', ['present ({{combined_attendance.present_count}})', 'Absent ({{combined_attendance.absent_count}})'], 'Attendance', [{{combined_attendance.present_percentage}}, {{combined_attendance.absent_percentage}}], ['#28a745', '#dc3545'], 'Overall Attendance - {{combined_attendance.present_percentage}}%')
+        {% for batch, atten in batchwise_attendance.items %}
+            {% if atten.present_percentage or atten.absent_percentage %}
+                create_pie_chart('attendanceChart{{forloop.counter}}', ['present ({{atten.present_count}})', 'Absent ({{atten.absent_count}})'], 'Attendance', [{{atten.present_percentage}}, {{atten.absent_percentage}}], ['#28a745', '#dc3545'], '{{batch}} - {{atten.present_percentage}}%')   
+            {% endif %}
+        {% endfor %}
+        
+        create_pie_chart('homeworkChart', ['Pending ({{combined_homework.pending_count}})', 'Partial Done ({{combined_homework.partial_done_count}})', 'Completed ({{combined_homework.completed_count}})'], 'Homework Status', [{{combined_homework.pending_percentage}}, {{combined_homework.partial_done_percentage}}, {{combined_homework.completed_percentage}} ], ['#dc3545', '#17a2b8', '#28a745'], 'Overall Homework Status')
+        
+        {% for batch, hw in batchwise_homework.items %}
+            {% if hw.completed_percentage or hw.partial_done_percentage or hw.pending_percentage %} 
+            create_pie_chart('homeworkChart{{forloop.counter}}', ['Pending ({{hw.pending_count}})', 'Partial Done ({{hw.partial_done_count}})', 'Completed ({{hw.completed_count}})'], 'Homework Status', [{{hw.pending_percentage}}, {{hw.partial_done_percentage}}, {{hw.completed_percentage}} ], ['#dc3545', '#17a2b8', '#28a745'], '{{batch}}')
+            {% endif %}
+        {% endfor %}
+
+        create_pie_chart('testChart', ['Avg Score ({{combined_marks.scored}})', 'Present ({{combined_marks.present}})', 'Absent ({{combined_marks.absent}})', ], 'Test Status', [{{combined_marks.scored}}, {{combined_marks.deducted}}, 0, 0], ['#28a745', '#dc3545','#28a745','#dc3545'], 'Test Status')
+        {% for batch, test in batchwise_marks.items %}
+            {% if test.scored or test.deducted %}
+                create_pie_chart('testChart{{forloop.counter}}', ['Avg Score ({{test.scored}})','Present ({{test.present}})', 'Absent ({{test.absent}})', ], 'Test Status', [{{test.scored}}, {{test.deducted}}, 0, 0], ['#28a745', '#dc3545','#28a745','#dc3545',], '{{batch}}')
+            {% endif %}
+        {% endfor %}
+
+    });
+</script>
+
+
+
+<script>
+    // Save date range to localStorage when form is submitted
+    document.querySelector("form").addEventListener("submit", function () {
+      const start = document.getElementById("start_date").value;
+      const end = document.getElementById("end_date").value;
+      localStorage.setItem("start_date", start);
+      localStorage.setItem("end_date", end);
+    });
+  
+    // On page load, set input values from localStorage if present
+    window.addEventListener("DOMContentLoaded", function () {
+      const start = localStorage.getItem("start_date");
+      const end = localStorage.getItem("end_date");
+  
+      if (start) document.getElementById("start_date").value = start;
+      if (end) document.getElementById("end_date").value = end;
+    });
+  </script>
+  
+
+{% endblock dashboard %}
