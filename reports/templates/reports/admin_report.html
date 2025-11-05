@@ -207,7 +207,7 @@
                             {% for data in batch_data %}
                                 
                                 <li class="list-group-item d-flex justify-content-between " style="font-size: 14px;">
-                                    <span class="">{{data.batch}}</span> 
+                                    <a target="_blank"  href="{% url 'compare_batch' data.batch.class_name.id data.batch.id %}?start_date={{start_date|date:'Y-m-d'}}&end_date={{end_date|date:'Y-m-d'}}" class="nav-link">{{data.batch}}</a> 
                                 </li>
                             
                             {% endfor %}
