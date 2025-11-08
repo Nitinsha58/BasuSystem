@@ -90,7 +90,7 @@ def student_report(request, stu_id):
             messages.error(request, "Invalid date format")
             return redirect('student_report', stu_id=stu_id)
     else:
-        period = ReportPeriod.objects.all().order_by('-start_date').first()
+        period = ReportPeriod.objects.all().order_by('-end_date').first()
         if period:
             start_date = period.start_date
             end_date = period.end_date
@@ -678,7 +678,7 @@ def mentor_remarks(request, mentor_id, student_id):
             messages.error(request, "Invalid date format")
             return redirect('mentor_students')
     else:
-        period = ReportPeriod.objects.all().order_by('-start_date').first()
+        period = ReportPeriod.objects.all().order_by('-end_date').first()
         if period:
             start_date, end_date = period.start_date, period.end_date
         else:
