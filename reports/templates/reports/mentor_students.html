@@ -7,32 +7,48 @@
   <div class="my-2">
     <a href="{% url 'staff_dashboard' %}" class="btn btn-primary">Go Back</a>
   </div>
-  {% if class_mentorships %}
-  <div class="row shuffle bg-warning-subtle" data-masonry='{"percentPosition": true }' id="batches">
-    {% for cls, mentorships in class_mentorships.items %}
-    <div class="col-sm-6 col-md-4 col-lg-3 category shuffle-item shuffle-item--visible mb-4">
-      <div class="card">
-        <ul class="list-group">
-          <li class="list-group-item bg-dark text-white list-group border-dark"> {{cls.name}}</li>
-          {% for mentorship in mentorships %}
-          <li style="position: relative;" class="list-group-item">
-            <a class="text-decoration-none text-dark" style="display: flex; justify-content: space-between;"
-              target="_blank" href="{% url 'mentor_remarks' mentorship.student.active_mentorship.mentor.id mentorship.student.stu_id %}">
-              <span class="">{{forloop.counter}}. {{mentorship.student.user.first_name}}
-                {{mentorship.student.user.last_name}}</span>
-            </a>
-            <p class="text-muted fw-normal m-0" style="font-size: 14px;">{{ mentorship.student.active_mentorship.mentor.user.first_name }} {{ mentorship.student.active_mentorship.mentor.user.last_name }}</p>
-            
-            {% if mentorship.student.has_latest_report %}
-              <div style="position: absolute; background-color: blue; border-radius: 50%; width: 12px; height: 12px; right: -6px; top: 50%;" class="indicator"></div>
-            {% endif %}
-          </li>
-          {% endfor %}
-        </ul>
-      </div>
+    <div class="row shuffle bg-warning-subtle m-2 rounded">
+        <div class="container mb-4">
+          <div class="card shadow-sm border-0">
+            <div class="card-body">
+              <div class="input-group">
+                <span class="input-group-text bg-dark text-white border-0"><i class="bi bi-search"></i></span>
+                <input type="text" id="searchInput" class="form-control border-0 shadow-none" placeholder="Search student name...">
+              </div>
+              <ul id="searchResults" class="list-group"></ul>
+            </div>
+          </div>
+        </div>
     </div>
+  {% if mentorship_list %}
+    {% for ment, class_mentorships in mentorship_list.items %}
+      <h3 class="my-3">Mentor: {{ ment.user.first_name }} {{ ment.user.last_name }}</h3>
+      <div class="row shuffle bg-warning-subtle" data-masonry='{"percentPosition": true }' id="batches">
+        {% for cls, mentorships in class_mentorships.items %}
+        <div class="col-sm-6 col-md-4 col-lg-3 category shuffle-item shuffle-item--visible mb-4">
+          <div class="card">
+            <ul class="list-group">
+              <li class="list-group-item bg-dark text-white list-group border-dark"> {{cls.name}}</li>
+              {% for mentorship in mentorships %}
+              <li style="position: relative;" class="list-group-item">
+                <a class="text-decoration-none text-dark" style="display: flex; justify-content: space-between;"
+                  target="_blank" href="{% url 'mentor_remarks' mentorship.student.active_mentorship.mentor.id mentorship.student.stu_id %}">
+                  <span class="">{{forloop.counter}}. {{mentorship.student.user.first_name}}
+                    {{mentorship.student.user.last_name}}</span>
+                </a>
+                <p class="text-muted fw-normal m-0" style="font-size: 14px;">{{ mentorship.student.active_mentorship.mentor.user.first_name }} {{ mentorship.student.active_mentorship.mentor.user.last_name }}</p>
+                
+                {% if mentorship.student.has_latest_report %}
+                  <div style="position: absolute; background-color: blue; border-radius: 50%; width: 12px; height: 12px; right: -6px; top: 50%;" class="indicator"></div>
+                {% endif %}
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
     {% endfor %}
-  </div>
   {% endif %}
 </div>
 
@@ -109,5 +125,52 @@
 <script src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js"
   integrity="sha384-GNFwBvfVxBkLMJpYMOABq3c+d3KnQxudP/mGPkzpZSTYykLBNsZEnG2D9G/X/+7D" crossorigin="anonymous" async>
   </script>
+
+
+<script>
+document.getElementById("searchInput").addEventListener("input", function() {
+  const query = this.value.toLowerCase().trim();
+  const resultsContainer = document.getElementById("searchResults");
+  resultsContainer.innerHTML = "";
+
+  if (query === "") return;
+
+  const studentItems = document.querySelectorAll("#batches li.list-group-item");
+  let matchFound = false;
+
+  studentItems.forEach(item => {
+    const nameElem = item.querySelector("a.text-decoration-none");
+    const mentorElem = item.querySelector("p.text-muted");
+
+    if (!nameElem || !mentorElem) return;
+
+    const name = nameElem.textContent.trim().replace(/\s+/g, " ");
+    const mentor = mentorElem.textContent.trim();
+
+    if (name.toLowerCase().includes(query)) {
+      matchFound = true;
+
+      const li = document.createElement("li");
+      li.className = "list-group-item d-flex flex-column align-items-start border-0 border-bottom";
+      li.innerHTML = `
+        <a href="${nameElem.href}" target="_blank" class="fw-semibold text-dark text-decoration-none">
+          ${name}
+        </a>
+        <small class="text-muted">${mentor}</small>
+      `;
+      resultsContainer.appendChild(li);
+    }
+  });
+
+  if (!matchFound) {
+    const li = document.createElement("li");
+    li.className = "list-group-item text-muted border-0";
+    li.textContent = "No results found";
+    resultsContainer.appendChild(li);
+  }
+});
+</script>
+
+
 
 {% endblock dashboard %}

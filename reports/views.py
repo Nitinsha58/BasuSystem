@@ -25,6 +25,7 @@ from registration.models import (
     Recommendation,
     StudentTestRemark,
     StudentRemark,
+    Mentor,
     )
 from django.utils import timezone
 from collections import defaultdict
@@ -338,7 +339,7 @@ def student_personal_report(request, stu_id):
             messages.error(request, "Invalid date format")
             return redirect('student_personal_report', stu_id=stu_id)
     else:
-        period = ReportPeriod.objects.all().order_by('-start_date').first()
+        period = ReportPeriod.objects.all().order_by('-end_date').first()
         if period:
             start_date = period.start_date
             end_date = period.end_date
@@ -438,7 +439,7 @@ def batchwise_students(request):
 @login_required(login_url='login')
 def mentor_students(request):
     classes = ClassName.objects.all()
-    class_mentorships = {}
+    mentorship_list = defaultdict(dict)
 
     start_date_str = request.GET.get('start_date')
     end_date_str = request.GET.get('end_date')
@@ -465,30 +466,31 @@ def mentor_students(request):
     if not mentor and not request.user.is_superuser:
         messages.error(request, "You are not authorized to view this page.")
         return redirect('staff_dashboard')
-
-    for class_name in classes:
-        if mentor:
-            mentorships = mentor.mentorships.filter(
-                active=True,
-                student__class_enrolled=class_name,
-                student__active=True,
-            ).order_by(
-                '-created_at',
-                'student__user__first_name',
-                'student__user__last_name'
-            ).distinct()
-        else:
-            mentorships = Mentorship.objects.filter(
-                active=True,
-                student__class_enrolled=class_name,
-                student__active=True,
-            )
-        class_mentorships[class_name] = mentorships
-    
+    for ment in Mentor.objects.all():
+        for class_name in classes:
+            if mentor:
+                mentorships = mentor.mentorships.filter(
+                    active=True,
+                    student__class_enrolled=class_name,
+                    student__active=True,
+                ).order_by(
+                    '-created_at',
+                    'student__user__first_name',
+                    'student__user__last_name'
+                ).distinct()
+            else:
+                mentorships = Mentorship.objects.filter(
+                    active=True,
+                    student__class_enrolled=class_name,
+                    student__active=True,
+                    mentor=ment,
+                )
+            if mentorships.exists():
+                mentorship_list[ment][class_name] = mentorships
     # students = generate_group_report_data_v2(request, start_date, end_date)
 
     return render(request, "reports/mentor_students.html", {
-        'class_mentorships': class_mentorships,
+        'mentorship_list': dict(mentorship_list),
         # 'students': students,
         'start_date': start_date,
         'end_date': end_date,

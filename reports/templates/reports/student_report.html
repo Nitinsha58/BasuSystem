@@ -193,7 +193,7 @@
 
             <div class="stats-wrapper">
                 <h2 >Attendance</h2>
-                <a href="{% url 'student_attendance_report' student.stu_id %}" class="attendance">
+                <a href="{% url 'student_attendance_report' student.stu_id %}?start_date={{start_date|date:'Y-m-d'}}&end_date={{end_date|date:'Y-m-d'}}" class="attendance">
                     <div class="graph-container">
                         <!-- <canvas id="attendanceChart"></canvas> -->
                         <div class="graph-box">
@@ -247,7 +247,7 @@
                 </a>
 
                 <h2 class="">Homework</h2>
-                <a href="{% url 'student_homework_report' student.stu_id %}" class="homework">
+                <a href="{% url 'student_homework_report' student.stu_id %}?start_date={{start_date|date:'Y-m-d'}}&end_date={{end_date|date:'Y-m-d'}}" class="homework">
                     <div class="graph-container">
                         <div class="graph-box">
                             <p class="graph-title">Overall Homework Status</p>
@@ -312,7 +312,7 @@
                 </a>
 
                 <h2 class="">Test</h2>
-                <a  href="{% url 'student_test_summary_report' student.stu_id %}" class="test">
+                <a  href="{% url 'student_test_summary_report' student.stu_id %}?start_date={{start_date|date:'Y-m-d'}}&end_date={{end_date|date:'Y-m-d'}}" class="test">
                     <div class="graph-container">
                         <!-- <canvas id="testChart"></canvas> -->
                         <div class="graph-box">
@@ -657,7 +657,7 @@
 
 
 
-<script>
+<!-- <script>
     // Save date range to localStorage when form is submitted
     document.querySelector("form").addEventListener("submit", function () {
       const start = document.getElementById("start_date").value;
@@ -675,6 +675,6 @@
       if (end) document.getElementById("end_date").value = end;
     });
   </script>
-  
+   -->
 
 {% endblock dashboard %}
