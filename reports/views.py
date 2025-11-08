@@ -466,7 +466,10 @@ def mentor_students(request):
     if not mentor and not request.user.is_superuser:
         messages.error(request, "You are not authorized to view this page.")
         return redirect('staff_dashboard')
+    
     for ment in Mentor.objects.all():
+        if mentor and ment != mentor:
+            continue
         for class_name in classes:
             if mentor:
                 mentorships = mentor.mentorships.filter(
