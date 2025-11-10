@@ -152,6 +152,57 @@ class StudentAdmin(admin.ModelAdmin):
 
         return response
 
+    def export_mentor_students(self, request, queryset):
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="mentor_students.csv"'
+        writer = csv.writer(response)
+
+        # Write header
+        writer.writerow(['Mentor Name', 'Student Name', 'Phone'])
+
+        for student in queryset.select_related('user').prefetch_related('mentorships__mentor__user'):
+            for mentorship in student.mentorships.all():
+                mentor = mentorship.mentor
+                if mentor:
+                    writer.writerow([
+                        f"{mentor.user.first_name} {mentor.user.last_name}",
+                        f"{student.user.first_name} {student.user.last_name}",
+                        student.user.phone or ''
+                    ])
+
+        return response
+    
+    def export_students_in_detail(self, request, queryset):
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="students_detailed.csv"'
+        writer = csv.writer(response)
+
+        # Write header
+        writer.writerow(['Student Name', 'Class', 'Batch', 'Subject', 'School Name', 'Phone', 'Status'])
+
+        for student in queryset.select_related('user').prefetch_related('batches__class_name', 'batches__subject'):
+            batches_info = []
+            for batch in student.batches.all():
+                subject_name = batch.subject.name + "-" + batch.section.name if batch.subject else ''
+                batches_info.append(f"{subject_name}")
+            writer.writerow([
+                f"{student.user.first_name} {student.user.last_name}",
+                ", ".join(set(batch.class_name.name for batch in student.batches.all() if batch.class_name)),
+                ", ".join(batches_info),
+                ", ".join(set(batch.subject.name for batch in student.batches.all() if batch.subject)),
+                student.school_name or '',
+                student.user.phone or '',
+                'Active' if student.active else 'Inactive'
+            ])
+
+        return response
+    
+    export_mentor_students.short_description = "Export mentor-student as CSV"
+    actions.append('export_mentor_students')
+
+    export_students_in_detail.short_description = "Export students in detail as CSV"
+    actions.append('export_students_in_detail')
+
     export_students_with_section_csv.short_description = "Export students with classes and sections (Section - Subject) as CSV"
     actions.append('export_students_with_section_csv')
 
