@@ -161,7 +161,7 @@ class StudentAdmin(admin.ModelAdmin):
         writer.writerow(['Mentor Name', 'Student Name', 'Phone'])
 
         for student in queryset.select_related('user').prefetch_related('mentorships__mentor__user'):
-            for mentorship in student.mentorships.all():
+            for mentorship in student.mentorships.filter(active=True):
                 mentor = mentorship.mentor
                 if mentor:
                     writer.writerow([
