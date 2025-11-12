@@ -178,7 +178,7 @@ class StudentAdmin(admin.ModelAdmin):
         writer = csv.writer(response)
 
         # Write header
-        writer.writerow(['Student Name', 'Class', 'Batch', 'Subject', 'School Name', 'Phone', 'Status'])
+        writer.writerow(['Student Name', 'Class', 'Batch', 'Subject', 'School Name', 'Phone', 'Mother Phone', 'Father Phone', 'Status'])
 
         for student in queryset.select_related('user').prefetch_related('batches__class_name', 'batches__subject'):
             batches_info = []
@@ -192,6 +192,8 @@ class StudentAdmin(admin.ModelAdmin):
                 ", ".join(set(batch.subject.name for batch in student.batches.all() if batch.subject)),
                 student.school_name or '',
                 student.user.phone or '',
+                student.parent_details.mother_contact or '',
+                student.parent_details.father_contact or '',
                 'Active' if student.active else 'Inactive'
             ])
 
