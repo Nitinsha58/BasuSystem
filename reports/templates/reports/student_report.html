@@ -501,7 +501,7 @@
                     {% endif %}
                     {% for remark, count in test.remarks.items %}
                     <li class="list-group-item d-flex justify-content-between">
-                        <span class="">{{remark.name}}</span> <span class="fw-normal" >{{count}}%</span> 
+                        <span class="">{{remark}}</span> <span class="fw-normal" >{{count}}%</span> 
                     </li>
                     {% endfor %}
                     </ul>
@@ -529,6 +529,15 @@
       data: {
         labels: [{% for ch_no, ch_name in report.chapters.items %} '{{ch_name}} {{ch_no}}', {% endfor %}].map(label => label.split(' ')),
         datasets: [
+            {% for remark, counts in report.correct_remarks.items %}
+                {
+                    label: '{{remark}}',
+                    data: {{counts}},
+                    borderWidth: 1,
+                    maxBarThickness: 60,
+                },
+            {% endfor %}
+
             {% for remark, counts in report.chapter_wise_test_remarks.items %}
             {
                 label: '{{remark}}',
@@ -548,7 +557,7 @@
                         labels: {
                             font: {
                                 size: 12
-                            }
+                            },
                         }
                     },
                     tooltip: {

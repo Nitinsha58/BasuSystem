@@ -569,16 +569,34 @@ def get_chapters_from_questions(test):
     }
 
 def calculate_testwise_remarks(testwise_responses, test_chapters):
+    """
+    Returns:
+      - chapter_wise_remarks: dict mapping remark -> list (per-chapter values).
+          For normal remarks the values are total marks deducted (max_marks - marks_obtained).
+          Additionally a special remark "Correct" is included (chapter-wise counts of fully correct answers).
+      - correct_by_chapter: list (aligned with test_chapters.keys()) giving counts of fully correct responses per chapter.
+    """
     chapter_wise_remarks = defaultdict(lambda: [0] * len(test_chapters))
+    chapter_keys = list(test_chapters.keys())
+
     for response in testwise_responses:
+        ch_no = response.question.chapter_no
+        if ch_no not in chapter_keys:
+            continue
+        index = chapter_keys.index(ch_no)
+
+        # If student scored full marks for this question, mark as "Correct"
+        if response.marks_obtained >= response.question.max_marks:
+            chapter_wise_remarks['Correct'][index] += response.marks_obtained
+            continue
+
         remark = response.remark
         if not remark:
             continue
-        ch_no = response.question.chapter_no
-        index = list(test_chapters.keys()).index(ch_no)
-        chapter_wise_remarks[remark][index] += (
-            response.question.max_marks - response.marks_obtained
-        )
+
+        # For other remarks, accumulate deducted marks as before
+        chapter_wise_remarks[remark.name][index] += (response.question.max_marks - response.marks_obtained)
+
     return dict(chapter_wise_remarks)
 
 def calculate_batchwise_chapter_remarks(student, batch, start_date, end_date):
@@ -644,8 +662,12 @@ def calculate_marks(testwise_responses, test_chapters):
         for r in responses:
             total_test_marks += r.question.max_marks
             total_marks_obt += r.marks_obtained
-            if r.remark:
-                remarks[r.remark] += r.question.max_marks - r.marks_obtained
+            
+            # Check if student scored full marks (mark as "Correct")
+            if r.marks_obtained >= r.question.max_marks:
+                remarks['Correct'] += r.marks_obtained
+            elif r.remark:
+                remarks[r.remark.name] += r.question.max_marks - r.marks_obtained
 
         total_marks.append(total_test_marks)
         marks_deducted.append(total_test_marks - total_marks_obt)

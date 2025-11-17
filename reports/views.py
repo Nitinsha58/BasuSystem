@@ -133,9 +133,13 @@ def student_report(request, stu_id):
                     'absent': True,
                 })
                 continue
-
+            
             chapter_remarks = calculate_testwise_remarks(responses, test_chapters)
+            # Ensure 'Correct' always appears first
+            chapter_remarks = {k: chapter_remarks[k] for k in sorted(chapter_remarks.keys(), key=lambda x: (x != 'Correct', x))}
+
             marks_data = calculate_marks(responses, test_chapters)
+            # print(calculate_testwise_remarks(responses, test_chapters))
 
             test_reports.append({
                 'test': test,
@@ -155,6 +159,11 @@ def student_report(request, stu_id):
             })
 
         batch_wise_tests[batch] = test_reports
+
+    for batch, reports in batch_wise_tests.items():
+        for report in reports:
+            print(report['test'].name, report['chapter_wise_test_remarks'])
+
     return render(request, 'reports/student_report.html', {
         'student': student,
         'combined_attendance': combined_attendance,
