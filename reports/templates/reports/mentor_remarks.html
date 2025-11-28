@@ -31,6 +31,7 @@
             <b class="m-0 mb-1">Mother: +91 {{student.parent_details.mother_contact}} - Father: +91 {{student.parent_details.father_contact}}</b>
         </div>
         
+        <p class="border-0 h2 mt-4" >Batch Test Summary</p>
         <div class="g-3 d-flex justify-content-between">
             <table class="table">
                 <thead class="table-dark">
@@ -42,19 +43,28 @@
                 </tr>
                 </thead>
                 <tbody>
-                {% for batch in stu_performance.batches_data %}
-                <tr {% if forloop.first %} class="table-active" {% endif %}>
-                    <td>{{ batch.batch_name }}</td>
+                {% for subject, cls in stu_performance.items %}
+                <tr class="table-active" >
+                    <th class="col">{{ subject }}</th>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                {% for batch in cls.batches %}
+                <tr class="">
+                    <td>{{ batch.batch_name }} {% if not batch.active %} <span class="text-danger">( Inactive )</span> {% endif %} </td>
                     <td>{{ batch.attendance }}</td>
                     <td>{{ batch.homework }}</td>
                     <td>{{ batch.test_marks }}</td>
                 </tr>
                 {% endfor %}
+                {% endfor %}
 
-                {% if not stu_performance.batches_data %}
+
+                {% if not stu_performance %}
                 <tr>
                     <th scope="row">
-                    <a href="{% url 'student_report' stu_performance.student.stu_id %}" class="nav-link">
+                    <a href="" class="nav-link">
                         {{ stu_performance.student_name }}
                     </a>
                     </th>
@@ -65,6 +75,7 @@
             </table>
         </div>
 
+        <p class="border-0 h2 mt-4" >Batchwise Test Detail</p>
         <div class="g-3 d-flex justify-content-between">
             <table class="table">
                 <thead class="table-dark">
@@ -75,8 +86,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                {% for batch, tests in student_test_report.items %}
-                    {% for test_data in tests %}
+                {% for batch, details in student_test_report.items %}
+                    {% for test in details.tests %}
                     <tr {% if forloop.first %} class="table-active" {% endif %}>
                         {% if forloop.first %}
                             <td>{{ batch }}</td>
@@ -84,13 +95,13 @@
                              <td></td> 
                         {% endif %}
                         <td class="d-flex flex-column">
-                            <a href="{% url 'add_student_result' batch.id test_data.test.id student.id %}" target="_blank" class="m-0 nav-link">{{ test_data.test.name }}</p> 
-                            <small class="text-dark">{{test_data.test.date}}</small>
+                            <a href="{% url 'add_student_result' test.test.batch.id test.test.id student.id %}" target="_blank" class="m-0 nav-link">{{ test.test.name }} ({{test.test.batch.section.name|title}})</a> 
+                            <small class="text-dark">{{test.test.date}}</small>
                         </td>
-                        {% if test_data.result == 'AB' %}
-                        <td class="text-danger" >{{ test_data.result }}</td>
+                        {% if test.is_absent  %}
+                        <td class="text-danger" > AB </td>
                         {% else %}
-                        <td>{{ test_data.result.total_marks_obtained }} / {{ test_data.result.total_max_marks }} ( {{ test_data.result.percentage|floatformat:2 }}%)</td>
+                        <td>{{ test.result.total_marks_obtained }} / {{ test.result.total_max_marks }} ( {{ test.result.percentage|floatformat:2 }}%)</td>
                         {% endif %}
                     </tr>
                     {% endfor %}
@@ -99,6 +110,7 @@
             </table>
         </div>
 
+        <p class="border-0 h2 mt-4" >Batchwise ReTest Suggestions</p>
         <div class="g-3 d-flex justify-content-between">
             <table class="table">
                 <thead class="table-dark">
@@ -111,8 +123,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                {% for batch, tests in student_retest_report.items %}
-                    {% for test_data in tests %}
+                {% for batch, details in student_retest_report.items %}
+                    {% for test in details.tests %}
                     <tr {% if forloop.first %} class="table-active" {% endif %}>
                         {% if forloop.first %}
                             <td>{{ batch }}</td>
@@ -120,31 +132,31 @@
                              <td></td> 
                         {% endif %}
                         <td class="d-flex flex-column">
-                            <a href="{% url 'add_student_result' batch.id test_data.test.id student.id %}" target="_blank" class="m-0 nav-link">{{ test_data.test.name }}</p> 
-                            <small class="text-dark">{{test_data.test.date}}</small>
+                            <a href="{% url 'add_student_result' test.test.batch.id test.test.id student.id %}" target="_blank" class="m-0 nav-link">{{ test.test.name }}</a> 
+                            <small class="text-dark">{{test.test.date}}</small>
                         </td>
                         
                         <td class="">
-                            {% if test_data.retest_suggested and test_data.result.previous_marks %}
+                            {% if test.retest_suggested and test.result.previous_marks %}
                                 <span class="bg-success rounded text-light mx-2 my-1 py-1 px-2">Taken </span>
-                            {% elif test_data.retest_suggested %}
+                            {% elif test.retest_suggested %}
                                 <span class="bg-danger rounded text-light mx-2 my-1 py-1 px-2">Suggested </span>
                             {% endif %}
                         </td>
 
-                        {% if test_data.result and test_data.result.previous_marks %}
-                        <td class="text-dark" >{{ test_data.result.previous_marks }}</td>
-                        {% elif test_data.result %}
-                        <td>{{ test_data.result.total_marks_obtained }} / {{ test_data.result.total_max_marks }} ( {{ test_data.result.percentage|floatformat:2 }}%)</td>
+                        {% if test.result and test.result.previous_marks %}
+                        <td class="text-dark" >{{ test.result.previous_marks }}</td>
+                        {% elif test.result %}
+                        <td>{{ test.result.total_marks_obtained }} / {{ test.result.total_max_marks }} ( {{ test_data.result.percentage|floatformat:2 }}%)</td>
                         {% else %}
-                        <td class="text-danger"></td>
+                        <td class="text-danger">AB</td>
                         {% endif %}
 
 
-                        {% if test_data.result and not test_data.result.previous_marks %}
+                        {% if test.result and not test.result.previous_marks %}
                         <td class="text-danger"></td>
-                        {% elif test_data.result and test_data.result.previous_marks %}
-                        <td>{{ test_data.result.total_marks_obtained }} / {{ test_data.result.total_max_marks }} ( {{ test_data.result.percentage|floatformat:2 }}%)</td>
+                        {% elif test.result and test.result.previous_marks %}
+                        <td>{{ test.result.total_marks_obtained }} / {{ test.result.total_max_marks }} ( {{ test.result.percentage|floatformat:2 }}%)</td>
                         {% else %}
                         <td class="text-danger"></td>
                         {% endif %}
@@ -157,7 +169,7 @@
 
     </div>
 
-    {% if remark %}
+    <!-- {% if remark %}
     <form class="g-3 bg-light rounded p-2 pb-3" method="post" action="{% url 'mentor_remarks' mentor.id student.stu_id %}?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}">
         {% csrf_token %}
 
@@ -365,7 +377,7 @@
             </div>
         </div>
     </form>
-    {% endif %}
+    {% endif %} -->
 
 </div>
 

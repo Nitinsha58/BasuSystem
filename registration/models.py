@@ -154,6 +154,9 @@ class StudentBatchLink(models.Model):
     
     class Meta:
         unique_together = ('student', 'batch')
+    
+    def __str__(self):
+        return f"{self.student.user.first_name} - {self.batch}"
 
 class ParentDetails(models.Model):
     parent_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)

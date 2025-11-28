@@ -18,6 +18,7 @@ from registration.models import (
     MentorRemark,
     Chapter,
     StudentTestRemark,
+    StudentBatchLink
     )
 from django.db.models import Q
 from collections import defaultdict
@@ -31,6 +32,7 @@ from django.db import models
 from datetime import datetime
 from django.contrib import messages
 from django.shortcuts import render, redirect
+from itertools import groupby
 
 
 def get_combined_attendance(student, start_date, end_date):
@@ -854,43 +856,41 @@ def generate_single_student_report_data(student, start_date: date, end_date: dat
     """
     Generates a report for a single student detailing their performance in various batches
     between a start date and an end date, using helper functions for calculations.
-
     Args:
-        student: The Student instance for whom the report is to be generated.
-        start_date: The start date for the report period (datetime.date).
-        end_date: The end date for the report period (datetime.date).
-
-    Returns:
-        A dictionary representing the student and their performance data per batch.
+        student: The Student instance.
+        start_date: Start of date range (datetime.date).
+        end_date: End of date range (datetime.date).
     """
-    student_info = {
-        'student_name': f"{student.user.first_name} {student.user.last_name}".strip() or student.user.phone,
-        'student_id': str(student.stu_id),
-        'student': student,
-        'batches_data': []
-    }
 
-    for batch in student.batches.all().exclude(
-        Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
-        Q(section__name='CBSE') &
-        Q(subject__name__in=['MATH', 'SCIENCE'])
-    ):
-        batch_name = str(batch)
-        attendance_perc = calculate_attendance_percentage(student, batch, start_date, end_date)
-        homework_perc = calculate_homework_completion_percentage(student, batch, start_date, end_date)
-        test_scores_perc = calculate_test_scores_percentage(student, batch, start_date, end_date)
+    # Get student's batches grouped by class and subject using StudentBatchLink (includes active flag)
+    student_batch_links = StudentBatchLink.objects.filter(
+        student=student
+    ).select_related('batch__class_name', 'batch__subject').order_by(
+        'batch__class_name__name', 'batch__subject__name', '-active'
+    )
 
-        batch_data = {
-            'batch_name': batch_name,
+    batches_by_class_subject = {}
+    for link in student_batch_links:
+        batch = link.batch
+        class_name = batch.class_name.name
+        subject_name = batch.subject.name
+        key = f"{class_name} {subject_name}"
+
+        if key not in batches_by_class_subject:
+            batches_by_class_subject[key] = {
+                'batches': []
+            }
+
+        batches_by_class_subject[key]['batches'].append({
+            'batch_name': str(batch.section.name),
             'batch_id': batch.id,
-            'attendance': attendance_perc,
-            'homework': homework_perc,
-            'test_marks': test_scores_perc,
-            'has_report': has_report(student, start_date, end_date)
-        }
-        student_info['batches_data'].append(batch_data)
+            'active': bool(link.active),
+            'attendance': calculate_attendance_percentage(student, batch, start_date, end_date),
+            'homework': calculate_homework_completion_percentage(student, batch, start_date, end_date),
+            'test_marks': calculate_test_scores_percentage(student, batch, start_date, end_date),
+        })
 
-    return student_info
+    return batches_by_class_subject
 
 
 def get_student_test_report(student, start_date, end_date):
@@ -905,83 +905,162 @@ def get_student_test_report(student, start_date, end_date):
     Returns:
         A dictionary with batch as key and a list of dicts
     """
-    test_result = {}
-    student_batches = student.batches.all().exclude(
-        Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
-        Q(section__name='CBSE') &
-        Q(subject__name__in=['MATH', 'SCIENCE'])
+    student_batch_links = StudentBatchLink.objects.filter(
+        student=student
+    ).select_related('batch__class_name', 'batch__subject').order_by(
+        'batch__class_name__name', 'batch__subject__name', '-active'
     )
 
-    for batch in student_batches:
-        tests = Test.objects.filter(
-            batch=batch,
+
+    batches_by_class_subject = {}
+    for link in student_batch_links:
+        batch = link.batch
+        class_name = batch.class_name.name
+        subject_name = batch.subject.name
+        key = f"{class_name} {subject_name}"
+
+        if key not in batches_by_class_subject:
+            batches_by_class_subject[key] = {
+                'class': batch.class_name,
+                'subject': batch.subject,
+                'section': batch.section,
+                'batches': []
+            }
+
+        batches_by_class_subject[key]['batches'].append({
+            'batch_name': str(batch.section.name),
+            'batch_id': batch.id,
+            'active': bool(link.active),
+        })
+
+    for key in batches_by_class_subject:
+        class_name = batches_by_class_subject[key]['class']
+        subject_name = batches_by_class_subject[key]['subject']
+
+        tests_qs = Test.objects.filter(
+            batch__subject=subject_name,
+            batch__class_name=class_name,
             date__range=(start_date, end_date)
         ).order_by('date')
 
-        doj = getattr(student, 'doj', None)
-        if doj:
-            tests = tests.filter(date__gte=doj)
+        # # Group tests by their exam date. Each item is a dict: {'date': date, 'tests': [Test, ...]}
+        tests_in_subject = {}
+        for test_date, group in groupby(tests_qs, key=lambda t: t.date):
 
-        tests = tests.order_by('date')
+            tests_in_subject[test_date] = {
+                'tests': list(group)
+            }
 
-        test_result[batch] = []
-        for test in tests:
-            result = TestResult.objects.filter(test=test, student=student).first()
-            if not is_absent(test, student):
-                marks_or_AB = result
+        test_data = []
+        for test_date, test_group in tests_in_subject.items():
+            tests = test_group['tests']
+            # Prefer a test on this date where the student has a TestResult.
+            selected_test = None
+            selected_result = None
+
+            for test in tests:
+                res = TestResult.objects.filter(test=test, student=student).first()
+                if res:
+                    selected_test = test
+                    selected_result = res
+                    break
+
+            if not selected_test:
+                # No result found for any test on this date — pick one test (first) and mark absent
+                selected_test = tests[0]
+                # Treat as absent when there is no TestResult for the student
+                is_abs = True
             else:
-                marks_or_AB = 'AB'
-            test_result[batch].append({
-                'test': test,
-                'result': marks_or_AB
+                is_abs = False
+
+            test_data.append({
+                'test': selected_test,
+                'result': selected_result,
+                'is_absent': is_abs
             })
+        batches_by_class_subject[key]['tests'] = test_data
             
-    return test_result
+    return batches_by_class_subject
 
 def get_student_retest_report(student):
     """
-    Generate retest suggestions for a student based on their test results.
-
+    Generates a detailed retest report for a student with test scores.
     Args:
         student: The Student instance.
-
     Returns:
-        A dictionary with batch as key and a list of dicts containing test, result, retest, and retest_marks.
-
-        it should include test result for which student has mandatory retest, or has given optional retest by checking 
-        if student has also given retest by checking test_type = 'retest' in TestResult model.
+        A dictionary with batch as key and a list of dicts
     """
 
-    test_result = {}
-    student_batches = student.batches.all().exclude(
-        Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
-        Q(section__name='CBSE') &
-        Q(subject__name__in=['MATH', 'SCIENCE'])
+    student_batch_links = StudentBatchLink.objects.filter(
+        student=student
+    ).select_related('batch__class_name', 'batch__subject').order_by(
+        'batch__class_name__name', 'batch__subject__name', '-active'
     )
-    for batch in student_batches:
-        tests = Test.objects.filter(
-            batch=batch
-        )
 
-        doj = getattr(student, 'doj', None)
-        if doj:
-            tests = tests.filter(date__gte=doj)
+    batches_by_class_subject = {}
+    for link in student_batch_links:
+        batch = link.batch
+        class_name = batch.class_name.name
+        subject_name = batch.subject.name
+        key = f"{class_name} {subject_name}"
 
-        tests = tests.order_by('date')
+        if key not in batches_by_class_subject:
+            batches_by_class_subject[key] = {
+                'class': batch.class_name,
+                'subject': batch.subject,
+                'section': batch.section,
+                'batches': []
+            }
 
-        test_result[batch] = []
-        for test in tests:
-            result = TestResult.objects.filter(test=test, student=student).first()
-            is_student_absent = is_absent(test, student)
-            
-            retest_suggested = None # is true when student is absent from the test or has scored less than 50% marks
-            retest_given = None # is true when student result has test_type = 'retest'
+        batches_by_class_subject[key]['batches'].append({
+            'batch_name': str(batch.section.name),
+            'batch_id': batch.id,
+            'active': bool(link.active),
+        })
 
-            if is_student_absent or (result and result.percentage < 50):
-                retest_suggested = True
-                # Check if student has given retest
+    for key in batches_by_class_subject:
+        class_name = batches_by_class_subject[key]['class']
+        subject_name = batches_by_class_subject[key]['subject']
+
+        tests_qs = Test.objects.filter(
+            batch__subject=subject_name,
+            batch__class_name=class_name
+            # date__range=(start_date, end_date)
+        ).order_by('date')
+
+        tests_in_subject = {}
+        for test_date, group in groupby(tests_qs, key=lambda t: t.date):
+            tests_in_subject[test_date] = {
+                'tests': list(group)
+            }
+
+        test_data = []
+        for test_date, test_group in tests_in_subject.items():
+            tests = test_group['tests']
+            selected_test = None
+            selected_result = None
+
+            for test in tests:
+                res = TestResult.objects.filter(test=test, student=student).first()
+                if res:
+                    selected_test = test
+                    selected_result = res
+                    break
+
+            if not selected_test:
+                selected_test = tests[0]
+                is_abs = True
+            else:
+                is_abs = False
+
+            # Check retest criteria
+            retest_suggested = is_abs or (selected_result and selected_result.percentage < 50)
+            retest_given = False
+            retest_marks = None
+
+            if retest_suggested:
                 retest_result = TestResult.objects.filter(
-                    test=test,
+                    test=selected_test,
                     student=student,
                     test_type='retest'
                 ).first()
@@ -989,33 +1068,21 @@ def get_student_retest_report(student):
                 if retest_result:
                     retest_given = True
                     retest_marks = retest_result.total_marks_obtained
-                else:
-                    retest_given = False
-                    retest_marks = None
-            else:
-                retest_suggested = False
-                retest_given = False
-                retest_marks = None
 
+            # Only include tests that need retest
             if retest_suggested:
-                test_result[batch].append({
-                    'test': test,
-                    'result': result if not is_student_absent else None,
+                test_data.append({
+                    'test': selected_test,
+                    'result': selected_result,
+                    'is_absent': is_abs,
                     'retest_suggested': retest_suggested,
                     'retest_given': retest_given,
                     'retest_marks': retest_marks
                 })
 
+        batches_by_class_subject[key]['tests'] = test_data
 
-    if not test_result:
-        return {}
-
-    # Sort each batch's test results by date
-    for batch, results in test_result.items():
-        results.sort(key=lambda x: x['test'].date)
-
-    # Return the final test result dictionary
-    return test_result
+    return batches_by_class_subject
 
 def compare_student_performance_by_week(batch, start_date, end_date):
     """
