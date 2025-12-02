@@ -26,6 +26,7 @@ from registration.models import (
     StudentTestRemark,
     StudentRemark,
     Mentor,
+    Subject,
     )
 from django.utils import timezone
 from collections import defaultdict
@@ -45,6 +46,13 @@ from .utility import (
     get_batchwise_attendance,
     get_combined_homework,
     get_batchwise_homework,
+
+    get_subjectwise_attendance,
+    get_subjectwise_homework,
+    get_subjectwise_marks,
+    get_subjectwise_attendance_calendar,
+    get_subjectwise_homework_calendar,
+
     get_monthly_calendar,
     get_chapters_from_questions,
     calculate_testwise_remarks,
@@ -107,11 +115,14 @@ def student_report(request, stu_id):
         ).order_by('-created_at')
 
     combined_attendance = get_combined_attendance(student, start_date, end_date)
-    batchwise_attendance = get_batchwise_attendance(student,start_date, end_date)
+    # batchwise_attendance = get_batchwise_attendance(student,start_date, end_date)
+    subjectwise_attendance = get_subjectwise_attendance(student, start_date, end_date)
     combined_homework = get_combined_homework(student, start_date, end_date)
-    batchwise_homework = get_batchwise_homework(student, start_date, end_date)
+    # batchwise_homework = get_batchwise_homework(student, start_date, end_date)
+    subjectwise_homework = get_subjectwise_homework(student, start_date, end_date)
     combined_marks = get_marks_percentage(student, start_date, end_date)
-    batchwise_marks = get_batchwise_marks(student, start_date, end_date)
+    # batchwise_marks = get_batchwise_marks(student, start_date, end_date)
+    subjectwise_marks = get_subjectwise_marks(student, start_date, end_date)
 
     # calendar_data = get_monthly_calendar(student, start_date, end_date)
     batch_wise_tests = {}
@@ -166,12 +177,17 @@ def student_report(request, stu_id):
 
     return render(request, 'reports/student_report.html', {
         'student': student,
-        'combined_attendance': combined_attendance,
-        'batchwise_attendance': batchwise_attendance,
-        'combined_homework': combined_homework,
-        'batchwise_homework': batchwise_homework,
-        'combined_marks': combined_marks,
-        'batchwise_marks': batchwise_marks,
+        # 'combined_attendance': combined_attendance,
+        # 'batchwise_attendance': batchwise_attendance,
+        'subjectwise_attendance': subjectwise_attendance,
+
+        # 'combined_homework': combined_homework,
+        # 'batchwise_homework': batchwise_homework,
+        'subjectwise_homework': subjectwise_homework,
+
+        # 'combined_marks': combined_marks,
+        # 'batchwise_marks': batchwise_marks,
+        'subjectwise_marks': subjectwise_marks,
 
         # 'calendar_data': calendar_data,
         'start_date': start_date,
@@ -233,6 +249,50 @@ def student_attendance_report(request, stu_id):
 
 
 @login_required(login_url='login')
+def student_subject_attendance_report(request, stu_id, subject_id):
+    student = Student.objects.filter(stu_id=stu_id).first()
+    if stu_id and not student:
+        messages.error(request, "Invalid Student")
+        return redirect('student_report', stu_id=stu_id)
+    
+    subject = Subject.objects.filter(id=subject_id).first()
+    if not subject:
+        messages.error(request, "Invalid Subject")
+        return redirect('student_report', stu_id=stu_id)
+    
+
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+
+    if start_date_str and end_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+        except ValueError:
+            messages.error(request, "Invalid date format")
+            return redirect('student_report', stu_id=stu_id)
+    else:
+        period = ReportPeriod.objects.all().order_by('-start_date').first()
+        if period:
+            start_date = period.start_date
+            end_date = period.end_date
+        else:
+            today = date.today()
+            start_date = today.replace(day=1)
+            end_date = today
+
+    subject_attendance = get_subjectwise_attendance_calendar(student, subject, start_date, end_date)
+
+    return render(request, 'reports/student_subject_attendance_report.html', {
+        'student': student,
+        'subject_attendance': subject_attendance,
+
+        'start_date': start_date,
+        'end_date': end_date,
+    })
+
+
+@login_required(login_url='login')
 def student_homework_report(request, stu_id):
     student = Student.objects.filter(stu_id=stu_id).first()
     if stu_id and not student:
@@ -277,6 +337,51 @@ def student_homework_report(request, stu_id):
         'end_date': end_date,
 
         'batches': batches,
+    })
+
+@login_required(login_url='login')
+def student_subject_homework_report(request, stu_id, subject_id):
+    student = Student.objects.filter(stu_id=stu_id).first()
+
+    subject = Subject.objects.filter(id=subject_id).first()
+
+    if stu_id and not student:
+        messages.error(request, "Invalid Student")
+        return redirect('student_report', stu_id=stu_id)
+
+    if not subject:
+        messages.error(request, "Invalid Subject")
+        return redirect('student_report', stu_id=stu_id)
+
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+
+    if start_date_str and end_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+        except ValueError:
+            messages.error(request, "Invalid date format")
+            return redirect('student_report', stu_id=stu_id)
+    else:
+        period = ReportPeriod.objects.all().order_by('-start_date').first()
+        if period:
+            start_date = period.start_date
+            end_date = period.end_date
+        else:
+            today = date.today()
+            start_date = today.replace(day=1)
+            end_date = today
+
+    subject_homework = get_subjectwise_homework_calendar(student, subject, start_date, end_date)
+
+
+    return render(request, 'reports/student_subject_homework_report.html', {
+        'student': student,
+        'subject_homework': subject_homework,
+        'start_date': start_date,
+        'end_date': end_date,
+
     })
 
 

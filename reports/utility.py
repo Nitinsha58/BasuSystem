@@ -18,7 +18,8 @@ from registration.models import (
     MentorRemark,
     Chapter,
     StudentTestRemark,
-    StudentBatchLink
+    StudentBatchLink,
+    Subject,
     )
 from django.db.models import Q
 from collections import defaultdict
@@ -63,6 +64,34 @@ def get_combined_attendance(student, start_date, end_date):
         'absent_percentage': round((total_absent / total_attendance * 100) if total_attendance > 0 else 0, 1),
     }
 
+def get_subjectwise_attendance(student, start_date, end_date):
+    result = {}
+    # Only include attendance from student's date of joining (doj) onwards
+    doj = getattr(student, 'doj', None)
+    effective_start_date = max(start_date, doj) if doj else start_date
+
+    subjects = student.batches.all().values_list('subject__name', flat=True).distinct()
+
+    for subject in subjects:
+        attendance_qs = Attendance.objects.filter(
+            student=student,
+            batch__subject__name=subject,
+            date__range=(effective_start_date, end_date)
+        )
+        present = attendance_qs.filter(is_present=True).count()
+        absent = attendance_qs.filter(is_present=False).count()
+        total = present + absent
+        subject = Subject.objects.filter(name=subject).first()
+
+        result[subject] = {
+            'present_count': present,
+            'absent_count': absent,
+            'present_percentage': round((present / total * 100) if total > 0 else 0, 1),
+            'absent_percentage': round((absent / total * 100) if total > 0 else 0, 1),
+            'subject_calendar': get_subjectwise_attendance_calendar(student, subject, start_date, end_date)
+        }
+    return result
+
 def get_batchwise_attendance(student, start_date, end_date):
     result = {}
     # Only include attendance from student's date of joining (doj) onwards
@@ -90,6 +119,187 @@ def get_batchwise_attendance(student, start_date, end_date):
             'batch_calendar': get_batch_calendar(student, batch, start_date, end_date)
         }
     return result
+
+def get_subjectwise_attendance_calendar(student, subject, start_date, end_date):
+    monthly_data = []
+
+    # Use student's DOJ if available
+    start_date = max(start_date, student.doj) if getattr(student, 'doj', None) else start_date
+
+    attendance_qs = Attendance.objects.filter(
+        student=student,
+        batch__subject=subject,
+        date__range=(start_date, end_date)
+    )
+
+    present = attendance_qs.filter(is_present=True).count()
+    absent = attendance_qs.filter(is_present=False).count()
+    total = present + absent
+    
+
+    current = date(start_date.year, start_date.month, 1)
+    last_date = date(end_date.year, end_date.month, calendar.monthrange(end_date.year, end_date.month)[1])
+
+    while current <= last_date:
+        year, month = current.year, current.month
+        first_weekday, total_days = calendar.monthrange(year, month)
+        first_weekday = (first_weekday + 1) % 7
+
+        calendar_data = []
+        week = [None] * first_weekday
+        present_c, absent_c = 0, 0
+
+        for day in range(1, total_days + 1):
+            current_date = date(year, month, day)
+
+            attendance_status = None
+            if start_date <= current_date <= end_date:
+                # Only consider attendance for this subject
+                attendance = Attendance.objects.filter(
+                    student=student,
+                    batch__subject=subject,
+                    date=current_date
+                ).first()
+                if attendance:
+                    attendance_status = 'Present' if attendance.is_present else 'Absent'
+                    if attendance.is_present:
+                        present_c += 1
+                    else:
+                        absent_c += 1
+            week.append({
+                'date': current_date,
+                'attendance': attendance_status,
+            })
+
+            if len(week) == 7:
+                calendar_data.append(week)
+                week = []
+
+        if week:
+            while len(week) < 7:
+                week.append(None)
+            calendar_data.append(week)
+
+        if len(calendar_data) == 5:
+            calendar_data.append([None] * 7)
+
+        monthly_data.append({
+            'calendar': calendar_data,
+            'present_count': present_c,
+            'absent_count': absent_c,
+            'percentage': round((present_c / (present_c + absent_c) * 100) if (present_c + absent_c) > 0 else 0, 1),
+            'month_name': calendar.month_name[month],
+            'year': year,
+        })
+
+        # Move to next month
+        if month == 12:
+            current = date(year + 1, 1, 1)
+        else:
+            current = date(year, month + 1, 1)
+    
+    return {
+        'subject_calendar': monthly_data,
+        'present_count': present,
+        'absent_count': absent,
+        'present_percentage': round((present / total * 100) if total > 0 else 0, 1),
+        'absent_percentage': round((absent / total * 100) if total > 0 else 0, 1),
+        'subject': subject,
+    }
+
+def get_subjectwise_homework_calendar(student, subject, start_date, end_date):
+    monthly_data = []
+
+    # Use student's DOJ if available
+    start_date = max(start_date, student.doj) if getattr(student, 'doj', None) else start_date
+
+    current = date(start_date.year, start_date.month, 1)
+    last_date = date(end_date.year, end_date.month, calendar.monthrange(end_date.year, end_date.month)[1])
+
+    homework_qs = Homework.objects.filter(
+        student=student,
+        batch__subject=subject,
+        date__range=(start_date, end_date)
+    )
+    total_homework = homework_qs.count()
+    completed_homework = homework_qs.filter(status='Completed').count()
+    pending_homework = homework_qs.filter(status='Pending').count()
+    partial_homework = homework_qs.filter(status='Partial Done').count()
+
+    
+
+    while current <= last_date:
+        year, month = current.year, current.month
+        first_weekday, total_days = calendar.monthrange(year, month)
+        first_weekday = (first_weekday + 1) % 7
+    
+        calendar_data = []
+        week = [None] * first_weekday
+        pending_c, partial_c, completed_c = 0, 0, 0
+
+        for day in range(1, total_days + 1):
+            current_date = date(year, month, day)
+
+            homework_status = None
+            if start_date <= current_date <= end_date:
+                # Only consider homework for this subject
+                homework = Homework.objects.filter(
+                    student=student,
+                    batch__subject=subject,
+                    date=current_date
+                ).first()
+                if homework:
+                    homework_status = homework.status
+                    if homework_status == 'Pending':
+                        pending_c += 1
+                    elif homework_status == 'Partial Done':
+                        partial_c += 1
+                    elif homework_status == 'Completed':
+                        completed_c += 1
+            week.append({
+                'date': current_date,
+                'homework': homework_status,
+            })
+
+            if len(week) == 7:
+                calendar_data.append(week)
+                week = []
+
+        if week:
+            while len(week) < 7:
+                week.append(None)
+            calendar_data.append(week)
+
+        if len(calendar_data) == 5:
+            calendar_data.append([None] * 7)
+
+        monthly_data.append({
+            'calendar': calendar_data,
+            'pending_count': pending_c,
+            'partial_done_count': partial_c,
+            'completed_count': completed_c,
+            'pending_percentage': round((pending_c / (pending_c + partial_c + completed_c) * 100) if (pending_c + partial_c + completed_c) > 0 else 0, 1),
+            'partial_done_percentage': round((partial_c / (pending_c + partial_c + completed_c) * 100) if (pending_c + partial_c + completed_c) > 0 else 0, 1),
+            'completed_percentage': round((completed_c / (pending_c + partial_c + completed_c) * 100) if (pending_c + partial_c + completed_c) > 0 else 0, 1),
+            'month_name': calendar.month_name[month],
+            'year': year,
+        })
+        # Move to next month
+        if month == 12:
+            current = date(year + 1, 1, 1)
+        else:
+            current = date(year, month + 1, 1)
+    return {
+        'subject': subject,
+        'subject_calendar': monthly_data,
+        'completed_count': completed_homework,
+        'partial_done_count': partial_homework,
+        'pending_count': pending_homework,
+        'completed_percentage': round((completed_homework / total_homework * 100) if total_homework > 0 else 0, 1),
+        'partial_done_percentage': round((partial_homework / total_homework * 100) if total_homework > 0 else 0, 1),
+        'pending_percentage': round((pending_homework / total_homework * 100) if total_homework > 0 else 0, 1),
+    }
+
 
 def get_combined_homework(student, start_date, end_date):
     doj = getattr(student, 'doj', None)
@@ -121,6 +331,34 @@ def get_combined_homework(student, start_date, end_date):
         'pending_count': pending,
         'total_count': total,
     }
+
+def get_subjectwise_homework(student, start_date, end_date):
+    doj = getattr(student, 'doj', None)
+    effective_start_date = max(start_date, doj) if doj else start_date
+    result = {}
+    subjects = student.batches.all().values_list('subject__name', flat=True).distinct()
+
+    for subject in subjects:
+        homework_qs = Homework.objects.filter(
+            student=student,
+            batch__subject__name=subject,
+            date__range=(effective_start_date, end_date)
+        )
+        total = homework_qs.count()
+        completed = homework_qs.filter(status='Completed').count()
+        partial = homework_qs.filter(status='Partial Done').count()
+        pending = homework_qs.filter(status='Pending').count()
+        subject = Subject.objects.filter(name=subject).first()
+        result[subject] = {
+            'completed_percentage': round((completed / total * 100) if total > 0 else 0, 1),
+            'partial_done_percentage': round((partial / total * 100) if total > 0 else 0, 1),
+            'pending_percentage': round((pending / total * 100) if total > 0 else 0, 1),
+            'completed_count': completed,
+            'partial_done_count': partial,
+            'pending_count': pending,
+            'total_count': total,
+        }
+    return result
 
 
 def get_batchwise_homework(student, start_date, end_date):
@@ -562,6 +800,75 @@ def get_batchwise_marks(student, start_date, end_date):
 
     return result
 
+def get_subjectwise_marks(student, start_date, end_date):
+    """
+    Calculates the marks percentage and test attendance (present/absent count) 
+    for a given student in each subject within the specified date range.
+    """
+    result = {}
+    subjects = student.batches.all().values_list('subject__name', flat=True).distinct()
+
+    for subject in subjects:
+        tests = Test.objects.filter(
+            batch__subject__name=subject,
+            date__range=(start_date, end_date)
+        )
+
+        total_max_marks = 0
+        total_obtained_marks = 0
+        present_count = 0
+        absent_count = 0
+
+        # Group tests by date because student may have appeared in any one batch on that date
+        for test_date, group in groupby(tests.order_by('date'), key=lambda t: t.date):
+            date_tests = list(group)
+
+            # Was there activity on this date (by other students) in any of the tests?
+            date_has_activity = any(
+            QuestionResponse.objects.filter(test=t).exclude(student=student).exists() or
+            TestResult.objects.filter(test=t).exclude(student=student).exists()
+            for t in date_tests
+            )
+
+            # Did the student participate in any test on this date?
+            student_participated = any(
+            QuestionResponse.objects.filter(test=t, student=student).exists() or
+            TestResult.objects.filter(test=t, student=student).exists()
+            for t in date_tests
+            )
+
+            # If there was activity but the student did not participate => absent for that date
+            if date_has_activity and not student_participated:
+                absent_count += 1
+                continue
+
+            # If student participated in any test on that date, count as present and accumulate marks
+            if student_participated:
+                present_count += 1
+                for t in date_tests:
+                    test_result = TestResult.objects.filter(test=t, student=student).first()
+                    if test_result:
+                        total_max_marks += t.total_max_marks
+                        total_obtained_marks += test_result.total_marks_obtained
+
+        if total_max_marks > 0:
+            scored = round((total_obtained_marks / total_max_marks) * 100, 2)
+            deducted = round(100 - scored, 2)
+        else:
+            scored = 0.0
+            deducted = 0.0
+
+        subject = Subject.objects.filter(name=subject).first()
+        result[subject] = {
+            'scored': round(scored, 2),
+            'deducted': round(deducted, 2),
+            'present': present_count or 0,
+            'absent': absent_count or 0,
+            'present_percentage': round((present_count / (present_count + absent_count) * 100) if (present_count + absent_count) > 0 else 0, 2),
+            'absent_percentage': round((absent_count / (present_count + absent_count) * 100) if (present_count + absent_count) > 0 else 0, 2),
+        }
+
+    return result
 
 def get_chapters_from_questions(test):
     questions = TestQuestion.objects.filter(test=test).order_by('chapter_no')
