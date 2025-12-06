@@ -136,7 +136,7 @@ class Student(models.Model):
         return self.class_enrolled.name + "," + ", ".join([batch.section.name for batch in self.batches.all()])
 
     def has_latest_report(self):
-        latest_report_period = ReportPeriod.objects.order_by('-start_date').first()
+        latest_report_period = ReportPeriod.objects.order_by('-end_date').first()
         if not latest_report_period:
             return False
         
