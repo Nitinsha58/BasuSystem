@@ -1704,8 +1704,6 @@ def get_student_test_report(student, start_date, end_date):
     ).select_related('batch__class_name', 'batch__subject').order_by(
         'batch__class_name__name', 'batch__subject__name', '-active'
     )
-
-
     batches_by_class_subject = {}
     for link in student_batch_links:
         batch = link.batch
@@ -1728,14 +1726,22 @@ def get_student_test_report(student, start_date, end_date):
         })
 
     for key in batches_by_class_subject:
-        class_name = batches_by_class_subject[key]['class']
-        subject_name = batches_by_class_subject[key]['subject']
+        class_obj = batches_by_class_subject[key]['class']
+        subject_obj = batches_by_class_subject[key]['subject']
 
-        tests_qs = Test.objects.filter(
-            batch__subject=subject_name,
-            batch__class_name=class_name,
-            date__range=(start_date, end_date)
-        ).order_by('date')
+        # Only include tests from the student's own batches for this class+subject
+        student_batches_for_subject = student.batches.filter(
+            subject=subject_obj,
+            class_name=class_obj
+        )
+
+        if not student_batches_for_subject.exists():
+            tests_qs = Test.objects.none()
+        else:
+            tests_qs = Test.objects.filter(
+                batch__in=student_batches_for_subject,
+                date__range=(start_date, end_date)
+            ).order_by('date')
 
         # # Group tests by their exam date. Each item is a dict: {'date': date, 'tests': [Test, ...]}
         tests_in_subject = {}
@@ -1776,7 +1782,7 @@ def get_student_test_report(student, start_date, end_date):
             
     return batches_by_class_subject
 
-def get_student_retest_report(student):
+def get_student_retest_report(student, start_date, end_date):
     """
     Generates a detailed retest report for a student with test scores.
     Args:
@@ -1784,7 +1790,6 @@ def get_student_retest_report(student):
     Returns:
         A dictionary with batch as key and a list of dicts
     """
-
     student_batch_links = StudentBatchLink.objects.filter(
         student=student
     ).select_related('batch__class_name', 'batch__subject').order_by(
@@ -1812,16 +1817,28 @@ def get_student_retest_report(student):
             'active': bool(link.active),
         })
 
+    doj = getattr(student, 'doj', None)
+    effective_start_date = max(start_date, doj) if doj else start_date
+
     for key in batches_by_class_subject:
-        class_name = batches_by_class_subject[key]['class']
-        subject_name = batches_by_class_subject[key]['subject']
+        class_obj = batches_by_class_subject[key]['class']
+        subject_obj = batches_by_class_subject[key]['subject']
 
-        tests_qs = Test.objects.filter(
-            batch__subject=subject_name,
-            batch__class_name=class_name
-            # date__range=(start_date, end_date)
-        ).order_by('date')
+        # Only include tests from the student's own batches for this class+subject and within date range
+        student_batches_for_subject = student.batches.filter(
+            subject=subject_obj,
+            class_name=class_obj
+        )
 
+        if not student_batches_for_subject.exists():
+            tests_qs = Test.objects.none()
+        else:
+            tests_qs = Test.objects.filter(
+                batch__in=student_batches_for_subject,
+                date__range=(effective_start_date, end_date)
+            ).order_by('date')
+
+        # Group tests by their exam date
         tests_in_subject = {}
         for test_date, group in groupby(tests_qs, key=lambda t: t.date):
             tests_in_subject[test_date] = {
@@ -1848,7 +1865,7 @@ def get_student_retest_report(student):
                 is_abs = False
 
             # Check retest criteria
-            retest_suggested = is_abs or (selected_result and selected_result.percentage < 50)
+            retest_suggested = is_abs or (selected_result and selected_result.percentage is not None and selected_result.percentage < 50)
             retest_given = False
             retest_marks = None
 

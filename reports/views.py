@@ -851,7 +851,7 @@ def mentor_remarks(request, mentor_id, student_id):
     # Data prep
     stu_performance = generate_single_student_report_data(student, start_date, end_date)   
     student_test_report = get_student_test_report(student, start_date, end_date)
-    student_retest_report = get_student_retest_report(student)
+    student_retest_report = get_student_retest_report(student, start_date, end_date)
 
     batches = student.batches.all().filter(class_name=student.class_enrolled).order_by('-created_at')
 
