@@ -37,7 +37,7 @@ urlpatterns = [
 
     path('compare_performance/', compare_student_performance, name='compare_performance'),
     path('compare_performance/<int:class_id>/', compare_student_performance, name='compare_class'),
-    path('compare_performance/<int:class_id>/<int:subject_id>/', compare_student_performance, name='compare_batch'),
+    path('compare_performance/<int:class_id>/<int:batch_id>/', compare_student_performance, name='compare_batch'),
 
     path('personal_report/<uuid:stu_id>/', student_personal_report , name='student_personal_report'),
     path('batchwise_students/', batchwise_students, name='batchwise_students'),
