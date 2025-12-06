@@ -11,6 +11,7 @@ from .views import (
     student_subject_homework_report,
     student_homework_report,
     student_test_summary_report,
+    student_subject_test_summary_report,
 
     # Teachers Reports
     teachers_list,
@@ -32,6 +33,7 @@ urlpatterns = [
     path('student_subject_homework/<uuid:stu_id>/<int:subject_id>/', student_subject_homework_report, name='student_subject_homework_report'),
     path('student_homework/<uuid:stu_id>/', student_homework_report, name='student_homework_report'),
     path('student_test_summary/<uuid:stu_id>/', student_test_summary_report, name='student_test_summary_report'),
+    path('student_subject_test_summary/<uuid:stu_id>/<int:subject_id>/', student_subject_test_summary_report, name='student_subject_test_summary_report'),
 
     path('compare_performance/', compare_student_performance, name='compare_performance'),
     path('compare_performance/<int:class_id>/', compare_student_performance, name='compare_class'),

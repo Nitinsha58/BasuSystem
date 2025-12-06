@@ -194,103 +194,41 @@
                     </form>
                 </div>
             </div>
-
-            <div class="stats-wrapper">
-                <h2>Test Report</h2>
-                <div class="test">
-                    <div class="graph-container">
-                        <!-- <canvas id="testChart"></canvas> -->
-                        <div class="graph-box">
-                            <p class="graph-title">Overall Test - {{combined_marks.scored}}%</p>
-                            <div class="chart-box">
-                                {% if combined_marks.scored %}
-                                <div class="ratios green" style="max-width: {{combined_marks.scored}}%; min-width: {{combined_marks.scored}}%;"> {{combined_marks.scored}} %  </div>
-                                {% endif %}
-                                {% if 100|sub:combined_marks.scored %}
-                                <div class="ratios red" style="max-width: calc(100 - {{combined_marks.scored}}%); min-width: calc(100 - {{combined_marks.scored}}%);" >{{100|sub:combined_marks.scored|floatformat:2}}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="graph-box">
-                            <p class="graph-title">Overall Test Attendance </p>
-                            <div class="chart-box" style="height: 25px; min-height: 25px;">
-                                {% if combined_marks.present %}
-                                <div class="ratios green" style="max-width: {{combined_marks.present_percentage}}%; min-width: {{combined_marks.present_percentage}}%;"> {{combined_marks.present}}  </div>
-                                {% endif %}
-                                {% if combined_marks.absent %}
-                                <div class="ratios red" style="max-width: {{combined_marks.absent_percentage}}%; min-width: {{combined_marks.absent_percentage}}%;"> {{combined_marks.absent}}  </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-
-                    {% for batch, test in batchwise_marks.items %}
-                    {% if test.scored or test.deducted %}
-                    <div class="graph-container">
-                        <!-- <canvas id="testChart{{forloop.counter}}"></canvas>  -->
-                        <div class="graph-box">
-                            <p class="graph-title">{{batch.subject.name}} {{batch.section.name}} - {{test.scored}}% </p>
-                            <div class="chart-box">
-                                {% if test.scored %}
-                                <div class="ratios green" style="max-width: {{test.scored}}%; min-width: {{test.scored}}%;"> {{test.scored}} %  </div>
-                                {% endif %}
-                                {% if 100|sub:test.scored %}
-                                <div class="ratios red" style="max-width: calc(100 - {{test.scored}}%); min-width: calc(100 - {{test.scored}}%);" >{{100|sub:test.scored|floatformat:2}}</div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="graph-box">
-                            <p class="graph-title"> {{batch.subject.name}} {{batch.section.name}} Test Attendance </p>
-                            <div class="chart-box" style="height: 25px; min-height: 25px;">
-                                {% if test.present %}
-                                <div class="ratios green" style="max-width: {{test.present_percentage}}%; min-width: {{test.present_percentage}}%;"> {{test.present}}  </div>
-                                {% endif %}
-                                {% if test.absent %}
-                                <div class="ratios red" style="max-width: {{test.absent_percentage}}%; min-width: {{test.absent_percentage}}%;"> {{test.absent}}  </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
-                    {% endfor %}
-                </div>
-
-            </div>
-
         </div>
 
         <div class="calendars d-flex flex-column gap-4 justify-content-center align-items-center mt-4">
+            <p class="h2">{{subject_test_reports.subject.name|title}} Test Summary</p>
             <div class="w-100 d-flex flex-column gap-4 justify-content-center align-items-center">
-                {% for batch, test in batchwise_marks.items %}
-                    {% if test.scored or test.deducted %}
-                    <div class="graph-container mt-4">
+                    {% if subject_test_reports.scored or subject_test_reports.deducted %}
+                    <div class="graph-container">
                         <div class="graph-box">
-                            <h2> {{batch.subject.name}} {{batch.section.name}} - {{test.scored}}% </h2>
+                            <h2> {{subject_test_reports.subject.name}} - {{subject_test_reports.scored}}% </h2>
                             <div class="chart-box">
-                                {% if test.scored %}
-                                <div class="ratios green" style="max-width: {{test.scored}}%; min-width: {{test.scored}}%;"> {{test.scored}} %  </div>
+                                {% if subject_test_reports.scored %}
+                                <div class="ratios green" style="max-width: {{subject_test_reports.scored}}%; min-width: {{subject_test_reports.scored}}%;"> {{subject_test_reports.scored}} %  </div>
                                 {% endif %}
-                                {% if 100|sub:test.scored %}
-                                <div class="ratios red" style="max-width: calc(100 - {{test.scored}}%); min-width: calc(100 - {{test.scored}}%);" >{{100|sub:test.scored|floatformat:2}}</div>
+                                {% if 100|sub:subject_test_reports.scored %}
+                                <div class="ratios red" style="max-width: calc(100 - {{subject_test_reports.scored}}%); min-width: calc(100 - {{subject_test_reports.scored}}%);" >{{100|sub:subject_test_reports.scored|floatformat:2}}</div>
                                 {% endif %}
                             </div>
                         </div>
                         <div class="graph-box">
-                            <p class="graph-title"> {{batch.subject.name}} {{batch.section.name}} Test Attendance </p>
+                            <p class="graph-title"> {{subject_test_reports.subject.name}} Test Attendance </p>
                             <div class="chart-box" style="height: 25px; min-height: 25px;">
-                                {% if test.present %}
-                                <div class="ratios green" style="max-width: {{test.present_percentage}}%; min-width: {{test.present_percentage}}%;"> {{test.present}}  </div>
+                                {% if subject_test_reports.present %}
+                                <div class="ratios green" style="max-width: {{subject_test_reports.present_percentage}}%; min-width: {{subject_test_reports.present_percentage}}%;"> {{subject_test_reports.present}}  </div>
                                 {% endif %}
-                                {% if test.absent %}
-                                <div class="ratios red" style="max-width: {{test.absent_percentage}}%; min-width: {{test.absent_percentage}}%;"> {{test.absent}}  </div>
+                                {% if subject_test_reports.absent %}
+                                <div class="ratios red" style="max-width: {{subject_test_reports.absent_percentage}}%; min-width: {{subject_test_reports.absent_percentage}}%;"> {{subject_test_reports.absent}}  </div>
                                 {% endif %}
                             </div>
                         </div>
                     </div>
                     {% endif %}
 
-                    <div class="d-flex gap-4 justify-content-center" style="flex-wrap: wrap; width: 100%;">
-                    {% for month_data in test.batch_calendar %}
+                    <p class="h2 mt-4">Test Attendance Calendar</p>
+                    <div class="d-flex gap-4 mb-4 justify-content-center" style="flex-wrap: wrap; width: 100%;">
+                    {% for month_data in subject_test_reports.subject_calendar %}
                         <div class="calendar_container ">
                             <div class="d-flex justify-content-center align-items-center">
                                 <p class="m-0" style="font-weight: 500; font-size: 20px;">
@@ -336,11 +274,10 @@
                             </div>
                         </div>
                     {% endfor %}
-                
-                
                     </div>
 
-                    <div class="graph-container mt-4 w-100">
+                    <p class="h2 mt-4">Subject Remarks Summary </p>
+                    <div class="graph-container w-100">
                         <div class="container-md my-4 w-100 d-flex flex-column justify-content-center align-items-center">
                             <div  class="g-3 relative w-100" style="overflow-x: auto;">
                                 <canvas id="remarkProgress_{{batch.id}}" class="w-100 h-auto" style="min-width: 700px;" ></canvas>
@@ -348,7 +285,7 @@
                             <div class="m-sm-2 p-sm-2 absolute w-100 remarks-container" style="max-width: 500px;">
                                 <ul class="list-group">
                                     <li class="list-group-item bg-dark text-white border-dark">Batch Remarks</li>
-                                    {% for remark, count in test.batch_summary.remarks_count.items %}
+                                    {% for remark, count in subject_test_reports.subject_summary.remarks_count.items %}
                                     <li class="list-group-item d-flex justify-content-between" style="font-size: 14px;" style="font-size: 12px;">
                                         <span class="">{{remark}}</span> <span class="fw-normal" >{{count}}%</span> 
                                     </li>
@@ -357,46 +294,131 @@
                             </div>
                         </div>
                     </div>
-                {% endfor %}
+
+
             </div>
         </div>
 
+
+        <div class="d-flex flex-column gap-4 justify-content-center align-items-center mt-4">
+            <p class="h2 mt-4">Individual Test Summary</p>
+        </div>
+        {% for test in subject_test_reports.test_reports %}
+
+            <div class="container-md my-4 w-100">
+                <div class="mt-4">
+                    <p class="h4 fw-normal">{{test.test.name}}</p>
+                    <p class="text-muted fw-normal m-0" style="font-size: 14px;">{{test.test.date|date:'d M Y'}}</p>
+                    <p class="text-muted fw-normal m-0" style="font-size: 14px;">{{test.test.batch}}</p>
+                </div>
+
+                <div  class="container my-4 p-0 w-100 d-lg-flex justify-content-around">
+                <div class="w-100 h-auto" style="overflow-x: auto;">
+                    <canvas id="sub_test_{{forloop.counter}}" class="w-100 h-auto" style="min-width: 700px;" ></canvas>
+                </div>
+                <div class="m-sm-2 p-sm-2 remarks-container">
+                    <ul class="list-group">
+                    {% if test.is_absent %}
+                    <li class="list-group-item bg-dark text-white border-dark">Absent</li>
+                    {% else %}
+                    <li class="list-group-item bg-dark text-white border-dark">Mock Remarks -  {{test.marks_data.percentage|floatformat:2}}% <br> ({{test.marks_data.obtained|floatformat:1}}/{{test.marks_data.total|floatformat:1}})</li>
+                    {% endif %}
+                    {% for remark, count in test.remarks.remarks_count.items %}
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span class="">{{remark}}</span> <span class="fw-normal" >{{count}}%</span> 
+                    </li>
+                    {% endfor %}
+                    </ul>
+                </div>
+
+                </div>
+            </div>
+        {% endfor %}
+
 </div>
+
+<script>
+window.addEventListener('DOMContentLoaded', function() {
+
+    {% for report in subject_test_reports.test_reports %}
+        {% if report.test.is_data_complete_for_graph %}
+    const ctx1{{ forloop.counter }} = document.getElementById('sub_test_{{forloop.counter}}').getContext('2d');
+    new Chart(ctx1{{batch.id}}{{forloop.counter}}, {
+        type: 'bar',
+        data: {
+            labels: [{% for ch_no, ch_name in report.remarks.chapters.items %} '{{ch_name}} {{ch_no}}', {% endfor %}].map(label => label.split(' ')),
+            datasets: [
+                {% for remark, counts in report.remarks.chapter_wise_remarks.items %}
+                    {
+                        label: '{{remark}}',
+                        data: {{counts}},
+                        borderWidth: 1,
+                        maxBarThickness: 60,
+                    },
+                {% endfor %}
+
+            ]
+        },
+        options: {
+                    responsive: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                font: {
+                                    size: 12
+                                },
+                            }
+                        },
+                        tooltip: {
+                            enabled: true
+                        }
+                    },
+                    scales: {
+                        responsive: false,
+                        maintainAspectRatio: true,
+                        x: {
+                            stacked: true, // Enable stacking on the X-axis
+                            ticks: {
+                                autoSkip: false,
+                                maxRotation: 0,
+                                minRotation: 0,
+                                font: {
+                                    size: 10
+                                }
+                            },
+                        },
+                        y: {
+                            stacked: true, // Enable stacking on the Y-axis
+                            beginAtZero: true,
+                            ticks: {
+                                font: {
+                                    size: 10
+                                }
+                            },
+                        }
+                    }
+                }
+        });
+
+
+        {% endif %}
+    {% endfor %}
+});
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- 
-<script>
-    // Save date range to localStorage when form is submitted
-    document.querySelector("form").addEventListener("submit", function () {
-      const start = document.getElementById("start_date").value;
-      const end = document.getElementById("end_date").value;
-      localStorage.setItem("start_date", start);
-      localStorage.setItem("end_date", end);
-    });
-  
-    // On page load, set input values from localStorage if present
-    window.addEventListener("DOMContentLoaded", function () {
-      const start = localStorage.getItem("start_date");
-      const end = localStorage.getItem("end_date");
-  
-      if (start) document.getElementById("start_date").value = start;
-      if (end) document.getElementById("end_date").value = end;
-    });
-</script> -->
-
 
 <script>
-    {% for batch, test in batchwise_marks.items %}
+    const ctx_{{subject_test_reports.subject_summary.subject.id}} = document.getElementById('remarkProgress_{{subject_test_reports.subject_summary.subject.id}}')
     
-    const ctx_{{batch.id}} = document.getElementById('remarkProgress_{{batch.id}}')
-    
-    new Chart(ctx_{{batch.id}}, {
+    new Chart(ctx_{{subject_test_reports.subject_summary.subject.id}}, {
       type: 'bar',
       data: {
-        labels: [{% for ch_no, ch_name in test.batch_summary.chapters.items %} '{{ch_name}} {{ch_no}}', {% endfor %}].map(label => label.split(' ')),
+        labels: [{% for ch_no, ch_name in subject_test_reports.subject_summary.chapters.items %} '{{ch_name}} {{ch_no}}', {% endfor %}].map(label => label.split(' ')),
         datasets: [
-            {% for remark, counts in test.batch_summary.chapter_wise_remarks.items %}
+            {% for remark, counts in subject_test_reports.subject_summary.chapter_wise_remarks.items %}
             {
                 label: '{{remark}}',
                 data: {{counts}},
@@ -447,7 +469,6 @@
             }
         }
     });
-    {% endfor %}
 </script>
   
 

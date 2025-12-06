@@ -53,6 +53,8 @@ from .utility import (
     get_subjectwise_attendance_calendar,
     get_subjectwise_homework_calendar,
 
+    get_subject_test_reports,
+
     get_monthly_calendar,
     get_chapters_from_questions,
     calculate_testwise_remarks,
@@ -150,7 +152,7 @@ def student_report(request, stu_id):
             chapter_remarks = {k: chapter_remarks[k] for k in sorted(chapter_remarks.keys(), key=lambda x: (x != 'Correct', x))}
 
             marks_data = calculate_marks(responses, test_chapters)
-            # print(calculate_testwise_remarks(responses, test_chapters))
+
 
             test_reports.append({
                 'test': test,
@@ -170,10 +172,6 @@ def student_report(request, stu_id):
             })
 
         batch_wise_tests[batch] = test_reports
-
-    # for batch, reports in batch_wise_tests.items():
-    #     for report in reports:
-    #         print(report['test'].name, report['chapter_wise_test_remarks'])
 
     return render(request, 'reports/student_report.html', {
         'student': student,
@@ -381,6 +379,52 @@ def student_subject_homework_report(request, stu_id, subject_id):
         'subject_homework': subject_homework,
         'start_date': start_date,
         'end_date': end_date,
+
+    })
+
+
+@login_required(login_url='login')
+def student_subject_test_summary_report(request, stu_id, subject_id):
+    student = Student.objects.filter(stu_id=stu_id).first()
+    subject = Subject.objects.filter(id=subject_id).first()
+
+    if stu_id and not student:
+        messages.error(request, "Invalid Student")
+        return redirect('student_report', stu_id=stu_id)
+    
+    if not subject:
+        messages.error(request, "Invalid Subject")
+        return redirect('student_report', stu_id=stu_id)
+
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+
+    if start_date_str and end_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+        except ValueError:
+            messages.error(request, "Invalid date format")
+            return redirect('student_report', stu_id=stu_id)
+    else:
+        period = ReportPeriod.objects.all().order_by('-start_date').first()
+        if period:
+            start_date = period.start_date
+            end_date = period.end_date
+        else:
+            today = date.today()
+            start_date = today.replace(day=1)
+            end_date = today
+
+    
+    subject_test_reports = get_subject_test_reports(student, subject, start_date, end_date)
+    return render(request, 'reports/student_subject_test_summary_report.html', {
+        'student': student,
+
+        'start_date': start_date,
+        'end_date': end_date,
+
+        'subject_test_reports': subject_test_reports,
 
     })
 

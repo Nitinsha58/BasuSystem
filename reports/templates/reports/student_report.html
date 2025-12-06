@@ -325,7 +325,7 @@
                 </div>
 
                 <h2 class="">Test</h2>
-                <a  href="{% url 'student_test_summary_report' student.stu_id %}?start_date={{start_date|date:'Y-m-d'}}&end_date={{end_date|date:'Y-m-d'}}" class="test">
+                <div  class="test">
                     {% if combined_marks %}
                     <div class="graph-container">
                         <!-- <canvas id="testChart"></canvas> -->
@@ -356,31 +356,33 @@
 
                     {% for subject, test in subjectwise_marks.items %}
                     {% if test.scored or test.deducted %}
-                    <div class="graph-container">
-                        <!-- <canvas id="testChart{{forloop.counter}}"></canvas>  -->
-                        <div class="graph-box">
-                            <p class="graph-title">{{subject.name}} - {{test.scored}}% </p>
-                            <div class="chart-box">
-                                {% if test.scored %}
-                                <div class="ratios green" style="max-width: {{test.scored}}%; min-width: {{test.scored}}%;"> {{test.scored}} %  </div>
-                                {% endif %}
-                                {% if 100|sub:test.scored %}
-                                <div class="ratios red" style="max-width: calc(100 - {{test.scored}}%); min-width: calc(100 - {{test.scored}}%);" >{{100|sub:test.scored|floatformat:2}}</div>
-                                {% endif %}
+                    <a  href="{% url 'student_subject_test_summary_report' student.stu_id subject.id %}?start_date={{start_date|date:'Y-m-d'}}&end_date={{end_date|date:'Y-m-d'}}" class="test">
+                        <div class="graph-container">
+                            <!-- <canvas id="testChart{{forloop.counter}}"></canvas>  -->
+                            <div class="graph-box">
+                                <p class="graph-title">{{subject.name}} - {{test.scored}}% </p>
+                                <div class="chart-box">
+                                    {% if test.scored %}
+                                    <div class="ratios green" style="max-width: {{test.scored}}%; min-width: {{test.scored}}%;"> {{test.scored}} %  </div>
+                                    {% endif %}
+                                    {% if 100|sub:test.scored %}
+                                    <div class="ratios red" style="max-width: calc(100 - {{test.scored}}%); min-width: calc(100 - {{test.scored}}%);" >{{100|sub:test.scored|floatformat:2}}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="graph-box">
+                                <p class="graph-title"> {{subject.name}} Test Attendance </p>
+                                <div class="chart-box" style="height: 25px; min-height: 25px;">
+                                    {% if test.present %}
+                                    <div class="ratios green" style="max-width: {{test.present_percentage}}%; min-width: {{test.present_percentage}}%;"> {{test.present}}  </div>
+                                    {% endif %}
+                                    {% if test.absent %}
+                                    <div class="ratios red" style="max-width: {{test.absent_percentage}}%; min-width: {{test.absent_percentage}}%;"> {{test.absent}}  </div>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
-                        <div class="graph-box">
-                            <p class="graph-title"> {{subject.name}} Test Attendance </p>
-                            <div class="chart-box" style="height: 25px; min-height: 25px;">
-                                {% if test.present %}
-                                <div class="ratios green" style="max-width: {{test.present_percentage}}%; min-width: {{test.present_percentage}}%;"> {{test.present}}  </div>
-                                {% endif %}
-                                {% if test.absent %}
-                                <div class="ratios red" style="max-width: {{test.absent_percentage}}%; min-width: {{test.absent_percentage}}%;"> {{test.absent}}  </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
+                    </a>
                     {% endif %}
                     {% endfor %}
                 </a>
@@ -488,7 +490,7 @@
         </div> -->
 
         <!-- <h2 class="mt-4">Weekly Tests</h2> -->
-        {% for batch, reports in batch_wise_tests.items %}
+        {% for batch, reports in batch_wise_testssd.items %}
             {% for test in reports %}
             {% if test.test.is_data_complete_for_graph %}
             <div class="container-md my-4 w-100">
@@ -501,11 +503,6 @@
                 <div  class="container my-4 p-0 w-100 d-lg-flex justify-content-around">
                 <div class="w-100 h-auto" style="overflow-x: auto;">
                     <canvas id="test_chart_1{{batch.id}}{{forloop.counter}}" class="w-100 h-auto" style="min-width: 700px;" ></canvas>
-                    <!-- <canvas id="test_chart_2{{batch.id}}{{forloop.counter}}" class="w-100 h-auto" style="min-width: 700px;" ></canvas> -->
-                    <!-- <div class="parent ">
-                    <div class="child bg-warning" style="width: {{test.attempted}}%;"  ></div>
-                    <p class="progress_text">{{test.attempted}}% Students Attempted</p>
-                    </div> -->
                 </div>
                 <div class="m-sm-2 p-sm-2 remarks-container">
                     <ul class="list-group">

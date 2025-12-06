@@ -612,6 +612,107 @@ def get_batch_test_calendar(student, batch, start_date, end_date):
 
     return monthly_data
 
+def get_subject_test_calendar(student, subject, start_date, end_date):
+    monthly_data = []
+
+    doj = getattr(student, 'doj', None)
+    effective_start_date = max(start_date, doj) if doj else start_date
+
+    # Accept either Subject instance or subject name
+    if isinstance(subject, str):
+        subject_obj = Subject.objects.filter(name=subject).first()
+    else:
+        subject_obj = subject
+
+    # Only consider tests from the batches the student actually belongs to for this subject
+    student_batches_for_subject = student.batches.filter(subject=subject_obj)
+
+    tests = Test.objects.filter(
+        batch__in=student_batches_for_subject,
+        date__range=(effective_start_date, end_date)
+    ).order_by('date')
+
+    # Build a lookup of tests by date for fast per-day checks
+    tests_by_date = {}
+    for t in tests:
+        tests_by_date.setdefault(t.date, []).append(t)
+
+    current = date(effective_start_date.year, effective_start_date.month, 1)
+    last_date = date(end_date.year, end_date.month, calendar.monthrange(end_date.year, end_date.month)[1])
+
+    while current <= last_date:
+        year, month = current.year, current.month
+        first_weekday, total_days = calendar.monthrange(year, month)
+        first_weekday = (first_weekday + 1) % 7
+
+        calendar_data = []
+        week = [None] * first_weekday
+        present_c, absent_c = 0, 0
+
+        for day in range(1, total_days + 1):
+            current_date = date(year, month, day)
+
+            test_status = None
+            if effective_start_date <= current_date <= end_date:
+                date_tests = tests_by_date.get(current_date, [])
+                if date_tests:
+                    # Was there activity on this date (by other students) in any of the tests?
+                    date_has_activity = any(
+                        QuestionResponse.objects.filter(test=t).exclude(student=student).exists() or
+                        TestResult.objects.filter(test=t).exclude(student=student).exists()
+                        for t in date_tests
+                    )
+
+                    # Did the student participate in any test on this date?
+                    student_participated = any(
+                        QuestionResponse.objects.filter(test=t, student=student).exists() or
+                        TestResult.objects.filter(test=t, student=student).exists()
+                        for t in date_tests
+                    )
+
+                    # Decide status per-date (not per-test)
+                    if date_has_activity and not student_participated:
+                        test_status = 'Absent'
+                        absent_c += 1
+                    elif student_participated:
+                        test_status = 'Present'
+                        present_c += 1
+                    # else: no activity and student did not participate -> leave None
+
+            week.append({
+                'date': current_date,
+                'attendance': test_status,
+            })
+
+            if len(week) == 7:
+                calendar_data.append(week)
+                week = []
+
+        if week:
+            while len(week) < 7:
+                week.append(None)
+            calendar_data.append(week)
+
+        if len(calendar_data) == 5:
+            calendar_data.append([None] * 7)
+
+        monthly_data.append({
+            'calendar': calendar_data,
+            'present_count': present_c,
+            'absent_count': absent_c,
+            'present_percentage': round((present_c / (present_c + absent_c) * 100) if (present_c + absent_c) > 0 else 0, 1),
+            'absent_percentage': round((absent_c / (present_c + absent_c) * 100) if (present_c + absent_c) > 0 else 0, 1),
+            'month_name': calendar.month_name[month],
+            'year': year,
+        })
+
+        # Move to next month
+        if month == 12:
+            current = date(year + 1, 1, 1)
+        else:
+            current = date(year, month + 1, 1)
+
+    return monthly_data
 
 def get_monthly_calendar(student, start_date, end_date):
     monthly_data = []
@@ -695,7 +796,7 @@ def is_absent(test, student):
         return True  # Student is absent
     return False  # Student is present or test has no activity at all
 
-def get_marks_percentage(student, start_date, end_date):
+def get_marks_percentage(student, start_date, end_date): 
     """
     Calculates the marks percentage and test attendance for a given student
     within the specified date range, excluding specific batches.
@@ -805,61 +906,98 @@ def get_subjectwise_marks(student, start_date, end_date):
     Calculates the marks percentage and test attendance (present/absent count) 
     for a given student in each subject within the specified date range.
     """
+    doj = getattr(student, 'doj', None)
+    effective_start_date = max(start_date, doj) if doj else start_date
+    
     result = {}
-    subjects = student.batches.all().values_list('subject__name', flat=True).distinct()
+    
+    # Use StudentBatchLink for accuracy
+    student_batch_links = StudentBatchLink.objects.filter(
+        student=student
+    ).select_related('batch__class_name', 'batch__subject').order_by(
+        'batch__class_name__name', 'batch__subject__name', '-active'
+    )
 
-    for subject in subjects:
-        tests = Test.objects.filter(
-            batch__subject__name=subject,
-            date__range=(start_date, end_date)
-        )
+    batches_by_class_subject = {}
+    for link in student_batch_links:
+        batch = link.batch
+        class_name = batch.class_name.name
+        subject_name = batch.subject.name
+        key = f"{class_name} {subject_name}"
+
+        if key not in batches_by_class_subject:
+            batches_by_class_subject[key] = {
+                'class': batch.class_name,
+                'subject': batch.subject,
+                'section': batch.section,
+                'batches': []
+            }
+
+        batches_by_class_subject[key]['batches'].append({
+            'batch_name': str(batch.section.name),
+            'batch_id': batch.id,
+            'active': bool(link.active),
+        })
+
+    # Process tests by class and subject
+    for class_subject_key, class_obj in batches_by_class_subject.items():
+        test_qs = Test.objects.filter(
+            batch__subject=class_obj['subject'],
+            batch__class_name=class_obj['class'],
+            date__range=(effective_start_date, end_date)
+        ).order_by('date')
 
         total_max_marks = 0
         total_obtained_marks = 0
+        percent_sum = 0.0
+        test_count = 0
         present_count = 0
         absent_count = 0
 
-        # Group tests by date because student may have appeared in any one batch on that date
-        for test_date, group in groupby(tests.order_by('date'), key=lambda t: t.date):
+        # Group tests by date
+        for test_date, group in groupby(test_qs, key=lambda t: t.date):
             date_tests = list(group)
 
-            # Was there activity on this date (by other students) in any of the tests?
+            # Was there activity on this date (by other students)?
             date_has_activity = any(
-            QuestionResponse.objects.filter(test=t).exclude(student=student).exists() or
-            TestResult.objects.filter(test=t).exclude(student=student).exists()
-            for t in date_tests
+                QuestionResponse.objects.filter(test=t).exclude(student=student).exists() or
+                TestResult.objects.filter(test=t).exclude(student=student).exists()
+                for t in date_tests
             )
 
             # Did the student participate in any test on this date?
             student_participated = any(
-            QuestionResponse.objects.filter(test=t, student=student).exists() or
-            TestResult.objects.filter(test=t, student=student).exists()
-            for t in date_tests
+                QuestionResponse.objects.filter(test=t, student=student).exists() or
+                TestResult.objects.filter(test=t, student=student).exists()
+                for t in date_tests
             )
 
-            # If there was activity but the student did not participate => absent for that date
+            # If there was activity but student did not participate => absent
             if date_has_activity and not student_participated:
                 absent_count += 1
                 continue
 
-            # If student participated in any test on that date, count as present and accumulate marks
+            # If student participated, count as present and accumulate marks
             if student_participated:
                 present_count += 1
                 for t in date_tests:
                     test_result = TestResult.objects.filter(test=t, student=student).first()
                     if test_result:
-                        total_max_marks += t.total_max_marks
-                        total_obtained_marks += test_result.total_marks_obtained
-
-        if total_max_marks > 0:
-            scored = round((total_obtained_marks / total_max_marks) * 100, 2)
+                        # total_max_marks += t.total_max_marks
+                        # total_obtained_marks += test_result.total_marks_obtained
+                        percent_sum += test_result.percentage
+                        test_count += 1
+                        
+        if test_count > 0:
+            scored = round((percent_sum / test_count), 2)
             deducted = round(100 - scored, 2)
         else:
             scored = 0.0
             deducted = 0.0
 
-        subject = Subject.objects.filter(name=subject).first()
-        result[subject] = {
+        # Store result using subject object as key
+        subject_obj = class_obj['subject']
+        result[subject_obj] = {
             'scored': round(scored, 2),
             'deducted': round(deducted, 2),
             'present': present_count or 0,
@@ -870,6 +1008,241 @@ def get_subjectwise_marks(student, start_date, end_date):
 
     return result
 
+def get_subjectwise_test_reports(student, start_date, end_date):
+    doj = getattr(student, 'doj', None)
+    effective_start_date = max(start_date, doj) if doj else start_date
+
+    # All subjects the student actually belongs to
+    subjects = student.batches.all().values_list('subject__name', flat=True).distinct()
+    result = {}
+
+    for subject_name in subjects:
+        subject_obj = Subject.objects.filter(name=subject_name).first()
+
+        # Get all batches the student belongs to for this subject
+        student_batches_for_subject = student.batches.filter(subject__name=subject_name)
+
+        # FIX: Only tests from student's batches (NOT all batches of that subject)
+        tests_qs = Test.objects.filter(
+            batch__in=student_batches_for_subject,
+            date__range=(effective_start_date, end_date)
+        ).order_by('date')
+
+        # Group tests by their exam date
+        tests_in_subject = {}
+        for test_date, group in groupby(tests_qs, key=lambda t: t.date):
+            tests_in_subject[test_date] = {
+                'tests': list(group)
+            }
+
+        test_reports = []
+        total_max_marks = 0
+        total_obtained_marks = 0
+        present_count = 0
+        absent_count = 0
+
+        # Process each test date group
+        for test_date, test_group in tests_in_subject.items():
+            tests = test_group['tests']
+
+            selected_test = None
+            selected_result = None
+
+            # Prefer a test on this date where the student has a TestResult
+            for test in tests:
+                res = TestResult.objects.filter(test=test, student=student).first()
+                if res:
+                    selected_test = test
+                    selected_result = res
+                    break
+
+            if not selected_test:
+                # Student was absent for all tests on this date
+                selected_test = tests[0]
+                is_absent_status = True
+            else:
+                is_absent_status = False
+
+            # Fetch responses for marks
+            responses = QuestionResponse.objects.filter(
+                test=selected_test,
+                student=student
+            ).select_related('question', 'remark')
+
+            attendance_status = 'Absent' if is_absent_status else 'Present'
+
+            # Compute chapters & marks
+            test_chapters = get_chapters_from_questions(selected_test)
+            marks_data = calculate_marks(responses, test_chapters)
+            chapter_remarks = calculate_testwise_remarks(responses, test_chapters)
+
+            # Append test report
+            test_reports.append({
+                'test': selected_test,
+                'result': selected_result,
+                'is_absent': is_absent_status,
+                'attendance_status': attendance_status,
+                'marks_data': marks_data,
+                'chapter_remarks': chapter_remarks,
+            })
+
+            # Update counts
+            if is_absent_status:
+                absent_count += 1
+            else:
+                present_count += 1
+                if selected_result:
+                    total_max_marks += selected_test.total_max_marks
+                    total_obtained_marks += selected_result.total_marks_obtained
+
+        # Calculate overall percentages
+        if total_max_marks > 0:
+            scored = round((total_obtained_marks / total_max_marks) * 100, 2)
+            deducted = 100 - scored
+        else:
+            scored = 0.0
+            deducted = 0.0
+
+        result[subject_obj] = {
+            'subject': subject_obj,
+            'test_reports': test_reports,
+            'subject_summary': calculate_subject_chapter_remarks(student, subject_obj, effective_start_date, end_date),
+            'test_calendar': get_subject_test_calendar(student, subject_obj, effective_start_date, end_date),
+            'scored': round(scored, 2),
+            'deducted': round(deducted, 2),
+            'present': present_count,
+            'absent': absent_count,
+            'present_percentage': round(
+                (present_count / (present_count + absent_count) * 100)
+                if (present_count + absent_count) > 0 else 0,
+                2
+            ),
+            'absent_percentage': round(
+                (absent_count / (present_count + absent_count) * 100)
+                if (present_count + absent_count) > 0 else 0,
+                2
+            ),
+        }
+
+    return result
+
+def get_subject_test_reports(student, subject, start_date, end_date):
+    doj = getattr(student, 'doj', None)
+    effective_start_date = max(start_date, doj) if doj else start_date
+
+    # Accept either Subject instance or subject name
+    if isinstance(subject, str):
+        subject_obj = Subject.objects.filter(name=subject).first()
+    else:
+        subject_obj = subject
+
+    # Only consider tests from the batches the student actually belongs to for this subject
+    student_batches_for_subject = student.batches.filter(subject=subject_obj)
+    tests = Test.objects.filter(
+        batch__in=student_batches_for_subject,
+        date__range=(effective_start_date, end_date)
+    ).order_by('date')
+
+    percent_sum = 0.0
+    test_count = 0
+    present_count = 0
+    absent_count = 0
+
+    # Group tests by date because student may have appeared in any one batch on that date
+    for test_date, group in groupby(tests, key=lambda t: t.date):
+        date_tests = list(group)
+
+        # Was there activity on this date (by other students) in any of the tests?
+        date_has_activity = any(
+            QuestionResponse.objects.filter(test=t).exclude(student=student).exists() or
+            TestResult.objects.filter(test=t).exclude(student=student).exists()
+            for t in date_tests
+        )
+
+        # Did the student participate in any test on this date?
+        student_participated = any(
+            QuestionResponse.objects.filter(test=t, student=student).exists() or
+            TestResult.objects.filter(test=t, student=student).exists()
+            for t in date_tests
+        )
+
+        # If there was activity but the student did not participate => absent for that date
+        if date_has_activity and not student_participated:
+            absent_count += 1
+            continue
+
+        # If student participated in any test on that date, count as present and accumulate percentage
+        if student_participated:
+            present_count += 1
+            for t in date_tests:
+                test_result = TestResult.objects.filter(test=t, student=student).first()
+                if test_result and test_result.percentage is not None:
+                    percent_sum += test_result.percentage
+                    test_count += 1
+
+    if test_count > 0:
+        scored = round((percent_sum / test_count), 2)
+        deducted = round(100 - scored, 2)
+    else:
+        scored = 0.0
+        deducted = 0.0
+
+
+    result = {
+        'subject': subject_obj,
+        'test_reports': calculate_subject_tests_report(student, subject_obj, effective_start_date, end_date),
+        'subject_summary': calculate_subject_chapter_remarks(student, subject_obj, effective_start_date, end_date),
+        'subject_calendar': get_subject_test_calendar(student, subject_obj, effective_start_date, end_date),
+        'scored': round(scored, 2),
+        'deducted': round(deducted, 2),
+        'present': present_count or 0,
+        'absent': absent_count or 0,
+        'present_percentage': round((present_count / (present_count + absent_count) * 100) if (present_count + absent_count) > 0 else 0, 2),
+        'absent_percentage': round((absent_count / (present_count + absent_count) * 100) if (present_count + absent_count) > 0 else 0, 2),
+    }
+
+    return result
+
+
+def calculate_subject_tests_report(student, subject, start_date, end_date):    
+    """
+    Generates detailed test reports for a student in a specific subject within a date range.
+    """
+    # Get all batches the student belongs to for this subject
+    student_batches_for_subject = student.batches.filter(subject=subject)
+    tests_qs = Test.objects.filter(
+        batch__in=student_batches_for_subject,
+        date__range=(start_date, end_date)
+    ).order_by('date')
+
+    test_reports = []
+    for test in tests_qs:
+        test_result = TestResult.objects.filter(test=test, student=student).first()
+        responses = QuestionResponse.objects.filter(
+            test=test,
+            student=student
+        ).select_related('question', 'remark')
+
+        is_absent_status = is_absent(test, student)
+        attendance_status = 'Absent' if is_absent_status else 'Present'
+
+        # Compute chapters & marks
+        test_chapters = get_chapters_from_questions(test)
+        marks_data = calculate_marks(responses, test_chapters)
+        chapter_remarks = calculate_testwise_remarks(responses, test_chapters)
+
+        test_reports.append({
+            'chapters': test_chapters,
+            'test': test,
+            'result': test_result,
+            'is_absent': is_absent_status,
+            'attendance_status': attendance_status,
+            'marks_data': marks_data,
+            'remarks': chapter_remarks,
+        })
+    return test_reports
+   
+
 def get_chapters_from_questions(test):
     questions = TestQuestion.objects.filter(test=test).order_by('chapter_no')
     return {
@@ -879,34 +1252,71 @@ def get_chapters_from_questions(test):
 
 def calculate_testwise_remarks(testwise_responses, test_chapters):
     """
+    Same structure as subject summary chapter-remarks, but for a single test.
     Returns:
-      - chapter_wise_remarks: dict mapping remark -> list (per-chapter values).
-          For normal remarks the values are total marks deducted (max_marks - marks_obtained).
-          Additionally a special remark "Correct" is included (chapter-wise counts of fully correct answers).
-      - correct_by_chapter: list (aligned with test_chapters.keys()) giving counts of fully correct responses per chapter.
+        {
+            'chapters': {1:'Algebra', 2:'Trigonometry'},
+            'remarks_count': { 'Correct': 80.0, 'Calculation Issue': 20.0 },
+            'chapter_wise_remarks': {
+                'Correct': [5, 10],
+                'Calculation Issue': [2, 0],
+                ...
+            }
+        }
     """
-    chapter_wise_remarks = defaultdict(lambda: [0] * len(test_chapters))
     chapter_keys = list(test_chapters.keys())
+
+    # Initialize same as subject summary
+    chapter_wise_remarks = defaultdict(lambda: [0] * len(test_chapters))
+    remarks_count = defaultdict(int)
 
     for response in testwise_responses:
         ch_no = response.question.chapter_no
         if ch_no not in chapter_keys:
             continue
-        index = chapter_keys.index(ch_no)
 
-        # If student scored full marks for this question, mark as "Correct"
-        if response.marks_obtained >= response.question.max_marks:
-            chapter_wise_remarks['Correct'][index] += response.marks_obtained
+        idx = chapter_keys.index(ch_no)
+        # Compute deducted marks for this response
+        deducted = response.question.max_marks - response.marks_obtained
+
+        # Add obtained marks to "Correct" (even if partial)
+        chapter_wise_remarks['Correct'][idx] += response.marks_obtained
+        remarks_count['Correct'] += response.marks_obtained
+
+        # If nothing was deducted (full marks) we're done for this response
+        if deducted == 0:
             continue
 
-        remark = response.remark
-        if not remark:
+        # If there's no remark, skip adding deducted marks to any remark
+        if not response.remark:
             continue
 
-        # For other remarks, accumulate deducted marks as before
-        chapter_wise_remarks[remark.name][index] += (response.question.max_marks - response.marks_obtained)
+        # Add deducted marks to the specific remark for this mistake
+        remark_name = response.remark.name
+        chapter_wise_remarks[remark_name][idx] += deducted
+        remarks_count[remark_name] += deducted
 
-    return dict(chapter_wise_remarks)
+    # Convert remark count to percentages
+    total = sum(remarks_count.values())
+    if total > 0:
+        remarks_count = {
+            k: round((v / total) * 100, 1)
+            for k, v in remarks_count.items()
+        }
+
+    # Sort for consistency
+    chapter_wise_remarks = dict(sorted(
+        chapter_wise_remarks.items(),
+        key=lambda item: item[0] != 'Correct'
+    ))
+    remarks_count = dict(sorted(remarks_count.items(), key=lambda item: item[1], reverse=True))
+
+    return {
+        'chapters': test_chapters,
+        'remarks_count': remarks_count,
+        'chapter_wise_remarks': chapter_wise_remarks
+    }
+
 
 def calculate_batchwise_chapter_remarks(student, batch, start_date, end_date):
     """
@@ -926,20 +1336,22 @@ def calculate_batchwise_chapter_remarks(student, batch, start_date, end_date):
         test__batch=batch,
         test__date__range=(start_date, end_date)
     ).select_related('question')
-
     chapter_wise_remarks = defaultdict(lambda: [0] * len(chapters))
     remarks_count = defaultdict(int)
 
     for response in questions_responses:
-        remark = response.remark
-        if not remark:
-            continue
         ch_no = response.question.chapter_no
         if ch_no not in chapters:
             continue  # Skip if chapter is not in the batch
         idx = list(chapters.keys()).index(ch_no)
-        chapter_wise_remarks[remark][idx] += ( response.question.max_marks - response.marks_obtained )
-        remarks_count[remark] += 1
+        
+        # Check if student scored full marks (mark as "Correct")
+        if response.marks_obtained >= response.question.max_marks:
+            chapter_wise_remarks['Correct'][idx] += response.marks_obtained
+            remarks_count['Correct'] += 1
+        elif response.remark:
+            chapter_wise_remarks[response.remark.name][idx] += (response.question.max_marks - response.marks_obtained)
+            remarks_count[response.remark.name] += 1
     
     total_remarks_sum = sum(remarks_count.values())
     if total_remarks_sum > 0:
@@ -949,7 +1361,81 @@ def calculate_batchwise_chapter_remarks(student, batch, start_date, end_date):
         }
     chapter_wise_remarks = dict(sorted(chapter_wise_remarks.items(), key=lambda d: d[1], reverse=True))
     remarks_count = dict(sorted(remarks_count.items(), key=lambda d: d[1], reverse=True))
+    return {
+        'chapters': chapters,
+        'remarks_count': remarks_count,
+        'chapter_wise_remarks': chapter_wise_remarks,
+    }
 
+def calculate_subject_chapter_remarks(student, subject, start_date, end_date):
+    """
+    Calculates chapterwise remarks for all tests of a student in a subject within a date range.
+    Returns a dict: {remark: [deducted_marks_per_chapter]}
+    """
+    # Get all batches the student belongs to for this subject
+    student_batches_for_subject = student.batches.filter(subject=subject)
+    if not student_batches_for_subject.exists():
+        chapters = {}
+        chapter_wise_remarks = {}
+        remarks_count = {}
+    else:
+        # Collect class_name ids for the student's batches of this subject
+        class_ids = list(student_batches_for_subject.values_list('class_name_id', flat=True).distinct())
+
+        # Chapters for the subject limited to the classes the student attends
+        chapters = {
+            ch.chapter_no: ch.chapter_name
+            for ch in Chapter.objects.filter(
+                subject=subject,
+                class_name__id__in=class_ids
+            ).order_by('chapter_no')
+        }
+
+        # Only tests from the student's batches for this subject in the date range
+        tests_qs = Test.objects.filter(
+            batch__in=student_batches_for_subject,
+            date__range=(start_date, end_date)
+        ).order_by('date')
+
+        # Fetch all responses for these tests by the student
+        questions_responses = QuestionResponse.objects.filter(
+            student=student,
+            test__in=tests_qs
+        ).select_related('question', 'remark')
+
+        chapter_wise_remarks = defaultdict(lambda: [0] * len(chapters))
+        remarks_count = defaultdict(int)
+        chapter_keys = list(chapters.keys())
+
+        for response in questions_responses:
+            ch_no = response.question.chapter_no
+            if ch_no not in chapters:
+                continue
+            idx = chapter_keys.index(ch_no)
+
+            # Full marks -> mark as Correct
+            if response.marks_obtained >= response.question.max_marks:
+                chapter_wise_remarks['Correct'][idx] += response.marks_obtained
+                remarks_count['Correct'] += 1
+                continue
+
+            if not response.remark:
+                continue
+
+            remark_name = response.remark.name
+            chapter_wise_remarks[remark_name][idx] += (response.question.max_marks - response.marks_obtained)
+            remarks_count[remark_name] += 1
+
+        total_remarks_sum = sum(remarks_count.values())
+        if total_remarks_sum > 0:
+            remarks_count = {
+                k: round((v / total_remarks_sum) * 100, 1)
+                for k, v in remarks_count.items()
+            }
+
+        # Sort remarks by their values (descending)
+        chapter_wise_remarks = dict(sorted(chapter_wise_remarks.items(), key=lambda item: item[1], reverse=True))
+        remarks_count = dict(sorted(remarks_count.items(), key=lambda item: item[1], reverse=True))
     return {
         'chapters': chapters,
         'remarks_count': remarks_count,
@@ -958,9 +1444,9 @@ def calculate_batchwise_chapter_remarks(student, batch, start_date, end_date):
 
 def calculate_marks(testwise_responses, test_chapters):
     max_marks = 0
-    total_marks = []
-    marks_deducted = []
-    marks_obtained = []
+    total_marks = 0
+    marks_deducted = 0
+    marks_obtained = 0
     remarks = defaultdict(float)
 
     for ch_no in test_chapters:
@@ -978,10 +1464,10 @@ def calculate_marks(testwise_responses, test_chapters):
             elif r.remark:
                 remarks[r.remark.name] += r.question.max_marks - r.marks_obtained
 
-        total_marks.append(total_test_marks)
-        marks_deducted.append(total_test_marks - total_marks_obt)
-        marks_obtained.append(total_marks_obt)
-        max_marks = max(max_marks, total_test_marks)
+        max_marks += total_test_marks
+        total_marks += total_test_marks
+        marks_obtained += total_marks_obt
+        marks_deducted += (total_test_marks - total_marks_obt)
 
     remarks_sum = sum(remarks.values())
     if remarks_sum:
@@ -989,17 +1475,18 @@ def calculate_marks(testwise_responses, test_chapters):
             k: round((v / remarks_sum) * 100, 1)
             for k, v in remarks.items()
         }
-
+        
     return {
         'total': total_marks,
         'deducted': marks_deducted,
         'obtained': marks_obtained,
         'remarks': dict(sorted(remarks.items(), key=lambda d: d[1], reverse=True)),
         'max_marks': max_marks,
-        'percentage': (sum(marks_obtained) / (sum(total_marks) or 1)) * 100,
-        'obtained_total': sum(marks_obtained),
-        'total_max': sum(total_marks),
+        'percentage': (marks_obtained / (total_marks or 1)) * 100,
+        'obtained_total': marks_obtained,
+        'total_max': total_marks,
     }
+
 
 
 
