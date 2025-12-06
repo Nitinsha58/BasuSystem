@@ -142,16 +142,27 @@
                         </div>
                         <button style="height: fit-content;" class="px-2 btn btn-warning" type="submit">Filter</button>
                         <button onclick="window.close()" style="height: fit-content;" class="px-2 btn btn-primary" type="submit">Go Back</button>
+                        <button onclick="copyToClipboard()" style="height: fit-content;" class="px-2 btn btn-primary" type="submit">Copy List</button>
                 </form>
 
                 <div  class="g-3 d-flex justify-content-between overflow-auto">
                     <div class="h-auto d-flex flex-1">
                         {% if students_list %}
+                            <div id="copyData" style="display:none; white-space:pre;"></div>
+                        {% endif %}
+
+
+                        {% if students_list %}
                         <ul class="list-group me-3" style="min-width: fit-content;">
                             <li class="list-group-item bg-dark text-white border-dark">Students</li>
                             {% for stu in students_list %}
                                 
-                                <li class="list-group-item d-flex justify-content-between " style="font-size: 14px;">
+                                <li class="list-group-item d-flex justify-content-between" style="font-size: 14px;"
+                                    data-batch="{{batch}}"
+                                    data-name="{{stu.student.stu.user.first_name}} {{stu.student.stu.user.last_name}}"
+                                    data-phone="{{stu.student.stu.user.phone}}"
+                                    data-percentage="{% if stu.student.percentage == 0 %}0{% else %}{{stu.student.percentage}}{% endif %}"
+                                >
                                     <span class="">{{stu.student.stu.user.first_name}} {{stu.student.stu.user.last_name}}</span> 
                                     {% if not tests %}
                                     <!-- <span class="fw-normal btn bg-danger-subtle px-2 py-0" style="font-size: 12px;" ></span>  -->
@@ -297,5 +308,30 @@
 
 
 {% endif %}
+
+<script>
+function copyToClipboard() {
+
+    let items = document.querySelectorAll('.list-group-item[data-name]');
+    let output = "";
+
+    items.forEach((item, index) => {
+        let batch = item.dataset.batch.trim();
+        let name = item.dataset.name.trim();
+        let phone = item.dataset.phone.trim();
+        let perc = item.dataset.percentage.trim();
+
+        output += `${batch}\t${phone}\t${name}\t${perc}`;
+
+        if (index !== items.length - 1) output += "\n";
+    });
+
+    navigator.clipboard.writeText(output).then(() => {
+        // alert("Copied! Now paste directly into Google Sheets.");
+    });
+}
+</script>
+
+
 
 {% endblock dashboard %}
