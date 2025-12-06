@@ -862,83 +862,83 @@ def mentor_remarks(request, mentor_id, student_id):
 
     recommendation = Recommendation.objects.filter(student=student, active=True).order_by('-date').first()
 
-    # if request.method == 'POST':
-    #     mentor_remark = request.POST.get('mentor_remark')
-    #     parent_remark = request.POST.get('parent_remark')
+    if request.method == 'POST':
+        mentor_remark = request.POST.get('mentor_remark')
+        parent_remark = request.POST.get('parent_remark')
 
-    #     mentor_negatives = request.POST.getlist('n_remark_mentor[]')
-    #     mentor_positives = request.POST.getlist('p_remark_mentor[]')
-    #     parent_negatives = request.POST.getlist('n_remark_parent[]')
-    #     parent_positives = request.POST.getlist('p_remark_parent[]')
+        mentor_negatives = request.POST.getlist('n_remark_mentor[]')
+        mentor_positives = request.POST.getlist('p_remark_mentor[]')
+        parent_negatives = request.POST.getlist('n_remark_parent[]')
+        parent_positives = request.POST.getlist('p_remark_parent[]')
 
-    #     if not remark:
-    #         # Create new remark
-    #         remark = MentorRemark.objects.create(
-    #             mentor=mentor, student=student,
-    #             start_date=start_date, end_date=end_date,
-    #             mentor_remark=mentor_remark, parent_remark=parent_remark
-    #         )
-    #     else:
-    #         # Update existing remark
-    #         remark.mentor_remark = mentor_remark
-    #         remark.parent_remark = parent_remark
-    #         remark.mentor_positive.clear()
-    #         remark.mentor_negative.clear()
-    #         remark.parent_positive.clear()
-    #         remark.parent_negative.clear()
+        if not remark:
+            # Create new remark
+            remark = MentorRemark.objects.create(
+                mentor=mentor, student=student,
+                start_date=start_date, end_date=end_date,
+                mentor_remark=mentor_remark, parent_remark=parent_remark
+            )
+        else:
+            # Update existing remark
+            remark.mentor_remark = mentor_remark
+            remark.parent_remark = parent_remark
+            remark.mentor_positive.clear()
+            remark.mentor_negative.clear()
+            remark.parent_positive.clear()
+            remark.parent_negative.clear()
 
-    #     # Add positives and negatives
-    #     for pos_id in mentor_positives:
-    #         if pos_id:
-    #             try:
-    #                 remark.mentor_positive.add(ReportPositive.objects.get(id=pos_id))
-    #             except ReportPositive.DoesNotExist:
-    #                 continue
+        # Add positives and negatives
+        for pos_id in mentor_positives:
+            if pos_id:
+                try:
+                    remark.mentor_positive.add(ReportPositive.objects.get(id=pos_id))
+                except ReportPositive.DoesNotExist:
+                    continue
 
-    #     for neg_id in mentor_negatives:
-    #         if neg_id:
-    #             try:
-    #                 remark.mentor_negative.add(ReportNegative.objects.get(id=neg_id))
-    #             except ReportNegative.DoesNotExist:
-    #                 continue
+        for neg_id in mentor_negatives:
+            if neg_id:
+                try:
+                    remark.mentor_negative.add(ReportNegative.objects.get(id=neg_id))
+                except ReportNegative.DoesNotExist:
+                    continue
 
-    #     for pos_id in parent_positives:
-    #         if pos_id:
-    #             try:
-    #                 remark.parent_positive.add(ReportPositive.objects.get(id=pos_id))
-    #             except ReportPositive.DoesNotExist:
-    #                 continue
+        for pos_id in parent_positives:
+            if pos_id:
+                try:
+                    remark.parent_positive.add(ReportPositive.objects.get(id=pos_id))
+                except ReportPositive.DoesNotExist:
+                    continue
 
-    #     for neg_id in parent_negatives:
-    #         if neg_id:
-    #             try:
-    #                 remark.parent_negative.add(ReportNegative.objects.get(id=neg_id))
-    #             except ReportNegative.DoesNotExist:
-    #                 continue
+        for neg_id in parent_negatives:
+            if neg_id:
+                try:
+                    remark.parent_negative.add(ReportNegative.objects.get(id=neg_id))
+                except ReportNegative.DoesNotExist:
+                    continue
 
-    #     # Assign recommendation only if not already assigned
-    #     if recommendation and not remark.recommendation:
-    #         recommendation.active = False
-    #         recommendation.save()
-    #         remark.recommendation = recommendation
+        # Assign recommendation only if not already assigned
+        if recommendation and not remark.recommendation:
+            recommendation.active = False
+            recommendation.save()
+            remark.recommendation = recommendation
 
-    #     remark.save()
+        remark.save()
 
-    #     # Handle ActionSuggested per batch
-    #     for batch in student.batches.all():
-    #         action_ids = request.POST.getlist(f'actions_{batch.id}')
-    #         if action_ids:
-    #             actions = Action.objects.filter(id__in=action_ids)
-    #             action_suggested, _ = ActionSuggested.objects.get_or_create(
-    #                 student=student, batch=batch, mentor_remark=remark
-    #             )
-    #             action_suggested.action.set(actions)
-    #             action_suggested.save()
-    #         else:
-    #             ActionSuggested.objects.filter(student=student, batch=batch, mentor_remark=remark).delete()
+        # Handle ActionSuggested per batch
+        for batch in student.batches.all():
+            action_ids = request.POST.getlist(f'actions_{batch.id}')
+            if action_ids:
+                actions = Action.objects.filter(id__in=action_ids)
+                action_suggested, _ = ActionSuggested.objects.get_or_create(
+                    student=student, batch=batch, mentor_remark=remark
+                )
+                action_suggested.action.set(actions)
+                action_suggested.save()
+            else:
+                ActionSuggested.objects.filter(student=student, batch=batch, mentor_remark=remark).delete()
 
-    #     messages.success(request, "Remark saved successfully.")
-    #     return redirect('mentor_remarks', mentor_id=mentor.id, student_id=student.stu_id)
+        messages.success(request, "Remark saved successfully.")
+        return redirect('mentor_remarks', mentor_id=mentor.id, student_id=student.stu_id)
 
     # For GET: Display label only
     recommendation_label = dict(Recommendation.ACTION_CHOICES).get(recommendation.action, '') if recommendation else ''

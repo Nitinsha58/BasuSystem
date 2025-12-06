@@ -169,7 +169,7 @@
 
     </div>
 
-    <!-- {% if remark %}
+    {% if remark %}
     <form class="g-3 bg-light rounded p-2 pb-3" method="post" action="{% url 'mentor_remarks' mentor.id student.stu_id %}?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}">
         {% csrf_token %}
 
@@ -377,7 +377,7 @@
             </div>
         </div>
     </form>
-    {% endif %} -->
+    {% endif %}
 
 </div>
 
