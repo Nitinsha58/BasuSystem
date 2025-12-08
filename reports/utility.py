@@ -940,22 +940,28 @@ def get_subjectwise_marks(student, start_date, end_date):
         })
 
     # Process tests by class and subject
-    for class_subject_key, class_obj in batches_by_class_subject.items():
-        test_qs = Test.objects.filter(
-            batch__subject=class_obj['subject'],
-            batch__class_name=class_obj['class'],
-            date__range=(effective_start_date, end_date)
-        ).order_by('date')
+    for _, class_obj in batches_by_class_subject.items():
+        # Only consider tests from the student's own batches for this class+subject
+        student_batches_for_subject = student.batches.filter(
+            subject=class_obj['subject'],
+            class_name=class_obj['class']
+        )
 
-        total_max_marks = 0
-        total_obtained_marks = 0
+        if not student_batches_for_subject.exists():
+            test_qs = Test.objects.none()
+        else:
+            test_qs = Test.objects.filter(
+                batch__in=student_batches_for_subject,
+                date__range=(effective_start_date, end_date)
+            ).order_by('date')
+
         percent_sum = 0.0
         test_count = 0
         present_count = 0
         absent_count = 0
 
-        # Group tests by date
-        for test_date, group in groupby(test_qs, key=lambda t: t.date):
+        # Group tests by date (we don't need the date variable itself)
+        for _, group in groupby(test_qs, key=lambda t: t.date):
             date_tests = list(group)
 
             # Was there activity on this date (by other students)?
@@ -972,19 +978,17 @@ def get_subjectwise_marks(student, start_date, end_date):
                 for t in date_tests
             )
 
-            # If there was activity but student did not participate => absent
+            # If there was activity but student did not participate => absent (count per date)
             if date_has_activity and not student_participated:
                 absent_count += 1
                 continue
 
-            # If student participated, count as present and accumulate marks
+            # If student participated, count as present (per date) and accumulate marks (per test)
             if student_participated:
                 present_count += 1
                 for t in date_tests:
                     test_result = TestResult.objects.filter(test=t, student=student).first()
-                    if test_result:
-                        # total_max_marks += t.total_max_marks
-                        # total_obtained_marks += test_result.total_marks_obtained
+                    if test_result and test_result.percentage is not None:
                         percent_sum += test_result.percentage
                         test_count += 1
                         
