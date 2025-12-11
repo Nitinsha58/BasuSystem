@@ -1078,7 +1078,7 @@ def get_subjectwise_test_reports(student, start_date, end_date):
             # Compute chapters & marks
             test_chapters = get_chapters_from_questions(selected_test)
             marks_data = calculate_marks(responses, test_chapters)
-            chapter_remarks = calculate_testwise_remarks(responses, test_chapters)
+            chapter_remarks = calculate_testwise_remarks(responses, test_chapters, is_objective=selected_test.objective)
 
             # Append test report
             test_reports.append({
@@ -1233,7 +1233,7 @@ def calculate_subject_tests_report(student, subject, start_date, end_date):
         # Compute chapters & marks
         test_chapters = get_chapters_from_questions(test)
         marks_data = calculate_marks(responses, test_chapters)
-        chapter_remarks = calculate_testwise_remarks(responses, test_chapters)
+        chapter_remarks = calculate_testwise_remarks(responses, test_chapters, is_objective=test.objective)
 
         test_reports.append({
             'chapters': test_chapters,
@@ -1254,7 +1254,7 @@ def get_chapters_from_questions(test):
         for q in questions
     }
 
-def calculate_testwise_remarks(testwise_responses, test_chapters):
+def calculate_testwise_remarks(testwise_responses, test_chapters, is_objective=False):
     """
     Same structure as subject summary chapter-remarks, but for a single test.
     Returns:
@@ -1280,6 +1280,31 @@ def calculate_testwise_remarks(testwise_responses, test_chapters):
             continue
 
         idx = chapter_keys.index(ch_no)
+
+        if is_objective:
+            maxm = response.question.max_marks
+            obtained = response.marks_obtained
+
+            if obtained > 0:
+                remark = "Correct"
+                chapter_wise_remarks[remark][idx] += obtained
+                remarks_count[remark] += obtained
+
+            elif obtained < 0:
+                remark = "Incorrect"
+                chapter_wise_remarks[remark][idx] += abs(maxm - obtained)
+                remarks_count[remark] += abs(maxm - obtained)
+
+                chapter_wise_remarks['Correct'][idx] += obtained
+                remarks_count['Correct'] += obtained
+
+            else:  # obtained == 0
+                remark = "Not Attempted"
+                chapter_wise_remarks[remark][idx] += maxm
+                remarks_count[remark] += maxm
+
+            continue  # skip the old subjective logic
+
         # Compute deducted marks for this response
         deducted = response.question.max_marks - response.marks_obtained
 
@@ -1408,6 +1433,8 @@ def calculate_subject_chapter_remarks(student, subject, start_date, end_date):
         ).select_related('question', 'remark')
 
         chapter_wise_remarks = defaultdict(lambda: [0] * len(chapters))
+        total_count = [0] * len(chapters)
+        remarks_total = 0
         remarks_count = defaultdict(int)
         chapter_keys = list(chapters.keys())
 
@@ -1417,10 +1444,45 @@ def calculate_subject_chapter_remarks(student, subject, start_date, end_date):
                 continue
             idx = chapter_keys.index(ch_no)
 
+            # =============== OBJECTIVE TEST LOGIC (new) ===============
+            if response.test.objective:
+                obtained = response.marks_obtained
+
+                if obtained > 0:
+                    remark = "Correct"
+                    chapter_wise_remarks[remark][idx] += obtained
+                    remarks_count[remark] += obtained
+                    total_count[idx] += obtained
+                    remarks_total += obtained
+
+                elif obtained < 0:
+                    remark = "Incorrect"
+                    chapter_wise_remarks[remark][idx] += abs(obtained)
+                    remarks_count[remark] += abs(obtained)
+                    total_count[idx] += abs(obtained)
+                    remarks_total += abs(obtained)
+
+                    chapter_wise_remarks['Correct'][idx] += obtained
+                    remarks_count['Correct'] += obtained
+                    total_count[idx] += obtained
+                    remarks_total += obtained
+
+                else:  # obtained == 0
+                    remark = "Not Attempted"
+                    chapter_wise_remarks[remark][idx] += response.question.max_marks
+                    remarks_count[remark] += response.question.max_marks
+                    total_count[idx] += response.question.max_marks
+                    remarks_total += response.question.max_marks
+
+                continue  # Skip subjective logic
+            # ==========================================================
+
             # Full marks -> mark as Correct
             if response.marks_obtained >= response.question.max_marks:
                 chapter_wise_remarks['Correct'][idx] += response.marks_obtained
+                total_count[idx] += response.marks_obtained
                 remarks_count['Correct'] += 1
+                remarks_total += response.marks_obtained
                 continue
 
             if not response.remark:
@@ -1428,7 +1490,9 @@ def calculate_subject_chapter_remarks(student, subject, start_date, end_date):
 
             remark_name = response.remark.name
             chapter_wise_remarks[remark_name][idx] += (response.question.max_marks - response.marks_obtained)
+            total_count[idx] += (response.question.max_marks - response.marks_obtained)
             remarks_count[remark_name] += 1
+            remarks_total += (response.question.max_marks - response.marks_obtained)
 
         total_remarks_sum = sum(remarks_count.values())
         if total_remarks_sum > 0:
@@ -1438,8 +1502,23 @@ def calculate_subject_chapter_remarks(student, subject, start_date, end_date):
             }
 
         # Sort remarks by their values (descending)
-        chapter_wise_remarks = dict(sorted(chapter_wise_remarks.items(), key=lambda item: item[1], reverse=True))
+        chapter_wise_remarks = dict(sorted(
+            chapter_wise_remarks.items(),
+            key=lambda item: (item[0] != "Correct", item[1]),
+        ))
+
         remarks_count = dict(sorted(remarks_count.items(), key=lambda item: item[1], reverse=True))
+
+    # Normalize chapter_wise_remarks to percentages per chapter
+    for chapter_idx in range(len(chapters)):
+        chapter_total = sum(
+        chapter_wise_remarks[remark][chapter_idx]
+        for remark in chapter_wise_remarks
+        )
+        if chapter_total > 0:
+            for remark in chapter_wise_remarks:
+                chapter_wise_remarks[remark][chapter_idx] = round((chapter_wise_remarks[remark][chapter_idx] / chapter_total) * 100, 1)
+
     return {
         'chapters': chapters,
         'remarks_count': remarks_count,
