@@ -954,11 +954,16 @@ def get_attendance(request, batch_id):
         messages.error(request, "You are not authorized to view attendance.")
         return redirect('students_list')
 
+    attendance_type = request.GET.get("type")
+
+    attendance_type_choices = Attendance.ATTENDANCE_TYPE
+    selected_type = attendance_type if attendance_type in dict(attendance_type_choices) else 'Regular'
+
     batch = Batch.objects.filter(id=batch_id).first()
     students = Student.objects.filter(batches=batch).order_by('stu_id')
 
     # Get attendance records for the batch
-    attendance_records = Attendance.objects.filter(batch=batch).order_by('date', 'student__stu_id')
+    attendance_records = Attendance.objects.filter(batch=batch, type=selected_type).order_by('date', 'student__stu_id')
 
     # Organize attendance records by date and student
     attendance_by_date = defaultdict(dict)
@@ -988,6 +993,8 @@ def get_attendance(request, batch_id):
         'attendance_timeline': attendance_timeline,
         'students': students,
         'dates': dates,
+        'type_choices': attendance_type_choices,
+        'selected_type': selected_type,
     })
 
 @login_required(login_url='login')

@@ -15,6 +15,14 @@
     }
 </style>
 
+<form class="ms-3 my-2 d-flex align-items-center" method="get" id="type-form">
+    <select class="form-select" id="type-option" style="width: fit-content;" name="type"  onchange="this.form.submit()">
+        {% for type in type_choices %}
+        <option value="{{ type.0 }}" {% if selected_type == type.0 %} selected {% endif %} >{{ type.1 }}</option>
+        {% endfor %}
+    </select>
+</form>
+
 <div class="mx-2 px-2">
     <div class="d-flex g-4 w-100 dates-group pb-3">
         {% for day in attendance_timeline %}
