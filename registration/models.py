@@ -266,6 +266,7 @@ class TransportDetails(models.Model):
 class Attendance(models.Model):
     ATTENDANCE_TYPE = [
         ('Regular', 'Regular'),
+        ('Remedial', 'Remedial'),
         ('Retest', 'Retest'),
         ('Test', 'Test'),
         ('Extra Class', 'Extra Class'),
