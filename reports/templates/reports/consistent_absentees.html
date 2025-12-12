@@ -5,11 +5,19 @@
 
 <div id="searchStuModal" class="start-0 d-flex items-center justify-content-center">
     <div class="position-relative rounded-lg rounded my-2 w-100 bg-white shadow-md"
-        style="height: fit-content; max-width: 400px; z-index: 2355;">
-        <div class="">
+        style="height: fit-content; max-width: 500px; z-index: 2355;">
+
             <form method="get" class="rounded p-2 pb-3 d-flex gap-2 align-items-end">
                 <div class="">
-                    <label for="latest_date" class="form-label">From: {{ earliest_date|date:'d M' }} To: {{ latest_date|date:'d M' }}</label>
+                    <label for="type" class="form-label">Type</label>
+                    <select class="form-select" id="type-option" style="width: fit-content;" name="type" required onchange="this.form.submit()">
+                        {% for type in type_choices %}
+                        <option value="{{ type.0 }}" {% if selected_type == type.0 %} selected {% endif %} >{{ type.1 }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="">
+                    <label for="latest_date" class="form-label">{{ earliest_date|date:'d M' }} To: {{ latest_date|date:'d M' }}</label>
                     <input type="date" name="latest_date" id="latest_date" value="{{latest_date|date:'Y-m-d'}}"
                         class="form-control" required>
                 </div>
@@ -19,7 +27,6 @@
                 </div>
                 <button style="height: fit-content;" class="px-2 mt-2 btn btn-warning" type="submit">Filter</button>
             </form>
-        </div>
     </div>
 </div>
 
@@ -58,17 +65,5 @@
     integrity="sha384-GNFwBvfVxBkLMJpYMOABq3c+d3KnQxudP/mGPkzpZSTYykLBNsZEnG2D9G/X/+7D" crossorigin="anonymous" async>
     </script>
 
-<script>
-    document.getElementById('toggle-date').addEventListener('click', function () {
-        const listItems = document.querySelectorAll('.date');
-        listItems.forEach(item => {
-            if (item.style.display === 'none') {
-                item.style.display = 'block';
-            } else {
-                item.style.display = 'none';
-            }
-        });
-    });
-</script>
 
 {% endblock dashboard %}

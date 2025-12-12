@@ -649,6 +649,11 @@ def teacher_students(request):
 def regular_absent_students(request):
     latest_date_str = request.GET.get('latest_date')
     n_days = request.GET.get('n_days', 2)  # default 3 days if not provided
+    attendance_type = request.GET.get("type")
+
+    attendance_type_choices = Attendance.ATTENDANCE_TYPE
+    selected_type = attendance_type if attendance_type in dict(attendance_type_choices) else 'Regular'
+
 
     try:
         latest_date = datetime.strptime(latest_date_str, "%Y-%m-%d").date() if latest_date_str else date.today()
@@ -663,7 +668,7 @@ def regular_absent_students(request):
     batches = Batch.objects.prefetch_related(
         Prefetch(
             'attendance',
-            queryset=Attendance.objects.filter(date__lte=latest_date, date__gte=latest_date - timedelta(days=n_days*2))
+            queryset=Attendance.objects.filter(type=selected_type, date__lte=latest_date, date__gte=latest_date - timedelta(days=n_days*2))
             .select_related('student', 'student__user', 'student__class_enrolled')
             .order_by('-date'),
             to_attr='recent_attendance'
@@ -703,6 +708,8 @@ def regular_absent_students(request):
         'n_days': n_days,
         'latest_date': latest_date,
         'earliest_date': earliest_date,
+        'type_choices': attendance_type_choices,
+        'selected_type': selected_type,
     })
 
 
