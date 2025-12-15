@@ -1130,6 +1130,95 @@ def delete_student_remark(request, remark_id, mentor_id, stu_id):
         messages.error(request, "Remark not found")
     return redirect('mentor_remarks', mentor_id=mentor_id, student_id=stu_id)
 
+from collections import defaultdict
+from django.db.models import Count, Q, Max
+from datetime import datetime, date
+
+@login_required(login_url='login')
+def batch_updated_list(request):
+    date_str = request.GET.get('date')
+    type = request.GET.get('type', 'Regular')
+
+    if date_str:
+        try:
+            filter_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+        except ValueError:
+            messages.error(request, "Invalid date format")
+            return redirect('batch_updated_list')
+    else:
+        # 🔥 Get latest attendance date
+        filter_date = (
+            Attendance.objects
+            .aggregate(latest=Max('date'))
+            .get('latest')
+        ) or date.today()
+
+    # Attendance aggregation
+    attendance_qs = (
+        Attendance.objects
+        .filter(date=filter_date, type=type)
+        .values('batch')
+        .annotate(
+            present=Count('id', filter=Q(is_present=True)),
+            absent=Count('id', filter=Q(is_present=False)),
+        )
+    )
+    attendance_map = {a['batch']: a for a in attendance_qs}
+
+    # Homework aggregation
+    homework_qs = (
+        Homework.objects
+        .filter(date=filter_date)
+        .values('batch')
+        .annotate(
+            pending=Count('id', filter=Q(status='Pending')),
+            partial=Count('id', filter=Q(status='Partial Done')),
+            completed=Count('id', filter=Q(status='Completed')),
+        )
+    )
+    homework_map = {h['batch']: h for h in homework_qs}
+
+    # Relevant batches
+    batches = (
+        Batch.objects
+        .filter(
+            Q(id__in=attendance_map.keys()) |
+            Q(id__in=homework_map.keys())
+        )
+        .select_related('class_name')
+        .order_by('class_name__name')
+    )
+
+    batches_by_class = defaultdict(list)
+
+    for batch in batches:
+        class_name = batch.class_name.name if batch.class_name else "Unknown"
+
+        attendance = attendance_map.get(batch.id)
+        homework = homework_map.get(batch.id)
+
+        batches_by_class[class_name].append({
+            'batch': batch,
+            'attendance': {
+                'present': attendance['present'],
+                'absent': attendance['absent'],
+            } if attendance else {},
+            'attendance_record_present': bool(attendance),
+            'homework': {
+                'pending': homework['pending'],
+                'partial': homework['partial'],
+                'completed': homework['completed'],
+            } if homework else {},
+            'homework_record_present': bool(homework),
+        })
+    
+    return render(request, 'reports/batch_updated_list.html', {
+        'batches_by_class': dict(batches_by_class),
+        'filter_date': filter_date,
+        'selected_type': type,
+        'type_choices': Attendance.ATTENDANCE_TYPE,
+    })
+
 
 @login_required(login_url='login')
 def admin_report(request):

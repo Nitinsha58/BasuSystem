@@ -24,6 +24,7 @@ from .views import (
     add_student_remarks,
     delete_student_remark,
     admin_report,
+    batch_updated_list,
 )
 
 urlpatterns = [
@@ -44,6 +45,7 @@ urlpatterns = [
     path('mentor_students/', mentor_students, name='mentor_students'),
     path('regular_absent_students/', regular_absent_students, name='regular_absent_students'),
 
+    path('batch_updated_list/', batch_updated_list, name='batch_updated_list'),
     # Teachers Reports
     path('teacher_students/', teacher_students, name='teacher_students'),
     path('admin-report/', admin_report, name='admin_report'),
