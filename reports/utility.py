@@ -66,31 +66,39 @@ def get_combined_attendance(student, start_date, end_date):
 
 def get_subjectwise_attendance(student, start_date, end_date):
     result = {}
-    # Only include attendance from student's date of joining (doj) onwards
+
     doj = getattr(student, 'doj', None)
     effective_start_date = max(start_date, doj) if doj else start_date
 
-    subjects = student.batches.all().values_list('subject__name', flat=True).distinct()
+    subject_ids = StudentBatchLink.objects.filter(
+        student=student
+    ).values_list('batch__subject_id', flat=True).distinct()
+
+    subjects = Subject.objects.filter(id__in=subject_ids)
 
     for subject in subjects:
         attendance_qs = Attendance.objects.filter(
             student=student,
-            batch__subject__name=subject,
+            batch__subject=subject,
             date__range=(effective_start_date, end_date)
         )
+
         present = attendance_qs.filter(is_present=True).count()
         absent = attendance_qs.filter(is_present=False).count()
         total = present + absent
-        subject = Subject.objects.filter(name=subject).first()
 
         result[subject] = {
             'present_count': present,
             'absent_count': absent,
-            'present_percentage': round((present / total * 100) if total > 0 else 0, 1),
-            'absent_percentage': round((absent / total * 100) if total > 0 else 0, 1),
-            'subject_calendar': get_subjectwise_attendance_calendar(student, subject, start_date, end_date)
+            'present_percentage': round((present / total * 100) if total else 0, 1),
+            'absent_percentage': round((absent / total * 100) if total else 0, 1),
+            'subject_calendar': get_subjectwise_attendance_calendar(
+                student, subject, start_date, end_date
+            )
         }
+
     return result
+
 
 def get_batchwise_attendance(student, start_date, end_date):
     result = {}
@@ -335,29 +343,37 @@ def get_combined_homework(student, start_date, end_date):
 def get_subjectwise_homework(student, start_date, end_date):
     doj = getattr(student, 'doj', None)
     effective_start_date = max(start_date, doj) if doj else start_date
+
     result = {}
-    subjects = student.batches.all().values_list('subject__name', flat=True).distinct()
+
+    subject_ids = StudentBatchLink.objects.filter(
+        student=student
+    ).values_list('batch__subject_id', flat=True).distinct()
+
+    subjects = Subject.objects.filter(id__in=subject_ids)
 
     for subject in subjects:
         homework_qs = Homework.objects.filter(
             student=student,
-            batch__subject__name=subject,
+            batch__subject=subject,
             date__range=(effective_start_date, end_date)
         )
+
         total = homework_qs.count()
         completed = homework_qs.filter(status='Completed').count()
         partial = homework_qs.filter(status='Partial Done').count()
         pending = homework_qs.filter(status='Pending').count()
-        subject = Subject.objects.filter(name=subject).first()
+
         result[subject] = {
-            'completed_percentage': round((completed / total * 100) if total > 0 else 0, 1),
-            'partial_done_percentage': round((partial / total * 100) if total > 0 else 0, 1),
-            'pending_percentage': round((pending / total * 100) if total > 0 else 0, 1),
+            'completed_percentage': round((completed / total * 100) if total else 0, 1),
+            'partial_done_percentage': round((partial / total * 100) if total else 0, 1),
+            'pending_percentage': round((pending / total * 100) if total else 0, 1),
             'completed_count': completed,
             'partial_done_count': partial,
             'pending_count': pending,
             'total_count': total,
         }
+
     return result
 
 
@@ -942,16 +958,17 @@ def get_subjectwise_marks(student, start_date, end_date):
     # Process tests by class and subject
     for _, class_obj in batches_by_class_subject.items():
         # Only consider tests from the student's own batches for this class+subject
-        student_batches_for_subject = student.batches.filter(
-            subject=class_obj['subject'],
-            class_name=class_obj['class']
-        )
+        student_batch_ids = StudentBatchLink.objects.filter(
+            student=student,
+            batch__subject=class_obj['subject'],
+            batch__class_name=class_obj['class'],
+        ).values_list('batch_id', flat=True)
 
-        if not student_batches_for_subject.exists():
+        if not student_batch_ids:
             test_qs = Test.objects.none()
         else:
             test_qs = Test.objects.filter(
-                batch__in=student_batches_for_subject,
+                batch_id__in=student_batch_ids,
                 date__range=(effective_start_date, end_date)
             ).order_by('date')
 
