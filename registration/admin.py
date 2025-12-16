@@ -160,14 +160,14 @@ class StudentAdmin(admin.ModelAdmin):
         # Write header
         writer.writerow(['Mentor Name', 'Student Name', 'Phone'])
 
-        for student in queryset.select_related('user').prefetch_related('mentorships__mentor__user'):
+        for student in queryset.select_related('user', 'parent_details').prefetch_related('mentorships__mentor__user'):
             for mentorship in student.mentorships.filter(active=True):
                 mentor = mentorship.mentor
                 if mentor:
                     writer.writerow([
                         f"{mentor.user.first_name} {mentor.user.last_name}",
                         f"{student.user.first_name} {student.user.last_name}",
-                        student.user.phone or ''
+                        student.parent_details.mother_contact or student.parent_details.father_contact or student.user.phone or ''
                     ])
 
         return response
