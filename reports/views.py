@@ -784,28 +784,31 @@ def mentor_remarks(request, mentor_id, student_id):
         messages.error(request, "Invalid Mentor or Student")
         return redirect('mentor_students')
 
+    period = ReportPeriod.objects.all().order_by('-end_date').first()
+    if period:
+        start_date, end_date = period.start_date, period.end_date
+    else:
+        today = date.today()
+        start_date, end_date = today.replace(day=1), today
+
     # Date range handling
-    start_date = request.GET.get('start_date')
-    end_date = request.GET.get('end_date')
-    if start_date and end_date:
+    filter_start_date = request.GET.get('filter_start_date')
+    filter_end_date = request.GET.get('filter_end_date')
+    if filter_start_date and filter_end_date:
         try:
-            start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
-            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
+            filter_start_date = datetime.strptime(filter_start_date, "%Y-%m-%d").date()
+            filter_end_date = datetime.strptime(filter_end_date, "%Y-%m-%d").date()
         except ValueError:
             messages.error(request, "Invalid date format")
             return redirect('mentor_students')
     else:
-        period = ReportPeriod.objects.all().order_by('-end_date').first()
-        if period:
-            start_date, end_date = period.start_date, period.end_date
-        else:
-            today = date.today()
-            start_date, end_date = today.replace(day=1), today
+        filter_start_date = start_date
+        filter_end_date = end_date
 
     # Data prep
-    stu_performance = generate_single_student_report_data(student, start_date, end_date)   
-    student_test_report = get_student_test_report(student, start_date, end_date)
-    student_retest_report = get_student_retest_report(student, start_date, end_date)
+    stu_performance = generate_single_student_report_data(student, filter_start_date, filter_end_date)   
+    student_test_report = get_student_test_report(student, filter_start_date, filter_end_date)
+    student_retest_report = get_student_retest_report(student, filter_start_date, filter_end_date)
 
     batches = student.batches.all().filter(class_name=student.class_enrolled).order_by('-created_at')
 
@@ -905,6 +908,8 @@ def mentor_remarks(request, mentor_id, student_id):
         'remark': remark,
         'start_date': start_date,
         'end_date': end_date,
+        'filter_start_date': filter_start_date,
+        'filter_end_date': filter_end_date,
         'actions': Action.objects.all(),
         'stu_performance': stu_performance,
         'batches': batches,

@@ -13,7 +13,7 @@
             {% endif %}
         </div>
         <div class="mb-2">
-            <a href="{% url 'student_report' student.stu_id %}" target="_blank" class="border-0 h2" style="text-decoration: none;">{{student.user.first_name}} {{student.user.last_name}}'s Remark    ({{ start_date|date:'d M' }} - {{ end_date|date:'d M' }})</a>
+            <a href="{% url 'student_report' student.stu_id %}?start_date={{ filter_start_date|date:'Y-m-d' }}&end_date={{ filter_end_date|date:'Y-m-d' }}" target="_blank" class="border-0 h2" style="text-decoration: none;">{{student.user.first_name}} {{student.user.last_name}}'s Remark    ({{ start_date|date:'d M' }} - {{ end_date|date:'d M' }})</a>
             <p class="m-0 mb-1">{{student.class_enrolled}} - {{ student.subjects.all|join:", " }} 
                 {% if remark.recommendation %}
                 <p class="btn btn-warning m-0">Recommended for {{recommendation_label}}</p> 
@@ -26,9 +26,22 @@
         </div>
         <div class="mb-3">
             <p class="m-0 mb-1">Joined On: {{student.doj|date:'d M Y'}}</p>
-        </div>
-        <div class="mb-3">
             <b class="m-0 mb-1">Mother: +91 {{student.parent_details.mother_contact}} - Father: +91 {{student.parent_details.father_contact}}</b>
+        </div>
+
+        <div class="w-100">
+            <form method="get" class="rounded d-flex flex-md-row flex-md-row gap-2 align-items-end w-100" style="flex-wrap: wrap;">
+                <div class="">
+                    <label for="filter_start_date" class="form-label text-nowrap m-0 text-align-center">Start Date: {{ filter_start_date|date:'d M' }}</label>
+                    <input type="date" name="filter_start_date" id="filter_start_date" value="{{filter_start_date|date:'Y-m-d'}}" class="form-control" style="max-width: 150px" required>
+                </div>
+                
+                <div class="">
+                    <label for="filter_end_date" class="form-label text-nowrap m-0 text-align-center">End Date: {{ filter_end_date|date:'d M' }}</label>
+                    <input type="date" name="filter_end_date" id="filter_end_date" value="{{filter_end_date|date:'Y-m-d'}}" class="form-control" style="max-width: 150px" required>
+                </div>
+                <button style="height: fit-content;" class="px-2 btn btn-warning" type="submit">Filter</button>
+            </form>
         </div>
         
         <p class="border-0 h2 mt-4" >Batch Test Summary</p>
