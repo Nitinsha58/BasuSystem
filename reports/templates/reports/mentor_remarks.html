@@ -44,12 +44,12 @@
             </form>
         </div>
         
-        <p class="border-0 h2 mt-4" >Batch Test Summary</p>
+        <p class="border-0 h2 mt-4" >Subject Test Summary</p>
         <div class="g-3 d-flex justify-content-between">
             <table class="table">
                 <thead class="table-dark">
                 <tr>
-                    <th scope="col">Batch</th>
+                    <th scope="col">Subject</th>
                     <th scope="col">Attendance</th>
                     <th scope="col">Homework</th>
                     <th scope="col">Test Marks</th>
@@ -66,9 +66,9 @@
                 {% for batch in cls.batches %}
                 <tr class="">
                     <td>{{ batch.batch_name }} {% if not batch.active %} <span class="text-danger">( Inactive )</span> {% endif %} </td>
-                    <td>{{ batch.attendance }}</td>
-                    <td>{{ batch.homework }}</td>
-                    <td>{{ batch.test_marks }}</td>
+                    <td> ({{ batch.attendance.present }} / {{ batch.attendance.total }} ) {{ batch.attendance.percentage }} %</td>
+                    <td> ({{ batch.homework.completed }} / {{ batch.homework.total }} )  {{ batch.homework.percentage }} %</td>
+                    <td>{{ batch.test_marks }} %</td>
                 </tr>
                 {% endfor %}
                 {% endfor %}
@@ -88,12 +88,14 @@
             </table>
         </div>
 
-        <p class="border-0 h2 mt-4" >Batchwise Test Detail</p>
+        <p class="border-0 h2 mt-4" >Subjectwise Test Detail</p>
         <div class="g-3 d-flex justify-content-between">
             <table class="table">
                 <thead class="table-dark">
                     <tr>
-                        <th scope="col">Batch</th>
+                        <th scope="col">Subject</th>
+                        <th scope="col">Attendance</th>
+                        <th scope="col">Homework</th>
                         <th scope="col">Test</th>
                         <th scope="col">Result</th>
                     </tr>
@@ -104,6 +106,18 @@
                     <tr {% if forloop.first %} class="table-active" {% endif %}>
                         {% if forloop.first %}
                             <td>{{ batch }}</td>
+                        {% else %}
+                             <td></td> 
+                        {% endif %}
+
+                        {% if forloop.first %}
+                            <td> ( {{ details.attendance.present }} / {{ details.attendance.total }} ) {{ details.attendance.percentage }}% </td>
+                        {% else %}
+                             <td></td> 
+                        {% endif %}
+
+                        {% if forloop.first %}
+                            <td> ( {{ details.homework.completed }} / {{ details.homework.total }} ) {{ details.homework.percentage }}%</td>
                         {% else %}
                              <td></td> 
                         {% endif %}
@@ -123,7 +137,7 @@
             </table>
         </div>
 
-        <p class="border-0 h2 mt-4" >Batchwise ReTest Suggestions</p>
+        <p class="border-0 h2 mt-4" >Subjectwise ReTest Suggestions</p>
         <div class="g-3 d-flex justify-content-between">
             <table class="table">
                 <thead class="table-dark">

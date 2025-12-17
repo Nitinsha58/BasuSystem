@@ -1603,9 +1603,13 @@ def calculate_attendance_percentage(student, batch, start_date, end_date) -> flo
     total_sessions_for_student = attendance_in_range.count()
     present_sessions = attendance_in_range.filter(is_present=True).count()
 
-    if total_sessions_for_student > 0:
-        return round((present_sessions / total_sessions_for_student) * 100, 2)
-    return 0.0
+    percentage = round((present_sessions / total_sessions_for_student) * 100, 2) if total_sessions_for_student > 0 else 0.0
+    
+    return {
+        'percentage': percentage,
+        'present': present_sessions,
+        'total': total_sessions_for_student
+    }
 
 def calculate_homework_completion_percentage(student, batch, start_date, end_date) -> float:
     """
@@ -1621,8 +1625,17 @@ def calculate_homework_completion_percentage(student, batch, start_date, end_dat
     completed_homeworks = homework_in_range.filter(status='Completed').count()
 
     if total_homeworks_for_student > 0:
-        return round((completed_homeworks / total_homeworks_for_student) * 100, 2)
-    return 0.0
+        percentage = round((completed_homeworks / total_homeworks_for_student) * 100, 2)
+        return {
+            'percentage': percentage,
+            'completed': completed_homeworks,
+            'total': total_homeworks_for_student
+        }
+    return {
+        'percentage': 0.0,
+        'completed': 0,
+        'total': 0
+    }
 
 def calculate_test_scores_percentage(student, batch, start_date, end_date) -> float:
     """
@@ -1879,6 +1892,52 @@ def get_student_test_report(student, start_date, end_date):
                 'is_absent': is_abs
             })
         batches_by_class_subject[key]['tests'] = test_data
+
+        # ---------------- ATTENDANCE ----------------
+        attendance_qs = Attendance.objects.filter(
+            student=student,
+            batch__in=student_batches_for_subject,
+            date__range=(start_date, end_date)
+        )
+
+        attendance_total = attendance_qs.count()
+        attendance_present = attendance_qs.filter(is_present=True).count()
+
+        attendance_percentage = (
+            round((attendance_present / attendance_total) * 100, 2)
+            if attendance_total else 0
+        )
+
+        # ---------------- HOMEWORK ----------------
+        homework_qs = Homework.objects.filter(
+            student=student,
+            batch__in=student_batches_for_subject,
+            date__range=(start_date, end_date)
+        )
+
+        homework_total = homework_qs.count()
+        homework_done = homework_qs.filter(status="Completed").count()
+
+        homework_percentage = (
+            round((homework_done / homework_total) * 100, 2)
+            if homework_total else 0
+        )
+
+        # ---------------- STORE DATA ----------------
+        batches_by_class_subject[key].update(
+            {
+            'attendance': {
+                'present': attendance_present,
+                'total': attendance_total,
+                'percentage': attendance_percentage
+            },
+            'homework': {
+                'completed': homework_done,
+                'total': homework_total,
+                'percentage': homework_percentage
+            }
+        }
+        )
             
     return batches_by_class_subject
 
