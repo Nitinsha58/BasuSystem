@@ -102,36 +102,48 @@
                 </thead>
                 <tbody>
                 {% for batch, details in student_test_report.items %}
-                    {% for test in details.tests %}
-                    <tr {% if forloop.first %} class="table-active" {% endif %}>
-                        {% if forloop.first %}
-                            <td>{{ batch }}</td>
-                        {% else %}
-                             <td></td> 
-                        {% endif %}
+                    {% if details.tests|length != 0 %}
+                        {% for test in details.tests %}
+                        <tr {% if forloop.first %} class="table-active" {% endif %}>
+                            {% if forloop.first %}
+                                <td>{{ batch }}</td>
+                            {% else %}
+                                <td></td> 
+                            {% endif %}
 
-                        {% if forloop.first %}
-                            <td> ( {{ details.attendance.present }} / {{ details.attendance.total }} ) {{ details.attendance.percentage }}% </td>
-                        {% else %}
-                             <td></td> 
-                        {% endif %}
+                            {% if forloop.first %}
+                                <td> ( {{ details.attendance.present }} / {{ details.attendance.total }} ) {{ details.attendance.percentage }}% </td>
+                            {% else %}
+                                <td></td> 
+                            {% endif %}
 
-                        {% if forloop.first %}
-                            <td> ( {{ details.homework.completed }} / {{ details.homework.total }} ) {{ details.homework.percentage }}%</td>
-                        {% else %}
-                             <td></td> 
-                        {% endif %}
-                        <td class="d-flex flex-column">
-                            <a href="{% url 'add_student_result' test.test.batch.id test.test.id student.id %}" target="_blank" class="m-0 nav-link">{{ test.test.name }} ({{test.test.batch.section.name|title}})</a> 
-                            <small class="text-dark">{{test.test.date}}</small>
-                        </td>
-                        {% if test.is_absent  %}
-                        <td class="text-danger" > AB </td>
-                        {% else %}
-                        <td>{{ test.result.total_marks_obtained }} / {{ test.result.total_max_marks }} ( {{ test.result.percentage|floatformat:2 }}%)</td>
-                        {% endif %}
+                            {% if forloop.first %}
+                                <td> ( {{ details.homework.completed }} / {{ details.homework.total }} ) {{ details.homework.percentage }}%</td>
+                            {% else %}
+                                <td></td> 
+                            {% endif %}
+                            <td class="d-flex flex-column">
+                                <a href="{% url 'add_student_result' test.test.batch.id test.test.id student.id %}" target="_blank" class="m-0 nav-link">{{ test.test.name }} ({{test.test.batch.section.name|title}})</a> 
+                                <small class="text-dark">{{test.test.date}}</small>
+                            </td>
+                            {% if test.is_absent  %}
+                            <td class="text-danger"> AB </td>
+                            {% else %}
+                            <td>{{ test.result.total_marks_obtained }} / {{ test.result.total_max_marks }} ( {{ test.result.percentage|floatformat:2 }}%)</td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                        
+                    {% else %}
+                    <tr class="table-active">
+                        <td>{{ batch }}</td>
+                        <td> ( {{ details.attendance.present }} / {{ details.attendance.total }} ) {{ details.attendance.percentage }}% </td>
+                        <td> ( {{ details.homework.completed }} / {{ details.homework.total }} ) {{ details.homework.percentage }}%</td>
+                        <td> N/A </td>
+                        <td> N/A </td>
                     </tr>
-                    {% endfor %}
+                    {% endif %}
+
                 {% endfor %}
                 </tbody>
             </table>
