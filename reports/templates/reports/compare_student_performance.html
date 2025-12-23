@@ -240,7 +240,10 @@
                             </ul>
                             {% for test in tests %}
                             <ul class="list-group" style="min-width: fit-content;">
-                                <li class="list-group-item bg-dark text-white border-dark">{{test.name}}</li>
+                                <li class="list-group-item bg-dark text-white border-dark d-flex flex-column">
+                                    <p class="m-0">{{test.name}}</p>
+                                    <small>{{test.date|date:"M d, Y"}}</small>
+                                </li>
                                 {% for data in students_list %}
 
                                     <li class="list-group-item d-flex justify-content-center " style="font-size: 14px;">
