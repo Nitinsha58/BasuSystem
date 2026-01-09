@@ -219,12 +219,22 @@
                             <ul class="list-group" style="min-width: fit-content;">
                                 <li class="list-group-item bg-dark text-white border-dark">Test</li>
                                 {% for data in batch_data %}
-                                    <li class="list-group-item d-flex justify-content-center fw-normal
-                                    {% if data.test == None %} text-danger
-                                    {% elif data.test > 75 %} text-success
-                                    {% elif data.test <= 50 and data.test > 25 %} text-warning
-                                    {% elif data.test <= 75 and data.test > 50 %} text-primary
-                                    {% elif data.test <= 25 %} text-danger {% endif %}" style="font-size: 14px;">
+                                    <li class="list-group-item d-flex justify-content-center fw-normal"
+                                    style="font-size: 14px; color: ;
+                                        {% if data.test == None %} color: red;
+                                        {% elif data.batch.code == 'JEE' or data.batch.code == 'NEET' %}
+                                            {% if data.test >= 75 %} color: violet;
+                                            {% elif data.test >= 50 %} color: green;
+                                            {% elif data.test >= 40 %} color: #ffc107;
+                                            {% elif data.test >= 20 %} color: darkorange;
+                                            {% else %} color: red; {% endif %}
+                                        {% else %}
+                                            {% if data.test >= 90 %} color: violet;
+                                            {% elif data.test >= 80 %} color: green;
+                                            {% elif data.test >= 60 %} color: #ffc107;
+                                            {% elif data.test >= 50 %} color: darkorange;
+                                            {% else %} color: red; {% endif %}
+                                        {% endif %}">
                                         {% if data.test %}
                                         <span class="fw-normal" >{{data.test}}%</span> 
                                         {% else %}
