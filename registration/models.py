@@ -8,6 +8,34 @@ from .manager import AttendanceManager
 from center.models import ClassName, Subject, Section
 from user.models import BaseUser
 
+
+class AcademicSession(models.Model):
+    name = models.CharField( max_length=20, unique=True, help_text="Eg: 2025-26")
+
+    start_date = models.DateField()
+    end_date = models.DateField()
+
+    is_active = models.BooleanField( default=False, help_text="Only one session should be active at a time")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-start_date"]
+
+    def __str__(self):
+        return self.name
+
+    @classmethod
+    def get_active(cls):
+        return cls.objects.filter(is_active=True).first()
+
+    def activate(self):
+        AcademicSession.objects.filter(is_active=True).update(is_active=False)
+        self.is_active = True
+        self.save()
+
+
 class ReportPeriod(models.Model):
     name = models.CharField(max_length=50, unique=True)
     start_date = models.DateField()
@@ -144,6 +172,47 @@ class Student(models.Model):
         end_date = latest_report_period.end_date
         # Check if the student has any reports in the latest report period
         return self.mentor_remarks.filter(start_date=start_date, end_date=end_date).exists()
+
+
+class StudentEnrollment(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="enrollments")
+    session = models.ForeignKey(AcademicSession, on_delete=models.CASCADE, related_name="enrollments")
+    class_name = models.ForeignKey( ClassName, on_delete=models.CASCADE, related_name="enrollments")
+    course = models.CharField(max_length=65, choices=Student.COURSE_CHOICE, blank=True, null=True)
+
+    program_duration = models.CharField(max_length=10, choices=Student.DURATION_CHOICE, default="1 Year" )
+    subjects = models.ManyToManyField(Subject, blank=True, related_name="enrollments" )
+    active = models.BooleanField(default=True,help_text="Active enrollment for this session" )
+
+    promoted_from = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL, related_name="promoted_to")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("student", "session")
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.student} | {self.session}"
+    
+    @property
+    def is_current(self):
+        return self.session.is_active and self.active
+
+    def deactivate(self):
+        self.active = False
+        self.save(update_fields=["active"])
+
+    @classmethod
+    def get_current_for_student(cls, student):
+        return cls.objects.filter(
+            student=student,
+            session__is_active=True,
+            active=True
+        ).first()
+
+
 
 class StudentBatchLink(models.Model):
     student = models.ForeignKey('Student', on_delete=models.CASCADE, related_name='batch_links')

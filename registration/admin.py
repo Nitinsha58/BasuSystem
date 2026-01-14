@@ -32,6 +32,7 @@ from .models import (
     StudentBatchLink,
     StudentTestRemark,
     StudentRemark,
+    AcademicSession
     )
 from .forms import TeacherForm, MentorForm
 import csv
@@ -326,6 +327,27 @@ class StudentBatchLinkAdmin(admin.ModelAdmin):
     ordering = ['-joined_at']
 
 
+class AcademicSessionAdmin(admin.ModelAdmin):
+    list_display = ("name", "start_date", "end_date", "is_active")
+    list_filter = ("is_active",)
+    ordering = ("-start_date",)
+
+    actions = ["make_active"]
+
+    def make_active(self, request, queryset):
+        if queryset.count() != 1:
+            self.message_user(
+                request,
+                "Please select exactly one session.",
+                level="error"
+            )
+            return
+        session = queryset.first()
+        session.activate()
+
+    make_active.short_description = "Mark selected session as active"
+
+admin.site.register(AcademicSession, AcademicSessionAdmin)
 admin.site.register(StudentTestRemark)
 admin.site.register(Recommendation)
 admin.site.register(TransportAttendance, TransportAttendanceAdmin)
