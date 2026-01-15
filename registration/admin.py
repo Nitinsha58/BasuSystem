@@ -32,7 +32,8 @@ from .models import (
     StudentBatchLink,
     StudentTestRemark,
     StudentRemark,
-    AcademicSession
+    AcademicSession,
+    StudentEnrollment,
     )
 from .forms import TeacherForm, MentorForm
 import csv
@@ -347,6 +348,20 @@ class AcademicSessionAdmin(admin.ModelAdmin):
 
     make_active.short_description = "Mark selected session as active"
 
+
+class StudentEnrollmentAdmin(admin.ModelAdmin):
+    list_display = (
+        "student",
+        "session",
+        "class_name",
+        "course",
+        "active"
+    )
+    list_filter = ("session", "active", "class_name")
+    search_fields = ("student__user__first_name", "student__user__phone")
+
+
+admin.site.register(StudentEnrollment, StudentEnrollmentAdmin)
 admin.site.register(AcademicSession, AcademicSessionAdmin)
 admin.site.register(StudentTestRemark)
 admin.site.register(Recommendation)

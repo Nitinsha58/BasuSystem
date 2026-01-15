@@ -43,17 +43,15 @@ class Batch(models.Model):
     class_name = models.ForeignKey(ClassName, on_delete=models.CASCADE, related_name="batch")
     section = models.ForeignKey(Section, on_delete=models.CASCADE, related_name="batch")
     subject  = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name="batch")
+    session = models.ForeignKey( 'registration.AcademicSession', on_delete=models.CASCADE, related_name="batches", null=True, blank=True )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ("class_name", "section", "subject")
+        unique_together = ("class_name", "section", "subject", "session")
 
     def __str__(self):
-        class_name = getattr(self.class_name, 'name', 'N/A')
-        section = getattr(self.section, 'name', 'N/A')
-        subject = getattr(self.subject, 'name', 'N/A')
-        return f"{class_name} {subject} {section}"
+        return f"{self.class_name} {self.subject} {self.section} ({self.session})"
 
 
 

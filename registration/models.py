@@ -172,6 +172,12 @@ class Student(models.Model):
         end_date = latest_report_period.end_date
         # Check if the student has any reports in the latest report period
         return self.mentor_remarks.filter(start_date=start_date, end_date=end_date).exists()
+    
+    def active_enrollment(self):
+        return self.enrollments.filter(
+            active=True,
+            session__is_active=True
+        ).first()
 
 
 class StudentEnrollment(models.Model):
