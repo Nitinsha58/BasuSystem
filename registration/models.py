@@ -65,19 +65,17 @@ class Batch(models.Model):
     end_time = models.CharField(max_length=10, choices=BATCH_TIME_CHOICES, blank=True, null=True)
     start_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
+
+    session = models.ForeignKey(AcademicSession, on_delete=models.CASCADE, related_name="batches", null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ("class_name", "section", "subject")
+        unique_together = ("class_name", "section", "subject", "session")
 
     def __str__(self):
-        class_name = getattr(self.class_name, 'name', 'N/A')
-        section = getattr(self.section, 'name', 'N/A')
-        subject = getattr(self.subject, 'name', 'N/A')
-        return f"{class_name} {subject} {section}"
-    
-
+        return f"{self.class_name.name} - {self.section.name} - {self.subject.name} - {self.session.name if self.session else 'No Session'}"
     
     def last_attendance_date(self):
         last_attendance = self.attendance.aggregate(last_date=Max('date'))['last_date']
@@ -178,6 +176,12 @@ class Student(models.Model):
             active=True,
             session__is_active=True
         ).first()
+    
+    def current_batches(self):
+        enrollment = self.active_enrollment()
+        if not enrollment:
+            return []
+        return [link.batch for link in enrollment.batch_links.all()]
 
 
 class StudentEnrollment(models.Model):
@@ -217,6 +221,17 @@ class StudentEnrollment(models.Model):
             session__is_active=True,
             active=True
         ).first()
+
+
+class EnrollmentBatch(models.Model):
+    enrollment = models.ForeignKey("StudentEnrollment", on_delete=models.CASCADE, related_name="batch_links")
+    batch = models.ForeignKey("registration.Batch", on_delete=models.CASCADE, related_name="enrollment_links")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("enrollment", "batch")
 
 
 
@@ -260,6 +275,9 @@ class FeeDetails(models.Model):
     registration_discount = models.BooleanField(default=False)
     paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     remaining_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True, blank=True)
+
+    enrollment = models.ForeignKey("StudentEnrollment", on_delete=models.CASCADE, null=True, blank=True, related_name="fees")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -267,7 +285,7 @@ class FeeDetails(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"Fees for {self.student.user.first_name}"
+        return f"Fee details for {self.student.user.first_name}"
 
 class Installment(models.Model):
     PAYMENT_CHOICES = [
@@ -350,6 +368,7 @@ class Attendance(models.Model):
     ]
 
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="attendance")
+    enrollment = models.ForeignKey( StudentEnrollment, on_delete=models.CASCADE, null=True, blank=True,related_name="homeworks")
     type = models.CharField(max_length=20, choices=ATTENDANCE_TYPE, default='Regular')
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name="attendance")
     is_present = models.BooleanField()
@@ -375,6 +394,7 @@ class Homework(models.Model):
     ]
 
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="homework")
+    enrollment = models.ForeignKey( StudentEnrollment, on_delete=models.CASCADE, null=True, blank=True,related_name="attendances")
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE, related_name="homework")
     date = models.DateField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES)

@@ -233,13 +233,19 @@ class BatchAdmin(admin.ModelAdmin):
     days_display.short_description = 'Days'
 
     def combined_time(self, obj):
-        return f"{obj.start_time} - {obj.end_time}"
+        if obj.start_time and obj.end_time:
+            return f"{obj.start_time} - {obj.end_time}"
+        return "N/A"
     combined_time.short_description = 'Time'
 
-    list_display = ['class_name', 'section', 'subject', 'combined_time', 'days_display']
-    search_fields = ['class_name__name', 'section__name', 'subject__name']
-    list_filter = ['class_name', 'section', 'subject']
-    ordering = ['class_name__name', 'section__name', 'subject__name']
+    def session_display(self, obj):
+        return obj.session.name if obj.session else "No Session"
+    session_display.short_description = 'Session'
+
+    list_display = ['class_name', 'section', 'subject', 'combined_time', 'days_display', 'session_display']
+    search_fields = ['class_name__name', 'section__name', 'subject__name', 'session__name']
+    list_filter = ['class_name', 'section', 'subject', 'session']
+    ordering = ['class_name__name', 'section__name', 'subject__name', 'session__start_date']
 
 class MentorAdmin(admin.ModelAdmin):
     form = MentorForm
