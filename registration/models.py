@@ -251,6 +251,8 @@ class StudentBatchLink(models.Model):
 class ParentDetails(models.Model):
     parent_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     student = models.OneToOneField(Student, on_delete=models.CASCADE, related_name='parent_details')
+    enrollment = models.ForeignKey( StudentEnrollment, on_delete=models.CASCADE, null=True, blank=True, related_name="parent_details")
+
     father_name = models.CharField(max_length=255, blank=True, null=True)
     mother_name = models.CharField(max_length=255, blank=True, null=True)
     father_contact = models.CharField(max_length=15, blank=True, null=True)
@@ -302,6 +304,8 @@ class Installment(models.Model):
     installment_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='installments')
+    enrollment = models.ForeignKey("StudentEnrollment", on_delete=models.CASCADE, null=True, blank=True, related_name="installments")
+
     label = models.CharField(max_length=255, blank=True, null=True)
     payment_type = models.CharField(max_length=255, choices=PAYMENT_CHOICES, blank=True, null=True) 
     remark = models.TextField(blank=True, null=True)
@@ -349,6 +353,8 @@ class TransportDetails(models.Model):
     transport_person = models.ForeignKey(TransportPerson, on_delete=models.CASCADE, related_name='transport', null=True, blank=True)
     transport_mode = models.ForeignKey(TransportMode, on_delete=models.CASCADE, related_name='transport', null=True, blank=True)
     student = models.OneToOneField(Student, on_delete=models.CASCADE, related_name='transport')
+    enrollment = models.ForeignKey( StudentEnrollment, on_delete=models.CASCADE, null=True, blank=True, related_name="transport_details")
+
     address = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -499,6 +505,8 @@ class TestResult(models.Model):
         ('Retest', 'Retest'),
     ]
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="results")
+    enrollment = models.ForeignKey( StudentEnrollment, on_delete=models.CASCADE, null=True, blank=True, related_name="results")
+
     test = models.ForeignKey(Test, on_delete=models.CASCADE, related_name="results")
     no_of_questions_attempted = models.IntegerField(default=0)
     total_marks_obtained = models.FloatField(default=0)
@@ -538,6 +546,8 @@ class TestResult(models.Model):
 class QuestionResponse(models.Model):
     question = models.ForeignKey(TestQuestion, on_delete=models.CASCADE, related_name='responses')
     student = models.ForeignKey('Student', on_delete=models.CASCADE, related_name='responses')
+    enrollment = models.ForeignKey( StudentEnrollment, on_delete=models.CASCADE, null=True, blank=True, related_name="responses")
+
     test = models.ForeignKey(Test, on_delete=models.CASCADE, related_name='responses')
     marks_obtained = models.FloatField()
     remark = models.ForeignKey(Remark, null=True, blank=True, on_delete=models.SET_NULL, related_name='responses')
@@ -554,6 +564,8 @@ class QuestionResponse(models.Model):
 class RemarkCount(models.Model):
     test = models.ForeignKey(Test, on_delete=models.CASCADE, related_name="remark_count")
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="remark_count")
+    enrollment = models.ForeignKey( StudentEnrollment, on_delete=models.CASCADE, null=True, blank=True, related_name="remark_count")
+
     remark = models.ForeignKey(Remark, on_delete=models.CASCADE, related_name="remark_count")
     count = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -587,6 +599,7 @@ class Mentor(models.Model):
 class Mentorship(models.Model):
     mentor = models.ForeignKey(Mentor, on_delete=models.CASCADE, related_name="mentorships")
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="mentorships")
+    enrollment = models.ForeignKey( StudentEnrollment, on_delete=models.CASCADE, null=True, blank=True, related_name="mentorships")
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -636,6 +649,8 @@ class MentorRemark(models.Model):
 
 class StudentRemark(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="student_remarks")
+    enrollment = models.ForeignKey(StudentEnrollment, on_delete=models.CASCADE, null=True, blank=True, related_name="student_remarks")
+
     remark = models.TextField(blank=True, null=True)
     added_by = models.ForeignKey(BaseUser, on_delete=models.CASCADE, related_name="added_student_remarks")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -646,6 +661,8 @@ class StudentRemark(models.Model):
 
 class StudentTestRemark(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="test_remarks")
+    enrollment = models.ForeignKey(StudentEnrollment, on_delete=models.CASCADE, null=True, blank=True, related_name="test_remarks")
+
     test = models.ForeignKey(Test, on_delete=models.CASCADE, related_name="test_remarks")
     remark = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -708,6 +725,8 @@ class TransportAttendance(models.Model):
         ('None', 'None'),
     ]
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="transport_attendance")
+    enrollment = models.ForeignKey( StudentEnrollment, on_delete=models.CASCADE, null=True, blank=True,related_name="transport_attendances")
+
     is_present = models.BooleanField()
     driver = models.ForeignKey(TransportPerson, on_delete=models.CASCADE, related_name="transport_attendance", null=True, blank=True)
     date = models.DateField()
