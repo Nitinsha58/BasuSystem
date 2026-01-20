@@ -251,7 +251,7 @@ class StudentBatchLink(models.Model):
 class ParentDetails(models.Model):
     parent_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     student = models.OneToOneField(Student, on_delete=models.CASCADE, related_name='parent_details')
-    enrollment = models.ForeignKey( StudentEnrollment, on_delete=models.CASCADE, null=True, blank=True, related_name="parent_details")
+    enrollment = models.OneToOneField( StudentEnrollment, on_delete=models.CASCADE, null=True, blank=True, related_name="parent_details")
 
     father_name = models.CharField(max_length=255, blank=True, null=True)
     mother_name = models.CharField(max_length=255, blank=True, null=True)
@@ -278,7 +278,7 @@ class FeeDetails(models.Model):
     paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     remaining_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True, blank=True)
 
-    enrollment = models.ForeignKey("StudentEnrollment", on_delete=models.CASCADE, null=True, blank=True, related_name="fees")
+    enrollment = models.OneToOneField("StudentEnrollment", on_delete=models.CASCADE, null=True, blank=True, related_name="fees")
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -353,7 +353,7 @@ class TransportDetails(models.Model):
     transport_person = models.ForeignKey(TransportPerson, on_delete=models.CASCADE, related_name='transport', null=True, blank=True)
     transport_mode = models.ForeignKey(TransportMode, on_delete=models.CASCADE, related_name='transport', null=True, blank=True)
     student = models.OneToOneField(Student, on_delete=models.CASCADE, related_name='transport')
-    enrollment = models.ForeignKey( StudentEnrollment, on_delete=models.CASCADE, null=True, blank=True, related_name="transport_details")
+    enrollment = models.OneToOneField( StudentEnrollment, on_delete=models.CASCADE, null=True, blank=True, related_name="transport_details")
 
     address = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
