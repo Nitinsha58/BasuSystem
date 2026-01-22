@@ -1,0 +1,379 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block style %}
+<style>
+    .checkbox-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .checkbox-btn {
+        position: relative;
+        cursor: pointer;
+    }
+
+    .checkbox-btn input[type="checkbox"] {
+        display: none;
+    }
+
+    .checkbox-btn span {
+        display: inline-block;
+        padding: 10px 20px;
+        border: 2px solid #ccc;
+        border-radius: 8px;
+        background: #f9f9f9;
+        transition: 0.2s;
+    }
+
+    .checkbox-btn input[type="checkbox"]:checked+span {
+        border-color: #007bff;
+        background: #e0f0ff;
+        color: #007bff;
+        /* font-weight: 600; */
+    }
+
+    .checkbox-btn.mismatch span {
+        border-color: #dc3545;
+        background: #ffe5e7;
+        color: #dc3545;
+    }
+</style>
+
+{% endblock style %}
+
+{% block dashboard %}
+<div class="container-sm p-4 ">
+    <div class="bg-success-subtle mx-auto p-1 d-flex rounded" style="width: fit-content;">
+        <a href="{% url 'student_enrollment_details_update' student.stu_id %}"
+            class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Student</a>
+        <a href="{% url 'student_enrollment_parent_details' student.stu_id %}"
+            class="text-decoration-none text-dark  p-1 px-2 rounded mx-2 my-1">Parent Details</a>
+        <a href="{% url 'student_enrollment_update' student.stu_id %}"
+            class="text-decoration-none text-dark bg-light p-1 px-2 rounded mx-2 my-1">Enrollments</a>
+    </div>
+
+    <div class="my-4 mt-2">
+        <h2 class="fw-normal text-dark">Enrollment Details </h2>
+    </div>
+
+    <div class="d-flex justify-content-between mb-2 rounded">
+        <form action="" method="get" class="">
+            <select name="session" id="academic-session"
+                class="form-select search-input fs-5 me-2 w-auto flex-grow-0 pe-5" onchange="this.form.submit()">
+                {% for session in academic_sessions %}
+                <option value="{{session.id}}" {% if session.id == selected_session.id %} selected {% endif %}>
+                    {{session.name}}</option>
+                {% endfor %}
+            </select>
+        </form>
+
+        <div class="p-1 d-flex bg-light rounded" style="width: fit-content;">
+            <a href="" class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Transport</a>
+            <a href="" class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Document</a>
+            <a href="" class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Receipt</a>
+        </div>
+    </div>
+
+    <form class="g-3 bg-light rounded p-2 pb-3" name="enrollment_update_form" method="post"
+        action="?session={{ selected_session.id }}">
+        {% csrf_token %}
+        <input type="hidden" name="session" value="{{ selected_session.id }}">
+
+        <div class="row justify-content-evenly mt-3">
+            <div class="col-md-3">
+                <label class="form-label">Student</label>
+                <div class="form-control bg-white">
+                    {{ student.user.first_name }} {{ student.user.last_name }} ({{ student.user.phone }})
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Session</label>
+                <div class="form-control bg-white">{{ selected_session.name }}</div>
+            </div>
+            <div class="col-md-3">
+                <label for="active" class="form-label">Enrollment Status</label>
+                <select class="form-select" name="active" id="active">
+                    <option value="Active" {% if enrollment and enrollment.active %} selected {% endif %}>Active
+                    </option>
+                    <option value="Not Active" {% if enrollment and not enrollment.active %} selected {% endif %}>Not
+                        Active</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row justify-content-evenly mt-3">
+            <div class="col-md-3">
+                <label for="class_name" class="form-label">Class Enrolled*</label>
+                <select class="form-select" name="class_name" id="class_name" required>
+                    {% for cls in classes %}
+                    <option value="{{cls.id}}" {% if enrollment and enrollment.class_name == cls %} selected {% elif not
+                        enrollment and student.class_enrolled == cls %} selected {% endif %}>{{cls.name}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label for="course" class="form-label">Course</label>
+                <select class="form-select" name="course" id="course">
+                    {% for course in student.COURSE_CHOICE %}
+                    <option value="{{course.0}}" {% if enrollment and course.0 == enrollment.course %} selected {% elif
+                        not enrollment and course.0 == student.course %} selected {% endif %}>{{course.1}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label for="program_duration" class="form-label">Duration</label>
+                <select class="form-select" name="program_duration" id="program_duration">
+                    {% for duration in student.DURATION_CHOICE %}
+                    <option value="{{duration.0}}" {% if enrollment and duration.0 == enrollment.program_duration %}
+                        selected {% elif not enrollment and duration.0 == student.program_duration %} selected {% endif %}>{{duration.1}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="row justify-content-evenly mt-3 px-5 py-2">
+            <label for="subjects" class="form-label">Subjects</label>
+            <div class="checkbox-buttons">
+                {% for subject in subjects %}
+                {% if subject.id in selected_subject_ids %}
+                <label class="checkbox-btn">
+                    <input type="checkbox" name="subjects[]" checked value="{{subject.id}}">
+                    <span>{{subject.name}}</span>
+                </label>
+                {% endif %}
+                {% endfor %}
+                {% for subject in subjects %}
+                {% if subject.id not in selected_subject_ids %}
+                <label class="checkbox-btn">
+                    <input type="checkbox" name="subjects[]" value="{{subject.id}}">
+                    <span>{{subject.name}}</span>
+                </label>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="row justify-content-evenly mt-3 px-5 py-2">
+            <label for="batches" class="form-label">Selected Batches</label>
+            <div class="checkbox-buttons">
+                {% for batch in batches %}
+                {% if batch.id in selected_batch_ids %}
+                <label class="checkbox-btn">
+                    <input type="checkbox" name="batches[]" checked value="{{batch.id}}"
+                        data-subject-id="{{ batch.subject.id }}" data-class-id="{{ batch.class_name.id }}">
+                    <span>{{batch.subject.name}} {{batch.section.name}}</span>
+                </label>
+                {% endif %}
+                {% endfor %}
+                {% for batch in batches %}
+                {% if batch.id not in selected_batch_ids %}
+                <label class="checkbox-btn">
+                    <input type="checkbox" name="batches[]" value="{{batch.id}}"
+                        data-subject-id="{{ batch.subject.id }}" data-class-id="{{ batch.class_name.id }}">
+                    <span>{{batch.subject.name}} {{batch.section.name}}</span>
+                </label>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <div id="mismatch-warning" class="text-danger px-5 pt-2" style="display: none;">
+            Mismatch between selected subject and batches detected.
+        </div>
+
+        <div class="row justify-content-evenly mt-3">
+            <div class="col-md-3"></div>
+            <div class="col-md-3 mt-4">
+                <button class="btn btn-warning" type="submit">Update Enrollment</button>
+            </div>
+            <div class="col-md-3"></div>
+        </div>
+    </form>
+</div>
+</div>
+
+<script>
+    (function () {
+        const subjectInputs = Array.from(document.querySelectorAll('input[name="subjects[]"]'));
+        const batchInputs = Array.from(document.querySelectorAll('input[name="batches[]"]'));
+        const classSelect = document.getElementById('class_name');
+
+        if (!subjectInputs.length || !batchInputs.length) return;
+
+        const subjectById = new Map(subjectInputs.map((el) => [String(el.value), el]));
+        const subjectLabelById = new Map(
+            subjectInputs.map((el) => [String(el.value), el.closest('label.checkbox-btn')])
+        );
+
+        const batchesBySubjectId = new Map();
+        batchInputs.forEach((b) => {
+            const subjectId = String(b.dataset.subjectId || '');
+            if (!subjectId) return;
+            if (!batchesBySubjectId.has(subjectId)) batchesBySubjectId.set(subjectId, []);
+            batchesBySubjectId.get(subjectId).push(b);
+        });
+
+        const mismatchWarning = document.getElementById('mismatch-warning');
+
+        function updateMismatchWarning() {
+            if (!mismatchWarning) return;
+            const hasMismatch = document.querySelectorAll('label.checkbox-btn.mismatch').length > 0;
+            mismatchWarning.style.display = hasMismatch ? '' : 'none';
+        }
+
+        function getSelectedSubjectIdSet() {
+            const set = new Set();
+            subjectInputs.forEach((s) => {
+                if (s.checked) set.add(String(s.value));
+            });
+            return set;
+        }
+
+        function updateBatchVisibility() {
+            const selectedClassId = classSelect ? String(classSelect.value || '') : '';
+            const selectedSubjectIds = getSelectedSubjectIdSet();
+
+            const hasClass = !!selectedClassId;
+            const hasSubjects = selectedSubjectIds.size > 0;
+
+            batchInputs.forEach((b) => {
+                const label = b.closest('label.checkbox-btn');
+                if (!label) return;
+
+                // Always keep selected batches visible
+                if (b.checked) {
+                    label.style.display = '';
+                    return;
+                }
+
+                // If class OR subjects aren't selected, hide all unselected batches
+                if (!hasClass || !hasSubjects) {
+                    label.style.display = 'none';
+                    return;
+                }
+
+                const batchClassId = String(b.dataset.classId || '');
+                const batchSubjectId = String(b.dataset.subjectId || '');
+                const isEligible = batchClassId === selectedClassId && selectedSubjectIds.has(batchSubjectId);
+                label.style.display = isEligible ? '' : 'none';
+            });
+        }
+
+        function setMismatchForSubject(subjectId, isMismatch, options) {
+            const subjectLabel = subjectLabelById.get(String(subjectId));
+            if (subjectLabel) subjectLabel.classList.toggle('mismatch', !!isMismatch);
+
+            const batchList = batchesBySubjectId.get(String(subjectId)) || [];
+            batchList.forEach((b) => {
+                const batchLabel = b.closest('label.checkbox-btn');
+                if (!batchLabel) return;
+                batchLabel.classList.remove('mismatch');
+            });
+
+            if (!isMismatch) return;
+
+            if (options?.highlightCheckedBatches) {
+                batchList.forEach((b) => {
+                    if (!b.checked) return;
+                    const batchLabel = b.closest('label.checkbox-btn');
+                    if (batchLabel) batchLabel.classList.add('mismatch');
+                });
+                return;
+            }
+
+            if (options?.highlightFirstBatch) {
+                const selectedClassId = classSelect ? String(classSelect.value || '') : '';
+                const firstMatchingClass = batchList.find((b) => {
+                    const batchClassId = String(b.dataset.classId || '');
+                    return selectedClassId ? batchClassId === selectedClassId : true;
+                });
+                const first = firstMatchingClass || batchList[0];
+                if (first) {
+                    const batchLabel = first.closest('label.checkbox-btn');
+                    if (batchLabel) batchLabel.classList.add('mismatch');
+                }
+            }
+        }
+
+        function recomputeMismatchForSubject(subjectId) {
+            const subjectInput = subjectById.get(String(subjectId));
+            if (!subjectInput) return;
+
+            const batchList = batchesBySubjectId.get(String(subjectId)) || [];
+            const checkedBatchCount = batchList.reduce((acc, b) => acc + (b.checked ? 1 : 0), 0);
+
+            // Mismatch A: batches selected but subject not selected
+            if (checkedBatchCount > 0 && !subjectInput.checked) {
+                setMismatchForSubject(subjectId, true, { highlightCheckedBatches: true });
+                return;
+            }
+
+            // Mismatch B: subject selected but no batches selected (suggest the first related batch)
+            if (subjectInput.checked && checkedBatchCount === 0) {
+                setMismatchForSubject(subjectId, true, { highlightFirstBatch: true });
+                return;
+            }
+
+            setMismatchForSubject(subjectId, false);
+            updateMismatchWarning();
+        }
+
+        function syncForBatch(batchInput) {
+            const subjectId = batchInput.dataset.subjectId;
+            if (!subjectId) return;
+
+            const subjectInput = subjectById.get(String(subjectId));
+            if (!subjectInput) return;
+
+            if (batchInput.checked) {
+                subjectInput.checked = true;
+                return;
+            }
+
+            const anyOtherCheckedSameSubject = batchInputs.some(
+                (b) => b !== batchInput && b.checked && b.dataset.subjectId === subjectId
+            );
+
+            if (!anyOtherCheckedSameSubject) {
+                subjectInput.checked = false;
+            }
+        }
+
+        // Initial pass: DO NOT auto-fix mismatches; just highlight them.
+        subjectInputs.forEach((s) => recomputeMismatchForSubject(String(s.value)));
+        updateMismatchWarning();
+        updateBatchVisibility();
+
+        batchInputs.forEach((b) => {
+            b.addEventListener('change', function () {
+                syncForBatch(b);
+                const subjectId = b.dataset.subjectId;
+                if (subjectId) recomputeMismatchForSubject(String(subjectId));
+                updateMismatchWarning();
+                updateBatchVisibility();
+            });
+        });
+
+        subjectInputs.forEach((s) => {
+            s.addEventListener('change', function () {
+                recomputeMismatchForSubject(String(s.value));
+                updateMismatchWarning();
+                updateBatchVisibility();
+            });
+        });
+
+        if (classSelect) {
+            classSelect.addEventListener('change', function () {
+                updateBatchVisibility();
+                subjectInputs.forEach((s) => recomputeMismatchForSubject(String(s.value)));
+                updateMismatchWarning();
+            });
+        }
+    })();
+</script>
+
+{% endblock dashboard %}

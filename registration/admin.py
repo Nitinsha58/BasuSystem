@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import (
+    EnrollmentBatch,
     Student, 
     ParentDetails, 
     FeeDetails, 
@@ -367,6 +368,31 @@ class StudentEnrollmentAdmin(admin.ModelAdmin):
     search_fields = ("student__user__first_name", "student__user__phone")
 
 
+class EnrollmentBatchAdmin(admin.ModelAdmin):
+    list_display = ("enrollment", "batch", "created_at", "updated_at")
+    ordering = ("-created_at",)
+
+    # Filters: class, section, subject
+    list_filter = (
+        "batch__class_name",
+        "batch__section",
+        "batch__subject",
+    )
+
+    # Search: enrollment -> student -> user fields, plus batch fields
+    search_fields = (
+        "enrollment__student__user__first_name",
+        "enrollment__student__user__last_name",
+        "enrollment__student__user__phone",
+        "batch__class_name__name",
+        "batch__section__name",
+        "batch__subject__name",
+    )
+
+    autocomplete_fields = ("enrollment", "batch")
+
+
+admin.site.register(EnrollmentBatch, EnrollmentBatchAdmin)
 admin.site.register(StudentEnrollment, StudentEnrollmentAdmin)
 admin.site.register(AcademicSession, AcademicSessionAdmin)
 admin.site.register(StudentTestRemark)

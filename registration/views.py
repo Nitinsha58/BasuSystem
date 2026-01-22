@@ -6,7 +6,8 @@ from .models import (
     Test, TestQuestion, Chapter, 
     Remark, RemarkCount,QuestionResponse, 
     TestResult, Day, Mentor,
-    Mentorship, TransportPerson, TransportMode, TransportAttendance
+    Mentorship, TransportPerson, TransportMode, TransportAttendance,
+    AcademicSession, StudentEnrollment, EnrollmentBatch,
     )
 from lesson.models import Lecture
 
@@ -269,6 +270,311 @@ def student_update(request, stu_id):
     })
 
 @login_required(login_url='login')
+def student_enrollment_update(request, stu_id):
+    student = Student.objects.filter(stu_id=stu_id).first()
+
+    if not student:
+        messages.error(request, 'Invalid Student Id.')
+        return redirect('student_registration')
+
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = None
+
+    if selected_session_id:
+        selected_session = AcademicSession.objects.filter(id=selected_session_id).first()
+    if not selected_session:
+        selected_session = active_session
+
+    if not selected_session:
+        messages.error(request, 'No academic session selected and no active session found.')
+        return redirect('students_enrollment_list')
+
+    enrollment = (
+        StudentEnrollment.objects.filter(student=student, session=selected_session)
+        .prefetch_related('subjects')
+        .first()
+    )
+
+    batches = (
+        Batch.objects.filter(session=selected_session)
+        .select_related('class_name', 'subject', 'section')
+        .order_by('class_name__name', 'subject__name', 'section__name')
+    )
+
+    selected_batch_ids = []
+    if enrollment:
+        selected_batch_ids = list(
+            EnrollmentBatch.objects.filter(enrollment=enrollment).values_list('batch_id', flat=True)
+        )
+    
+    if request.method == 'POST':
+        class_id = request.POST.get('class_name')
+        class_name = ClassName.objects.filter(id=class_id).first() if class_id else None
+
+        if not class_name:
+            messages.error(request, 'Please select a class.')
+            return redirect(f"{reverse('student_enrollment_update', args=[student.stu_id])}?session={selected_session.id}")
+
+        if enrollment is None:
+            enrollment = StudentEnrollment(student=student, session=selected_session)
+
+        enrollment.class_name = class_name
+        enrollment.course = request.POST.get('course') or None
+        enrollment.program_duration = request.POST.get('program_duration') or enrollment.program_duration
+        enrollment.active = request.POST.get('active') == 'Active'
+        enrollment.save()
+
+        subject_ids_raw = request.POST.getlist('subjects[]') or request.POST.getlist('subjects')
+        subject_ids = [int(s) for s in subject_ids_raw if str(s).isdigit()]
+        enrollment.subjects.set(subject_ids)
+
+        eligible_batch_ids = set(
+            Batch.objects.filter(
+                class_name=class_name,
+                subject_id__in=subject_ids,
+                session=selected_session,
+            ).values_list('id', flat=True)
+        )
+
+        # Save enrollment->batch links
+        batch_ids = [int(b) for b in request.POST.getlist('batches[]') if str(b).isdigit() and int(b) in eligible_batch_ids]
+        with transaction.atomic():
+            EnrollmentBatch.objects.filter(enrollment=enrollment).exclude(batch_id__in=batch_ids).delete()
+            existing_ids = set(
+                EnrollmentBatch.objects.filter(enrollment=enrollment, batch_id__in=batch_ids).values_list('batch_id', flat=True)
+            )
+            to_create = [
+                EnrollmentBatch(enrollment=enrollment, batch_id=batch_id)
+                for batch_id in batch_ids
+                if batch_id not in existing_ids
+            ]
+            if to_create:
+                EnrollmentBatch.objects.bulk_create(to_create)
+
+        messages.success(request, 'Enrollment updated.')
+        return redirect(f"{reverse('student_enrollment_update', args=[student.stu_id])}?session={selected_session.id}")
+    
+    classes = ClassName.objects.all().order_by('-name')
+    subjects = Subject.objects.all().order_by('name')
+    if enrollment:
+        selected_subject_ids = list(enrollment.subjects.values_list('id', flat=True))
+    else:
+        selected_subject_ids = list(student.subjects.values_list('id', flat=True))
+
+    return render(request, "registration/enrollment/student_enrollment_update.html", {
+        'student': student,
+        'enrollment': enrollment,
+        'classes': classes,
+        'subjects': subjects,
+        'selected_subject_ids': selected_subject_ids,
+        'batches': batches,
+        'selected_batch_ids': selected_batch_ids,
+        'academic_sessions': sessions,
+        'active_session': active_session,
+        'selected_session': selected_session,
+    })
+
+@login_required(login_url='login')
+def student_enrollment_details_update(request, stu_id):
+    student = Student.objects.filter(stu_id=stu_id).first()
+
+    if not student:
+        messages.error(request, 'Invalid Student Id.')
+        return redirect('student_registration')
+    
+    if request.method == 'POST':
+        form_data = {
+            "first_name": request.POST.get("first_name"),
+            "last_name": request.POST.get("last_name"),
+            "phone": request.POST.get("phone"),
+            "email": request.POST.get("email"),
+            "dob": request.POST.get("dob"),
+            "doj": request.POST.get("doj"),
+            "school_name": request.POST.get("school_name"),
+            "class_enrolled": ClassName.objects.filter(id=request.POST.get("class_enrolled")).first() if request.POST.get("class_enrolled") else '',
+            "subjects": request.POST.getlist("subjects"),  # ManyToMany field
+            "batches": request.POST.getlist("batches[]"),  # ManyToMany field
+            "marksheet_submitted": request.POST.get("marksheet_submitted") == "yes",
+            "sat_score": request.POST.get("sat_score"),
+            "remarks": request.POST.get("remarks"),
+            "address": request.POST.get("address"),
+            "last_year_marks_details": request.POST.get("last_year_marks_details"),
+            "aadhar_card_number": request.POST.get("aadhar_card_number"),
+            "gender": request.POST.get("gender"),
+            "course": request.POST.get("course"),
+            "program_duration": request.POST.get("program_duration"),
+            "active": request.POST.get("active") == "Active",
+        }
+        form = StudentUpdateForm(form_data, instance=student)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Student Updated.')
+            return redirect("student_update", stu_id=student.stu_id)
+        
+        for field, error_list in form.errors.items():
+            for error in error_list:
+                messages.error(request, f"{field}: {error}")
+
+        return redirect("student_update", stu_id=student.stu_id)
+    
+    classes = ClassName.objects.all().order_by('-name')
+    subjects = Subject.objects.all().order_by('name')
+    selected_class = ClassName.objects.filter(id=student.class_enrolled.id).first() if student.class_enrolled else None
+    batches = Batch.objects.filter(class_name=selected_class)
+
+    # # WhatsApp group links mapping by class and type
+    # WHATSAPP_GROUP_LINKS = {
+    #     "7": {
+    #         "student": "https://chat.whatsapp.com/CODPG4w7eFX43VQpOi6BnD",
+    #         "parent": "https://chat.whatsapp.com/Hi0U7fSFFwbGNlfinyCZII",
+    #     },
+    #     "8": {
+    #         "student": "https://chat.whatsapp.com/H2xTY2qpUOb5EXut75iNwV",
+    #         "parent": "https://chat.whatsapp.com/CGsBhqddvtI5BNKwzXm2wC",
+    #     },
+    #     "9": {
+    #         "student": "https://chat.whatsapp.com/BasrRWXoC3x88lyXrvctEU",
+    #         "parent": "https://chat.whatsapp.com/IOj2m12EWZI3fp9rEjF01x",
+    #     },
+    #     "10": {
+    #         "student": "https://chat.whatsapp.com/L0zF6dVCBDNEF1eGEBR1Wg",
+    #         "parent": "https://chat.whatsapp.com/Lb7Q1Xq1YBz9J2ZfcbK5dC",
+    #     },
+    #     "11_PCM": {
+    #         "student": "https://chat.whatsapp.com/JdbjvZ55nwKDREkmsw2GMD",
+    #         "parent": "https://chat.whatsapp.com/IbQTtuqBQIALABUPcE688G",
+    #     },
+    #     "11_COMMERCE": {
+    #         "student": "https://chat.whatsapp.com/GruyEBmP0dZ0WOADZlEeic",
+    #         "parent": "https://chat.whatsapp.com/I6bm2asTs9T4KJEJvKgMCL",
+    #     },
+    #     "12_PCM": {
+    #         "student": "https://chat.whatsapp.com/IsveJm0QuCT9IM9Y93vZ6s",
+    #         "parent": "https://chat.whatsapp.com/B7wsZHE4oDHDmpvC0UB1YH",
+    #     },
+    #     "12_COMMERCE": {
+    #         "student": "https://chat.whatsapp.com/Esgz3orRZuLEkyQB9iJ3Va",
+    #         "parent": "https://chat.whatsapp.com/ByZk2Dnu0el5WGanR4SZcB",
+    #     },
+    #     "transport_erikshaw": "https://chat.whatsapp.com/Hea0v2pn5NzDdZdzCeE4mL",
+    #     "transport_cab": "https://chat.whatsapp.com/IvSYxCyANmFL7QjzuHljGF",
+    # }
+
+    # def get_class_group_key(student):
+    #     cls = student.class_enrolled.name.upper() if student.class_enrolled else ""
+    #     if "11" in cls:
+    #         if "COMMERCE" in cls:
+    #             return "11_COMMERCE"
+    #         return "11_PCM"
+    #     if "12" in cls:
+    #         if "COMMERCE" in cls:
+    #             return "12_COMMERCE"
+    #         return "12_PCM"
+    #     for num in ["7", "8", "9", "10"]:
+    #         if num in cls:
+    #             return num
+    #     return None
+
+    # def get_whatsapp_group_links(student):
+    #     group_key = get_class_group_key(student)
+    #     student_link = parent_link = None
+    #     if group_key and group_key in WHATSAPP_GROUP_LINKS:
+    #         student_link = WHATSAPP_GROUP_LINKS[group_key].get("student")
+    #         parent_link = WHATSAPP_GROUP_LINKS[group_key].get("parent")
+    #     return student_link, parent_link
+
+    # def get_transport_group_links(student):
+    #     links = []
+    #     if getattr(student, "transport", None):
+    #         mode = getattr(student.transport, "mode", None)
+    #         if mode and hasattr(mode, "name"):
+    #             mode_name = mode.name.lower()
+    #             if "rikshaw" in mode_name:
+    #                 links.append(WHATSAPP_GROUP_LINKS.get("transport_erikshaw"))
+    #             if "cab" in mode_name:
+    #                 links.append(WHATSAPP_GROUP_LINKS.get("transport_cab"))
+    #     return [l for l in links if l]
+
+    # def generate_wa_me_link(phone, message):
+    #     import urllib.parse
+    #     return f"https://wa.me/{phone}?text={urllib.parse.quote(message)}"
+
+    # # Compose the join message for WhatsApp with both group links (both links are always included)
+    # def get_join_message(student, student_link, parent_link):
+    #     class_name = student.class_enrolled.name if student.class_enrolled else ""
+    #     message = (
+    #         "Dear Parent,\n\n"
+    #         "We're excited to begin the 2025-26 session!\n\n"
+    #         "Thank you for your continued support. This year, we've made key improvements and new strategies to boost student results.\n\n"
+    #         f"👇 Join the official WhatsApp groups for updates:\n\n"
+    #     )
+    #     # Always include both links, even if one is missing (show as N/A if not found)
+    #     message += f"{class_name} Students Group\n{student_link or 'N/A'}\n\n"
+    #     message += f"{class_name} Parents Group\n{parent_link or 'N/A'}\n\n"
+    #     message += (
+    #         "Feel free to reach out for any queries. We're here to help!\n\n"
+    #         "- BASU Classes"
+    #     )
+    #     return message
+
+    # # Prepare WhatsApp join links for student, mother, and father (same message for all)
+    # student_link, parent_link = get_whatsapp_group_links(student)
+    # transport_links = get_transport_group_links(student)
+
+    # wa_links = {}
+
+    # join_message = get_join_message(student, student_link, parent_link)
+
+    # # Student WhatsApp link
+    # wa_links['student'] = generate_wa_me_link(
+    #     '91' + str(student.user.phone),
+    #     join_message
+    # )
+
+    # # Mother WhatsApp link
+    # mother_phone = getattr(getattr(student, "parent_details", None), "mother_contact", None)
+    # if mother_phone:
+    #     wa_links['mother'] = generate_wa_me_link(
+    #         '91' + str(mother_phone),
+    #         join_message
+    #     )
+
+    # # Father WhatsApp link
+    # father_phone = getattr(getattr(student, "parent_details", None), "father_contact", None)
+    # if father_phone:
+    #     wa_links['father'] = generate_wa_me_link(
+    #         '91' + str(father_phone),
+    #         join_message
+    #     )
+
+    # # Optionally add transport group links for student (separate message for transport)
+    # wa_links['transport'] = []
+    # for link in transport_links:
+    #     wa_links['transport'].append(
+    #         generate_wa_me_link(
+    #             '91' + str(student.user.phone),
+    #             f"Dear Parent,\n\nJoin the official transport WhatsApp group for updates:\n{link}\n\n- BASU Classes"
+    #         )
+    #     )
+
+
+    return render(request, "registration/enrollment/student_details_update.html", {
+        'student': student,
+        'classes': classes, 
+        'subjects': subjects,
+        'batches': batches,
+        # 'wa_links': wa_links,
+    })
+
+@login_required(login_url='login')
 def students_list(request):
     classes = ClassName.objects.all().order_by('-created_at')
     class_students = [
@@ -280,6 +586,71 @@ def students_list(request):
     return render(request, "registration/students.html", {
         'class_students' : class_students,
         'count': count,
+    })
+
+@login_required(login_url='login')
+def students_enrollment_list(request):
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+
+    selected_session_id = request.GET.get('session')
+    selected_session = None
+    
+    if selected_session_id:
+        selected_session = AcademicSession.objects.filter(id=selected_session_id).first()
+    if not selected_session:
+        selected_session = active_session
+
+    classes = ClassName.objects.all().order_by('-created_at')
+    class_students = []
+    for cls in classes:
+        students_qs = StudentEnrollment.objects.filter(
+            session=selected_session,
+            class_name=cls,
+        ).order_by('-created_at', 'student__user__first_name', 'student__user__last_name').distinct()
+        class_students.append({'class': cls.name, 'students': students_qs})
+
+    count = StudentEnrollment.objects.filter(active=True, student__active=True, session=selected_session).distinct().count()
+
+    return render(request, "registration/enrollment/students_enrollment_list.html", {
+        'class_students': class_students,
+        'count': count,
+        'academic_sessions': sessions,
+        'selected_session': selected_session,
+    })
+
+@login_required(login_url='login')
+def student_enrollment_parent_details(request, stu_id):
+
+    if stu_id and not Student.objects.filter(stu_id=stu_id):
+        messages.error(request, "Invalid Student")
+        return redirect('student_registration')
+    student = Student.objects.filter(stu_id=stu_id).first()
+    form_data = {}
+
+    if request.method == "POST":
+        form_data = {
+            "father_name": request.POST.get("father_name"),
+            "mother_name": request.POST.get("mother_name"),
+            "father_contact": request.POST.get("father_contact"),
+            "mother_contact": request.POST.get("mother_contact"),
+        }
+        form = ParentDetailsForm(form_data)
+
+        if form.is_valid():
+            form.save(student)
+            messages.success(request, "Parent details saved successfully.")
+            return redirect("student_parent_details", stu_id=student.stu_id)
+        
+        for field, error_list in form.errors.items():
+            for error in error_list:
+                messages.error(request, f"{field}: {error}")
+
+    parent_details = ParentDetails.objects.filter(student=student).first()
+    return render(request, "registration/enrollment/student_parent_details.html", {
+        "student": student,
+        "form": form_data,
+        "parent_details": parent_details
     })
 
 @login_required(login_url='login')

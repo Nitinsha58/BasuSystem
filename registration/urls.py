@@ -5,6 +5,12 @@ from .views import (
     student_parent_details, 
     student_transport_details,
     student_update,
+    
+    student_enrollment_details_update,
+    students_enrollment_list,
+    student_enrollment_parent_details,
+    student_enrollment_update,
+    
     students_list,
     student_reg_doc,
     delete_installment,
@@ -62,6 +68,12 @@ urlpatterns = [
     path('search-students/', search_students, name='search_students'),
     path('registration', student_registration, name='student_registration'),
     path('<uuid:stu_id>', student_update, name='student_update'),
+    path('enrollments', students_enrollment_list, name='students_enrollment_list'),
+    path('enrollment/<uuid:stu_id>', student_enrollment_details_update, name='student_enrollment_details_update'),
+    path('enrollment/parent/<uuid:stu_id>', student_enrollment_parent_details, name='student_enrollment_parent_details'),
+    path('enrollment/update/<uuid:stu_id>', student_enrollment_update, name='student_enrollment_update'),
+
+    
     path('<uuid:stu_id>/parent', student_parent_details, name='student_parent_details'),
     path('<uuid:stu_id>/fees', student_fees_details, name='student_fees_details'),
     path('<uuid:stu_id>/transport', student_transport_details, name='student_transport_details'),

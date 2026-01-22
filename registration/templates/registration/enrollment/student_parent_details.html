@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block dashboard %}
+<div class="container-sm p-4 ">
+        <div class="bg-success-subtle mx-auto p-1 d-flex rounded" style="width: fit-content;">
+        <a href="{% url 'student_enrollment_details_update' student.stu_id %}" class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Student</a>
+        <a href="{% url 'student_enrollment_parent_details' student.stu_id %}" class="text-decoration-none text-dark bg-light p-1 px-2 rounded mx-2 my-1">Parent Details</a>
+        <a href="{% url 'student_enrollment_update' student.stu_id %}" class="text-decoration-none text-dark  p-1 px-2 rounded mx-2 my-1">Enrollments</a>
+    </div>
+
+    <div class="my-4 mt-2">
+        <h2 class="fw-normal text-dark">{{student.user.first_name}}'s Parent Details </h2>
+    </div>
+
+    <form class="g-3 bg-light rounded p-2 pb-3" method="post">
+      {% csrf_token %}
+      <div class="row justify-content-evenly mt-3">
+        <div class="col-md-4">
+          <label for="father_name" class="form-label">Father Name</label>
+          <input type="text" value="{{parent_details.father_name}}" class="form-control" name="father_name" id="father_name">
+        </div>
+        <div class="col-md-4">
+          <label for="mother_name" class="form-label">Mother Name</label>
+          <input type="text" value="{{parent_details.mother_name}}" class="form-control" name="mother_name" id="mother_name">
+        </div>
+      </div>
+      
+      <div class="row justify-content-evenly mt-3">
+        <div class="col-md-4">
+          <label for="father_contact" class="form-label">Father Phone</label>
+          <input type="text" minlength="10" value="{{parent_details.father_contact}}" maxlength="10" class="form-control" name="father_contact" id="father_contact">
+        </div>
+
+        <div class="col-md-4">
+          <label for="mother_contact" class="form-label">Mother Phone</label>
+          <input type="text" minlength="10" maxlength="10" value="{{parent_details.mother_contact}}" class="form-control" name="mother_contact" id="mother_contact">
+        </div>
+      </div>
+
+      <div class="d-flex justify-content-center mt-3">
+        <div class="">
+          <button class="btn btn-warning" type="submit">Save Parent Details</button>
+        </div>
+      </div>
+    </form>
+</div>
+</div>
+
+
+<script>
+
+  const father_phone = document.getElementById('father_contact');
+  const mother_phone = document.getElementById('mother_contact')
+  
+  father_phone.addEventListener("input", function () {
+      this.value = this.value.replace(/\D/g, "").slice(0, 10); // Remove non-digits and limit to 10
+  });
+  mother_phone.addEventListener("input", function () {
+      this.value = this.value.replace(/\D/g, "").slice(0, 10); // Remove non-digits and limit to 10
+  });
+
+</script>
+
+{% endblock dashboard %}
