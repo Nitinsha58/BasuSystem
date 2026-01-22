@@ -1,0 +1,411 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block dashboard %}
+<div class="container-sm p-4">
+  <div class="bg-success-subtle mx-auto p-1 d-flex rounded" style="width: fit-content;">
+    <a href="{% url 'student_enrollment_details_update' student.stu_id %}"
+      class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Student</a>
+    <a href="{% url 'student_enrollment_parent_details' student.stu_id %}"
+      class="text-decoration-none text-dark  p-1 px-2 rounded mx-2 my-1">Parent Details</a>
+    <a href="{% url 'student_enrollment_update' student.stu_id %}?session={{ selected_session.id }}"
+      class="text-decoration-none text-dark bg-light p-1 px-2 rounded mx-2 my-1">Enrollments</a>
+  </div>
+
+  <div class="my-4 mt-2">
+    <h2 class="fw-normal text-dark">{{student.user.first_name}}'s Fee Details </h2>
+  </div>
+  <div class="d-flex justify-content-between mb-2 rounded">
+    <form action="" method="get" class="">
+      <select name="session" id="academic-session" onchange="this.form.submit()"
+        class="form-select search-input fs-5 me-2 w-auto flex-grow-0 pe-5" disabled>
+        {% for session in academic_sessions %}
+        <option value="{{session.id}}" {% if session.id == selected_session.id %} selected {% endif %}>
+          {{session.name}}</option>
+        {% endfor %}
+      </select>
+    </form>
+
+    <div class="p-1 d-flex bg-light rounded" style="width: fit-content;">
+      <a href="{% url 'student_enrollment_update' student.stu_id %}?session={{ selected_session.id }}"
+        class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Enrollment</a>
+      <a href="{% url 'student_enrollment_fees_details' student.stu_id %}?session={{ selected_session.id }}"
+        class="text-decoration-none text-dark bg-success-subtle p-1 px-2 rounded mx-2 my-1">Fees</a>
+      <a href="{% url 'student_enrollment_transport_details' student.stu_id %}?session={{ selected_session.id }}"
+        class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Transport</a>
+      <a href="" class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Document</a>
+      <a href="" class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Receipt</a>
+    </div>
+  </div>
+
+  <form class="g-3 bg-light rounded p-2 pb-3" method="post" id="fee-form" action="?session={{ selected_session.id }}">
+    {% csrf_token %}
+    <input type="hidden" name="session" value="{{ selected_session.id }}">
+    <div class="row justify-content-evenly mt-3">
+      <div class="col-md-10">
+        <p class="form-label fs-4 fw-normal text-end">Total: <span id="total_fees">{{fees_details.total_fees}}</span>
+        </p>
+      </div>
+    </div>
+    <input type="text" hidden value="{{fees_details.total_fees}}" class="form-control" name="total_fees"
+      id="total_fees_input">
+    <div class="row justify-content-evenly mt-3">
+      <div class="col-md-4">
+        <label for="book_fees" class="form-label">Registration Fees</label>
+        <input type="text" value="{{fees_details.registration_fee}}" class="form-control" name="registration_fee"
+          id="registration_fee">
+        <div class="form-check form-switch mt-2">
+          <label class="form-check-label" for="registration_discount">Discount</label>
+          <input class="form-check-input w-4 h-4" type="checkbox" name="registration_discount" {% if fees_details.registration_discount %} checked {% endif %} role="switch" id="registration_discount">
+        </div>
+      </div>
+      <div class="col-md-4">
+        <label for="cab_fees" class="form-label">Cab Fees</label>
+        <input type="text" minlength="10" value="{{fees_details.cab_fees}}" maxlength="10" class="form-control"
+          name="cab_fees" id="cab_fees">
+      </div>
+    </div>
+
+    <div class="row justify-content-evenly mt-3">
+
+      <div class="col-md-4">
+        <label for="discount" class="form-label">Discount Amount</label>
+        <input type="text" minlength="10" maxlength="10" value="{{fees_details.discount}}" class="form-control"
+          name="discount" id="discount">
+      </div>
+      <div class="col-md-4">
+        <label for="tuition_fees" class="form-label">Tuition Fees</label>
+        <input type="text" minlength="10" maxlength="10" value="{{fees_details.tuition_fees}}" class="form-control"
+          name="tuition_fees" id="tuition_fees" required>
+      </div>
+    </div>
+
+    <div class="row justify-content-evenly mt-3">
+      <div class="col-md-4">
+      </div>
+      <div class="col-md-4">
+        <label for="book_fees" class="form-label">Book Fees</label>
+        <input type="text" minlength="10" maxlength="10" value="{{fees_details.book_fees}}" class="form-control"
+          name="book_fees" id="book_fees" required>
+        <div class="form-check form-switch mt-2">
+          <label class="form-check-label" for="book_discount">Discount</label>
+          <input class="form-check-input w-4 h-4" type="checkbox" name="book_discount" {% if fees_details.book_discount %} checked {% endif %} role="switch" id="book_discount">
+        </div>
+      </div>
+    </div>
+    <div class="row mt-3">
+      <div class="col-md-1"></div>
+
+      <div class="col-md-3 ms-4">
+        <label for="tuition_fees" class="form-label">No. Of Installments</label>
+        <div class="d-flex p-1 px-2 rounded m-0" style="width: fit-content; background-color: white;">
+          {% if not installments %}
+          <button id="decrement-btn" class="btn bg-danger-subtle m-0 " type="button">-</button>
+          {% endif %}
+          <input id="count-input" name="num_installments" readonly
+            class="m-0 border-0 rounded d-flex justify-content-center align-items-center"
+            style="width: 40px; height: 40px; padding: 7px; text-align: center;" {% if installments_count %}
+            value="{{installments_count}}" {% else %} value="1" {% endif %}>
+          <button id="increment-btn" class="btn bg-success-subtle m-0 " type="button">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="installments rounded p-2 my-2" style="background-color: white;">
+      <div class="d-flex justify-content-end w-100">
+        Total : <span class="fw-normal" id="installment-total-amt">0</span>
+      </div>
+      {% if installments %}
+      {% for installment in installments %}
+      <div class="row installment m-0 justify-content-evenly">
+        <div class="col-10 col-md-10 rounded p-2 d-flex flex-column align-items-end">
+          <div class="d-flex justify-content-between w-100">
+            <div class="">
+              <span class="m-0 h4 fw-normal">{{forloop.counter}}. </span>
+              <input type="text" name="installment_label_{{forloop.counter}}" value="{{installment.label}}"
+                class="rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" required>
+              <input type="text" name="installment_remark_{{forloop.counter}}" value="{{installment.remark|default:''}}"
+                class="rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" placeholder="remark...">
+            </div>
+            <div class="d-flex gap-2">
+              <input type="number" name="installment_amount_{{forloop.counter}}" class="mt-1 rounded p-1 px-2"
+                value="{{installment.amount}}" style="border: 2px solid rgba(184, 184, 184, 0.794);"
+                id="installment-amt-{{forloop.counter}}">
+              <input type="date" name="installment_due_date_{{forloop.counter}}"
+                value="{{installment.due_date|date:'Y-m-d'}}" class="mt-1 rounded p-1 px-2"
+                style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-date-{{forloop.counter}}">
+              <select class="form-select mt-1 rounded p-1 px-2" style="width: fit-content;"
+                name="payment_type_{{forloop.counter}}" id="payment_type_{{forloop.counter}}">
+                {% for option in payment_options %}
+                <option value="{{option.0}}" {% if option.0 == installment.payment_type %} selected {% endif %}>
+                  {{option.1}}</option>
+                {% endfor %}
+              </select>
+              {% if not installment.paid %}
+              <button type="button" data-stu_id="{{student.stu_id}}" data-installment_id="{{installment.id}}"
+                style="height: fit-content;"
+                class="delete-link px-2 py-1 ms-2 btn btn-outline-danger fw-semibold text-decoration-none">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash"
+                  viewBox="0 0 16 16">
+                  <path
+                    d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z">
+                  </path>
+                  <path
+                    d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z">
+                  </path>
+                </svg>
+              </button>
+              {% endif %}
+            </div>
+          </div>
+          <div class="form-check form-switch mt-2">
+            <label class="form-check-label" for="isPaid_{{forloop.counter}}">Paid</label>
+            <input class="form-check-input w-4 h-4" type="checkbox" name="paid_{{forloop.counter}}" {% if installment.paid %} checked {% endif %} role="switch" id="isPaid_{{forloop.counter}}">
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+      {% else %}
+      <div class="row installment m-0 justify-content-evenly">
+        <div class="col-10 col-md-10 rounded p-2 d-flex flex-column align-items-end">
+          <div class="d-flex justify-content-between w-100">
+            <div class="">
+              <span class="m-0 h4 fw-normal">1. </span>
+              <input type="text" name="installment_label_1" value="Installment" class="rounded p-1 px-2"
+                style="border: 2px solid rgba(184, 184, 184, 0.794);" required>
+            </div>
+
+            <div class="d-flex gap-2">
+              <input type="number" name="installment_amount_1" placeholder="amount" class="mt-1 rounded p-1 px-2"
+                style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-amt-1" required>
+              <input type="date" name="installment_due_date_1" value="" class="mt-1 rounded p-1 px-2"
+                style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-date-1">
+              <select class="form-select mt-1 rounded p-1 px-2" style="width: fit-content;" name="payment_type_1"
+                id="payment_type_1">
+                {% for option in payment_options %}
+                <option value="{{option.0}}">{{option.1}}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="form-check form-switch mt-2">
+            <label class="form-check-label" for="flexSwitchCheckChecked">Paid</label>
+            <input class="form-check-input w-4 h-4" type="checkbox" name="paid_1" role="switch"
+              id="flexSwitchCheckChecked">
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+
+    </div>
+
+    <div class="d-flex justify-content-center mt-3">
+      <div class="">
+        <button class="btn btn-warning" type="submit">Save Fee Details</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const decrementBtn = document.getElementById("decrement-btn");
+    const incrementBtn = document.getElementById("increment-btn");
+    const countInput = document.getElementById("count-input");
+    const totalFeesElement = document.getElementById("total_fees");
+    const totalFeesInput = document.getElementById("total_fees_input");
+    const installmentContainer = document.querySelector(".installments");
+    const feeInputs = document.querySelectorAll("#registration_fee, #cab_fees, #tuition_fees, #discount, #book_fees");
+    today = new Date().toISOString().split('T')[0];
+
+    const registration_discount = document.getElementById("registration_discount");
+    const book_discount = document.getElementById("book_discount");
+
+    const fee_form = document.getElementById("fee-form");
+
+    {% if not installments %}
+    first_installment_date = document.getElementById("installment-date-1");
+    first_installment_date.value = today;
+    {% endif %}
+
+    document.getElementById("fee-form").addEventListener("submit", function (event) {
+      let totalFees = totalFeesElement.textContent;
+      let installment_total_amt = document.getElementById("installment-total-amt").textContent;
+
+      if (totalFees != installment_total_amt) {
+        alert("Total fees and total installment Don't Match.");
+        event.preventDefault();
+      }
+    });
+
+    // total_fees
+    // installment-total-amt
+
+    function calculateTotalFees() {
+      let totalFees = 0;
+      feeInputs.forEach(input => {
+        if (input.id === "discount") {
+          totalFees -= parseInt(input.value || 0, 10);
+        } else {
+          totalFees += parseInt(input.value || 0, 10);
+        }
+      });
+
+      if (registration_discount.checked) {
+        totalFees -= parseInt(document.getElementById("registration_fee").value || 0, 10);
+      }
+
+      if (book_discount.checked) {
+        totalFees -= parseInt(document.getElementById("book_fees").value || 0, 10);
+      }
+
+      totalFeesElement.textContent = totalFees.toLocaleString();
+      totalFeesInput.value = totalFees;
+    }
+
+    registration_discount.addEventListener("input", calculateTotalFees);
+    book_discount.addEventListener("input", calculateTotalFees);
+
+    feeInputs.forEach(input => {
+      input.addEventListener("input", function () {
+        this.value = this.value.replace(/\D/g, "").slice(0, 10); // Allow only numbers
+        calculateTotalFees();
+      });
+    });
+
+
+
+    function updateTotalInstallmentAmt() {
+      let installments = document.querySelectorAll(".installment");
+      let installment_total_amt = document.getElementById("installment-total-amt");
+      let total = 0;
+      installments.forEach((installment, index) => {
+        let installmentAmtInput = installment.querySelector(`#installment-amt-${index + 1}`);
+        total += parseInt(installmentAmtInput.value || 0, 10);
+      });
+      installment_total_amt.textContent = total.toLocaleString();
+    }
+
+    updateTotalInstallmentAmt();
+
+    document.querySelectorAll(".installment input[type=number]").forEach((input) => {
+      input.addEventListener("input", updateTotalInstallmentAmt);
+    });
+
+    window.deleteInstallment = function (count) {
+      let installment = document.querySelector(`#installment-amt-${count}`).closest(".installment");
+      installment.remove();
+      countInput.value = parseInt(countInput.value, 10) - 1;
+      updateTotalInstallmentAmt();
+    }
+
+    function addInstallment(count) {
+      let installmentDiv = document.createElement("div");
+      installmentDiv.classList.add("row", "installment", "m-0", "justify-content-evenly");
+
+      installmentDiv.innerHTML = `
+        <div class="col-10 col-md-10 rounded p-2 d-flex flex-column align-items-end">
+          <div class="d-flex justify-content-between w-100">
+            <div class="">
+              <span class="m-0 h4 fw-normal">${count}. </span>
+              <input type="text" name="installment_label_${count}" type="text" value="Installment" class="rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" required>
+            </div>
+            <div class="d-flex gap-2">
+              <input type="number" name="installment_amount_${count}" placeholder="amount" class="mt-1 rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-amt-${count}" required>
+              <input type="date" name="installment_due_date_${count}" class="mt-1 rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-date-${count}" required>
+              <select class="form-select mt-1 rounded p-1 px-2 pe-3" style="width: fit-content;" name="payment_type_${count}" id="payment_type_${count}">
+                  {% for option in payment_options %}
+                    <option value="{{option.0}}">{{option.1}}</option>
+                  {% endfor %}
+              </select>
+
+              <button type="button" onclick="deleteInstallment(${count})" id="delete-btn-${count}" style="height: fit-content;" class="px-2 py-1 ms-2 btn btn-outline-danger fw-semibold text-decoration-none">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                  <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"></path>
+                  <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-check form-switch mt-2">
+            <label class="form-check-label" for="paid_${count}">Paid</label>
+            <input class="form-check-input w-4 h-4" type="checkbox" role="switch" name="paid_${count}" id="paid_${count}">
+          </div>
+        </div>
+      `;
+      installmentContainer.appendChild(installmentDiv);
+
+      installmentDiv.addEventListener("input", updateTotalInstallmentAmt);
+    }
+
+    function removeLastInstallment() {
+      let installments = document.querySelectorAll(".installment");
+      let lastInstallment = installments[installments.length - 1];
+      lastInstallment.remove();
+    }
+
+
+    {% if not installments %}
+    decrementBtn.addEventListener("click", function () {
+      let count = parseInt(countInput.value, 10);
+      if (count > 1) {
+        countInput.value = count - 1;
+        // calculateTotalFees();
+        removeLastInstallment()
+      }
+    });
+
+    {% endif %}
+
+    incrementBtn.addEventListener("click", function () {
+      let count = parseInt(countInput.value, 10);
+      if (count <= 15) {
+        countInput.value = count + 1;
+        // calculateTotalFees();
+        addInstallment(count + 1);
+      }
+    });
+
+    calculateTotalFees();
+  });
+
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const deleteLinks = document.querySelectorAll(".delete-link");
+    const modal = document.getElementById("deleteConfirmationModal");
+    const confirmButton = document.getElementById("confirmDeleteButton");
+    const cancelButton = document.getElementById("cancelButton");
+
+    let deleteUrl = "";
+
+    deleteLinks.forEach(link => {
+      link.addEventListener("click", function (event) {
+        event.preventDefault();
+        document.getElementsByTagName('html')[0].style.overflow = 'hidden';
+        document.getElementsByTagName('body')[0].style.overflow = 'hidden';
+        deleteUrl = `/student/delete_installment/${this.dataset.stu_id}/${this.dataset.installment_id}`;
+
+        const scrollPosition = window.scrollY || document.documentElement.scrollTop;
+        modal.style.top = `${scrollPosition}px`;
+        modal.classList.remove('d-none');
+      });
+    });
+
+    confirmButton.addEventListener("click", function () {
+      if (deleteUrl) {
+        window.location.href = deleteUrl; // Redirect to the delete URL
+      }
+    });
+
+    cancelButton.addEventListener("click", function () {
+      modal.classList.add("d-none");
+      document.getElementsByTagName('html')[0].style.overflow = 'auto';
+      document.getElementsByTagName('body')[0].style.overflow = 'auto';
+    });
+  });
+</script>
+
+
+{% endblock dashboard %}

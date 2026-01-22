@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load form_tags %}
+{% load center_filters %}
+
+
+{% block style %}
+<style>
+  th,
+  td {
+    text-align: center;
+    vertical-align: middle;
+    font-size: 0.75rem;
+  }
+
+  th.time-col {
+    width: 80px;
+    background-color: #f8f9fa;
+  }
+
+  td {
+    height: 30px;
+  }
+</style>
+{% endblock style %}
+
+{% block dashboard %}
+<div class="container-sm p-4 ">
+  <div class="bg-success-subtle mx-auto p-1 d-flex rounded" style="width: fit-content;">
+    <a href="{% url 'student_enrollment_details_update' student.stu_id %}"
+      class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Student</a>
+    <a href="{% url 'student_enrollment_parent_details' student.stu_id %}"
+      class="text-decoration-none text-dark  p-1 px-2 rounded mx-2 my-1">Parent Details</a>
+    <a href="{% url 'student_enrollment_update' student.stu_id %}"
+      class="text-decoration-none text-dark bg-light p-1 px-2 rounded mx-2 my-1">Enrollments</a>
+  </div>
+
+  <div class="my-4 mt-2">
+    <h2 class="fw-normal text-dark">Add Location</h2>
+  </div>
+
+  <div class="d-flex justify-content-between mb-2 rounded">
+    <form action="" method="get" class="">
+      <select name="session" id="academic-session" class="form-select search-input fs-5 me-2 w-auto flex-grow-0 pe-5"
+        disabled>
+        {% for session in academic_sessions %}
+        <option value="{{session.id}}" {% if session.id == selected_session.id %} selected {% endif %}>
+          {{session.name}}</option>
+        {% endfor %}
+      </select>
+    </form>
+
+    <div class="p-1 d-flex bg-light rounded" style="width: fit-content;">
+      <a href="{% url 'student_enrollment_update' student.stu_id %}?session={{ selected_session.id }}"
+        class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Enrollment</a>
+      <a href="{% url 'student_enrollment_fees_details' student.stu_id %}?session={{ selected_session.id }}"
+        class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Fees</a>
+      <a href="{% url 'student_enrollment_transport_details' student.stu_id %}?session={{ selected_session.id }}"
+        class="text-decoration-none text-dark bg-success-subtle p-1 px-2 rounded mx-2 my-1">Transport</a>
+      <a href="" class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Document</a>
+      <a href="" class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Receipt</a>
+    </div>
+  </div>
+
+  <form class="d-flex flex-column align-items-center bg-light rounded p-2 pb-3" method="post"
+    action="?session={{ selected_session.id }}">
+    {% csrf_token %}
+    <input type="hidden" name="session" value="{{ selected_session.id }}">
+
+    <div class="col-md-4">
+      {{ form.address.label_tag }}
+      {{ form.address|add_class:"form-control mt-1" }}
+      {% if form.address.errors %}
+      <div class="text-danger small">{{ form.address.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <div class="col-md-4">
+      {{ form.transport_mode.label_tag }}
+      {{ form.transport_mode|add_class:"form-select mt-1" }}
+      {% if form.transport_mode.errors %}
+      <div class="text-danger small">{{ form.transport_mode.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <div class="col-md-4">
+      {{ form.transport_person.label_tag }}
+      {{ form.transport_person|add_class:"form-select mt-1" }}
+      {% if form.transport_person.errors %}
+      <div class="text-danger small">{{ form.transport_person.errors.0 }}</div>
+      {% endif %}
+    </div>
+
+    <div class="col-md-4 mt-3">
+      <button class="btn btn-primary" type="submit">Add Location</button>
+    </div>
+  </form>
+
+  {% if student.transport and student.transport.transport_person %}
+  <div class="table-responsive p-4 bg-light rounded mt-4">
+    <table class="table table-bordered table-sm m-0">
+      <thead class="table-light">
+        <tr>
+          <th class="time-col">Time</th>
+          {% for day in weekdays %}
+          <th>{{ day|slice:":3" }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for time in time_slots %}
+        <tr>
+          <th class="time-col">{{ time }}</th>
+          {% for day in weekdays %}
+          {% with timing=batch_timings|get_item:day.name %}
+          {% if timing %}
+
+          {% if timing.earliest_start == time %}
+          <td
+            class="{% if timing.driver_status.pickup.diff < 0 %} bg-danger {% else %} bg-success {% endif %} text-white">
+            {{ timing.driver_status.pickup.display }}
+          </td>
+          {% elif timing.latest_end == time %}
+          <td
+            class="{% if timing.driver_status.drop.diff < 0 %} bg-danger {% else %} bg-primary {% endif %} text-white">
+            {{ timing.driver_status.drop.display }}
+          </td>
+          {% else %}
+          <td></td>
+          {% endif %}
+
+          {% else %}
+          <td>{{batch_timings|get_item:day.name}}</td>
+          {% endif %}
+          {% endwith %}
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+  </div>
+  {% endif %}
+
+</div>
+</div>
+
+{% endblock dashboard %}

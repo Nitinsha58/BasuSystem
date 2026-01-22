@@ -688,6 +688,100 @@ def student_parent_details(request, stu_id):
     })
 
 @login_required(login_url = 'login')
+def student_enrollment_fees_details(request, stu_id):
+    student = Student.objects.filter(stu_id=stu_id).first()
+    if not student:
+        messages.error(request, "Invalid Student")
+        return redirect('student_registration')
+
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = None
+
+    if selected_session_id:
+        selected_session = AcademicSession.objects.filter(id=selected_session_id).first()
+    if not selected_session:
+        selected_session = active_session
+
+    if not selected_session:
+        messages.error(request, 'No academic session selected and no active session found.')
+        return redirect('students_enrollment_list')
+
+    enrollment = StudentEnrollment.objects.filter(student=student, session=selected_session).first()
+    if not enrollment:
+        messages.error(request, 'No enrollment found for the selected session. Please create/update enrollment first.')
+        return redirect(f"{reverse('student_enrollment_update', args=[student.stu_id])}?session={selected_session.id}")
+
+    fees_details, _ = FeeDetails.objects.get_or_create(student=student)
+    if fees_details.enrollment_id != enrollment.id:
+        fees_details.enrollment = enrollment
+        fees_details.save(update_fields=['enrollment'])
+
+    if request.method == 'POST':
+
+        try:
+            with transaction.atomic():
+                fees_details, created = FeeDetails.objects.get_or_create(student=student)
+                if fees_details.enrollment_id != enrollment.id:
+                    fees_details.enrollment = enrollment
+
+                fees_details.total_fees = request.POST.get("total_fees") or 0
+                fees_details.registration_fee = request.POST.get("registration_fee") or 0
+                fees_details.cab_fees = request.POST.get("cab_fees") or 0
+                fees_details.tuition_fees = request.POST.get("tuition_fees") or 0
+                fees_details.discount = request.POST.get("discount") or 0
+                fees_details.book_fees = request.POST.get("book_fees") or 0
+                fees_details.book_discount = (request.POST.get("book_discount") == 'on')
+                fees_details.registration_discount = (request.POST.get("registration_discount") == 'on')
+
+                fees_details.save()
+
+                # Delete existing installments
+                Installment.objects.filter(fee_details=fees_details, enrollment=enrollment).delete()
+
+                for ins in range(1, int(request.POST.get("num_installments") or 1) + 1):
+                    installment = Installment(
+                        fee_details=fees_details,
+                        student=student,
+                        enrollment=enrollment,
+                        amount=request.POST.get(f'installment_amount_{ins}'),
+                        due_date=request.POST.get(f'installment_due_date_{ins}'),
+                        paid=(request.POST.get(f'paid_{ins}') == 'on') ,
+                        label = request.POST.get(f'installment_label_{ins}'),
+                        payment_type = request.POST.get(f'payment_type_{ins}'),
+                        remark = request.POST.get(f'installment_remark_{ins}'),
+                    )
+                    installment.save()
+        except Exception as e:
+            messages.error(request, "Invalid Data or form.")
+            return redirect(f"{reverse('student_enrollment_fees_details', args=[student.stu_id])}?session={selected_session.id}")
+
+        messages.success(request, 'Fee details saved.')
+        return redirect(f"{reverse('student_enrollment_fees_details', args=[student.stu_id])}?session={selected_session.id}")
+
+    payment_options = Installment.PAYMENT_CHOICES
+
+    installments = Installment.objects.filter(fee_details=fees_details, enrollment=enrollment).order_by('due_date')
+
+    return render(request, "registration/enrollment/student_enrollment_fees_details.html", {
+        'student': student,
+        'fees_details': fees_details,
+        'installments': installments,
+        'installments_count': installments.count(),
+        'payment_options': payment_options,
+        'academic_sessions': sessions,
+        'active_session': active_session,
+        'selected_session': selected_session,
+    })
+
+@login_required(login_url = 'login')
 def student_fees_details(request, stu_id):
     student = Student.objects.filter(stu_id=stu_id).first()
     if not student:
@@ -881,7 +975,207 @@ def student_transport_details(request, stu_id):
         'weekdays': WEEKDAYS,
     })
 
-    
+@login_required(login_url='login')
+def student_enrollment_transport_details(request, stu_id):
+    student = Student.objects.filter(stu_id=stu_id).first()
+    if not student:
+        messages.error(request, "Invalid Student")
+        return redirect('student_registration')
+
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = None
+
+    if selected_session_id:
+        selected_session = AcademicSession.objects.filter(id=selected_session_id).first()
+    if not selected_session:
+        selected_session = active_session
+
+    if not selected_session:
+        messages.error(request, 'No academic session selected and no active session found.')
+        return redirect('students_enrollment_list')
+
+    enrollment = StudentEnrollment.objects.filter(student=student, session=selected_session).first()
+
+    instance = getattr(student, 'transport', None)
+
+    if request.method == "POST":
+        form = TransportDetailsForm(request.POST, instance=instance)
+        if form.is_valid():
+            transport = form.save(commit=False)
+            transport.student = student
+            transport.save()
+            messages.success(request, "Transport details saved.")
+            return redirect(f"{reverse('student_enrollment_transport_details', args=[student.stu_id])}?session={selected_session.id}")
+        else:
+            for field, error_list in form.errors.items():
+                for error in error_list:
+                    messages.error(request, f"{field}: {error}")
+    else:
+        form = TransportDetailsForm(instance=instance)
+    if not instance:
+        return render(request, "registration/enrollment/student_enrollment_transport_details.html", {
+            'form': form,
+            'student': student,
+            'academic_sessions': sessions,
+            'active_session': active_session,
+            'selected_session': selected_session,
+        })
+    WEEKDAYS = Day.objects.all()
+    batch_timings_by_weekday = {}
+    slots = []
+    min_slot_time = None
+    max_slot_time = None
+
+    enrollment_batches = Batch.objects.none()
+    if enrollment:
+        enrollment_batches = Batch.objects.filter(enrollment_links__enrollment=enrollment).distinct()
+
+    for day in WEEKDAYS:
+        batches_by_day = enrollment_batches.filter(days=day)
+        if not batches_by_day.exists():
+            continue
+
+        batches_by_day_with_times = [b for b in batches_by_day if b.start_time and b.end_time]
+        if not batches_by_day_with_times:
+            continue
+
+        earliest = min(batches_by_day_with_times, key=lambda b: datetime.strptime(b.start_time, "%I:%M %p").time())
+        latest = max(batches_by_day_with_times, key=lambda b: datetime.strptime(b.end_time, "%I:%M %p").time())
+        
+        if min_slot_time is None:
+            min_slot_time = earliest.start_time
+        else:
+            min_slot_time = min([min_slot_time, earliest.start_time], key=lambda time: datetime.strptime(time, "%I:%M %p").time())
+        if max_slot_time is None:
+            max_slot_time = latest.end_time
+        else:
+            max_slot_time = max([max_slot_time, latest.end_time], key=lambda time: datetime.strptime(time, "%I:%M %p").time())
+        
+
+        driver_capacity = None
+        assigned_driver = getattr(student.transport, "transport_person", None)
+        if assigned_driver and hasattr(assigned_driver, "capacity"):
+            driver_capacity = assigned_driver.capacity
+
+            students_qs = Student.objects.filter(
+                transport__transport_person=assigned_driver,
+                active=True,
+                fees__cab_fees__gt=0,
+                enrollments__session=selected_session,
+                enrollments__active=True,
+                enrollments__batch_links__batch__days=day,
+            ).distinct()
+            # Calculate pickup (earliest) and drop (latest) counts separately
+            pickup_count = 0
+            drop_count = 0
+            pickup_status = "0"
+            drop_status = "0"
+
+            if earliest and earliest.start_time:
+                pickup_students_qs = []
+                for other_student in students_qs:
+                    other_enrollment = StudentEnrollment.objects.filter(
+                        student=other_student,
+                        session=selected_session,
+                        active=True,
+                    ).first()
+                    if not other_enrollment:
+                        continue
+
+                    batches_on_day = Batch.objects.filter(
+                        enrollment_links__enrollment=other_enrollment,
+                        days=day,
+                    ).exclude(start_time__isnull=True).exclude(start_time="")
+
+                    if batches_on_day.exists():
+                        first_batch = min(batches_on_day, key=lambda b: datetime.strptime(b.start_time, "%I:%M %p"))
+                        if first_batch.start_time == earliest.start_time:
+                            pickup_students_qs.append(other_student)
+
+                pickup_count = len(pickup_students_qs)
+
+            if latest and latest.end_time:
+                drop_students_qs = []
+                for other_student in students_qs:
+                    other_enrollment = StudentEnrollment.objects.filter(
+                        student=other_student,
+                        session=selected_session,
+                        active=True,
+                    ).first()
+                    if not other_enrollment:
+                        continue
+
+                    batches_on_day = Batch.objects.filter(
+                        enrollment_links__enrollment=other_enrollment,
+                        days=day,
+                    ).exclude(end_time__isnull=True).exclude(end_time="")
+
+                    if batches_on_day.exists():
+                        last_batch = max(batches_on_day, key=lambda b: datetime.strptime(b.end_time, "%I:%M %p"))
+                        if last_batch.end_time == latest.end_time:
+                            drop_students_qs.append(other_student)
+                drop_count = len(drop_students_qs)
+
+
+            if driver_capacity is not None:
+                pickup_diff = driver_capacity - pickup_count
+                drop_diff = driver_capacity - drop_count
+
+                pickup_status = {
+                    'diff': pickup_diff,  # keep raw number
+                    'display': f"{'+' if pickup_diff < 0 else '-'}{abs(pickup_diff)}"
+                }
+                drop_status = {
+                    'diff': drop_diff,
+                    'display': f"{'+' if drop_diff < 0 else '-'}{abs(drop_diff)}"
+                }
+
+            driver_status = {
+                "pickup": pickup_status,
+                "pickup_count": pickup_count,
+                "drop": drop_status,
+                "drop_count": drop_count,
+                "capacity": driver_capacity,
+            }
+        else:
+            driver_status = None
+
+        batch_timings_by_weekday[day.name] = {
+            'earliest_start': earliest.start_time if earliest else None,
+            'latest_end': latest.end_time if latest else None,
+            'driver_capacity': driver_capacity,
+            'driver_status': driver_status,
+        }
+
+    # Generate 15-minute time slots with a 15-minute buffer before and after
+    if min_slot_time and max_slot_time:
+        start_dt = datetime.combine(datetime.today(), datetime.strptime(min_slot_time, "%I:%M %p").time()) - timedelta(minutes=30)
+        end_dt = datetime.combine(datetime.today(), datetime.strptime(max_slot_time, "%I:%M %p").time()) + timedelta(minutes=30)
+        slots = []
+        current_time = start_dt
+        while current_time <= end_dt:
+            slots.append(current_time.strftime("%I:%M %p"))
+            current_time += timedelta(minutes=30)
+
+    return render(request, "registration/enrollment/student_enrollment_transport_details.html", {
+        'form': form,
+        'student': student,
+        'time_slots': slots,
+        'batch_timings': batch_timings_by_weekday,
+        'weekdays': WEEKDAYS,
+        'academic_sessions': sessions,
+        'active_session': active_session,
+        'selected_session': selected_session,
+    })
+
 @login_required(login_url='login')
 def delete_installment(request, stu_id, ins_id):
     if stu_id and not Student.objects.filter(stu_id=stu_id):

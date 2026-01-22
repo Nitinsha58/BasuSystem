@@ -19,12 +19,21 @@
     }
 
     .checkbox-btn span {
-        display: inline-block;
+        display: inline-flex;
+        flex-direction: column;
+        align-items: flex-start;
         padding: 10px 20px;
         border: 2px solid #ccc;
         border-radius: 8px;
         background: #f9f9f9;
         transition: 0.2s;
+    }
+
+    .checkbox-btn span small {
+        font-size: 0.75rem;
+        opacity: 0.8;
+        margin-top: 2px;
+        line-height: 1.1;
     }
 
     .checkbox-btn input[type="checkbox"]:checked+span {
@@ -70,7 +79,12 @@
         </form>
 
         <div class="p-1 d-flex bg-light rounded" style="width: fit-content;">
-            <a href="" class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Transport</a>
+            <a href="{% url 'student_enrollment_update' student.stu_id %}?session={{ selected_session.id }}"
+                class="text-decoration-none text-dark p-1 px-2 bg-success-subtle rounded mx-2 my-1">Enrollment</a>
+            <a href="{% url 'student_enrollment_fees_details' student.stu_id %}?session={{ selected_session.id }}"
+                class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Fees</a>
+            <a href="{% url 'student_enrollment_transport_details' student.stu_id %}?session={{ selected_session.id }}"
+                class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Transport</a>
             <a href="" class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Document</a>
             <a href="" class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Receipt</a>
         </div>
@@ -165,7 +179,10 @@
                 <label class="checkbox-btn">
                     <input type="checkbox" name="batches[]" checked value="{{batch.id}}"
                         data-subject-id="{{ batch.subject.id }}" data-class-id="{{ batch.class_name.id }}">
-                    <span>{{batch.subject.name}} {{batch.section.name}}</span>
+                    <span>
+                        {{batch.subject.name}} {{batch.section.name}}
+                        <small class="m-0">{{batch.class_name.name}}</small>
+                    </span>
                 </label>
                 {% endif %}
                 {% endfor %}
@@ -174,7 +191,10 @@
                 <label class="checkbox-btn">
                     <input type="checkbox" name="batches[]" value="{{batch.id}}"
                         data-subject-id="{{ batch.subject.id }}" data-class-id="{{ batch.class_name.id }}">
-                    <span>{{batch.subject.name}} {{batch.section.name}}</span>
+                    <span>
+                        {{batch.subject.name}} {{batch.section.name}}
+                        <small class="m-0">{{batch.class_name.name}}</small>
+                    </span>
                 </label>
                 {% endif %}
                 {% endfor %}
