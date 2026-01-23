@@ -781,6 +781,74 @@ def student_enrollment_fees_details(request, stu_id):
         'selected_session': selected_session,
     })
 
+
+@login_required(login_url='login')
+def student_enrollment_reg_doc(request, stu_id):
+    student = Student.objects.filter(stu_id=stu_id).first()
+    if not student:
+        messages.error(request, "Invalid Student")
+        return redirect('student_registration')
+
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = None
+
+    if selected_session_id:
+        selected_session = AcademicSession.objects.filter(id=selected_session_id).first()
+    if not selected_session:
+        selected_session = active_session
+
+    if not selected_session:
+        messages.error(request, 'No academic session selected and no active session found.')
+        return redirect('students_enrollment_list')
+
+    enrollment = StudentEnrollment.objects.filter(student=student, session=selected_session).first()
+    if not enrollment:
+        messages.error(request, 'No enrollment found for the selected session. Please create/update enrollment first.')
+        return redirect(f"{reverse('student_enrollment_update', args=[student.stu_id])}?session={selected_session.id}")
+
+    fees_details = FeeDetails.objects.filter(enrollment=enrollment).first()
+    installments = Installment.objects.none()
+    total_discount = 0
+    total_fees = 0
+
+    if fees_details:
+        total_discount = (
+            (fees_details.discount or 0)
+            + ((fees_details.book_fees or 0) if fees_details.book_discount else 0)
+            + ((fees_details.registration_fee or 0) if fees_details.registration_discount else 0)
+        )
+
+        total_fees = (fees_details.total_fees or 0) + (fees_details.discount or 0)
+        if fees_details.book_discount:
+            total_fees += (fees_details.book_fees or 0)
+        if fees_details.registration_discount:
+            total_fees += (fees_details.registration_fee or 0)
+
+        installments = Installment.objects.filter(fee_details=fees_details, enrollment=enrollment).order_by('due_date')
+
+    transport_details = TransportDetails.objects.filter(enrollment=enrollment).first()
+
+    return render(request, "registration/enrollment/student_enrollment_reg_doc.html", {
+        'student': student,
+        'enrollment': enrollment,
+        'fees_details': fees_details,
+        'installments': installments,
+        'transport_details': transport_details,
+        'total_discount': total_discount,
+        'total_fees': total_fees,
+        'academic_sessions': sessions,
+        'active_session': active_session,
+        'selected_session': selected_session,
+    })
+
 @login_required(login_url = 'login')
 def student_fees_details(request, stu_id):
     student = Student.objects.filter(stu_id=stu_id).first()
@@ -1211,6 +1279,57 @@ def student_reg_doc(request, stu_id):
         'student': Student.objects.filter(stu_id=stu_id).first(),
         'total_discount': total_discount,
         'total_fees': total_fees
+    })
+
+@login_required(login_url='login')
+def print_enrollment_receipt(request, stu_id):
+    student = Student.objects.filter(stu_id=stu_id).first()
+    if not student:
+        messages.error(request, "Invalid Student")
+        return redirect('student_registration')
+
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = None
+
+    if selected_session_id:
+        selected_session = AcademicSession.objects.filter(id=selected_session_id).first()
+    if not selected_session:
+        selected_session = active_session
+
+    if not selected_session:
+        messages.error(request, 'No academic session selected and no active session found.')
+        return redirect('students_enrollment_list')
+
+    enrollment = StudentEnrollment.objects.filter(student=student, session=selected_session).first()
+    if not enrollment:
+        messages.error(request, 'No enrollment found for the selected session. Please create/update enrollment first.')
+        return redirect(f"{reverse('student_enrollment_update', args=[student.stu_id])}?session={selected_session.id}")
+
+    fees_details = FeeDetails.objects.filter(enrollment=enrollment).first()
+    installments = Installment.objects.none()
+    if fees_details:
+        installments = Installment.objects.filter(
+            fee_details=fees_details,
+            enrollment=enrollment,
+        ).order_by('due_date')
+
+    return render(request, "registration/enrollment/enrollment_receipt.html", {
+        'student': student,
+        'enrollment': enrollment,
+        'fees_details': fees_details,
+        'installments': installments,
+        'today': datetime.now(),
+        'academic_sessions': sessions,
+        'active_session': active_session,
+        'selected_session': selected_session,
     })
 
 @login_required(login_url='login')

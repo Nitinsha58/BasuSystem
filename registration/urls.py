@@ -12,6 +12,8 @@ from .views import (
     student_enrollment_update,
     student_enrollment_transport_details,
     student_enrollment_fees_details,
+    student_enrollment_reg_doc,
+    print_enrollment_receipt,
     
     students_list,
     student_reg_doc,
@@ -76,6 +78,8 @@ urlpatterns = [
     path('enrollment/update/<uuid:stu_id>', student_enrollment_update, name='student_enrollment_update'),
     path('enrollment/fees/<uuid:stu_id>', student_enrollment_fees_details, name='student_enrollment_fees_details'),
     path('enrollment/transport/<uuid:stu_id>', student_enrollment_transport_details, name='student_enrollment_transport_details'),
+    path('enrollment/document/<uuid:stu_id>', student_enrollment_reg_doc, name='student_enrollment_reg_doc'),
+    path('enrollment/receipt/<uuid:stu_id>', print_enrollment_receipt, name='print_enrollment_receipt'),
 
     
     path('<uuid:stu_id>/parent', student_parent_details, name='student_parent_details'),

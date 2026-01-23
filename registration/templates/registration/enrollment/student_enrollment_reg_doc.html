@@ -1,0 +1,585 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block style %}
+<style>
+    .student_reg_doc {
+        position: relative;
+    }
+
+    .photo-frame {
+        position: absolute;
+        right: 0;
+        width: 100px;
+        height: 120px;
+        border: 1px solid #000;
+        margin: 0 auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+
+    p {
+        white-space: wrap;
+    }
+</style>
+{% endblock style %}
+{% block dashboard %}
+
+<div class="">
+    <div class="bg-success-subtle mx-auto p-1 d-flex rounded" style="width: fit-content;">
+        <a href="{% url 'student_enrollment_details_update' student.stu_id %}"
+            class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Student</a>
+        <a href="{% url 'student_enrollment_parent_details' student.stu_id %}"
+            class="text-decoration-none text-dark  p-1 px-2 rounded mx-2 my-1">Parent Details</a>
+        <a href="{% url 'student_enrollment_update' student.stu_id %}?session={{ selected_session.id }}"
+            class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Enrollments</a>
+    </div>
+
+    <div class="my-4 mt-2 container-sm d-flex">
+        <h2 class="fw-normal text-dark">Student Details</h2>
+        <button class="btn bg-warning ms-2" onclick="printDiv('student_reg_doc')">Print Document</button>
+    </div>
+
+    <div class="d-flex justify-content-between mb-2 rounded container-sm">
+        <form action="" method="get" class="">
+            <select name="session" id="academic-session" onchange="this.form.submit()"
+                class="form-select search-input fs-5 me-2 w-auto flex-grow-0 pe-5" disabled>
+                {% for session in academic_sessions %}
+                <option value="{{session.id}}" {% if session.id == selected_session.id %} selected {% endif %}>
+                    {{session.name}}</option>
+                {% endfor %}
+            </select>
+        </form>
+
+        <div class="p-1 d-flex bg-light rounded" style="width: fit-content;">
+            <a href="{% url 'student_enrollment_update' student.stu_id %}?session={{ selected_session.id }}"
+                class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Enrollment</a>
+            <a href="{% url 'student_enrollment_fees_details' student.stu_id %}?session={{ selected_session.id }}"
+                class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Fees</a>
+            <a href="{% url 'student_enrollment_transport_details' student.stu_id %}?session={{ selected_session.id }}"
+                class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Transport</a>
+            <a href="{% url 'student_enrollment_reg_doc' student.stu_id %}?session={{ selected_session.id }}"
+                class="text-decoration-none text-dark bg-success-subtle p-1 px-2 rounded mx-2 my-1">Document</a>
+            <a href="{% url 'print_enrollment_receipt' student.stu_id %}?session={{ selected_session.id }}"
+                target="_blank" class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Receipt</a>
+        </div>
+    </div>
+
+    <div class="g-3 bg-light rounded p-2 pb-3 container-sm p-4" id="student_reg_doc">
+        <div class="photo-frame">
+            Student<br>Photo
+        </div>
+        <div class="navbar-brand d-flex justify-content-center">
+            <img src="https://basueducation.com/static/images/BASU%20LOGO.5e3cc85845b7.svg" alt="logo" width="115">
+        </div>
+        <div class="navbar-brand d-flex flex-column align-items-center justify-content-center p-3" style="width: 100%;">
+            <h3 class="fw-normal">Student Registration</h3>
+        </div>
+        <div class="px-2">
+            <div class="d-flex mb-3" style="width: 100%; align-items: center;">
+                <h4 class="mb-0">Personal Details</h4>
+                <div style="flex-grow: 1; border-bottom: 2px solid rgba(105, 105, 105, 0.477); margin-left: 10px;">
+                </div>
+            </div>
+            <div class="d-flex justify-content-between">
+                <p class="fw-semibold">Name</p>
+                <p class="">{{ student.user.first_name }} {{ student.user.last_name }}</p>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <p class="fw-semibold">Address</p>
+                {% if student.address %}
+                <p class="">{{student.address }}</p>
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <p class="fw-semibold">Gender</p>
+                {% if student.gender %}
+                <p class="">
+                    {{ student.gender }}
+                </p>
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <p class="fw-semibold">Registered No.</p>
+                {% if student.user.phone %}
+                <p class="">
+                    {{ student.user.phone }}
+                </p>
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <p class="fw-semibold">Academic Session</p>
+                {% if selected_session %}
+                <p class="">
+                    {{ selected_session.start_date|date:"d M Y" }} - {{ selected_session.end_date|date:"d M Y" }}
+                </p>
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <p class="fw-semibold">Date of Birth</p>
+                {% if student.dob %}
+                <p class="">{{student.dob|date:"d M Y" }}</p>
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <p class="fw-semibold">Date of Joining</p>
+                {% if student.doj %}
+                <p class="">{{student.doj|date:"d M Y" }}</p>
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <p class="fw-semibold">School Name</p>
+                {% if student.school_name %}
+                <p class="">{{student.school_name }}</p>
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <p class="fw-semibold">Class</p>
+                {% if enrollment.class_name %}
+                <p class="">{{enrollment.class_name }}</p>
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <p class="fw-semibold">Subjects</p>
+                {% if enrollment.subjects %}
+                <p class="">
+                    {% with subjects=enrollment.subjects.all|join:", " %}
+                    {{ subjects|title }}
+                    {% endwith %}
+                </p>
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <p class="fw-semibold">Course</p>
+                {% if enrollment.course %}
+                <p class="">
+                    {{ enrollment.course }}
+                </p>
+                {% else %}
+                <p class="">CBSE</p>
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <p class="fw-semibold">Program Duration</p>
+                {% if enrollment.program_duration %}
+                <p class="">
+                    {{ enrollment.program_duration }}
+                </p>
+                {% else %}
+                <p class="">1 Year</p>
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <p class="fw-semibold">Aadhar Card</p>
+                {% if student.aadhar_card_number %}
+                <p class="">
+                    {{student.aadhar_card_number }}
+                </p>
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <p class="fw-semibold">Pick-up Location</p>
+                {% if transport_details and transport_details.address %}
+                <p class="">
+                    {{transport_details.address }}
+                </p>
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <div class="px-2">
+            <div class="d-flex mb-3" style="width: 100%; align-items: center;">
+                <h4 class="mb-0">Parent Details</h4>
+                <div style="flex-grow: 1; border-bottom: 2px solid rgba(105, 105, 105, 0.477); margin-left: 10px;">
+                </div>
+            </div>
+            <div class="d-flex justify-content-between">
+                <p class="fw-semibold">Father's Name/ Guardian's Name</p>
+                {% if student.parent_details %}
+                {% if student.parent_details.father_name %}
+                <p class="">{{ student.parent_details.father_name }}</p>
+                {% elif student.parent_details.mother_name %}
+                <p class="">{{ student.parent_details.mother_name }}</p>
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <p class="fw-semibold">Mother Name</p>
+                {% if student.parent_details %}
+                <p class="">{{student.parent_details.mother_name }}</p>
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <p class="fw-semibold">Father's Contact</p>
+                {% if student.parent_details %}
+                {% if student.parent_details.father_contact %}
+                <p class="">+91 {{ student.parent_details.father_contact }}</p>
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <p class="fw-semibold">Mother's Contact</p>
+                {% if student.parent_details %}
+                {% if student.parent_details.mother_contact %}
+                <p class="">+91 {{ student.parent_details.mother_contact }}</p>
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="mt-3 px-2" style="page-break-before: always;">
+            <div class="d-flex mb-3" style="width: 100%; align-items: center;">
+                <h4 class="mb-0">Fee Details</h4>
+                <div style="flex-grow: 1; border-bottom: 2px solid rgba(105, 105, 105, 0.477); margin-left: 10px;">
+                </div>
+            </div>
+            <div class="d-flex justify-content-between">
+                <p class="fw-semibold">Registration Fee</p>
+                {% if fees_details and fees_details.registration_fee %}
+
+                {% if fees_details.registration_discount %}
+                <s class="">₹ {{fees_details.registration_fee}}</s>
+                {% else %}
+                <p class="">₹ {{fees_details.registration_fee}}</p>
+                {% endif %}
+
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+            </div>
+            <div class="d-flex justify-content-between">
+                <p class="fw-semibold">Book Fees</p>
+                {% if fees_details and fees_details.book_fees %}
+
+                {% if fees_details.book_discount %}
+                <s class="">₹ {{fees_details.book_fees}}</s>
+                {% else %}
+                <p class="">₹ {{fees_details.book_fees}}</p>
+                {% endif %}
+
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+            </div>
+            <div class="d-flex justify-content-between">
+                <p class="fw-semibold">Tuition Fee</p>
+                {% if fees_details and fees_details.tuition_fees %}
+                <p class="">₹ {{fees_details.tuition_fees}}</p>
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+            </div>
+            <div class="d-flex justify-content-between">
+                <p class="fw-semibold">Cab Fee</p>
+                {% if fees_details and fees_details.cab_fees %}
+                <p class="">₹ {{fees_details.cab_fees}}</p>
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+            </div>
+
+            {% if fees_details and fees_details.discount %}
+            <div class="d-flex justify-content-between">
+                <p class="fw-semibold">Additional Discount</p>
+                {% if fees_details.discount %}
+                <p class="">- ₹ {{ fees_details.discount|default:0 }}</p>
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div style="flex-grow: 1; border-bottom: 2px solid rgba(105, 105, 105, 0.477); margin-left: 10px;"></div>
+
+            {% if total_discount %}
+            <div class="d-flex justify-content-between">
+                <p class="">Total Fee</p>
+                <p class="">₹ {{ total_fees|floatformat:2 }}</p>
+            </div>
+            {% endif %}
+            {% if total_discount %}
+            <div class="d-flex justify-content-between">
+                <p class="">Total Fee Discount</p>
+                <p class="">₹ {{ total_discount|floatformat:2 }}</p>
+            </div>
+            {% endif %}
+
+            <div class="d-flex justify-content-between">
+                <p class="fw-bold">Net Fees</p>
+                {% if fees_details and fees_details.total_fees %}
+                <p class="">₹ {{ fees_details.total_fees }}</p>
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+            </div>
+
+            <div style="flex-grow: 1; border-bottom: 2px solid rgba(105, 105, 105, 0.477); margin-left: 10px;"></div>
+            <div class="p-3">
+                {% for installment in installments %}
+                <div class="d-flex justify-content-between">
+                    <div class="">
+                        <p class="fw-semibold text-dark m-0">{{forloop.counter}}. Installment</p>
+                        <p class="">{{ installment.due_date|date:"d M Y" }}</p>
+                    </div>
+                    <p class="">₹ {{installment.amount}}</p>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div style="flex-grow: 1; border-bottom: 2px solid rgba(105, 105, 105, 0.477); margin-left: 10px;"></div>
+            <div class="d-flex justify-content-between">
+                <p class="fw-bold">Total Payable Fees</p>
+                <p class="">₹ {% if fees_details %}{{fees_details.total_fees}}{% else %}0{% endif %}</p>
+            </div>
+
+            <div class="mb-2">
+                <p style="margin: 5px;">Declaration:</p>
+                <p style="margin: 5px;">I,
+                    {% if student.parent_details.father_name %}
+                    {{ student.parent_details.father_name }}
+                    {% elif student.parent_details.mother_name %}
+                    {{ student.parent_details.mother_name }}
+                    {% endif %}
+
+                    parent/guardian of {{student.user.first_name}} {{student.user.last_name}}, confirm that the above
+                    fees for the student are correct and agreed upon.</p>
+                <p style="margin: 5px;">Parent/Guardian's Signature: ______________ </p>
+                <p style="margin: 5px;">Institute's Representative: ________________</p>
+                <p style="margin: 5px;">Academic Head: ________________</p>
+            </div>
+        </div>
+
+        <div class="navbar-brand d-flex justify-content-center flex-column align-items-center"
+            style="page-break-before: always;">
+            <img src="https://basueducation.com/static/images/BASU%20LOGO.5e3cc85845b7.svg" alt="logo" width="125">
+            <div class="mt-2">
+                <h3 class="term-heading">Terms & Conditions</h3>
+            </div>
+            <div class="term-content" style="font-size: 14px; text-align: justify; max-width: 800px;">
+
+                <div class="mb-2">
+                    <p style="margin: 5px;">Effective Date:
+                        {% if fees_details %}
+                        {{fees_details.created_at|date:"d M Y"}}
+                        {% else %}
+                        {{student.created_at|date:"d M Y"}}
+                        {% endif %}
+
+                    </p>
+                    <p style="margin: 5px;">Applicable To: Students of Classes 7th to 12th</p>
+                </div>
+                <ol type="1" class="">
+
+                    <li class="mb-2">
+                        <p style="margin: 5px;">Admission is confirmed upon successful payment of the registration fee
+                            and submission of required documents.</p>
+                        <p style="margin: 5px;">The coaching center reserves the right to accept or reject any
+                            application without providing a reason.</p>
+                        <p style="margin: 5px;">Students must provide accurate information during admission. False
+                            information can lead to cancellation.</p>
+                    </li>
+
+                    <li class="mb-2">
+                        <p style="margin: 5px;">The fee must be paid as per the schedule provided during admission.</p>
+                        <p style="margin: 5px;">Late payment may attract a penalty of ₹100 per day.</p>
+                        <p style="margin: 5px;">Fees once paid are non-refundable, except under specific conditions
+                            mentioned in the refund policy.</p>
+                        <p style="margin: 5px;">Discounts (if any) are applicable only as per center guidelines and
+                            cannot be transferred.</p>
+                    </li>
+
+                    <li class="mb-2">
+                        <p style="margin: 5px;">Students must maintain a minimum of 90% attendance to be eligible for
+                            internal tests and other academic benefits.</p>
+                        <p style="margin: 5px;">Any leave must be informed by the Parent in advance. Repeated
+                            absenteeism without valid reason may result in disciplinary action.</p>
+                        <p style="margin: 5px;">Misconduct, rude behavior, or violation of institute rules may result in
+                            suspension or termination without refund.</p>
+                        <p style="margin: 5px;">Use of mobile phones is restricted during class hours unless permitted
+                            by the faculty for academic purposes.</p>
+                    </li>
+
+                    <li class="mb-2">
+                        <p style="margin: 5px;">Students must maintain discipline and respect teachers, staff, and
+                            fellow students.</p>
+                        <p style="margin: 5px;">Any form of misconduct, including bullying, harassment, or use of
+                            offensive language, will not be tolerated.</p>
+                        <p style="margin: 5px;">Damaging center property will result in penalties or suspension.</p>
+                        <p style="margin: 5px;">Misbehavior or misconduct by a parent may result in student termination
+                            without refund.</p>
+                    </li>
+
+                    <li class="mb-2">
+                        <p style="margin: 5px;">Regular tests and assessments will be conducted. Participation is
+                            mandatory.</p>
+                        <p style="margin: 5px;">Students are expected to complete homework and assignments on time.</p>
+                        <p style="margin: 5px;">Academic progress reports will be shared periodically with
+                            parents/guardians.</p>
+                    </li>
+
+                    <li class="mb-2">
+                        <p style="margin: 5px;">All study materials provided are for personal use only and cannot be
+                            shared, copied, or distributed without permission.</p>
+                    </li>
+
+                    <li class="mb-2">
+                        <p style="margin: 5px;">Mobile phones and other electronic gadgets are strictly not allowed
+                            during class hours unless instructed by the faculty.</p>
+                        <p style="margin: 5px;">The coaching center is not responsible for the loss or theft of personal
+                            belongings.</p>
+                    </li>
+
+                    <li class="mb-2">
+                        <p style="margin: 5px;">The institute takes necessary precautions for student safety but is not
+                            responsible for any personal injury, loss of belongings, or unforeseen incidents.</p>
+                        <p style="margin: 5px;">The institute takes necessary precautions for student safety on its
+                            premises and during transport. However, the institute is not liable for any unforeseen
+                            accidents or incidents that may occur on the premises or while using the institute's
+                            transport services.</p>
+
+                    </li>
+
+                    <li class="mb-2">
+                        <p style="margin: 5px;">If a parent withdraws their child's admission mid-session, the refund
+                            will be processed on a pro-rata basis for the remaining duration. Registration and book
+                            charges will be deducted if they were not charged at the time of admission. No refunds will
+                            be applicable for any other fees already paid.</p>
+                    </li>
+
+                    <li class="mb-2">
+                        <p style="margin: 5px;">The coaching center reserves the right to terminate a student's
+                            enrollment for non-payment, misconduct, poor attendance, or academic dishonesty.</p>
+                    </li>
+
+                    <li class="mb-2">
+                        <p style="margin: 5px;">Parents must monitor their child's progress and ensure participation in
+                            assignments and tests.</p>
+                        <p style="margin: 5px;">Complaints should be addressed professionally to the management.</p>
+                    </li>
+
+                    <li class="mb-2">
+                        <p style="margin: 5px;">The coaching center reserves the right to modify these terms and
+                            conditions at any time.</p>
+                    </li>
+
+                    <li class="mb-2">
+                        <p style="margin: 5px;">Students must board and alight only at the designated stops assigned by
+                            the coaching center.</p>
+                        <p style="margin: 5px;">The predefined stops will be communicated in advance to all students and
+                            parents.</p>
+                        <p style="margin: 5px;">They must be present at their stop on time, as the transport service
+                            follows a strict schedule and will not wait for late arrivals.</p>
+                        <p style="margin: 5px;">If a student misses their pickup, they are responsible for reaching the
+                            coaching center by their own means. Parents must ensure their child reaches the designated
+                            stop on time and arrange alternate transportation if needed.</p>
+                    </li>
+
+                    <li class="mb-2">
+                        <p style="margin: 5px;">Any disputes shall be resolved amicably. If unresolved, the matter will
+                            be subject to arbitration/legal jurisdiction in Noida.</p>
+                    </li>
+
+                    <div class="mb-2">
+                        <strong style="margin: 5px;">Declaration:</strong>
+                        <p style="margin: 5px;">I,
+                            {% if student.parent_details.father_name %}
+                            {{ student.parent_details.father_name }}
+                            {% elif student.parent_details.mother_name %}
+                            {{ student.parent_details.mother_name }}
+                            {% endif %} parent/guardian of {{student.user.first_name}} {{student.user.last_name}}, by
+                            signing this agreement confirms that I have read, understood, and agreed to the terms and
+                            conditions mentioned above.</p>
+                        <p style="margin: 5px;">I,
+                            {% if student.parent_details.father_name %}
+                            {{ student.parent_details.father_name }}
+                            {% elif student.parent_details.mother_name %}
+                            {{ student.parent_details.mother_name }}
+                            {% endif %}
+
+                            parent/guardian of {{student.user.first_name}} {{student.user.last_name}}, also acknowledge
+                            that these terms are subject to change, and any updates will be communicated in advance.</p>
+                        <p style="margin: 5px;">Parent/Guardian's Signature: ______________ </p>
+                        <p style="margin: 5px;">Institute's Representative: ________________</p>
+                        <p style="margin: 5px;">Academic Head: ________________</p>
+                    </div>
+                </ol>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<script>
+    function printDiv(divId) {
+        var divContent = document.getElementById(divId).innerHTML;
+        var originalContent = document.body.innerHTML;
+
+        document.body.innerHTML = divContent;
+        window.print();
+        document.body.innerHTML = originalContent;
+    }
+
+    window.onbeforeprint = function () {
+        printDiv('student_reg_doc')
+        alert('Printing');
+    };
+</script>
+
+{% endblock dashboard %}

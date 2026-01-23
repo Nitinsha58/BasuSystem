@@ -1,0 +1,303 @@
+<style>
+    body {
+        font-size: 16px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    table tr td {
+        padding: 0;
+    }
+
+    table tr td:last-child {
+        text-align: right;
+    }
+
+    .bold {
+        font-weight: bold;
+    }
+
+    .right {
+        text-align: right;
+    }
+
+    .large {
+        font-size: 1.75em;
+    }
+
+    .total {
+        font-weight: bold;
+        color: #fb7578;
+    }
+
+    .logo-container {
+        margin: 20px 0 70px 0;
+    }
+
+    .invoice-info-container {
+        font-size: 0.875em;
+    }
+
+    .invoice-info-container td {
+        padding: 4px 0;
+    }
+
+    .client-name {
+        font-size: 1.5em;
+        vertical-align: top;
+    }
+
+    .line-items-container {
+        margin: 70px 0;
+        font-size: 0.875em;
+    }
+
+    .line-items-container th {
+        text-align: left;
+        color: #999;
+        border-bottom: 2px solid #ddd;
+        padding: 10px 0 15px 0;
+        font-size: 0.75em;
+    }
+
+    .line-items-container th:last-child {
+        text-align: right;
+    }
+
+    .line-items-container td {
+        padding: 15px 0;
+    }
+
+    .line-items-container tbody tr:first-child td {
+        padding-top: 25px;
+    }
+
+    .line-items-container.has-bottom-border tbody tr:last-child td {
+        padding-bottom: 25px;
+        border-bottom: 2px solid #ddd;
+    }
+
+    .line-items-container.has-bottom-border {
+        margin-bottom: 0;
+    }
+
+    .line-items-container th.heading-quantity {
+        width: 50px;
+    }
+
+    .line-items-container th.heading-price {
+        text-align: right;
+        width: 100px;
+    }
+
+    .line-items-container th.heading-subtotal {
+        width: 100px;
+    }
+
+    .payment-info {
+        width: 38%;
+        font-size: 0.75em;
+        line-height: 1.5;
+    }
+
+    .footer {
+        margin-top: 100px;
+    }
+
+    .footer-thanks {
+        font-size: 1.125em;
+    }
+
+    .footer-thanks img {
+        display: inline-block;
+        position: relative;
+        top: 1px;
+        width: 16px;
+        margin-right: 4px;
+    }
+
+    .footer-info {
+        float: right;
+        margin-top: 5px;
+        font-size: 0.75em;
+        color: #ccc;
+    }
+
+    .footer-info span {
+        padding: 0 5px;
+        color: black;
+    }
+
+    .footer-info span:last-child {
+        padding-right: 0;
+    }
+
+    .page-container {
+        display: none;
+    }
+
+
+
+
+    /*
+  The styles here for use when generating a PDF invoice with the HTML code.
+
+  * Set up a repeating page counter
+  * Place the .footer-info in the last page's footer
+*/
+
+    .footer {
+        margin-top: 30px;
+    }
+
+    .footer-info {
+        float: none;
+        position: running(footer);
+        margin-top: -25px;
+    }
+
+    .page-container {
+        display: block;
+        position: running(pageContainer);
+        margin-top: -25px;
+        font-size: 12px;
+        text-align: right;
+        color: #999;
+    }
+
+    .page-container .page::after {
+        content: counter(page);
+    }
+
+    .page-container .pages::after {
+        content: counter(pages);
+    }
+
+
+    @page {
+        @bottom-right {
+            content: element(pageContainer);
+        }
+
+        @bottom-left {
+            content: element(footer);
+        }
+    }
+</style>
+
+<div class="page-container">
+    Page
+    <span class="page"></span>
+    of
+    <span class="pages"></span>
+</div>
+
+<div class="logo-container">
+    <img style="height: 48px" src="https://basueducation.com/static/images/BASU%20LOGO.5e3cc85845b7.svg">
+</div>
+
+<table class="invoice-info-container">
+    <tr>
+        <td rowspan="1" class="client-name">
+            {{ student.user.first_name|default:"Student" }} {{ student.user.last_name|default:"Name" }}
+        </td>
+        <td>
+            BASU Classes
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Student ID: {{ student.stu_id|default:"N/A" }}
+        </td>
+        <td>
+            Mahavir Enclave
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Invoice Date: <strong>{{today|date:"d M Y" }}</strong>
+        </td>
+        <td>
+            Noida, 201301
+        </td>
+    </tr>
+    <tr>
+        <td>
+            Academic Session: <strong>{{ selected_session.name }}</strong>
+            {% if selected_session.start_date and selected_session.end_date %}
+            ({{ selected_session.start_date|date:"d M Y" }} - {{ selected_session.end_date|date:"d M Y" }})
+            {% endif %}
+        </td>
+        <td>
+
+        </td>
+    </tr>
+    <tr>
+        <td>
+        </td>
+        <td>
+            basueducation.com
+        </td>
+    </tr>
+</table>
+
+
+<table class="line-items-container">
+    <thead>
+        <tr>
+            <th class="heading-quantity">SNo.</th>
+            <th class="heading-description">Payments</th>
+            <th class="heading-price">Status</th>
+            <th class="heading-price">Payment Date</th>
+            <th class="heading-price">Payment Mode</th>
+            <th class="heading-subtotal">Fees</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for installment in installments %}
+        <tr>
+            <td>{{ forloop.counter|default:"-" }}.</td>
+            <td>{{ installment.label|default:"Installment" }}</td>
+            <td class="right">
+                <strong>
+                    {% if installment.paid|default:False %}
+                    Paid
+                    {% else %}
+                    Due
+                    {% endif %}
+                </strong>
+            </td>
+            <td class="right">{{ installment.due_date|date:"d M Y"|default:"No Date" }}</td>
+            <td class="right">{{ installment.payment_type|default:"Not Specified" }}</td>
+            <td class="bold">₹{{ installment.amount|default:"0" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6" class="right">No payments available</td>
+        </tr>
+        {% endfor %}
+        <tr>
+            <td></td>
+            <td><b>Total</b></td>
+            <td class="right">
+            </td>
+            <td class="right"></td>
+            <td class="right"></td>
+            <td class="bold">₹{{ fees_details.total_fees|default:"0" }}</td>
+        </tr>
+    </tbody>
+</table>
+
+
+<div class="footer">
+    <div class="footer-info">
+        <span>8447760430</span> |
+        <span>basueducation.com</span>
+    </div>
+    <div class="footer-thanks" style="padding-top: 15px;">
+        <span>Thank you!</span>
+    </div>
+</div>

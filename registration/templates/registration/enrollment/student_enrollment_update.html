@@ -85,8 +85,10 @@
                 class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Fees</a>
             <a href="{% url 'student_enrollment_transport_details' student.stu_id %}?session={{ selected_session.id }}"
                 class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Transport</a>
-            <a href="" class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Document</a>
-            <a href="" class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Receipt</a>
+            <a href="{% url 'student_enrollment_reg_doc' student.stu_id %}?session={{ selected_session.id }}"
+                class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Document</a>
+            <a href="{% url 'print_enrollment_receipt' student.stu_id %}?session={{ selected_session.id }}"
+                target="_blank" class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Receipt</a>
         </div>
     </div>
 
