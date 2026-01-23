@@ -27,14 +27,14 @@
 {% endblock style %}
 {% block dashboard %}
 
-<div class="">
+<div class="container-sm p-4">
     <div class="bg-success-subtle mx-auto p-1 d-flex rounded" style="width: fit-content;">
         <a href="{% url 'student_enrollment_details_update' student.stu_id %}"
             class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Student</a>
         <a href="{% url 'student_enrollment_parent_details' student.stu_id %}"
             class="text-decoration-none text-dark  p-1 px-2 rounded mx-2 my-1">Parent Details</a>
         <a href="{% url 'student_enrollment_update' student.stu_id %}?session={{ selected_session.id }}"
-            class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Enrollments</a>
+            class="text-decoration-none text-dark bg-light p-1 px-2 rounded mx-2 my-1">Enrollments</a>
     </div>
 
     <div class="my-4 mt-2 container-sm d-flex">
