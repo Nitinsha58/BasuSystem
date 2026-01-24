@@ -1377,6 +1377,22 @@ def mark_attendance(request, class_id=None, batch_id=None):
     batch = None
     lesson_info = None
 
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = None
+
+    if selected_session_id:
+        selected_session = AcademicSession.objects.filter(id=selected_session_id).first()
+    if not selected_session:
+        selected_session = active_session
+
     if class_id and not ClassName.objects.filter(id=class_id).exists():
         messages.error(request, "Invalid Class")
         return redirect('attendance')
@@ -1387,7 +1403,11 @@ def mark_attendance(request, class_id=None, batch_id=None):
 
     if class_id:
         cls = ClassName.objects.filter(id=class_id).first()
-        batches = Batch.objects.filter(class_name=cls).order_by('created_at').exclude(
+        batches_qs = Batch.objects.filter(class_name=cls)
+        if selected_session:
+            batches_qs = batches_qs.filter(session=selected_session)
+
+        batches = batches_qs.order_by('created_at').exclude(
             Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
             Q(section__name='CBSE') &
             Q(subject__name__in=['MATH', 'SCIENCE'])
@@ -1396,7 +1416,9 @@ def mark_attendance(request, class_id=None, batch_id=None):
         batches = None
 
     if batch_id:
-        batch = Batch.objects.filter(id=batch_id).first()
+        batch = Batch.objects.filter(id=batch_id).select_related('session').first()
+        if batch and getattr(batch, 'session_id', None):
+            selected_session = batch.session
     
 
     if batch_id and not batch:
@@ -1425,7 +1447,23 @@ def mark_attendance(request, class_id=None, batch_id=None):
         return redirect('students_list')
 
     classes = ClassName.objects.all().order_by('created_at')
-    students = Student.objects.filter(batches=batch, active=True)
+
+    students = Student.objects.none()
+    enrollments_by_student_id = {}
+    if batch and selected_session:
+        enrollments_qs = (
+            StudentEnrollment.objects.filter(
+                active=True,
+                session=selected_session,
+                batch_links__batch=batch,
+            )
+            .select_related('student')
+            .only('id', 'student_id')
+            .distinct()
+        )
+        enrollments_by_student_id = {e.student_id: e for e in enrollments_qs if e.student_id}
+        if enrollments_by_student_id:
+            students = Student.objects.filter(id__in=enrollments_by_student_id.keys()).distinct()
 
     marked_students = students.filter(
         attendance__date=date,
@@ -1436,8 +1474,8 @@ def mark_attendance(request, class_id=None, batch_id=None):
         Attendance.objects.filter(
             batch=batch,
             date=date,
-            student__active=True,
-            type=selected_type
+            type=selected_type,
+            student__in=students,
         ).order_by('student__created_at')
     )
     un_marked_students = list(students.exclude(id__in=marked_students.values_list('id', flat=True)))
@@ -1499,9 +1537,12 @@ def mark_attendance(request, class_id=None, batch_id=None):
         status_data = request.POST.get('status', '')
 
         if status_data:
-            lecture_id, lesson_id, status = status_data.split(':')
-
-            if status and date == datetime.today().date() and (selected_type == 'Regular' or selected_type == 'Extra Class'):
+            parts = status_data.split(':')
+            if len(parts) == 3:
+                lecture_id, lesson_id, status = parts
+            else:
+                lecture_id = lesson_id = status = ""
+            if status and status.isdigit() and date == datetime.today().date() and (selected_type == 'Regular' or selected_type == 'Extra Class'):
                 status = int(status)
                 if lecture_id:
                     try:
@@ -1527,29 +1568,37 @@ def mark_attendance(request, class_id=None, batch_id=None):
                         return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={date}")
 
         for data in attendance_data:
-            stu_id, status = data.split(':')
-            student = Student.objects.filter(stu_id=stu_id, batches=batch, active=True).first()
-            if student:
-                if status == '3':
-                    Attendance.objects.create(
-                        student=student,
-                        batch=batch,
-                        is_present=False,
-                        date=date,
-                        type=selected_type
-                    )
-                elif status == '2':
-                    Attendance.objects.create(
-                        student=student,
-                        batch=batch,
-                        is_present=True,
-                        date=date,
-                        type=selected_type
-                    )
-                marked_students_set.add(student.stu_id)
+            try:
+                stu_id, status = data.split(':', 1)
+            except ValueError:
+                continue
+
+            if status not in ('2', '3'):
+                continue
+
+            student = students.filter(stu_id=stu_id).first()
+            if not student:
+                continue
+
+            enrollment = enrollments_by_student_id.get(student.id)
+
+            Attendance.objects.update_or_create(
+                student=student,
+                batch=batch,
+                date=date,
+                type=selected_type,
+                defaults={
+                    'is_present': (status == '2'),
+                    'enrollment': enrollment,
+                }
+            )
+            marked_students_set.add(student.stu_id)
 
         messages.success(request, "Attendance marked successfully.")
-        return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={date}&type={selected_type}")
+        redirect_url = f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={date}&type={selected_type}"
+        if selected_session:
+            redirect_url += f"&session={selected_session.id}"
+        return redirect(redirect_url)
 
     return render(request, 'registration/attendance.html', {
         'classes': classes,
@@ -1563,6 +1612,9 @@ def mark_attendance(request, class_id=None, batch_id=None):
         'prev_date': prev_date,
         'next_date': next_date,
         'lesson_info': lesson_info,
+        'academic_sessions': sessions,
+        'active_session': active_session,
+        'selected_session': selected_session,
         'type_choices': attendance_type_choices,
         'selected_type': selected_type,
     })
@@ -1572,6 +1624,22 @@ def mark_attendance(request, class_id=None, batch_id=None):
 def mark_homework(request, class_id=None, batch_id=None):
     cls = None
     batch = None
+
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = None
+
+    if selected_session_id:
+        selected_session = AcademicSession.objects.filter(id=selected_session_id).first()
+    if not selected_session:
+        selected_session = active_session
 
     if class_id and not ClassName.objects.filter(id=class_id).exists():
         messages.error(request, "Invalid Class")
@@ -1583,7 +1651,11 @@ def mark_homework(request, class_id=None, batch_id=None):
 
     if class_id:
         cls = ClassName.objects.filter(id=class_id).first()
-        batches = Batch.objects.filter(class_name=cls).order_by('created_at').exclude(
+        batches_qs = Batch.objects.filter(class_name=cls)
+        if selected_session:
+            batches_qs = batches_qs.filter(session=selected_session)
+
+        batches = batches_qs.order_by('created_at').exclude(
             Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
             Q(section__name='CBSE') &
             Q(subject__name__in=['MATH', 'SCIENCE'])
@@ -1593,7 +1665,9 @@ def mark_homework(request, class_id=None, batch_id=None):
 
 
     if batch_id:
-        batch = Batch.objects.filter(id=batch_id).first()
+        batch = Batch.objects.filter(id=batch_id).select_related('session').first()
+        if batch and getattr(batch, 'session_id', None):
+            selected_session = batch.session
 
     if batch_id and not batch:
         messages.error(request, "Invalid Batch")
@@ -1616,10 +1690,32 @@ def mark_homework(request, class_id=None, batch_id=None):
         return redirect('students_list')
 
     classes = ClassName.objects.all().order_by('created_at')
-    students = Student.objects.filter(batches=batch, active=True)
+
+    students = Student.objects.none()
+    enrollments_by_student_id = {}
+    if batch and selected_session:
+        enrollments_qs = (
+            StudentEnrollment.objects.filter(
+                active=True,
+                session=selected_session,
+                batch_links__batch=batch,
+            )
+            .select_related('student')
+            .only('id', 'student_id')
+            .distinct()
+        )
+        enrollments_by_student_id = {e.student_id: e for e in enrollments_qs if e.student_id}
+        if enrollments_by_student_id:
+            students = Student.objects.filter(id__in=enrollments_by_student_id.keys()).distinct()
 
     marked_students = students.filter(homework__date=date, homework__batch=batch).order_by('created_at')
-    marked_homework = list(Homework.objects.filter(batch=batch, date=date, student__active=True).order_by('student__created_at'))
+    marked_homework = list(
+        Homework.objects.filter(
+            batch=batch,
+            date=date,
+            student__in=students,
+        ).order_by('student__created_at')
+    )
     un_marked_students = list(students.exclude(id__in=marked_students.values_list('id', flat=True)))
 
     if batch_id and request.method == 'POST':
@@ -1627,19 +1723,41 @@ def mark_homework(request, class_id=None, batch_id=None):
         marked_students_set = set()
 
         for data in attendance_data:
-            stu_id, status = data.split(':')
-            student = Student.objects.filter(stu_id=stu_id, batches=batch, active=True).first()
-            if student:
-                homework, created = Homework.objects.get_or_create(
+            try:
+                stu_id, status = data.split(':', 1)
+            except ValueError:
+                continue
+
+            student = students.filter(stu_id=stu_id).first()
+            if not student:
+                continue
+
+            enrollment = enrollments_by_student_id.get(student.id)
+
+            updated = Homework.objects.filter(
+                student=student,
+                batch=batch,
+                date=date,
+            ).update(
+                status=status,
+                enrollment=enrollment,
+            )
+            if updated == 0:
+                Homework.objects.create(
                     student=student,
+                    enrollment=enrollment,
                     batch=batch,
                     status=status,
-                    date=date
+                    date=date,
                 )
-                marked_students_set.add(student.stu_id)
+
+            marked_students_set.add(student.stu_id)
 
         messages.success(request, "Homework marked successfully.")
-        return redirect(f"{reverse('homework_batch', args=[class_id, batch_id])}?date={date}")
+        redirect_url = f"{reverse('homework_batch', args=[class_id, batch_id])}?date={date}"
+        if selected_session:
+            redirect_url += f"&session={selected_session.id}"
+        return redirect(redirect_url)
     
     homework_status = Homework.STATUS_CHOICES
 
@@ -1655,6 +1773,9 @@ def mark_homework(request, class_id=None, batch_id=None):
         'prev_date': prev_date,
         'next_date': next_date,
         'homework_status': homework_status,
+        'academic_sessions': sessions,
+        'active_session': active_session,
+        'selected_session': selected_session,
     })
 
 @login_required(login_url='login')

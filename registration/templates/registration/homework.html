@@ -5,7 +5,7 @@
 <link rel="stylesheet" href="{% static 'css/attendance.css' %}">
 <style>
     html {
-      scroll-behavior: auto !important;
+        scroll-behavior: auto !important;
     }
 </style>
 {% endblock style %}
@@ -17,29 +17,32 @@
     <h2 class="heading m-2">Homework</h2>
     <div class="row g-2">
         {% if request.user.teachers %}
-            {% for c in request.user.teachers.get_classes %}
-            <div class="col-6 col-md-3 flex justify-content-center align-items-center">
-                <a href="{% url 'homework_class' c.id %}" class="nav-link">
-                    <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
-                </a>
-            </div>
-            {% endfor %}
-        {% else %}    
-            {% for c in classes %}
-            <div class="col-6 col-md-3 flex justify-content-center align-items-center">
-                <a href="{% url 'homework_class' c.id %}" class="nav-link">
-                    <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
-                </a>
-            </div>
-            {% endfor %}
+        {% for c in request.user.teachers.get_classes %}
+        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+            <a href="{% url 'homework_class' c.id %}{% if selected_session %}?session={{ selected_session.id }}{% endif %}"
+                class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
+            </a>
+        </div>
+        {% endfor %}
+        {% else %}
+        {% for c in classes %}
+        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+            <a href="{% url 'homework_class' c.id %}{% if selected_session %}?session={{ selected_session.id }}{% endif %}"
+                class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
+            </a>
+        </div>
+        {% endfor %}
         {% endif %}
     </div>
     {% endif %}
-    
+
     {% if cls %}
     <div class="row g-2">
         <div class="col-6 col-md-3 flex justify-content-center align-items-center">
-            <a href="{% url 'homework' %}" class="nav-link">
+            <a href="{% url 'homework' %}{% if selected_session %}?session={{ selected_session.id }}{% endif %}"
+                class="nav-link">
                 <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{cls.name}}</div>
             </a>
         </div>
@@ -50,23 +53,27 @@
     <h2 class="heading m-2">Select Batch</h2>
     <div class="row g-2">
         {% if request.user.teachers %}
-            {% for b in request.user.teachers.batches.all %}
-                {% if b.class_name == cls %}
-                <div class="col-6 col-md-3 flex justify-content-center align-items-center">
-                    <a href="{% url 'homework_batch' cls.id b.id %}" class="nav-link">
-                        <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{b.section.name}} {{b.subject.name}}</div>
-                    </a>
-                </div>
-                {% endif %}
-            {% endfor %}
+        {% for b in request.user.teachers.batches.all %}
+        {% if b.class_name == cls %}
+        {% if not selected_session or b.session_id == selected_session.id %}
+        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+            <a href="{% url 'homework_batch' cls.id b.id %}{% if selected_session %}?session={{ selected_session.id }}{% endif %}"
+                class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{b.section.name}} {{b.subject.name}}</div>
+            </a>
+        </div>
+        {% endif %}
+        {% endif %}
+        {% endfor %}
         {% else %}
-            {% for b in batches %}
-                <div class="col-6 col-md-3 flex justify-content-center align-items-center">
-                    <a href="{% url 'homework_batch' cls.id b.id %}" class="nav-link">
-                        <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{b.section.name}} {{b.subject.name}}</div>
-                    </a>
-                </div>
-            {% endfor %}
+        {% for b in batches %}
+        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+            <a href="{% url 'homework_batch' cls.id b.id %}{% if selected_session %}?session={{ selected_session.id }}{% endif %}"
+                class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{b.section.name}} {{b.subject.name}}</div>
+            </a>
+        </div>
+        {% endfor %}
         {% endif %}
     </div>
     {% endif %}
@@ -74,13 +81,15 @@
     {% if cls and batch %}
     <div class="row g-2 mt-1">
         <div class="col-6 col-md-3 flex justify-content-center align-items-center">
-            <a href="{% url 'homework_class' cls.id %}" class="nav-link">
-                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{batch.section.name}} {{batch.subject.name}}</div>
+            <a href="{% url 'homework_class' cls.id %}{% if selected_session %}?session={{ selected_session.id }}{% endif %}"
+                class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{batch.section.name}}
+                    {{batch.subject.name}}</div>
             </a>
         </div>
     </div>
     {% endif %}
-    
+
     {% if batch %}
     <h2 class="heading m-2">{{batch}}</h2>
     {% endif %}
@@ -89,159 +98,189 @@
     {% if cls and batch %}
     <div class="">
         <h3 class="heading m-2">Mark Homework</h3>
-        <a href="{% url 'get_homework' batch.id %}" class="btn btn-primary">View Homework</a>
+        <a href="{% url 'get_homework' batch.id %}{% if selected_session %}?session={{ selected_session.id }}{% endif %}"
+            class="btn btn-primary">View Homework</a>
     </div>
-        {% if un_marked_students %}
-        <form action="" method="post" class="bg-primary-subtle rounded p-1" id="homework-form">
-            {% csrf_token %}
-            
-            <div class="students-list-container">
-                <div class="col-md-3 my-2">
-                    <div class="row mx-2">
-                        <ul class="pagination m-0">
-                            <li class="page-item m-0"><a class="page-link m-0" href="?date={{ prev_date|date:'Y-m-d' }}">Previous</a></li>
-                            <li class="page-item m-0"><p class="page-link text-dark text-nowrap m-0">{{date|date:'Y-m-d'}}</p></li>
-                            <input type="date" name="date" value="{{date|date:'Y-m-d'}}" hidden id="">
-                            <li class="page-item m-0"><a class="page-link m-0" href="?date={{ next_date|date:'Y-m-d' }}">Next</a></li>
-                        </ul>
-                    </div>
+    {% if un_marked_students %}
+    <form action="" method="post" class="bg-primary-subtle rounded p-1" id="homework-form">
+        {% csrf_token %}
+
+        <div class="students-list-container">
+            <div class="col-md-3 my-2">
+                <div class="row mx-2">
+                    <ul class="pagination m-0">
+                        <li class="page-item m-0"><a class="page-link m-0"
+                                href="?date={{ prev_date|date:'Y-m-d' }}{% if selected_session %}&session={{ selected_session.id }}{% endif %}">Previous</a>
+                        </li>
+                        <li class="page-item m-0">
+                            <p class="page-link text-dark text-nowrap m-0">{{date|date:'Y-m-d'}}</p>
+                        </li>
+                        <input type="date" name="date" value="{{date|date:'Y-m-d'}}" hidden id="">
+                        <li class="page-item m-0"><a class="page-link m-0"
+                                href="?date={{ next_date|date:'Y-m-d' }}{% if selected_session %}&session={{ selected_session.id }}{% endif %}">Next</a>
+                        </li>
+                    </ul>
                 </div>
-                {% if un_marked_students %}
+            </div>
+            {% if un_marked_students %}
+            <li class="student list-group-item">
+                <div class="form-check form-switch"
+                    style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
+                    <label class="form-check-label" for="student_{{forloop.counter}}">Mark all</label>
+                    <select class="form-select" id="mark-all-homework" style="width: fit-content;" name="">
+                        {% for status in homework_status %}
+                        <option value="{{ student.stu_id }}:{{ status.0 }}">{{ status.1 }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </li>
+            {% endif %}
+            <ul class="students-list list-group">
+                {% for student in un_marked_students %}
                 <li class="student list-group-item">
-                    <div class="form-check form-switch" style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
-                        <label class="form-check-label" for="student_{{forloop.counter}}">Mark all</label>
-                        <select class="form-select" id="mark-all-homework" style="width: fit-content;" name="">
+                    <div class="form-check form-switch"
+                        style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
+                        <label class="form-check-label" for="student_{{forloop.counter}}">{{forloop.counter}}. {{ student.user.first_name }} {{ student.user.last_name }}</label>
+                        <select class="form-select student-homework-select" style="width: fit-content;"
+                            name="homework[]" id="student_{{ student.stu_id }}">
                             {% for status in homework_status %}
                             <option value="{{ student.stu_id }}:{{ status.0 }}">{{ status.1 }}</option>
                             {% endfor %}
                         </select>
                     </div>
                 </li>
+                {% endfor %}
+                {% if un_marked_students %}
+                <div class="wrapper my-2">
+                    <button class="btn btn-primary">Add Homework</button>
+                </div>
                 {% endif %}
-                <ul class="students-list list-group">
-                    {% for student in un_marked_students %}
-                    <li class="student list-group-item">
-                        <div class="form-check form-switch" style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
-                            <label class="form-check-label" for="student_{{forloop.counter}}">{{forloop.counter}}. {{ student.user.first_name }} {{ student.user.last_name }}</label>
-                            <select class="form-select student-homework-select" style="width: fit-content;" name="homework[]" id="student_{{ student.stu_id }}">
+            </ul>
+
+        </div>
+    </form>
+    {% endif %}
+
+    {% if marked_homework %}
+    <form action="{% url 'homework_batch_update' cls.id batch.id %}?{{date|date:'Y-m-d'}}" method="post"
+        class="bg-warning-subtle rounded p-1 mt-4" id="homework-form2">
+        {% csrf_token %}
+
+        <div class="students-list-container">
+            <div class="col-md-3 my-2">
+                <div class="row mx-2">
+                    <ul class="pagination m-0">
+                        <li class="page-item m-0"><a class="page-link m-0"
+                                href="?date={{ prev_date|date:'Y-m-d' }}{% if selected_session %}&session={{ selected_session.id }}{% endif %}">Previous</a>
+                        </li>
+                        <li class="page-item m-0">
+                            <p class="page-link text-dark text-nowrap m-0">{{date|date:'Y-m-d'}}</p>
+                        </li>
+                        <input type="date" name="date" value="{{date|date:'Y-m-d'}}" hidden id="">
+                        <li class="page-item m-0"><a class="page-link m-0"
+                                href="?date={{ next_date|date:'Y-m-d' }}{% if selected_session %}&session={{ selected_session.id }}{% endif %}">Next</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <ul class="students-list list-group ">
+                {% for homework in marked_homework %}
+                <li
+                    class="student list-group-item {% if homework.status == 'Pending' %} bg-danger-subtle {% elif homework.status == 'Completed' %} bg-success-subtle {% elif homework.status == 'Partial Done' %} bg-warning-subtle {% endif %}">
+                    <div class="form-check form-switch "
+                        style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
+                        <label class="form-check-label" for="student_{{forloop.counter}}">{{forloop.counter}}. {{ homework.student.user.first_name }} {{ homework.student.user.last_name }}</label>
+                        <div class="d-flex gap-2">
+                            <select class="form-select" style="width: fit-content;" name="homework[]"
+                                id="student_{{ student.stu_id }}">
                                 {% for status in homework_status %}
-                                <option value="{{ student.stu_id }}:{{ status.0 }}">{{ status.1 }}</option>
+                                <option {% if homework.status == status.0 %} selected {% endif %}
+                                    value="{{ homework.id }}:{{ status.0 }}">{{ status.1 }}</option>
                                 {% endfor %}
                             </select>
+                            {% if request.user and request.user.is_superuser %}
+                            <a data-batch_id="{{batch.id}}" data-cls_id="{{cls.id}}" data-homework_id="{{homework.id}}"
+                                class="delete-link d-flex justify-content-center align-items-center py-2 px-2 btn bg-danger btn-outline-light fw-semibold text-decoration-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                                    class="bi bi-trash" viewBox="0 0 16 16">
+                                    <path
+                                        d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z">
+                                    </path>
+                                    <path
+                                        d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z">
+                                    </path>
+                                </svg>
+                            </a>
+                            {% endif %}
                         </div>
-                    </li>
-                    {% endfor %}
-                    {% if un_marked_students %}
-                    <div class="wrapper my-2">
-                        <button class="btn btn-primary">Add Homework</button>
                     </div>
-                    {% endif %}
-                </ul>
-
-            </div> 
-        </form>
-        {% endif %}
-
-        {% if marked_homework %}
-        <form action="{% url 'homework_batch_update' cls.id batch.id %}?{{date|date:'Y-m-d'}}" method="post" class="bg-warning-subtle rounded p-1 mt-4" id="homework-form2">
-            {% csrf_token %}
-            
-            <div class="students-list-container">
-                <div class="col-md-3 my-2">
-                    <div class="row mx-2">
-                        <ul class="pagination m-0">
-                            <li class="page-item m-0"><a class="page-link m-0" href="?date={{ prev_date|date:'Y-m-d' }}">Previous</a></li>
-                            <li class="page-item m-0"><p class="page-link text-dark text-nowrap m-0">{{date|date:'Y-m-d'}}</p></li>
-                            <input type="date" name="date" value="{{date|date:'Y-m-d'}}" hidden id="">
-                            <li class="page-item m-0"><a class="page-link m-0" href="?date={{ next_date|date:'Y-m-d' }}">Next</a></li>
-                        </ul>
-                    </div>
+                </li>
+                {% endfor %}
+                {% if marked_homework %}
+                <div class="wrapper my-2">
+                    <button class="btn btn-warning">Update Homework</button>
                 </div>
-                <ul class="students-list list-group ">
-                    {% for homework in marked_homework %}
-                    <li class="student list-group-item {% if homework.status == 'Pending' %} bg-danger-subtle {% elif homework.status == 'Completed' %} bg-success-subtle {% elif homework.status == 'Partial Done' %} bg-warning-subtle {% endif %}">
-                        <div class="form-check form-switch " style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
-                            <label class="form-check-label" for="student_{{forloop.counter}}">{{forloop.counter}}. {{ homework.student.user.first_name }} {{ homework.student.user.last_name }}</label>
-                            <div class="d-flex gap-2">
-                                <select class="form-select" style="width: fit-content;" name="homework[]" id="student_{{ student.stu_id }}">
-                                    {% for status in homework_status %}
-                                    <option {% if homework.status == status.0 %} selected {% endif %}  value="{{ homework.id }}:{{ status.0 }}">{{ status.1 }}</option>
-                                    {% endfor %}
-                                </select>
-                                {% if request.user and request.user.is_superuser %}
-                                <a data-batch_id="{{batch.id}}" data-cls_id="{{cls.id}}" data-homework_id="{{homework.id}}" class="delete-link d-flex justify-content-center align-items-center py-2 px-2 btn bg-danger btn-outline-light fw-semibold text-decoration-none">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"></path>
-                                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
-                                    </svg>
-                                </a>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </li>
-                    {% endfor %}
-                    {% if marked_homework %}
-                    <div class="wrapper my-2">
-                        <button class="btn btn-warning">Update Homework</button>
-                    </div>
-                    {% endif %}
-                </ul>
+                {% endif %}
+            </ul>
 
-            </div> 
-        </form>
+        </div>
+    </form>
 
-        {% endif %}
     {% endif %}
-</div>  
+    {% endif %}
+</div>
 
 <script>
-document.getElementById("mark-all-homework").addEventListener("change", function () {
-    const selectedLabel = this.options[this.selectedIndex].text;
+    document.getElementById("mark-all-homework").addEventListener("change", function () {
+        const selectedLabel = this.options[this.selectedIndex].text;
 
-    document.querySelectorAll(".student-homework-select").forEach(select => {
-        Array.from(select.options).forEach(option => {
-            if (option.text === selectedLabel) {
-                option.selected = true;
-            }
+        document.querySelectorAll(".student-homework-select").forEach(select => {
+            Array.from(select.options).forEach(option => {
+                if (option.text === selectedLabel) {
+                    option.selected = true;
+                }
+            });
         });
     });
-});
 </script>
 
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-      const deleteLinks = document.querySelectorAll(".delete-link");
-      const modal = document.getElementById("deleteConfirmationModal");
-      const confirmButton = document.getElementById("confirmDeleteButton");
-      const cancelButton = document.getElementById("cancelButton");
-  
-      let deleteUrl = "";
-  
-      deleteLinks.forEach(link => {
-        link.addEventListener("click", function (event) {
-          event.preventDefault();
-          document.getElementsByTagName('html')[0].style.overflow = 'hidden';
-          document.getElementsByTagName('body')[0].style.overflow = 'hidden';
-          deleteUrl = `/student/delete_homework/${this.dataset.cls_id}/${this.dataset.batch_id}/${this.dataset.homework_id}?date={{ date|date:'Y-m-d' }}`; // Construct the delete URL
+        const deleteLinks = document.querySelectorAll(".delete-link");
+        const modal = document.getElementById("deleteConfirmationModal");
+        const confirmButton = document.getElementById("confirmDeleteButton");
+        const cancelButton = document.getElementById("cancelButton");
 
-          const scrollPosition = window.scrollY || document.documentElement.scrollTop;
-          modal.style.top = `${scrollPosition}px`;
-          modal.classList.remove('d-none');
+        let deleteUrl = "";
+
+        deleteLinks.forEach(link => {
+            link.addEventListener("click", function (event) {
+                event.preventDefault();
+                document.getElementsByTagName('html')[0].style.overflow = 'hidden';
+                document.getElementsByTagName('body')[0].style.overflow = 'hidden';
+                deleteUrl = `/student/delete_homework/${this.dataset.cls_id}/${this.dataset.batch_id}/${this.dataset.homework_id}?date={{ date|date:'Y-m-d' }}`; // Construct the delete URL
+                {% if selected_session %}
+                deleteUrl += `&session={{ selected_session.id }}`;
+                {% endif %}
+
+                const scrollPosition = window.scrollY || document.documentElement.scrollTop;
+                modal.style.top = `${scrollPosition}px`;
+                modal.classList.remove('d-none');
+            });
         });
-      });
-  
-      confirmButton.addEventListener("click", function () {
-        if (deleteUrl) {
-          window.location.href = deleteUrl; // Redirect to the delete URL
-        }
-      });
-  
-      cancelButton.addEventListener("click", function () {
-        modal.classList.add("d-none");
-        document.getElementsByTagName('html')[0].style.overflow = 'auto';
-        document.getElementsByTagName('body')[0].style.overflow = 'auto';
-      });
+
+        confirmButton.addEventListener("click", function () {
+            if (deleteUrl) {
+                window.location.href = deleteUrl; // Redirect to the delete URL
+            }
+        });
+
+        cancelButton.addEventListener("click", function () {
+            modal.classList.add("d-none");
+            document.getElementsByTagName('html')[0].style.overflow = 'auto';
+            document.getElementsByTagName('body')[0].style.overflow = 'auto';
+        });
     });
 </script>
 
@@ -249,7 +288,7 @@ document.getElementById("mark-all-homework").addEventListener("change", function
     const form = document.getElementById('homework-form');
     const form2 = document.getElementById('homework-form2');
     // prevent duplicate form submission
-    form.addEventListener('submit', function(event) {
+    form.addEventListener('submit', function (event) {
         const submitButton = form.querySelector('button[type="submit"]');
         if (submitButton) {
             submitButton.disabled = true; // Disable the button
@@ -257,7 +296,7 @@ document.getElementById("mark-all-homework").addEventListener("change", function
         }
     });
 
-    form2.addEventListener('submit', function(event) {
+    form2.addEventListener('submit', function (event) {
         const submitButton = form2.querySelector('button[type="submit"]');
         if (submitButton) {
             submitButton.disabled = true; // Disable the button

@@ -5,7 +5,7 @@
 <link rel="stylesheet" href="{% static 'css/attendance.css' %}">
 <style>
     html {
-      scroll-behavior: auto !important;
+        scroll-behavior: auto !important;
     }
 </style>
 {% endblock style %}
@@ -17,29 +17,32 @@
     <h2 class="heading m-2">Attendance</h2>
     <div class="row g-2">
         {% if request.user.teachers %}
-            {% for c in request.user.teachers.get_classes %}
-            <div class="col-6 col-md-3 flex justify-content-center align-items-center">
-                <a href="{% url 'attendance_class' c.id %}" class="nav-link">
-                    <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
-                </a>
-            </div>
-            {% endfor %}
-        {% else %}    
-            {% for c in classes %}
-            <div class="col-6 col-md-3 flex justify-content-center align-items-center">
-                <a href="{% url 'attendance_class' c.id %}" class="nav-link">
-                    <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
-                </a>
-            </div>
-            {% endfor %}
+        {% for c in request.user.teachers.get_classes %}
+        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+            <a href="{% url 'attendance_class' c.id %}{% if selected_session %}?session={{ selected_session.id }}{% endif %}"
+                class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
+            </a>
+        </div>
+        {% endfor %}
+        {% else %}
+        {% for c in classes %}
+        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+            <a href="{% url 'attendance_class' c.id %}{% if selected_session %}?session={{ selected_session.id }}{% endif %}"
+                class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
+            </a>
+        </div>
+        {% endfor %}
         {% endif %}
     </div>
     {% endif %}
-    
+
     {% if cls %}
     <div class="row g-2">
         <div class="col-6 col-md-3 flex justify-content-center align-items-center">
-            <a href="{% url 'attendance' %}" class="nav-link">
+            <a href="{% url 'attendance' %}{% if selected_session %}?session={{ selected_session.id }}{% endif %}"
+                class="nav-link">
                 <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{cls.name}}</div>
             </a>
         </div>
@@ -50,23 +53,27 @@
     <h2 class="heading m-2">Select Batch</h2>
     <div class="row g-2">
         {% if request.user.teachers %}
-            {% for b in request.user.teachers.batches.all %}
-                {% if b.class_name == cls %}
-                <div class="col-6 col-md-3 flex justify-content-center align-items-center">
-                    <a href="{% url 'attendance_batch' cls.id b.id %}" class="nav-link">
-                        <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{b.section.name}} {{b.subject.name}}</div>
-                    </a>
-                </div>
-                {% endif %}
-            {% endfor %}
+        {% for b in request.user.teachers.batches.all %}
+        {% if b.class_name == cls %}
+        {% if not selected_session or b.session_id == selected_session.id %}
+        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+            <a href="{% url 'attendance_batch' cls.id b.id %}{% if selected_session %}?session={{ selected_session.id }}{% endif %}"
+                class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{b.section.name}} {{b.subject.name}}</div>
+            </a>
+        </div>
+        {% endif %}
+        {% endif %}
+        {% endfor %}
         {% else %}
-            {% for b in batches %}
-                <div class="col-6 col-md-3 flex justify-content-center align-items-center">
-                    <a href="{% url 'attendance_batch' cls.id b.id %}" class="nav-link">
-                        <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{b.section.name}} {{b.subject.name}}</div>
-                    </a>
-                </div>
-            {% endfor %}
+        {% for b in batches %}
+        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+            <a href="{% url 'attendance_batch' cls.id b.id %}{% if selected_session %}?session={{ selected_session.id }}{% endif %}"
+                class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{b.section.name}} {{b.subject.name}}</div>
+            </a>
+        </div>
+        {% endfor %}
         {% endif %}
     </div>
     {% endif %}
@@ -74,13 +81,15 @@
     {% if cls and batch %}
     <div class="row g-2 mt-1">
         <div class="col-6 col-md-3 flex justify-content-center align-items-center">
-            <a href="{% url 'attendance_class' cls.id %}" class="nav-link">
-                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{batch.section.name}} {{batch.subject.name}}</div>
+            <a href="{% url 'attendance_class' cls.id %}{% if selected_session %}?session={{ selected_session.id }}{% endif %}"
+                class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{batch.section.name}}
+                    {{batch.subject.name}}</div>
             </a>
         </div>
     </div>
     {% endif %}
-    
+
     {% if batch %}
     <h2 class="heading m-2">{{batch}}</h2>
     {% endif %}
@@ -89,29 +98,39 @@
     {% if cls and batch %}
     <div class="mb-2">
         <h3 class="heading m-2">Mark Attendance</h3>
-        <a href="{% url 'get_attendance' batch.id %}" class="btn btn-primary">View Attendance</a>
+        <a href="{% url 'get_attendance' batch.id %}{% if selected_session %}?session={{ selected_session.id }}{% endif %}"
+            class="btn btn-primary">View Attendance</a>
     </div>
     <form class=" mt-2" method="get" id="type-form">
         <label for="type-option" class="form-label">Attendance Type</label>
         <select class="form-select" id="type-option" style="width: fit-content;" name="type">
             {% for type in type_choices %}
-            <option value="{{ type.0 }}" {% if selected_type == type.0 %} selected {% endif %} >{{ type.1 }}</option>
+            <option value="{{ type.0 }}" {% if selected_type == type.0 %} selected {% endif %}>{{ type.1 }}</option>
             {% endfor %}
         </select>
         <input type="hidden" name="date" value="{{ date|date:'Y-m-d' }}">
+        {% if selected_session %}
+        <input type="hidden" name="session" value="{{ selected_session.id }}">
+        {% endif %}
     </form>
     <form action="" method="post" id="attendance-form">
         {% csrf_token %}
-        
+
         <div class="students-list-container">
             <div class="col-md-3 my-1">
                 <label for="date" class="form-label">Attendance Date</label>
                 <div class="row mx-2">
                     <ul class="pagination">
-                        <li class="page-item"><a class="page-link" href="?type={{selected_type}}&date={{ prev_date|date:'Y-m-d' }}">Previous</a></li>
-                        <li class="page-item"><p class="page-link text-dark text-nowrap">{{date|date:'Y-m-d'}}</p></li>
+                        <li class="page-item"><a class="page-link"
+                                href="?type={{selected_type}}&date={{ prev_date|date:'Y-m-d' }}{% if selected_session %}&session={{ selected_session.id }}{% endif %}">Previous</a>
+                        </li>
+                        <li class="page-item">
+                            <p class="page-link text-dark text-nowrap">{{date|date:'Y-m-d'}}</p>
+                        </li>
                         <input type="date" name="date" value="{{date|date:'Y-m-d'}}" hidden id="">
-                        <li class="page-item"><a class="page-link" href="?type={{selected_type}}&date={{ next_date|date:'Y-m-d' }}">Next</a></li>
+                        <li class="page-item"><a class="page-link"
+                                href="?type={{selected_type}}&date={{ next_date|date:'Y-m-d' }}{% if selected_session %}&session={{ selected_session.id }}{% endif %}">Next</a>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -126,9 +145,14 @@
                     {% else %}
                         bg-success-subtle
                     {% endif %} ">
-                    <div class="form-check form-switch " style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
-                        <p class="form-check-label m-0" id="all-label" for="all-input"><b>{{lesson_info.previous_lecture.lesson.chapter_sequence.chapter_name}}:</b> {{lesson_info.previous_lecture.lesson.topic}} (Previous)</p>
-                        <p class="form-check-label m-0" id="all-label" for="all-input">{{lesson_info.previous_lecture.date|date:'d M Y'}}</p>
+                    <div class="form-check form-switch "
+                        style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
+                        <p class="form-check-label m-0" id="all-label" for="all-input">
+                            <b>{{lesson_info.previous_lecture.lesson.chapter_sequence.chapter_name}}:</b>
+                            {{lesson_info.previous_lecture.lesson.topic}} (Previous)
+                        </p>
+                        <p class="form-check-label m-0" id="all-label" for="all-input">
+                            {{lesson_info.previous_lecture.date|date:'d M Y'}}</p>
                     </div>
                 </li>
                 {% endif %}
@@ -140,28 +164,27 @@
                         bg-danger-subtle
                     {% else %}
                         bg-success-subtle
-                    {% endif %} " style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
-                        <p class="form-check-label m-0" id="all-label" for="all-input"><b>{{lesson_info.lecture.lesson.chapter_sequence.chapter_name}}:</b> {{lesson_info.lecture.lesson.topic}} (Today)</p>
+                    {% endif %} "
+                        style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
+                        <p class="form-check-label m-0" id="all-label" for="all-input">
+                            <b>{{lesson_info.lecture.lesson.chapter_sequence.chapter_name}}:</b>
+                            {{lesson_info.lecture.lesson.topic}} (Today)
+                        </p>
                         {% if lesson_info.editable %}
-                        <input type="hidden" 
-                                name="status" 
-                                id="statusInput" 
-                                data-lesson-id="{{ lesson_info.lecture.lesson.id|default:'' }}" 
-                                data-lecture-id="{{ lesson_info.lecture.id|default:'' }}" 
-                                value="{{ lesson_info.lecture.id|default:'' }}:{{ lesson_info.lecture.lesson.id|default:'' }}:{% if lesson_info.lecture.status == 'completed' %}2{% else %}1{% endif %}">
-                        <div 
-                            id="statusButton"
-                            class="btn
+                        <input type="hidden" name="status" id="statusInput"
+                            data-lesson-id="{{ lesson_info.lecture.lesson.id|default:'' }}"
+                            data-lecture-id="{{ lesson_info.lecture.id|default:'' }}"
+                            value="{{ lesson_info.lecture.id|default:'' }}:{{ lesson_info.lecture.lesson.id|default:'' }}:{% if lesson_info.lecture.status == 'completed' %}2{% else %}1{% endif %}">
+                        <div id="statusButton" class="btn
                             {% if lesson_info.lecture.status == 'pending' %}
                                 btn-danger
                             {% else %}
                                 btn-success
-                            {% endif %}"
-                            onclick="cycleStatusLesson()">
+                            {% endif %}" onclick="cycleStatusLesson()">
                             {% if lesson_info.lecture.status == 'pending' %}
-                                Pending
+                            Pending
                             {% else %}
-                                Completed
+                            Completed
                             {% endif %}
                         </div>
                         {% endif %}
@@ -175,29 +198,30 @@
                         bg-warning-subtle
                     {% endif %} ">
                     <div class="form-check form-switch d-flex justify-content-between align-items-center p-0">
-                        <p class="form-check-label m-0" id="all-label" for="all-input"><b>{{lesson_info.suggested_lesson.chapter_sequence.chapter_name}}:</b> {{lesson_info.suggested_lesson.topic}} (Today)</p>
-                        <input type="hidden" 
-                                name="status" 
-                                id="statusInput" 
-                                data-lesson-id="{{ lesson_info.suggested_lesson.id|default:'' }}" 
-                                data-lecture-id="" 
-                                value=":{{ lesson_info.suggested_lesson.id|default:'' }}:1">
-                        <div 
-                            id="statusButton" 
-                            class=" btn btn-danger " 
-                            onclick="cycleStatusLesson()">
+                        <p class="form-check-label m-0" id="all-label" for="all-input">
+                            <b>{{lesson_info.suggested_lesson.chapter_sequence.chapter_name}}:</b>
+                            {{lesson_info.suggested_lesson.topic}} (Today)
+                        </p>
+                        <input type="hidden" name="status" id="statusInput"
+                            data-lesson-id="{{ lesson_info.suggested_lesson.id|default:'' }}" data-lecture-id=""
+                            value=":{{ lesson_info.suggested_lesson.id|default:'' }}:1">
+                        <div id="statusButton" class=" btn btn-danger " onclick="cycleStatusLesson()">
                             Pending
                         </div>
 
                     </div>
                 </li>
-                
+
                 {% endif %}
-                
+
                 {% if lesson_info and lesson_info.next_lesson %}
                 <li class="student list-group-item p-2">
-                    <div class="form-check form-switch" style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
-                        <p class="form-check-label m-0" id="all-label" for="all-input"><b>{{lesson_info.next_lesson.chapter_sequence.chapter_name}}:</b> {{lesson_info.next_lesson.topic}} (Next)</p>
+                    <div class="form-check form-switch"
+                        style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
+                        <p class="form-check-label m-0" id="all-label" for="all-input">
+                            <b>{{lesson_info.next_lesson.chapter_sequence.chapter_name}}:</b>
+                            {{lesson_info.next_lesson.topic}} (Next)
+                        </p>
                     </div>
                 </li>
                 {% endif %}
@@ -206,43 +230,35 @@
 
 
             {% if un_marked_students %}
-                <li class="student list-group-item p-2">
-                    <div class="form-check form-switch d-flex justify-content-between align-items-center p-2">
-                        <label class="form-check-label">Mark All Attendance</label>
+            <li class="student list-group-item p-2">
+                <div class="form-check form-switch d-flex justify-content-between align-items-center p-2">
+                    <label class="form-check-label">Mark All Attendance</label>
 
-                        <!-- Master Attendance Button -->
-                        <div 
-                            id="all-status-button"
-                            class="btn btn-secondary status-button"
-                            onclick="cycleAllStatus(this)">
+                    <!-- Master Attendance Button -->
+                    <div id="all-status-button" class="btn btn-secondary status-button" onclick="cycleAllStatus(this)">
+                        Not Marked
+                    </div>
+                </div>
+            </li>
+            {% endif %}
+            <ul class="students-list list-group">
+                {% for student in un_marked_students %}
+                <li class="student list-group-item bg-warning-subtle">
+                    <div class="form-check form-switch d-flex justify-content-between align-items-center p-2">
+                        <p class="form-check-label m-0">
+                            {{ student.user.first_name }} {{ student.user.last_name }}
+                        </p>
+
+                        <!-- Hidden input to store attendance -->
+                        <input type="hidden" name="attendance[]" value="{{ student.stu_id }}:1" class="status-input"
+                            data-student-id="{{ student.stu_id }}">
+
+                        <!-- Button to cycle status -->
+                        <div class="btn btn-secondary status-button" onclick="cycleStatus(this)">
                             Not Marked
                         </div>
                     </div>
                 </li>
-            {% endif %}
-            <ul class="students-list list-group">
-                {% for student in un_marked_students %}
-                    <li class="student list-group-item bg-warning-subtle">
-                        <div class="form-check form-switch d-flex justify-content-between align-items-center p-2">
-                            <p class="form-check-label m-0">
-                                {{ student.user.first_name }} {{ student.user.last_name }}
-                            </p>
-
-                            <!-- Hidden input to store attendance -->
-                            <input type="hidden" 
-                                name="attendance[]" 
-                                value="{{ student.stu_id }}:1" 
-                                class="status-input"
-                                data-student-id="{{ student.stu_id }}">
-
-                            <!-- Button to cycle status -->
-                            <div 
-                                class="btn btn-secondary status-button"
-                                onclick="cycleStatus(this)">
-                                Not Marked
-                            </div>
-                        </div>
-                    </li>
                 {% endfor %}
                 {% if un_marked_students %}
                 <div class="wrapper my-2">
@@ -250,70 +266,94 @@
                 </div>
                 {% endif %}
                 {% for atten in marked_attendance %}
-                    {% if atten.is_present %}
-                    <li class="student list-group-item bg-success-subtle p-0 px-2">
-                        <!-- <p class="student-name">{{ student.user.first_name }} {{ student.user.last_name }}</p> -->
-                        <div class="form-check form-switch" style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
-                            <label class="form-check-label" for="student_{{forloop.counter}}">{{ atten.student.user.first_name }} {{ atten.student.user.last_name }}</label>
-                            <div class="d-flex gap-2">
-                                <a href="{% url 'mark_absent' cls.id batch.id atten.id %}?type={{selected_type}}&date={{ date|date:'Y-m-d' }}" class="d-flex justify-content-center align-items-center py-2 px-2 btn bg-danger btn-outline-light fw-semibold text-decoration-none">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-square" viewBox="0 0 16 16">
-                                        <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
-                                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/>
-                                    </svg>
-                                </a>
-                                {% if request.user and request.user.is_superuser %}
-                                <a data-batch_id="{{batch.id}}" data-cls_id="{{cls.id}}" data-atten_id="{{atten.id}}" data-atten_type="{{selected_type}}" class="delete-link d-flex justify-content-center align-items-center py-2 px-2 btn bg-danger btn-outline-light fw-semibold text-decoration-none">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"></path>
-                                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
-                                    </svg>
-                                </a>
-                                {% endif %}
-                            </div>
+                {% if atten.is_present %}
+                <li class="student list-group-item bg-success-subtle p-0 px-2">
+                    <!-- <p class="student-name">{{ student.user.first_name }} {{ student.user.last_name }}</p> -->
+                    <div class="form-check form-switch"
+                        style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
+                        <label class="form-check-label" for="student_{{forloop.counter}}">{{ atten.student.user.first_name }} {{ atten.student.user.last_name }}</label>
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'mark_absent' cls.id batch.id atten.id %}?type={{selected_type}}&date={{ date|date:'Y-m-d' }}"
+                                class="d-flex justify-content-center align-items-center py-2 px-2 btn bg-danger btn-outline-light fw-semibold text-decoration-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                    class="bi bi-x-square" viewBox="0 0 16 16">
+                                    <path
+                                        d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z" />
+                                    <path
+                                        d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708" />
+                                </svg>
+                            </a>
+                            {% if request.user and request.user.is_superuser %}
+                            <a data-batch_id="{{batch.id}}" data-cls_id="{{cls.id}}" data-atten_id="{{atten.id}}"
+                                data-atten_type="{{selected_type}}"
+                                class="delete-link d-flex justify-content-center align-items-center py-2 px-2 btn bg-danger btn-outline-light fw-semibold text-decoration-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                                    class="bi bi-trash" viewBox="0 0 16 16">
+                                    <path
+                                        d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z">
+                                    </path>
+                                    <path
+                                        d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z">
+                                    </path>
+                                </svg>
+                            </a>
+                            {% endif %}
                         </div>
-                    </li>
-                    {% else %}
-                    <li class="student list-group-item bg-danger-subtle p-0 px-2">
-                        <!-- <p class="student-name">{{ student.user.first_name }} {{ student.user.last_name }}</p> -->
-                        <div class="form-check form-switch" style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
-                            <label class="form-check-label" for="student_{{forloop.counter}}">{{ atten.student.user.first_name }} {{ atten.student.user.last_name }}</label>
-                            
-                            <div class="d-flex gap-2">
-                                <a href="{% url 'mark_present' cls.id batch.id atten.id %}?type={{selected_type}}&date={{ date|date:'Y-m-d' }}" class="d-flex justify-content-center align-items-center py-2 px-2 btn bg-success btn-outline-light fw-semibold text-decoration-none">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-square" viewBox="0 0 16 16">
-                                        <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
-                                        <path d="M10.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/>
-                                    </svg>
-                                </a>
-                                {% if request.user and request.user.is_superuser %}
-                                <a data-batch_id="{{batch.id}}" data-cls_id="{{cls.id}}" data-atten_id="{{atten.id}}" data-atten_type="{{selected_type}}" class="delete-link d-flex justify-content-center align-items-center py-2 px-2 btn bg-danger btn-outline-light fw-semibold text-decoration-none">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"></path>
-                                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
-                                    </svg>
-                                </a>
-                                {% endif %}
-                            </div>
+                    </div>
+                </li>
+                {% else %}
+                <li class="student list-group-item bg-danger-subtle p-0 px-2">
+                    <!-- <p class="student-name">{{ student.user.first_name }} {{ student.user.last_name }}</p> -->
+                    <div class="form-check form-switch"
+                        style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
+                        <label class="form-check-label" for="student_{{forloop.counter}}">{{ atten.student.user.first_name }} {{ atten.student.user.last_name }}</label>
+
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'mark_present' cls.id batch.id atten.id %}?type={{selected_type}}&date={{ date|date:'Y-m-d' }}"
+                                class="d-flex justify-content-center align-items-center py-2 px-2 btn bg-success btn-outline-light fw-semibold text-decoration-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                    class="bi bi-check-square" viewBox="0 0 16 16">
+                                    <path
+                                        d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z" />
+                                    <path
+                                        d="M10.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z" />
+                                </svg>
+                            </a>
+                            {% if request.user and request.user.is_superuser %}
+                            <a data-batch_id="{{batch.id}}" data-cls_id="{{cls.id}}" data-atten_id="{{atten.id}}"
+                                data-atten_type="{{selected_type}}"
+                                class="delete-link d-flex justify-content-center align-items-center py-2 px-2 btn bg-danger btn-outline-light fw-semibold text-decoration-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                                    class="bi bi-trash" viewBox="0 0 16 16">
+                                    <path
+                                        d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z">
+                                    </path>
+                                    <path
+                                        d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z">
+                                    </path>
+                                </svg>
+                            </a>
+                            {% endif %}
                         </div>
-                    </li>
-                    {% endif %}
+                    </div>
+                </li>
+                {% endif %}
                 {% endfor %}
             </ul>
 
-        </div> 
+        </div>
     </form>
     {% endif %}
-</div>  
+</div>
 
 {% if cls and batch %}
 <script>
-document.getElementById("all-input").addEventListener("change", function() {
-    const checkboxes = document.querySelectorAll(".unmarked_students");
-    checkboxes.forEach(cb => {
-        cb.checked = this.checked;
+    document.getElementById("all-input").addEventListener("change", function () {
+        const checkboxes = document.querySelectorAll(".unmarked_students");
+        checkboxes.forEach(cb => {
+            cb.checked = this.checked;
+        });
     });
-});
 </script>
 {% endif %}
 
@@ -423,57 +463,57 @@ document.getElementById("all-input").addEventListener("change", function() {
 </script>
 
 {% if cls and batch %}
-    <script>
-        const type_option = document.getElementById("type-option");
-        const type_form = document.getElementById("type-form");
-        console.log(type_option)
-        console.log(type_form)
-        type_option.addEventListener("change", function() {
-            type_form.submit();
-        });
-    </script>
+<script>
+    const type_option = document.getElementById("type-option");
+    const type_form = document.getElementById("type-form");
+    console.log(type_option)
+    console.log(type_form)
+    type_option.addEventListener("change", function () {
+        type_form.submit();
+    });
+</script>
 {% endif %}
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-      const deleteLinks = document.querySelectorAll(".delete-link");
-      const modal = document.getElementById("deleteConfirmationModal");
-      const confirmButton = document.getElementById("confirmDeleteButton");
-      const cancelButton = document.getElementById("cancelButton");
-  
-      let deleteUrl = "";
-  
-      deleteLinks.forEach(link => {
-        link.addEventListener("click", function (event) {
-          event.preventDefault();
-          document.getElementsByTagName('html')[0].style.overflow = 'hidden';
-          document.getElementsByTagName('body')[0].style.overflow = 'hidden';
-          deleteUrl = `/student/delete_attendance/${this.dataset.cls_id}/${this.dataset.batch_id}/${this.dataset.atten_id}?type=${this.dataset.atten_type}&date={{ date|date:'Y-m-d' }}`; // Construct the delete URL
+        const deleteLinks = document.querySelectorAll(".delete-link");
+        const modal = document.getElementById("deleteConfirmationModal");
+        const confirmButton = document.getElementById("confirmDeleteButton");
+        const cancelButton = document.getElementById("cancelButton");
 
-          const scrollPosition = window.scrollY || document.documentElement.scrollTop;
-          modal.style.top = `${scrollPosition}px`;
-          modal.classList.remove('d-none');
+        let deleteUrl = "";
+
+        deleteLinks.forEach(link => {
+            link.addEventListener("click", function (event) {
+                event.preventDefault();
+                document.getElementsByTagName('html')[0].style.overflow = 'hidden';
+                document.getElementsByTagName('body')[0].style.overflow = 'hidden';
+                deleteUrl = `/student/delete_attendance/${this.dataset.cls_id}/${this.dataset.batch_id}/${this.dataset.atten_id}?type=${this.dataset.atten_type}&date={{ date|date:'Y-m-d' }}`; // Construct the delete URL
+
+                const scrollPosition = window.scrollY || document.documentElement.scrollTop;
+                modal.style.top = `${scrollPosition}px`;
+                modal.classList.remove('d-none');
+            });
         });
-      });
-  
-      confirmButton.addEventListener("click", function () {
-        if (deleteUrl) {
-          window.location.href = deleteUrl; // Redirect to the delete URL
-        }
-      });
-  
-      cancelButton.addEventListener("click", function () {
-        modal.classList.add("d-none");
-        document.getElementsByTagName('html')[0].style.overflow = 'auto';
-        document.getElementsByTagName('body')[0].style.overflow = 'auto';
-      });
+
+        confirmButton.addEventListener("click", function () {
+            if (deleteUrl) {
+                window.location.href = deleteUrl; // Redirect to the delete URL
+            }
+        });
+
+        cancelButton.addEventListener("click", function () {
+            modal.classList.add("d-none");
+            document.getElementsByTagName('html')[0].style.overflow = 'auto';
+            document.getElementsByTagName('body')[0].style.overflow = 'auto';
+        });
     });
 </script>
 
 <script>
     const form = document.getElementById('attendance-form');
     // prevent duplicate submission
-    form.addEventListener('submit', function(event) {
+    form.addEventListener('submit', function (event) {
         const submitButton = form.querySelector('.submit-btn');
         if (submitButton.disabled) {
             event.preventDefault();
