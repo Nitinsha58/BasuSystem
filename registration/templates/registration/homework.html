@@ -162,8 +162,9 @@
     {% endif %}
 
     {% if marked_homework %}
-    <form action="{% url 'homework_batch_update' cls.id batch.id %}?{{date|date:'Y-m-d'}}" method="post"
-        class="bg-warning-subtle rounded p-1 mt-4" id="homework-form2">
+    <form
+        action="{% url 'homework_batch_update' cls.id batch.id %}?date={{date|date:'Y-m-d'}}{% if selected_session %}&session={{ selected_session.id }}{% endif %}"
+        method="post" class="bg-warning-subtle rounded p-1 mt-4" id="homework-form2">
         {% csrf_token %}
 
         <div class="students-list-container">

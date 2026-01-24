@@ -273,7 +273,7 @@
                         style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
                         <label class="form-check-label" for="student_{{forloop.counter}}">{{ atten.student.user.first_name }} {{ atten.student.user.last_name }}</label>
                         <div class="d-flex gap-2">
-                            <a href="{% url 'mark_absent' cls.id batch.id atten.id %}?type={{selected_type}}&date={{ date|date:'Y-m-d' }}"
+                            <a href="{% url 'mark_absent' cls.id batch.id atten.id %}?type={{selected_type}}&date={{ date|date:'Y-m-d' }}{% if selected_session %}&session={{ selected_session.id }}{% endif %}"
                                 class="d-flex justify-content-center align-items-center py-2 px-2 btn bg-danger btn-outline-light fw-semibold text-decoration-none">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                                     class="bi bi-x-square" viewBox="0 0 16 16">
@@ -309,7 +309,7 @@
                         <label class="form-check-label" for="student_{{forloop.counter}}">{{ atten.student.user.first_name }} {{ atten.student.user.last_name }}</label>
 
                         <div class="d-flex gap-2">
-                            <a href="{% url 'mark_present' cls.id batch.id atten.id %}?type={{selected_type}}&date={{ date|date:'Y-m-d' }}"
+                            <a href="{% url 'mark_present' cls.id batch.id atten.id %}?type={{selected_type}}&date={{ date|date:'Y-m-d' }}{% if selected_session %}&session={{ selected_session.id }}{% endif %}"
                                 class="d-flex justify-content-center align-items-center py-2 px-2 btn bg-success btn-outline-light fw-semibold text-decoration-none">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                                     class="bi bi-check-square" viewBox="0 0 16 16">
@@ -489,6 +489,9 @@
                 document.getElementsByTagName('html')[0].style.overflow = 'hidden';
                 document.getElementsByTagName('body')[0].style.overflow = 'hidden';
                 deleteUrl = `/student/delete_attendance/${this.dataset.cls_id}/${this.dataset.batch_id}/${this.dataset.atten_id}?type=${this.dataset.atten_type}&date={{ date|date:'Y-m-d' }}`; // Construct the delete URL
+                {% if selected_session %}
+                deleteUrl += `&session={{ selected_session.id }}`;
+                {% endif %}
 
                 const scrollPosition = window.scrollY || document.documentElement.scrollTop;
                 modal.style.top = `${scrollPosition}px`;

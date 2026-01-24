@@ -1789,8 +1789,25 @@ def update_homework(request, class_id, batch_id):
         messages.error(request, "Invalid Batch")
         return redirect('homework_class', class_id=class_id)
 
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = None
+    if selected_session_id:
+        selected_session = AcademicSession.objects.filter(id=selected_session_id).first()
+    if not selected_session:
+        selected_session = active_session
+
     if batch_id:
-        batch = Batch.objects.filter(id=batch_id).first()
+        batch = Batch.objects.filter(id=batch_id).select_related('session').first()
+        if batch and getattr(batch, 'session_id', None):
+            selected_session = batch.session
 
     if batch_id and not batch:
         messages.error(request, "Invalid Batch")
@@ -1810,18 +1827,30 @@ def update_homework(request, class_id, batch_id):
             date = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else datetime.now().date()
         except ValueError:
             messages.error(request, "Invalid date format.")
-            return redirect(f"{reverse('homework_batch', args=[class_id, batch_id])}?date={datetime.now().date()}")
+            redirect_url = f"{reverse('homework_batch', args=[class_id, batch_id])}?date={datetime.now().date()}"
+            if selected_session:
+                redirect_url += f"&session={selected_session.id}"
+            return redirect(redirect_url)
         
         for data in homework_data:
             hw_id, status = data.split(':')
-            homework = Homework.objects.filter(id=int(hw_id), batch=batch, date=date).first()
+            homework_qs = Homework.objects.filter(id=int(hw_id), batch=batch, date=date)
+            if selected_session:
+                homework_qs = homework_qs.filter(Q(enrollment__session=selected_session) | Q(enrollment__isnull=True))
+            homework = homework_qs.first()
             if homework:
                 homework.status = status
                 homework.save()
         messages.success(request, "Homework updated successfully.")
-        return redirect(f"{reverse('homework_batch', args=[class_id, batch_id])}?date={date}")
+        redirect_url = f"{reverse('homework_batch', args=[class_id, batch_id])}?date={date}"
+        if selected_session:
+            redirect_url += f"&session={selected_session.id}"
+        return redirect(redirect_url)
 
-    return redirect(f"{reverse('homework_batch', args=[class_id, batch_id])}?date={date}")
+    redirect_url = f"{reverse('homework_batch', args=[class_id, batch_id])}?date={date}"
+    if selected_session:
+        redirect_url += f"&session={selected_session.id}"
+    return redirect(redirect_url)
 
 
 @login_required(login_url='login')
@@ -1831,10 +1860,34 @@ def mark_present(request, class_id, batch_id, attendance_id):
     if not selected_type:
         messages.error(request, "Attendance type not specified.")
         return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={day}")
-    obj = Attendance.objects.filter(id=attendance_id, type=selected_type).first()
-    obj.is_present = True 
+
+    active_session = AcademicSession.get_active()
+    selected_session_id = request.GET.get('session') or request.GET.get('academic-session')
+    selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
+
+    batch = Batch.objects.filter(id=batch_id).select_related('session').first()
+    if batch and getattr(batch, 'session_id', None):
+        selected_session = batch.session
+    if not selected_session:
+        selected_session = active_session
+
+    obj_qs = Attendance.objects.filter(id=attendance_id, batch_id=batch_id, type=selected_type)
+    if selected_session:
+        obj_qs = obj_qs.filter(Q(enrollment__session=selected_session) | Q(enrollment__isnull=True))
+    obj = obj_qs.first()
+    if not obj:
+        messages.error(request, "Invalid Attendance Id.")
+        redirect_url = f"{reverse('attendance_batch', args=[class_id, batch_id])}?type={selected_type}&date={day}"
+        if selected_session:
+            redirect_url += f"&session={selected_session.id}"
+        return redirect(redirect_url)
+
+    obj.is_present = True
     obj.save()
-    return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?type={selected_type}&date={day}")
+    redirect_url = f"{reverse('attendance_batch', args=[class_id, batch_id])}?type={selected_type}&date={day}"
+    if selected_session:
+        redirect_url += f"&session={selected_session.id}"
+    return redirect(redirect_url)
 
 @login_required(login_url='login')
 def mark_absent(request, class_id, batch_id, attendance_id):
@@ -1844,10 +1897,33 @@ def mark_absent(request, class_id, batch_id, attendance_id):
         messages.error(request, "Attendance type not specified.")
         return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={day}")
 
-    obj = Attendance.objects.filter(id=attendance_id, type=selected_type).first()
+    active_session = AcademicSession.get_active()
+    selected_session_id = request.GET.get('session') or request.GET.get('academic-session')
+    selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
+
+    batch = Batch.objects.filter(id=batch_id).select_related('session').first()
+    if batch and getattr(batch, 'session_id', None):
+        selected_session = batch.session
+    if not selected_session:
+        selected_session = active_session
+
+    obj_qs = Attendance.objects.filter(id=attendance_id, batch_id=batch_id, type=selected_type)
+    if selected_session:
+        obj_qs = obj_qs.filter(Q(enrollment__session=selected_session) | Q(enrollment__isnull=True))
+    obj = obj_qs.first()
+    if not obj:
+        messages.error(request, "Invalid Attendance Id.")
+        redirect_url = f"{reverse('attendance_batch', args=[class_id, batch_id])}?type={selected_type}&date={day}"
+        if selected_session:
+            redirect_url += f"&session={selected_session.id}"
+        return redirect(redirect_url)
+
     obj.is_present = False
     obj.save()
-    return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?type={selected_type}&date={day}")
+    redirect_url = f"{reverse('attendance_batch', args=[class_id, batch_id])}?type={selected_type}&date={day}"
+    if selected_session:
+        redirect_url += f"&session={selected_session.id}"
+    return redirect(redirect_url)
 
 @login_required(login_url='login')
 def get_attendance(request, batch_id):
@@ -2040,24 +2116,63 @@ def delete_attendance(request, class_id, batch_id, attendance_id):
         messages.error(request, "Attendance type not specified.")
         return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?date={day}")
 
-    obj = Attendance.objects.filter(id=attendance_id, type=selected_type).first()
+    active_session = AcademicSession.get_active()
+    selected_session_id = request.GET.get('session') or request.GET.get('academic-session')
+    selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
+
+    batch = Batch.objects.filter(id=batch_id).select_related('session').first()
+    if batch and getattr(batch, 'session_id', None):
+        selected_session = batch.session
+    if not selected_session:
+        selected_session = active_session
+
+    obj_qs = Attendance.objects.filter(id=attendance_id, batch_id=batch_id, type=selected_type)
+    if selected_session:
+        obj_qs = obj_qs.filter(Q(enrollment__session=selected_session) | Q(enrollment__isnull=True))
+    obj = obj_qs.first()
     if obj:
         obj.delete()
         messages.success(request, "Attendance Deleted.")
     else:
         messages.error(request, "Invalid Attendance Id.")
-    return redirect(f"{reverse('attendance_batch', args=[class_id, batch_id])}?type={selected_type}&date={day}")
+    redirect_url = f"{reverse('attendance_batch', args=[class_id, batch_id])}?type={selected_type}&date={day}"
+    if selected_session:
+        redirect_url += f"&session={selected_session.id}"
+    return redirect(redirect_url)
 
 @login_required(login_url='login')
 def delete_homework(request, class_id, batch_id, homework_id):
     day = request.GET.get('date')
-    obj = Homework.objects.filter(id=homework_id).first()
+
+    active_session = AcademicSession.get_active()
+    selected_session_id = request.GET.get('session') or request.GET.get('academic-session')
+    selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
+
+    batch = Batch.objects.filter(id=batch_id).select_related('session').first()
+    if batch and getattr(batch, 'session_id', None):
+        selected_session = batch.session
+    if not selected_session:
+        selected_session = active_session
+
+    obj_qs = Homework.objects.filter(id=homework_id, batch_id=batch_id)
+    if day:
+        try:
+            parsed_day = datetime.strptime(day, "%Y-%m-%d").date()
+            obj_qs = obj_qs.filter(date=parsed_day)
+        except ValueError:
+            pass
+    if selected_session:
+        obj_qs = obj_qs.filter(Q(enrollment__session=selected_session) | Q(enrollment__isnull=True))
+    obj = obj_qs.first()
     if obj:
         obj.delete()
         messages.success(request, "Homework Deleted.")
     else:
         messages.error(request, "Invalid Homework Id.")
-    return redirect(f"{reverse('homework_batch', args=[class_id, batch_id])}?date={day}")
+    redirect_url = f"{reverse('homework_batch', args=[class_id, batch_id])}?date={day}"
+    if selected_session:
+        redirect_url += f"&session={selected_session.id}"
+    return redirect(redirect_url)
 
 @login_required(login_url='login')
 def add_teacher(request):
