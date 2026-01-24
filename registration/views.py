@@ -2176,6 +2176,21 @@ def delete_homework(request, class_id, batch_id, homework_id):
 
 @login_required(login_url='login')
 def add_teacher(request):
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = None
+    if selected_session_id:
+        selected_session = AcademicSession.objects.filter(id=selected_session_id).first()
+    if not selected_session:
+        selected_session = active_session
+
     if request.method == "POST":
         form_data = {
             "first_name": request.POST.get("first_name"),
@@ -2207,16 +2222,37 @@ def add_teacher(request):
         teacher, created = Teacher.objects.get_or_create(user=user)
         if not created:
             messages.info(request, "Teacher already exists. Updating the teacher details.")
-        teacher.batches.set(form_data["batches"])
+        batches_qs = Batch.objects.filter(id__in=form_data["batches"])
+        if selected_session:
+            batches_qs = batches_qs.filter(session=selected_session)
+        teacher.batches.set(batches_qs)
         teacher.save()
 
         messages.success(request, "Teacher registered successfully.")
-        return redirect("add_teacher")
+        redirect_url = reverse("add_teacher")
+        if selected_session:
+            redirect_url += f"?session={selected_session.id}"
+        return redirect(redirect_url)
 
     classes = ClassName.objects.all()
-    class_teachers = [{'class': cls.name, 'teachers': Teacher.objects.filter(batches__class_name=cls).distinct()} for cls in classes ]
+    class_teachers = []
+    for cls in classes:
+        teachers_qs = Teacher.objects.filter(batches__class_name=cls)
+        if selected_session:
+            teachers_qs = teachers_qs.filter(batches__session=selected_session)
+        class_teachers.append({'class': cls.name, 'teachers': teachers_qs.distinct()})
+
     batches = Batch.objects.all()
-    return render(request, "registration/add_teacher.html", {'batches': batches, "class_teachers": class_teachers})
+    if selected_session:
+        batches = batches.filter(session=selected_session)
+
+    return render(request, "registration/add_teacher.html", {
+        'batches': batches,
+        "class_teachers": class_teachers,
+        'academic_sessions': sessions,
+        'active_session': active_session,
+        'selected_session': selected_session,
+    })
 
 @login_required(login_url='login')
 def update_teacher(request, teacher_id):
@@ -2224,6 +2260,21 @@ def update_teacher(request, teacher_id):
     if not teacher:
         messages.error(request, "Invalid Teacher Id")
         return redirect("add_teacher")
+
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = None
+    if selected_session_id:
+        selected_session = AcademicSession.objects.filter(id=selected_session_id).first()
+    if not selected_session:
+        selected_session = active_session
 
     if request.method == "POST":
         form_data = {
@@ -2238,21 +2289,42 @@ def update_teacher(request, teacher_id):
         teacher.user.save()
 
         # Update assigned batches
-        teacher.batches.set(form_data["batches"])
+        batches_qs = Batch.objects.filter(id__in=form_data["batches"])
+        if selected_session:
+            batches_qs = batches_qs.filter(session=selected_session)
+        teacher.batches.set(batches_qs)
         teacher.save()
 
         messages.success(request, "Teacher details updated successfully.")
-        return redirect("update_teacher", teacher_id=teacher.id)
+        redirect_url = reverse("update_teacher", kwargs={'teacher_id': teacher.id})
+        if selected_session:
+            redirect_url += f"?session={selected_session.id}"
+        return redirect(redirect_url)
 
     # Fetch existing details
     classes = ClassName.objects.all()
-    class_teachers = [{'class': cls.name, 'teachers': Teacher.objects.filter(batches__class_name=cls).distinct()} for cls in classes ]
+    class_teachers = []
+    for cls in classes:
+        teachers_qs = Teacher.objects.filter(batches__class_name=cls)
+        if selected_session:
+            teachers_qs = teachers_qs.filter(batches__session=selected_session)
+        class_teachers.append({'class': cls.name, 'teachers': teachers_qs.distinct()})
+
     batches = Batch.objects.all()
+    if selected_session:
+        batches = batches.filter(session=selected_session)
 
     return render(
         request, 
         "registration/update_teacher.html", 
-        {'batches': batches, "class_teachers": class_teachers, "teacher": teacher}
+        {
+            'batches': batches,
+            "class_teachers": class_teachers,
+            "teacher": teacher,
+            'academic_sessions': sessions,
+            'active_session': active_session,
+            'selected_session': selected_session,
+        }
     )
 
 
@@ -2263,33 +2335,73 @@ def test_templates(request, batch_id=None):
         messages.error(request, "You are not authorized to view this page.")
         return redirect('staff_dashboard')
     
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = None
+    if selected_session_id:
+        selected_session = AcademicSession.objects.filter(id=selected_session_id).first()
+    if not selected_session:
+        selected_session = active_session
+
     if batch_id and request.method == "POST":
         if Batch.objects.filter(id=batch_id).first() == None:
             messages.error("Invalid Batch")
             return redirect('test_templates')
         
-        batch = Batch.objects.filter(id=batch_id).first()
+        batch = Batch.objects.filter(id=batch_id).select_related('session').first()
+        if batch and getattr(batch, 'session_id', None):
+            selected_session = batch.session
         test = Test.objects.create(batch=batch, date=datetime.now())
         test.name = 'Demo Test Paper '
         test.save()
 
-        return redirect("create_testpaper", batch_id=batch_id, test_id=test.id )
+        redirect_url = reverse("create_testpaper", kwargs={'batch_id': batch_id, 'test_id': test.id})
+        if selected_session:
+            redirect_url += f"?session={selected_session.id}"
+        return redirect(redirect_url)
 
     classes = ClassName.objects.all().order_by('name')
     class_batches = {
-            cls.name : Batch.objects.filter(class_name=cls).order_by('class_name__name', 'section')
+            cls.name : Batch.objects.filter(
+                class_name=cls,
+                **({'session': selected_session} if selected_session else {})
+            ).order_by('class_name__name', 'section')
             for cls in classes
         }
 
     return render(request, "registration/test_templates.html", {
         'class_batches': class_batches,
+        'academic_sessions': sessions,
+        'active_session': active_session,
+        'selected_session': selected_session,
     })
 
 @login_required(login_url='login')
 def create_testpaper(request, batch_id, test_id):
     if not request.user.is_superuser:
         return redirect('staff_dashboard')
-    batch = Batch.objects.filter(id=batch_id).first()
+    active_session = AcademicSession.get_active()
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
+
+    batch = Batch.objects.filter(id=batch_id).select_related('session').first()
+    if batch and getattr(batch, 'session_id', None):
+        selected_session = batch.session
+    if not selected_session:
+        selected_session = active_session
+
     test = Test.objects.filter(id=test_id).first()
     if not batch or not test:
         messages.error(request, "Invalid Batch or Test")
@@ -2307,7 +2419,10 @@ def create_testpaper(request, batch_id, test_id):
 
         test.save()
 
-        return redirect('test_templates')
+        redirect_url = reverse('test_templates')
+        if selected_session:
+            redirect_url += f"?session={selected_session.id}"
+        return redirect(redirect_url)
     
     questions = TestQuestion.objects.filter(test = test, is_main=True).order_by('question_number')
     chapters = Chapter.objects.filter(subject=batch.subject, class_name=batch.class_name).order_by('chapter_no')
@@ -2324,20 +2439,37 @@ def delete_testpaper(request, test_id):
     if not request.user.is_superuser:
         return redirect('staff_dashboard')
     
-    test = Test.objects.filter(id=test_id).first()
+    test = Test.objects.filter(id=test_id).select_related('batch__session').first()
     if not test:
         messages.error(request, "Invalid Test")
         return redirect("test_templates")
-    
+
+    selected_session = getattr(getattr(test, 'batch', None), 'session', None)
     test.delete()
     messages.success(request, "Test deleted successfully.")
-    return redirect("test_templates")
+    redirect_url = reverse("test_templates")
+    if selected_session:
+        redirect_url += f"?session={selected_session.id}"
+    return redirect(redirect_url)
 
 @login_required(login_url='login')
 def create_test_question(request, batch_id, test_id):
     if not request.user.is_superuser:
         return redirect('staff_dashboard')
-    batch = Batch.objects.filter(id=batch_id).first()
+    active_session = AcademicSession.get_active()
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
+
+    batch = Batch.objects.filter(id=batch_id).select_related('session').first()
+    if batch and getattr(batch, 'session_id', None):
+        selected_session = batch.session
+    if not selected_session:
+        selected_session = active_session
     test = Test.objects.filter(id=test_id).first()
     if not batch or not test:
         messages.error(request, "Invalid Batch or Test")
@@ -2393,14 +2525,33 @@ def create_test_question(request, batch_id, test_id):
         except Exception as e:
             messages.error(request, "Invalid Input.")
 
-        return redirect("create_testpaper", batch_id=batch_id, test_id=test_id )
-    return redirect("create_testpaper", batch_id=batch_id, test_id=test_id )
+        redirect_url = reverse("create_testpaper", kwargs={'batch_id': batch_id, 'test_id': test_id})
+        if selected_session:
+            redirect_url += f"?session={selected_session.id}"
+        return redirect(redirect_url)
+    redirect_url = reverse("create_testpaper", kwargs={'batch_id': batch_id, 'test_id': test_id})
+    if selected_session:
+        redirect_url += f"?session={selected_session.id}"
+    return redirect(redirect_url)
 
 @login_required(login_url='login')
 def update_test_question(request, batch_id, test_id, question_id):
     if not request.user.is_superuser:
         return redirect('staff_dashboard')
-    batch = Batch.objects.filter(id=batch_id).first()
+    active_session = AcademicSession.get_active()
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
+
+    batch = Batch.objects.filter(id=batch_id).select_related('session').first()
+    if batch and getattr(batch, 'session_id', None):
+        selected_session = batch.session
+    if not selected_session:
+        selected_session = active_session
     test = Test.objects.filter(id=test_id).first()
     question = TestQuestion.objects.filter(id=question_id).first()
     if not batch or not test or not question:
@@ -2443,21 +2594,37 @@ def update_test_question(request, batch_id, test_id, question_id):
             opt_question.chapter = opt_chapter
             opt_question.save()
 
-        return redirect("create_testpaper", batch_id=batch_id, test_id=test_id )
-    return redirect("create_testpaper", batch_id=batch_id, test_id=test_id )
-
+        redirect_url = reverse("create_testpaper", kwargs={'batch_id': batch_id, 'test_id': test_id})
+        if selected_session:
+            redirect_url += f"?session={selected_session.id}"
+        return redirect(redirect_url)
+    redirect_url = reverse("create_testpaper", kwargs={'batch_id': batch_id, 'test_id': test_id})
+    if selected_session:
+        redirect_url += f"?session={selected_session.id}"
+    return redirect(redirect_url)
 
 @login_required(login_url='login')
 def calculate_marks(request, batch_id, test_id):
     if not request.user.is_superuser:
         return redirect('staff_dashboard')
-    batch = Batch.objects.filter(id=batch_id).first()
+    active_session = AcademicSession.get_active()
+    selected_session_id = request.GET.get('session') or request.GET.get('academic-session')
+    selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
+
+    batch = Batch.objects.filter(id=batch_id).select_related('session').first()
+    if batch and getattr(batch, 'session_id', None):
+        selected_session = batch.session
+    if not selected_session:
+        selected_session = active_session
     test = Test.objects.filter(id=test_id).first()
     if not batch or not test:
         messages.error(request, "Invalid Batch or Test")
         return redirect("create_test_template")
     test.calculate_total_max_marks()
-    return redirect("create_testpaper", batch_id=batch_id, test_id=test_id )
+    redirect_url = reverse("create_testpaper", kwargs={'batch_id': batch_id, 'test_id': test_id})
+    if selected_session:
+        redirect_url += f"?session={selected_session.id}"
+    return redirect(redirect_url)
 
 # Test Response
 @login_required(login_url='login')
@@ -2465,21 +2632,56 @@ def result_templates(request):
     if not request.user.is_superuser:
         return redirect('staff_dashboard')
     
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = None
+    if selected_session_id:
+        selected_session = AcademicSession.objects.filter(id=selected_session_id).first()
+    if not selected_session:
+        selected_session = active_session
+
     classes = ClassName.objects.all().order_by('name')
     class_batches = {
-        cls.name : Batch.objects.filter(class_name=cls).order_by('class_name__name', 'section')
+        cls.name : Batch.objects.filter(
+            class_name=cls,
+            **({'session': selected_session} if selected_session else {})
+        ).order_by('class_name__name', 'section')
         for cls in classes
     }
 
     return render(request, "registration/result_templates.html", {
         'class_batches': class_batches,
+        'academic_sessions': sessions,
+        'active_session': active_session,
+        'selected_session': selected_session,
     })
 
 @login_required(login_url='login')
 def add_result(request, batch_id, test_id, student_id=None, question_id = None):
     if not request.user.is_superuser:
         return redirect('staff_dashboard')
-    batch = Batch.objects.filter(id=batch_id).first()
+    active_session = AcademicSession.get_active()
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
+
+    batch = Batch.objects.filter(id=batch_id).select_related('session').first()
+    if batch and getattr(batch, 'session_id', None):
+        selected_session = batch.session
+    if not selected_session:
+        selected_session = active_session
+
     test = Test.objects.filter(id=test_id).first()
     student = None
     question_response = None
@@ -2492,9 +2694,19 @@ def add_result(request, batch_id, test_id, student_id=None, question_id = None):
     questions = TestQuestion.objects.filter(test=test).order_by('question_number')
     remarks = Remark.objects.all()
 
-    if student_id and Student.objects.filter(id=student_id).first():
-        student = Student.objects.filter(id=student_id).first()
+    enrollments_qs = StudentEnrollment.objects.filter(
+        active=True,
+        session=selected_session,
+        batch_links__batch=batch,
+    ).select_related('student').distinct()
+    enrollments_by_student_id = {e.student_id: e for e in enrollments_qs if e.student_id}
+    students = Student.objects.filter(id__in=enrollments_by_student_id.keys()).order_by('stu_id')
+
+    if student_id:
+        student = students.filter(id=student_id).first()
         question = TestQuestion.objects.filter(id=question_id).first()
+
+        enrollment = enrollments_by_student_id.get(getattr(student, 'id', None)) if student else None
 
         result = TestResult.objects.filter(test=test, student=student).first()
 
@@ -2506,12 +2718,19 @@ def add_result(request, batch_id, test_id, student_id=None, question_id = None):
             response = QuestionResponse.objects.create(
                 question = question,
                 student=student,
+                enrollment=enrollment,
                 test=test,
                 marks_obtained = float(question.max_marks) - float(marks_obtained),
                 remark = remark
             )
             response.save()
-            return redirect("add_student_result", batch_id=batch_id, test_id=test_id, student_id=student_id)
+            redirect_url = reverse(
+                "add_student_result",
+                kwargs={'batch_id': batch_id, 'test_id': test_id, 'student_id': student_id}
+            )
+            if selected_session:
+                redirect_url += f"?session={selected_session.id}"
+            return redirect(redirect_url)
         
         responses = QuestionResponse.objects.filter(student=student, test=test).select_related("question")
 
@@ -2527,8 +2746,7 @@ def add_result(request, batch_id, test_id, student_id=None, question_id = None):
             elif question.is_main and question.question_number not in question_nums:
                 question_response.append({"question": question})
     
-    students = Student.objects.filter(batches=batch)
-    students_map = {student : TestResult.objects.filter(test=test, student=student).first() or 0 for student in students}
+    students_map = {stu: (TestResult.objects.filter(test=test, student=stu).first() or 0) for stu in students}
     return render(request, "registration/add_results.html", {
         "batch":batch, 
         "test":test,
@@ -2539,6 +2757,7 @@ def add_result(request, batch_id, test_id, student_id=None, question_id = None):
         "question_response": question_response,
         "result":result,
         "test_types": TestResult.TEST_TYPE_CHOICES,
+        'selected_session': selected_session,
     })
 
 @login_required(login_url='login')
