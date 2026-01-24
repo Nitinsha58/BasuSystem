@@ -2764,11 +2764,26 @@ def add_result(request, batch_id, test_id, student_id=None, question_id = None):
 def add_test_result_type(request, test_result_id):
     if not request.user.is_superuser:
         return redirect('staff_dashboard')
+
+    active_session = AcademicSession.get_active()
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
     
-    test_result = TestResult.objects.filter(id=test_result_id).first()
+    test_result = TestResult.objects.filter(id=test_result_id).select_related('test__batch__session').first()
     if not test_result:
         messages.error(request, "Invalid Test Result")
         return redirect("result_templates")
+
+    batch_session = getattr(getattr(getattr(test_result, 'test', None), 'batch', None), 'session', None)
+    if batch_session:
+        selected_session = batch_session
+    if not selected_session:
+        selected_session = active_session
 
     if request.method == 'POST':
         test_type = request.POST.get("test_type")
@@ -2785,21 +2800,75 @@ def add_test_result_type(request, test_result_id):
         else:
             messages.error(request, "Invalid Result Type.")
 
-    return redirect("add_student_result", batch_id=test_result.test.batch.id, test_id=test_result.test.id, student_id=test_result.student.id)   
+    redirect_url = reverse(
+        "add_student_result",
+        kwargs={
+            'batch_id': test_result.test.batch.id,
+            'test_id': test_result.test.id,
+            'student_id': test_result.student.id,
+        },
+    )
+    if selected_session:
+        redirect_url += f"?session={selected_session.id}"
+    return redirect(redirect_url)
 
 
 @login_required(login_url='login')
 def update_result(request, batch_id, test_id, student_id, response_id):
     if not request.user.is_superuser:
         return redirect('staff_dashboard')
-    batch = Batch.objects.filter(id=batch_id).first()
+
+    active_session = AcademicSession.get_active()
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
+
+    batch = Batch.objects.filter(id=batch_id).select_related('session').first()
+    if batch and getattr(batch, 'session_id', None):
+        selected_session = batch.session
+    if not selected_session:
+        selected_session = active_session
+
     test = Test.objects.filter(id=test_id).first()
     student = Student.objects.filter(id=student_id).first()
-    response = QuestionResponse.objects.filter(id = response_id).first()
+
+    enrollment = None
+    if batch and selected_session and student:
+        enrollment = StudentEnrollment.objects.filter(
+            student=student,
+            session=selected_session,
+            active=True,
+            batch_links__batch=batch,
+        ).first()
+
+    response_qs = QuestionResponse.objects.filter(id=response_id, student_id=student_id, test_id=test_id)
+    if selected_session:
+        response_qs = response_qs.filter(Q(enrollment__session=selected_session) | Q(enrollment__isnull=True))
+    response = response_qs.select_related('question').first()
 
     if ( not batch or not test or not student or not response ) :
         messages.error("Invalid Details.")
-        return redirect("add_student_question_response", batch_id=batch_id, test_id=test_id, student_id=student_id)
+        redirect_url = reverse(
+            "add_student_result",
+            kwargs={'batch_id': batch_id, 'test_id': test_id, 'student_id': student_id},
+        )
+        if selected_session:
+            redirect_url += f"?session={selected_session.id}"
+        return redirect(redirect_url)
+
+    if selected_session and enrollment is None:
+        messages.error(request, "Student is not enrolled in this batch/session")
+        redirect_url = reverse(
+            "add_student_result",
+            kwargs={'batch_id': batch_id, 'test_id': test_id, 'student_id': student_id},
+        )
+        if selected_session:
+            redirect_url += f"?session={selected_session.id}"
+        return redirect(redirect_url)
 
     if request.method == 'POST':
         marks_obtained = request.POST.get("marks_obtained")
@@ -2809,15 +2878,39 @@ def update_result(request, batch_id, test_id, student_id, response_id):
         if remark_id:
             remark = Remark.objects.get(id=remark_id)
             response.remark = remark
+
+        if enrollment and response.enrollment_id != enrollment.id:
+            response.enrollment = enrollment
         response.save()
 
-    return redirect("add_student_result", batch_id=batch_id, test_id=test_id, student_id=student_id)
+    redirect_url = reverse(
+        "add_student_result",
+        kwargs={'batch_id': batch_id, 'test_id': test_id, 'student_id': student_id},
+    )
+    if selected_session:
+        redirect_url += f"?session={selected_session.id}"
+    return redirect(redirect_url)
 
 @login_required(login_url='login')
 def add_total_marks_obtained(request, batch_id, test_id, student_id):
     if not request.user.is_superuser:
         return redirect('staff_dashboard')
-    batch = Batch.objects.filter(id=batch_id).first()
+
+    active_session = AcademicSession.get_active()
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
+
+    batch = Batch.objects.filter(id=batch_id).select_related('session').first()
+    if batch and getattr(batch, 'session_id', None):
+        selected_session = batch.session
+    if not selected_session:
+        selected_session = active_session
+
     test = Test.objects.filter(id=test_id).first()
     student = None
 
@@ -2828,37 +2921,112 @@ def add_total_marks_obtained(request, batch_id, test_id, student_id):
     student = Student.objects.filter(id=student_id).first()
     if not student:
         messages.error(request, "Invalid Student")
-        return redirect("add_student_result", batch_id=batch_id, test_id=test_id)
+        redirect_url = reverse("add_result", kwargs={'batch_id': batch_id, 'test_id': test_id})
+        if selected_session:
+            redirect_url += f"?session={selected_session.id}"
+        return redirect(redirect_url)
+
+    enrollment = None
+    if batch and selected_session and student:
+        enrollment = StudentEnrollment.objects.filter(
+            student=student,
+            session=selected_session,
+            active=True,
+            batch_links__batch=batch,
+        ).first()
+
+    if selected_session and enrollment is None:
+        messages.error(request, "Student is not enrolled in this batch/session")
+        redirect_url = reverse(
+            "add_student_result",
+            kwargs={'batch_id': batch_id, 'test_id': test_id, 'student_id': student_id},
+        )
+        if selected_session:
+            redirect_url += f"?session={selected_session.id}"
+        return redirect(redirect_url)
 
     if request.method == 'POST':
         total_marks_obtained = request.POST.get('total_marks_obtained')
         result, created = TestResult.objects.get_or_create(student=student,test=test)
+        if enrollment and result.enrollment_id != enrollment.id:
+            result.enrollment = enrollment
         result.total_marks_obtained = float(total_marks_obtained)
         result.total_max_marks = test.total_max_marks
         result.percentage = (float(total_marks_obtained) / test.total_max_marks or 1) * 100
         result.save()
-        return redirect("add_student_result", batch_id=batch_id, test_id=test_id, student_id=student_id)
+        redirect_url = reverse(
+            "add_student_result",
+            kwargs={'batch_id': batch_id, 'test_id': test_id, 'student_id': student_id},
+        )
+        if selected_session:
+            redirect_url += f"?session={selected_session.id}"
+        return redirect(redirect_url)
 
-    return redirect("add_student_result", batch_id=batch_id, test_id=test_id)
+    redirect_url = reverse(
+        "add_student_result",
+        kwargs={'batch_id': batch_id, 'test_id': test_id, 'student_id': student_id},
+    )
+    if selected_session:
+        redirect_url += f"?session={selected_session.id}"
+    return redirect(redirect_url)
 
 @login_required(login_url='login')
 def delete_result(request, batch_id, test_id, student_id, response_id):
     if not request.user.is_superuser:
         return redirect('staff_dashboard')
+
+    active_session = AcademicSession.get_active()
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
+
+    batch = Batch.objects.filter(id=batch_id).select_related('session').first()
+    if batch and getattr(batch, 'session_id', None):
+        selected_session = batch.session
+    if not selected_session:
+        selected_session = active_session
+
     try:
-        if not Batch.objects.filter(id=batch_id).exists():
+        if not batch:
             messages.error(request, "Invalid batch ID.")
-            return redirect("add_student_result", batch_id=batch_id, test_id=test_id, student_id=student_id)
+            redirect_url = reverse(
+                "add_student_result",
+                kwargs={'batch_id': batch_id, 'test_id': test_id, 'student_id': student_id},
+            )
+            if selected_session:
+                redirect_url += f"?session={selected_session.id}"
+            return redirect(redirect_url)
 
         if not Test.objects.filter(id=test_id).exists():
             messages.error(request, "Invalid test ID.")
-            return redirect("add_student_result", batch_id=batch_id, test_id=test_id, student_id=student_id)
+            redirect_url = reverse(
+                "add_student_result",
+                kwargs={'batch_id': batch_id, 'test_id': test_id, 'student_id': student_id},
+            )
+            if selected_session:
+                redirect_url += f"?session={selected_session.id}"
+            return redirect(redirect_url)
 
         if not Student.objects.filter(id=student_id).exists():
             messages.error(request, "Invalid student ID.")
-            return redirect("add_student_result", batch_id=batch_id, test_id=test_id, student_id=student_id)
+            redirect_url = reverse(
+                "add_student_result",
+                kwargs={'batch_id': batch_id, 'test_id': test_id, 'student_id': student_id},
+            )
+            if selected_session:
+                redirect_url += f"?session={selected_session.id}"
+            return redirect(redirect_url)
 
-        response = QuestionResponse.objects.get(id=response_id)
+        response_qs = QuestionResponse.objects.filter(id=response_id, student_id=student_id, test_id=test_id)
+        if selected_session:
+            response_qs = response_qs.filter(Q(enrollment__session=selected_session) | Q(enrollment__isnull=True))
+        response = response_qs.first()
+        if not response:
+            raise QuestionResponse.DoesNotExist
 
         response.delete()
         messages.success(request, "Response deleted.")
@@ -2869,18 +3037,65 @@ def delete_result(request, batch_id, test_id, student_id, response_id):
     except Exception as e:
         messages.error(request, f"An error occurred: {str(e)}")
 
-    return redirect("add_student_result", batch_id=batch_id, test_id=test_id, student_id=student_id)
+    redirect_url = reverse(
+        "add_student_result",
+        kwargs={'batch_id': batch_id, 'test_id': test_id, 'student_id': student_id},
+    )
+    if selected_session:
+        redirect_url += f"?session={selected_session.id}"
+    return redirect(redirect_url)
 
 @login_required(login_url='login')
 def all_pending_response(request, batch_id, test_id, student_id):
     if not request.user.is_superuser:
         return redirect('staff_dashboard')
+
+    active_session = AcademicSession.get_active()
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
+
+    batch = Batch.objects.filter(id=batch_id).select_related('session').first()
+    if batch and getattr(batch, 'session_id', None):
+        selected_session = batch.session
+    if not selected_session:
+        selected_session = active_session
+
     test = Test.objects.filter(id=test_id).first()
     student = Student.objects.filter(id=student_id).first()
 
     if not student or not test:
         messages.error(request, "Invalid Student or Test")
-        return redirect("add_student_result", batch_id=batch_id, test_id=test_id, student_id=student_id)
+        redirect_url = reverse(
+            "add_student_result",
+            kwargs={'batch_id': batch_id, 'test_id': test_id, 'student_id': student_id},
+        )
+        if selected_session:
+            redirect_url += f"?session={selected_session.id}"
+        return redirect(redirect_url)
+
+    enrollment = None
+    if batch and selected_session and student:
+        enrollment = StudentEnrollment.objects.filter(
+            student=student,
+            session=selected_session,
+            active=True,
+            batch_links__batch=batch,
+        ).first()
+
+    if selected_session and enrollment is None:
+        messages.error(request, "Student is not enrolled in this batch/session")
+        redirect_url = reverse(
+            "add_student_result",
+            kwargs={'batch_id': batch_id, 'test_id': test_id, 'student_id': student_id},
+        )
+        if selected_session:
+            redirect_url += f"?session={selected_session.id}"
+        return redirect(redirect_url)
 
     unanswered_questions = TestQuestion.objects.filter(
         test=test
@@ -2895,12 +3110,19 @@ def all_pending_response(request, batch_id, test_id, student_id):
         obj = QuestionResponse.objects.create(
             question=question,
             student=student,
+            enrollment=enrollment,
             test=test,
             marks_obtained=question.max_marks,  # Default marks
         )
         obj.save()
 
-    return redirect("add_student_result", batch_id=batch_id, test_id=test_id, student_id=student_id)
+    redirect_url = reverse(
+        "add_student_result",
+        kwargs={'batch_id': batch_id, 'test_id': test_id, 'student_id': student_id},
+    )
+    if selected_session:
+        redirect_url += f"?session={selected_session.id}"
+    return redirect(redirect_url)
     
 
 @login_required(login_url='login')
