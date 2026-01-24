@@ -3130,6 +3130,18 @@ def transport_list(request):
     if not request.user.is_superuser:
         return redirect('staff_dashboard')
 
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
+    if not selected_session:
+        selected_session = active_session
+
     weekdays = list(Day.objects.order_by("id"))  # or "name" if alphabetically sorted
     total = len(weekdays)
 
@@ -3150,12 +3162,27 @@ def transport_list(request):
         Q(subject__name__in=['MATH', 'SCIENCE'])
     ).order_by('start_time', 'class_name__name', 'section')
 
+    if selected_session:
+        batches = batches.filter(session=selected_session)
+
     grouped_batches = {}
     for batch in batches:
-        transport_students = Student.objects.filter(
-            batches=batch,
-            fees__cab_fees__gt=0,
+        enrollments_qs = StudentEnrollment.objects.filter(
             active=True,
+            session=selected_session,
+            batch_links__batch=batch,
+        ).select_related('student').distinct()
+        student_ids = [e.student_id for e in enrollments_qs if e.student_id]
+        transport_students = Student.objects.filter(
+            id__in=student_ids,
+            fees__cab_fees__gt=0,
+            transport__isnull=False,
+        ).select_related(
+            'user',
+            'transport',
+            'transport__transport_person',
+            'transport__transport_mode',
+            'fees',
         ).order_by('stu_id')
 
         if transport_students.exists():
@@ -3168,6 +3195,9 @@ def transport_list(request):
         "current_day": current_day,
         "day": index,
         "grouped_batches": dict(grouped_batches),
+        'academic_sessions': sessions,
+        'active_session': active_session,
+        'selected_session': selected_session,
     })
 
 
@@ -3175,6 +3205,18 @@ def transport_list(request):
 def transport_driver_list(request):
     if not request.user.is_superuser:
         return redirect('staff_dashboard')
+
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
+    if not selected_session:
+        selected_session = active_session
 
     weekdays = list(Day.objects.order_by("id"))
     total = len(weekdays)
@@ -3189,51 +3231,46 @@ def transport_driver_list(request):
 
     current_day = weekdays[index]
 
-    # Load only students who have cab fees and are active
-    students = Student.objects.filter(
-        active=True,
-        fees__cab_fees__gt=0,
-        batches__days__name=current_day.name
-    ).prefetch_related(
-        'batches__days',
-        'batches',
-        'transport',
-        'transport__transport_person'
-    ).distinct()
+    batch_links_qs = EnrollmentBatch.objects.filter(
+        enrollment__active=True,
+        enrollment__session=selected_session,
+        batch__days__name=current_day.name,
+    ).exclude(
+        Q(batch__class_name__name__in=['CLASS 9', 'CLASS 10']) &
+        Q(batch__section__name='CBSE') &
+        Q(batch__subject__name__in=['MATH', 'SCIENCE'])
+    ).select_related(
+        'batch',
+        'enrollment',
+        'enrollment__student',
+        'enrollment__student__user',
+        'enrollment__student__transport',
+        'enrollment__student__transport__transport_person',
+        'enrollment__student__transport__transport_mode',
+        'enrollment__student__fees',
+    ).order_by('batch__start_time')
 
     grouped_transports = defaultdict(lambda: defaultdict(list))
-
     seen_students = set()  # to avoid duplicate inclusion
 
-    for student in students:
+    for link in batch_links_qs:
+        student = getattr(getattr(link, 'enrollment', None), 'student', None)
+        if not student:
+            continue
+        if student.id in seen_students:
+            continue
+        if not getattr(student, 'fees', None) or float(student.fees.cab_fees or 0) <= 0:
+            continue
         try:
             if not student.transport or not student.transport.transport_person:
                 continue
         except Student.transport.RelatedObjectDoesNotExist:
             continue
 
-        # Get all batches on current_day
-        batches_today = [
-            batch for batch in student.batches.all().exclude(
-                Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
-                Q(section__name='CBSE') &
-                Q(subject__name__in=['MATH', 'SCIENCE'])
-            )
-            if current_day in batch.days.all()
-        ]
-
-        if not batches_today:
-            continue
-
-        # Find the earliest batch time
-        earliest_batch = min(batches_today, key=lambda b: b.start_time)
-        time = earliest_batch.start_time
+        time = link.batch.start_time
         driver = student.transport.transport_person
-
-        # Use stu_id or student.pk to avoid duplicates
-        if student.pk not in seen_students:
-            grouped_transports[time][driver].append(student)
-            seen_students.add(student.pk)
+        grouped_transports[time][driver].append(student)
+        seen_students.add(student.id)
 
     # Sort students and timings
     for time in grouped_transports:
@@ -3253,6 +3290,9 @@ def transport_driver_list(request):
         "current_day": current_day,
         "day": index,
         "grouped_transports": sorted_grouped,
+        'academic_sessions': sessions,
+        'active_session': active_session,
+        'selected_session': selected_session,
     })
 
 
@@ -3261,12 +3301,45 @@ def grouped_transports(request):
     if not request.user.is_superuser:
         return redirect('staff_dashboard')
 
-    # Load only active students with cab fees and a driver
-    students = Student.objects.filter(
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
+    if not selected_session:
+        selected_session = active_session
+
+    weekdays = list(Day.objects.order_by("id"))
+    total = len(weekdays)
+    index = int(request.GET.get("day", 0))
+    move = request.GET.get("move")
+    if move == "next" and index < total - 1:
+        index += 1
+    elif move == "prev" and index > 0:
+        index -= 1
+    current_day = weekdays[index]
+
+    enrolled_student_ids = StudentEnrollment.objects.filter(
         active=True,
+        session=selected_session,
+        batch_links__batch__days__name=current_day.name,
+    ).values_list('student_id', flat=True)
+
+    students = Student.objects.filter(
+        id__in=enrolled_student_ids,
         fees__cab_fees__gt=0,
-        transport__transport_person__isnull=False
-    ).select_related('transport__transport_person').distinct()
+        transport__transport_person__isnull=False,
+    ).select_related(
+        'user',
+        'fees',
+        'transport',
+        'transport__transport_person',
+        'transport__transport_mode',
+    ).distinct().order_by('stu_id')
 
     grouped_by_driver = defaultdict(list)
 
@@ -3280,12 +3353,29 @@ def grouped_transports(request):
 
     return render(request, "registration/grouped_transports.html", {
         "grouped_transports": dict(grouped_by_driver),
+        "current_day": current_day,
+        "day": index,
+        'academic_sessions': sessions,
+        'active_session': active_session,
+        'selected_session': selected_session,
     })
 
 @login_required(login_url='login')
 def transport_student_list(request):
     if not request.user.is_superuser:
         return redirect('staff_dashboard')
+
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
+    if not selected_session:
+        selected_session = active_session
 
     weekdays = list(Day.objects.order_by("id"))
     total = len(weekdays)
@@ -3300,47 +3390,42 @@ def transport_student_list(request):
 
     current_day = weekdays[index]
 
-    # Load only students who have cab fees and are active
-    students = Student.objects.filter(
-        active=True,
-        fees__cab_fees__gt=0,
-        batches__days__name=current_day.name
-    ).prefetch_related(
-        'batches__days',
-        'batches',
-        'transport',
-        'transport__transport_person'
-    ).distinct()
+    batch_links_qs = EnrollmentBatch.objects.filter(
+        enrollment__active=True,
+        enrollment__session=selected_session,
+        batch__days__name=current_day.name,
+    ).select_related(
+        'batch',
+        'enrollment',
+        'enrollment__student',
+        'enrollment__student__user',
+        'enrollment__student__transport',
+        'enrollment__student__transport__transport_person',
+        'enrollment__student__transport__transport_mode',
+        'enrollment__student__fees',
+    ).order_by('batch__start_time')
 
     grouped_transports = defaultdict(lambda: defaultdict(list))
-
     seen_students = set()  # to avoid duplicate inclusion
 
-    for student in students:
+    for link in batch_links_qs:
+        student = getattr(getattr(link, 'enrollment', None), 'student', None)
+        if not student:
+            continue
+        if student.id in seen_students:
+            continue
+        if not getattr(student, 'fees', None) or float(student.fees.cab_fees or 0) <= 0:
+            continue
         try:
             if not student.transport or not student.transport.transport_person:
                 continue
         except Student.transport.RelatedObjectDoesNotExist:
             continue
 
-        # Get all batches on current_day
-        batches_today = [
-            batch for batch in student.batches.all()
-            if current_day in batch.days.all()
-        ]
-
-        if not batches_today:
-            continue
-
-        # Find the earliest batch time
-        earliest_batch = min(batches_today, key=lambda b: b.start_time)
-        time = earliest_batch.start_time
+        time = link.batch.start_time
         driver = student.transport.transport_person
-
-        # Use stu_id or student.pk to avoid duplicates
-        if student.pk not in seen_students:
-            grouped_transports[time][driver].append(student)
-            seen_students.add(student.pk)
+        grouped_transports[time][driver].append(student)
+        seen_students.add(student.id)
 
     # Sort students and timings
     for time in grouped_transports:
@@ -3360,72 +3445,223 @@ def transport_student_list(request):
         "current_day": current_day,
         "day": index,
         "grouped_transports": sorted_grouped,
+        'academic_sessions': sessions,
+        'active_session': active_session,
+        'selected_session': selected_session,
     })
 
 @login_required(login_url='login')
 def assign_mentor(request):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
+
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
+    if not selected_session:
+        selected_session = active_session
     
     if request.method == 'POST':
         mentor = request.POST.get('mentor')
-        students = request.POST.getlist('students[]')
+        enrollment_ids = request.POST.getlist('enrollments[]')
 
-        if not mentor or not students:
+        if not mentor or not enrollment_ids:
             messages.error(request, "Please select a mentor and at least one student.")
-            return redirect('assign_mentor')
+            redirect_url = reverse('assign_mentor')
+            if selected_session:
+                redirect_url += f"?session={selected_session.id}"
+            return redirect(redirect_url)
         mentor_obj = Mentor.objects.filter(id=mentor).first()
         if not mentor_obj:
             messages.error(request, "Invalid Mentor")
-            return redirect('assign_mentor')
-        for student_id in students:
-            student = Student.objects.filter(stu_id=student_id).first()
-            if student:
-                mentorship, created = Mentorship.objects.get_or_create(
-                    mentor=mentor_obj,
-                    student=student,
-                    defaults={'active': True}
-                )
-                if not created:
-                    mentorship.active = True
-                    mentorship.save()
-        messages.success(request, "Mentor assigned successfully.")
-        return redirect('assign_mentor')
+            redirect_url = reverse('assign_mentor')
+            if selected_session:
+                redirect_url += f"?session={selected_session.id}"
+            return redirect(redirect_url)
 
-    classes = ClassName.objects.all().order_by('-created_at')
-    class_students = [
-        {
-            'class': cls.name, 
-            'students': Student.objects.filter(class_enrolled=cls, active=True).order_by('-created_at', 'user__first_name', 'user__last_name').distinct()
-        } for cls in classes ]
+        enrollments = StudentEnrollment.objects.filter(
+            id__in=enrollment_ids,
+            session=selected_session,
+            active=True,
+        ).select_related('student')
+
+        for enrollment in enrollments:
+            if not enrollment.student:
+                continue
+            Mentorship.objects.filter(enrollment=enrollment, active=True).update(active=False)
+            mentorship, created = Mentorship.objects.get_or_create(
+                mentor=mentor_obj,
+                student=enrollment.student,
+                enrollment=enrollment,
+                defaults={'active': True}
+            )
+            if not created and not mentorship.active:
+                mentorship.active = True
+                mentorship.save(update_fields=['active'])
+        messages.success(request, "Mentor assigned successfully.")
+        redirect_url = reverse('assign_mentor')
+        if selected_session:
+            redirect_url += f"?session={selected_session.id}"
+        return redirect(redirect_url)
+
+    classes = ClassName.objects.all().order_by('name')
+
+    enrollments_qs = StudentEnrollment.objects.filter(
+        session=selected_session,
+        active=True,
+    ).select_related(
+        'class_name',
+        'student',
+        'student__user',
+    ).order_by('student__user__first_name', 'student__user__last_name', 'student__stu_id')
+
+    enrollments_by_class_id = defaultdict(list)
+    enrollment_ids = []
+    for e in enrollments_qs:
+        if not e.class_name_id or not e.student_id:
+            continue
+        enrollments_by_class_id[e.class_name_id].append(e)
+        enrollment_ids.append(e.id)
+
+    active_mentorships = Mentorship.objects.filter(
+        active=True,
+        enrollment_id__in=enrollment_ids,
+    ).select_related('mentor__user', 'enrollment')
+    mentorship_by_enrollment_id = {m.enrollment_id: m for m in active_mentorships if m.enrollment_id}
+
+    class_enrollments = []
+    for cls in classes:
+        cls_enrollments = enrollments_by_class_id.get(cls.id, [])
+        if not cls_enrollments:
+            continue
+
+        enrollment_rows = []
+        for enrollment in cls_enrollments:
+            active_mentorship = mentorship_by_enrollment_id.get(enrollment.id)
+            enrollment_rows.append({
+                'enrollment': enrollment,
+                'student': enrollment.student,
+                'active_mentorship': active_mentorship,
+                'needs_mentor': active_mentorship is None,
+            })
+        class_enrollments.append({
+            'class': cls.name,
+            'enrollments': enrollment_rows,
+            'total': len(enrollment_rows),
+        })
 
     mentors = Mentor.objects.all().order_by('-created_at')
 
 
     return render(request, "registration/assign_mentor.html", {
-        'class_students' : class_students,
-        'mentors' : mentors,
+        'class_enrollments': class_enrollments,
+        'mentors': mentors,
+        'academic_sessions': sessions,
+        'active_session': active_session,
+        'selected_session': selected_session,
     })
+
+
+@login_required(login_url='login')
+def unassign_mentor_enrollment(request, enrollment_id):
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
+
+    active_session = AcademicSession.get_active()
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
+
+    enrollment = StudentEnrollment.objects.filter(id=enrollment_id).select_related('session').first()
+    if not enrollment:
+        messages.error(request, "Invalid Enrollment")
+        redirect_url = reverse('assign_mentor')
+        if selected_session:
+            redirect_url += f"?session={selected_session.id}"
+        return redirect(redirect_url)
+
+    if enrollment.session:
+        selected_session = enrollment.session
+    if not selected_session:
+        selected_session = active_session
+
+    Mentorship.objects.filter(enrollment=enrollment, active=True).update(active=False)
+    messages.success(request, "Mentorship unassigned successfully.")
+
+    redirect_url = reverse('assign_mentor')
+    if selected_session:
+        redirect_url += f"?session={selected_session.id}"
+    return redirect(redirect_url)
 
 @login_required(login_url='login')
 def unassign_mentor(request, stu_id):
     if not request.user.is_superuser:
         return redirect('staff_dashboard')
+
+    active_session = AcademicSession.get_active()
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
     
     student = Student.objects.filter(stu_id=stu_id).first()
     if not student:
         messages.error(request, "Invalid Student")
-        return redirect('assign_mentor')
+        redirect_url = reverse('assign_mentor')
+        if selected_session:
+            redirect_url += f"?session={selected_session.id}"
+        return redirect(redirect_url)
+
+    # If session is provided (or can be inferred), unassign only for that session's enrollment.
+    enrollment = None
+    if selected_session:
+        enrollment = StudentEnrollment.objects.filter(student=student, session=selected_session).first()
+    if not enrollment:
+        enrollment = StudentEnrollment.get_current_for_student(student)
+        if enrollment and enrollment.session:
+            selected_session = enrollment.session
+    if not selected_session:
+        selected_session = active_session
+
+    if enrollment:
+        Mentorship.objects.filter(enrollment=enrollment, active=True).update(active=False)
+        messages.success(request, "Mentorship unassigned successfully.")
+        redirect_url = reverse('assign_mentor')
+        if selected_session:
+            redirect_url += f"?session={selected_session.id}"
+        return redirect(redirect_url)
 
     mentorships = Mentorship.objects.filter(student=student)
     if not mentorships.exists():
         messages.error(request, "No mentorship found for this student.")
-        return redirect('assign_mentor')
+        redirect_url = reverse('assign_mentor')
+        if selected_session:
+            redirect_url += f"?session={selected_session.id}"
+        return redirect(redirect_url)
     
     for mentorship in mentorships:
         mentorship.active = False
         mentorship.save()
     messages.success(request, "Mentorship unassigned successfully.")
 
-    return redirect('assign_mentor')
+    redirect_url = reverse('assign_mentor')
+    if selected_session:
+        redirect_url += f"?session={selected_session.id}"
+    return redirect(redirect_url)
 
 @login_required(login_url='login')
 def add_driver(request):

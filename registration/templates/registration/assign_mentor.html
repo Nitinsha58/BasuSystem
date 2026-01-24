@@ -8,59 +8,83 @@
 </div>
 
 <div class="container p-4 bg-warning-subtle">
-  {% if class_students %}
+  <div class="mb-3 d-flex gap-2 align-items-center">
+    <form method="get" class="d-flex gap-2 align-items-center">
+      <label for="session" class="form-label m-0">Session</label>
+      <select class="form-select" name="session" id="session" style="max-width: 260px;">
+        {% for s in academic_sessions %}
+        <option value="{{ s.id }}" {% if selected_session and s.id == selected_session.id %}selected{% endif %}>
+          {{ s }}{% if active_session and s.id == active_session.id %} (Active){% endif %}
+        </option>
+        {% endfor %}
+      </select>
+      <button class="btn btn-dark" type="submit">Apply</button>
+    </form>
+  </div>
+
+  {% if class_enrollments %}
   <div class="row shuffle bg-warning-subtle" data-masonry='{"percentPosition": true }' id="batches">
-    {% for cls in class_students %}
+    {% for cls in class_enrollments %}
     <div class="col-sm-6 col-md-4 col-lg-3 category shuffle-item shuffle-item--visible mb-4">
       <div class="card">
         <ul class="list-group">
-            <li class="list-group-item bg-dark text-white list-group border-dark"> {{cls.class}} - ({{cls.students.count}} )</li>
-            <form action="" method="post" class="p-2 border rounded">
-                    {% csrf_token %}
-                <li class="d-flex flex-column justify-content-center list-group-item ">
-                    <button type="submit" class="btn btn-dark text-white fw-semibold mb-2" >
-                        Assign Mentor
-                    </button>
-                    <div class="">
-                        <label for="class_enrolled" class="form-label">Mentor</label>
-                        <select class="form-select" name="mentor" id="mentor" required>
-                            {% for mentor in mentors %}
-                                <option value="{{mentor.id}}">{{mentor.user.first_name}} {{mentor.user.last_name}} ({{ mentor.total_active_mentorships }})</option>
-                            {% endfor %}
-                        </select>
-                    </div>
+          <li class="list-group-item bg-dark text-white list-group border-dark"> {{cls.class}} - ({{cls.total}} )</li>
+          <form action="" method="post" class="p-2 border rounded">
+            {% csrf_token %}
+            {% if selected_session %}
+            <input type="hidden" name="session" value="{{ selected_session.id }}" />
+            {% endif %}
+            <li class="d-flex flex-column justify-content-center list-group-item ">
+              <button type="submit" class="btn btn-dark text-white fw-semibold mb-2">
+                Assign Mentor
+              </button>
+              <div class="">
+                <label for="class_enrolled" class="form-label">Mentor</label>
+                <select class="form-select" name="mentor" id="mentor" required>
+                  {% for mentor in mentors %}
+                  <option value="{{mentor.id}}">{{mentor.user.first_name}} {{mentor.user.last_name}} ({{ mentor.total_active_mentorships }})</option>
+                  {% endfor %}
+                </select>
+              </div>
 
-                </li>
-                {% for student in cls.students %}
-                    {% if student.needs_mentor and student.active %}
-                    <li class="list-group-item ">
-                        <div class=" d-flex justify-content-between">
-                            <label for="student_{{cls.class}}{{forloop.counter}}" class="text-decoration-none text-dark m-0" style="display: flex; justify-content: space-between;" target="_blank">
-                                {{forloop.counter}}. {{student.user.first_name}} {{student.user.last_name}}
-                            </label>
-                            <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;" name="students[]" type="checkbox" value="{{ student.stu_id }}" id="student_{{cls.class}}{{forloop.counter}}">
-                        </div>
-                    </li>
-                    {% endif %}    
-                {% endfor %}
-            </form>
-
-          {% for student in cls.students %}
-            {% if student.has_active_mentorship and student.active %}
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                <div class="">
-                    <p class="text-decoration-none text-dark m-0" style="display: flex; justify-content: space-between;" target="_blank">
-                    {{forloop.counter}}. {{student.user.first_name}} {{student.user.last_name}}
-                    </p>
-                    <p class="text-muted fw-normal m-0" style="font-size: 14px;">{{ student.active_mentorship.mentor.user.first_name }} {{ student.active_mentorship.mentor.user.last_name }}</p>
-                </div>
-                <a data-stu_id="{{student.stu_id}}" class="delete-link px-2 py-1 btn btn-outline-danger fw-semibold text-decoration-none">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
-                    </svg>
-                </a>
+            </li>
+            {% for row in cls.enrollments %}
+            {% if row.needs_mentor %}
+            <li class="list-group-item ">
+              <div class=" d-flex justify-content-between">
+                <label for="enrollment_{{cls.class}}{{forloop.counter}}" class="text-decoration-none text-dark m-0"
+                  style="display: flex; justify-content: space-between;" target="_blank">
+                  {{forloop.counter}}. {{row.student.user.first_name}} {{row.student.user.last_name}}
+                </label>
+                <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;" name="enrollments[]"
+                  type="checkbox" value="{{ row.enrollment.id }}" id="enrollment_{{cls.class}}{{forloop.counter}}">
+              </div>
             </li>
             {% endif %}
+            {% endfor %}
+          </form>
+
+          {% for row in cls.enrollments %}
+          {% if not row.needs_mentor and row.active_mentorship %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div class="">
+              <p class="text-decoration-none text-dark m-0" style="display: flex; justify-content: space-between;"
+                target="_blank">
+                {{forloop.counter}}. {{row.student.user.first_name}} {{row.student.user.last_name}}
+              </p>
+              <p class="text-muted fw-normal m-0" style="font-size: 14px;">{{ row.active_mentorship.mentor.user.first_name }} {{ row.active_mentorship.mentor.user.last_name }}</p>
+            </div>
+            <a href="{% url 'unassign_mentor_enrollment' row.enrollment.id %}{% if selected_session %}?session={{ selected_session.id }}{% endif %}"
+              class="delete-link px-2 py-1 btn btn-outline-danger fw-semibold text-decoration-none">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash"
+                viewBox="0 0 16 16">
+                <path
+                  d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z">
+                </path>
+              </svg>
+            </a>
+          </li>
+          {% endif %}
           {% endfor %}
         </ul>
       </div>
@@ -71,41 +95,41 @@
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      const deleteLinks = document.querySelectorAll(".delete-link");
-      const modal = document.getElementById("deleteConfirmationModal");
-      const confirmButton = document.getElementById("confirmDeleteButton");
-      const cancelButton = document.getElementById("cancelButton");
-  
-      let deleteUrl = "";
-  
-      deleteLinks.forEach(link => {
-        link.addEventListener("click", function (event) {
-          event.preventDefault();
-          document.getElementsByTagName('html')[0].style.overflow = 'hidden';
-          document.getElementsByTagName('body')[0].style.overflow = 'hidden';
-          deleteUrl = `/student/unassign_mentor/${this.dataset.stu_id}`; // Construct the delete URL
+  document.addEventListener("DOMContentLoaded", function () {
+    const deleteLinks = document.querySelectorAll(".delete-link");
+    const modal = document.getElementById("deleteConfirmationModal");
+    const confirmButton = document.getElementById("confirmDeleteButton");
+    const cancelButton = document.getElementById("cancelButton");
 
-          const scrollPosition = window.scrollY || document.documentElement.scrollTop;
-          modal.style.top = `${scrollPosition}px`;
-          modal.classList.remove('d-none');
-        });
-      });
-  
-      confirmButton.addEventListener("click", function () {
-        if (deleteUrl) {
-          window.location.href = deleteUrl; // Redirect to the delete URL
-        }
-      });
-  
-      cancelButton.addEventListener("click", function () {
-        modal.classList.add("d-none");
-        document.getElementsByTagName('html')[0].style.overflow = 'auto';
-        document.getElementsByTagName('body')[0].style.overflow = 'auto';
+    let deleteUrl = "";
+
+    deleteLinks.forEach(link => {
+      link.addEventListener("click", function (event) {
+        event.preventDefault();
+        document.getElementsByTagName('html')[0].style.overflow = 'hidden';
+        document.getElementsByTagName('body')[0].style.overflow = 'hidden';
+        deleteUrl = this.getAttribute('href');
+
+        const scrollPosition = window.scrollY || document.documentElement.scrollTop;
+        modal.style.top = `${scrollPosition}px`;
+        modal.classList.remove('d-none');
       });
     });
+
+    confirmButton.addEventListener("click", function () {
+      if (deleteUrl) {
+        window.location.href = deleteUrl; // Redirect to the delete URL
+      }
+    });
+
+    cancelButton.addEventListener("click", function () {
+      modal.classList.add("d-none");
+      document.getElementsByTagName('html')[0].style.overflow = 'auto';
+      document.getElementsByTagName('body')[0].style.overflow = 'auto';
+    });
+  });
 </script>
-  
+
 <script src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js"
   integrity="sha384-GNFwBvfVxBkLMJpYMOABq3c+d3KnQxudP/mGPkzpZSTYykLBNsZEnG2D9G/X/+7D" crossorigin="anonymous" async>
   </script>

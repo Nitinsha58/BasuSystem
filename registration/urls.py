@@ -61,6 +61,7 @@ from .views import (
     # Mentorship Assignment
     assign_mentor,
     unassign_mentor,
+    unassign_mentor_enrollment,
     students_pick_drop,
     mark_transport_attendance,
     delete_transport_attendance,
@@ -121,6 +122,7 @@ urlpatterns = [
     # Mentorship Assignment
     path('assign_mentor/', assign_mentor, name='assign_mentor'),
     path('unassign_mentor/<uuid:stu_id>/', unassign_mentor, name='unassign_mentor'),
+    path('unassign_mentor_enrollment/<int:enrollment_id>/', unassign_mentor_enrollment, name='unassign_mentor_enrollment'),
 
     # Test Paper
     path('test-templates/',test_templates, name='test_templates'),

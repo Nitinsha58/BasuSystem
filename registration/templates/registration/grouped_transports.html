@@ -19,43 +19,59 @@
 
     <div class="row g-4 mx-2">
         <ul class="pagination">
-            <li class="page-item"><a class="page-link" href="?day={{ day }}&move=prev">Previous</a></li>
-            <li class="page-item"><p class="page-link text-dark">{{current_day}}</p></li>
-            <li class="page-item"><a class="page-link" href="?day={{ day }}&move=next">Next</a></li>
+            <li class="page-item"><a class="page-link"
+                    href="?day={{ day }}&move=prev{% if selected_session %}&session={{ selected_session.id }}{% endif %}">Previous</a>
+            </li>
+            <li class="page-item">
+                <p class="page-link text-dark">{{current_day}}</p>
+            </li>
+            <li class="page-item"><a class="page-link"
+                    href="?day={{ day }}&move=next{% if selected_session %}&session={{ selected_session.id }}{% endif %}">Next</a>
+            </li>
         </ul>
     </div>
     <div class="g-4 mx-2 d-flex gap-2">
-        <a href="{% url 'transport_list' %}" class="btn btn-primary">Batch Timing</a>
-        <a href="{% url 'transport_driver_list' %}" class="btn btn-warning ">Driver List</a>
-        <a href="{% url 'grouped_transports' %}" class="btn btn-warning ">Transport Students</a>
+        <a href="{% url 'transport_list' %}{% if selected_session %}?session={{ selected_session.id }}{% endif %}"
+            class="btn btn-primary">Batch Timing</a>
+        <a href="{% url 'transport_driver_list' %}{% if selected_session %}?session={{ selected_session.id }}{% endif %}"
+            class="btn btn-warning ">Driver List</a>
+        <a href="{% url 'grouped_transports' %}{% if selected_session %}?session={{ selected_session.id }}{% endif %}"
+            class="btn btn-warning ">Transport Students</a>
     </div>
-</div>  
+</div>
 
 <div class="mx-2 px-2">
     <div class="d-flex g-4 w-100 flex-column dates-group pb-3">
-        
-        
+
+
         <h5 class="card-title">{{ time }}</h5>
         <div class="row shuffle bg-warning-subtle" data-masonry='{"percentPosition": true }' id="driver">
-          <div class="category flex-wrap shuffle-item shuffle-item--visible mb-4 d-flex flex-md-row gap-2">
-              {% for driver, students in grouped_transports.items %}
-              <div class="">
+            <div class="category flex-wrap shuffle-item shuffle-item--visible mb-4 d-flex flex-md-row gap-2">
+                {% for driver, students in grouped_transports.items %}
+                <div class="">
                     <ul class="list-group">
-                        <li class="list-group-item bg-dark text-white list-group border-dark text-nowrap"> {{driver}} </li>
+                        <li class="list-group-item bg-dark text-white list-group border-dark text-nowrap"> {{driver}}
+                        </li>
                         {% for student in students %}
-                        <li style="position: relative;" class="list-group-item d-flex flex-column justify-content-between">
-                            <a href="{% url 'student_transport_details' student.stu_id %}" class="text-decoration-none text-dark" style="display: flex; justify-content: space-between;" target="_blank">
-                                <span class="">{{forloop.counter}}. {{student.user.first_name}} {{student.user.last_name}} ( {{student.transport.transport_mode.name}} )</span>
+                        <li style="position: relative;"
+                            class="list-group-item d-flex flex-column justify-content-between">
+                            <a href="{% url 'student_transport_details' student.stu_id %}"
+                                class="text-decoration-none text-dark"
+                                style="display: flex; justify-content: space-between;" target="_blank">
+                                <span class="">{{forloop.counter}}. {{student.user.first_name}}
+                                    {{student.user.last_name}} ( {{student.transport.transport_mode.name}} )</span>
                             </a>
-                            <p class="text-muted fw-normal m-0 text-wrap" style="font-size: 14px;">{{student.transport.transport_person.name}}</p>
-                            <p class="text-muted fw-normal m-0 text-wrap" style="font-size: 14px;">{{student.transport.address}}</p>
+                            <p class="text-muted fw-normal m-0 text-wrap" style="font-size: 14px;">
+                                {{student.transport.transport_person.name}}</p>
+                            <p class="text-muted fw-normal m-0 text-wrap" style="font-size: 14px;">
+                                {{student.transport.address}}</p>
 
                         </li>
                         {% endfor %}
                     </ul>
                 </div>
-            {% endfor %}
-          </div>
+                {% endfor %}
+            </div>
         </div>
 
     </div>
