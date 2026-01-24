@@ -16,27 +16,34 @@
 </style>
 
 <form class="ms-3 my-2 d-flex align-items-center" method="get" id="type-form">
-    <select class="form-select" id="type-option" style="width: fit-content;" name="type"  onchange="this.form.submit()">
+    <select class="form-select" id="type-option" style="width: fit-content;" name="type" onchange="this.form.submit()">
         {% for type in type_choices %}
-        <option value="{{ type.0 }}" {% if selected_type == type.0 %} selected {% endif %} >{{ type.1 }}</option>
+        <option value="{{ type.0 }}" {% if selected_type == type.0 %} selected {% endif %}>{{ type.1 }}</option>
         {% endfor %}
     </select>
+    {% if selected_session %}
+    <input type="hidden" name="session" value="{{ selected_session.id }}">
+    {% endif %}
 </form>
 
 <div class="mx-2 px-2">
     <div class="d-flex g-4 w-100 dates-group pb-3">
         {% for day in attendance_timeline %}
-        <div class="card date-card" style="min-width: 18rem; height: fit-content; border: none;" data-date="{{ day.date|date:'Y-m-d' }}">
+        <div class="card date-card" style="min-width: 18rem; height: fit-content; border: none;"
+            data-date="{{ day.date|date:'Y-m-d' }}">
             <ul class="list-group ">
-            <li class="list-group-item text-dark bg-light rounded">{{ day.date|date:'d b Y ( l )'|title }}</li>
+                <li class="list-group-item text-dark bg-light rounded">{{ day.date|date:'d b Y ( l )'|title }}</li>
 
-            {% for record in day.attendance %}
-                <li class="list-group-item p-2 my-2 rounded {% if record.is_present == False %} bg-danger-subtle {% elif record.is_present %} bg-success-subtle {% else %} bg-warning-subtle {% endif %}">
+                {% for record in day.attendance %}
+                <li
+                    class="list-group-item p-2 my-2 rounded {% if record.is_present == False %} bg-danger-subtle {% elif record.is_present %} bg-success-subtle {% else %} bg-warning-subtle {% endif %}">
                     <p class="text-decoration-none text-dark m-0">
-                        {{ forloop.counter }}. {{ record.student.user.first_name }} {{ record.student.user.last_name }} ( {% if record.is_present == False %} Absent {% elif record.is_present %} Present {% else %} Not Marked {% endif %} )
+                        {{ forloop.counter }}. {{ record.student.user.first_name }} {{ record.student.user.last_name }}
+                        ( {% if record.is_present == False %} Absent {% elif record.is_present %} Present {% else %} Not
+                        Marked {% endif %} )
                     </p>
                 </li>
-            {% endfor %}
+                {% endfor %}
             </ul>
         </div>
         {% endfor %}
@@ -63,7 +70,7 @@
 
             sessionStorage.removeItem("inquiriesPosition");
         }
-            window.addEventListener("beforeunload", function () {
+        window.addEventListener("beforeunload", function () {
             sessionStorage.setItem("inquiriesPosition", container.scrollLeft);
         });
 
@@ -74,9 +81,9 @@
                 dateCards[i].querySelector('ul.list-group').children[0].classList.add("bg-dark", "text-white", "border-dark");
                 break;
             }
-            scrollOffset +=  gap + cardWidth;
+            scrollOffset += gap + cardWidth;
         }
-        scrollOffset -= gap*2 + cardWidth;
+        scrollOffset -= gap * 2 + cardWidth;
 
         if (!scrollPosition) {
             container.scrollTo({

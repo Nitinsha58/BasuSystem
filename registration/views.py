@@ -1859,16 +1859,55 @@ def get_attendance(request, batch_id):
         messages.error(request, "You are not authorized to view attendance.")
         return redirect('students_list')
 
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = None
+    if selected_session_id:
+        selected_session = AcademicSession.objects.filter(id=selected_session_id).first()
+    if not selected_session:
+        selected_session = active_session
+
     attendance_type = request.GET.get("type")
 
     attendance_type_choices = Attendance.ATTENDANCE_TYPE
     selected_type = attendance_type if attendance_type in dict(attendance_type_choices) else 'Regular'
 
-    batch = Batch.objects.filter(id=batch_id).first()
-    students = Student.objects.filter(batches=batch).order_by('stu_id')
+    batch = Batch.objects.filter(id=batch_id).select_related('session').first()
+    if batch and getattr(batch, 'session_id', None):
+        selected_session = batch.session
+
+    students = Student.objects.none()
+    enrollments_by_student_id = {}
+    if batch and selected_session:
+        enrollments_qs = (
+            StudentEnrollment.objects.filter(
+                active=True,
+                session=selected_session,
+                batch_links__batch=batch,
+            )
+            .select_related('student')
+            .only('id', 'student_id')
+            .distinct()
+        )
+        enrollments_by_student_id = {e.student_id: e for e in enrollments_qs if e.student_id}
+        if enrollments_by_student_id:
+            students = Student.objects.filter(id__in=enrollments_by_student_id.keys()).order_by('stu_id').distinct()
 
     # Get attendance records for the batch
-    attendance_records = Attendance.objects.filter(batch=batch, type=selected_type).order_by('date', 'student__stu_id')
+    attendance_records = Attendance.objects.filter(
+        batch=batch,
+        type=selected_type,
+        enrollment__active=True,
+        enrollment__session=selected_session,
+        student__in=students,
+    ).order_by('date', 'student__stu_id')
 
     # Organize attendance records by date and student
     attendance_by_date = defaultdict(dict)
@@ -1900,6 +1939,9 @@ def get_attendance(request, batch_id):
         'dates': dates,
         'type_choices': attendance_type_choices,
         'selected_type': selected_type,
+        'academic_sessions': sessions,
+        'active_session': active_session,
+        'selected_session': selected_session,
     })
 
 @login_required(login_url='login')
@@ -1912,11 +1954,49 @@ def get_homework(request, batch_id):
         messages.error(request, "You are not authorized to view homework.")
         return redirect('students_list')
 
-    batch = Batch.objects.filter(id=batch_id).first()
-    students = Student.objects.filter(batches=batch).order_by('stu_id')
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = None
+    if selected_session_id:
+        selected_session = AcademicSession.objects.filter(id=selected_session_id).first()
+    if not selected_session:
+        selected_session = active_session
+
+    batch = Batch.objects.filter(id=batch_id).select_related('session').first()
+    if batch and getattr(batch, 'session_id', None):
+        selected_session = batch.session
+
+    students = Student.objects.none()
+    enrollments_by_student_id = {}
+    if batch and selected_session:
+        enrollments_qs = (
+            StudentEnrollment.objects.filter(
+                active=True,
+                session=selected_session,
+                batch_links__batch=batch,
+            )
+            .select_related('student')
+            .only('id', 'student_id')
+            .distinct()
+        )
+        enrollments_by_student_id = {e.student_id: e for e in enrollments_qs if e.student_id}
+        if enrollments_by_student_id:
+            students = Student.objects.filter(id__in=enrollments_by_student_id.keys()).order_by('stu_id').distinct()
 
     # Get homework records for the batch
-    homework_records = Homework.objects.filter(batch=batch).order_by('date', 'student__stu_id')
+    homework_records = Homework.objects.filter(
+        batch=batch,
+        enrollment__active=True,
+        enrollment__session=selected_session,
+        student__in=students,
+    ).order_by('date', 'student__stu_id')
 
     # Organize homework records by date and student
     homework_by_date = defaultdict(dict)
@@ -1946,6 +2026,9 @@ def get_homework(request, batch_id):
         'homework_timeline': homework_timeline,
         'students': students,
         'dates': dates,
+        'academic_sessions': sessions,
+        'active_session': active_session,
+        'selected_session': selected_session,
     })
 
 
