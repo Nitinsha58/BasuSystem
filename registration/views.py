@@ -3722,6 +3722,18 @@ def students_pick_drop(request):
     except Exception:
         messages.error(request, 'Invalid Driver')
         return redirect('staff_dashboard')
+
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
+    if not selected_session:
+        selected_session = active_session
     
     date_str = request.GET.get("date")
     try:
@@ -3734,58 +3746,115 @@ def students_pick_drop(request):
     next_date = date + timedelta(days=1)
 
     current_day = Day.objects.filter(name=date.strftime("%A")).first()
-    students = Student.objects.filter(
+
+    if not current_day:
+        return render(request, "registration/students_pick_drop.html", {
+            "current_day": None,
+            "date": date,
+            "prev_date": prev_date,
+            "next_date": next_date,
+            "driver": driver,
+            "grouped_transports": {},
+            'academic_sessions': sessions,
+            'active_session': active_session,
+            'selected_session': selected_session,
+        })
+
+    enrollments_qs = StudentEnrollment.objects.filter(
         active=True,
+        session=selected_session,
         fees__cab_fees__gt=0,
-        transport__transport_person=driver,
-        batches__days__name=current_day
-    ).prefetch_related(
-        'batches__days',
-        'batches'
+        transport_details__transport_person=driver,
+        batch_links__batch__days__name=current_day.name,
+    ).select_related(
+        'student',
+        'student__user',
+        'fees',
+        'transport_details',
+        'transport_details__transport_person',
+        'transport_details__transport_mode',
     ).distinct()
 
-    attendance_qs = TransportAttendance.objects.filter(
-        student__in=students,
-        date=date
+    enrollment_ids = [e.id for e in enrollments_qs]
+
+    batch_links_qs = EnrollmentBatch.objects.filter(
+        enrollment_id__in=enrollment_ids,
+        batch__days__name=current_day.name,
+    ).exclude(
+        Q(batch__class_name__name__in=['CLASS 9', 'CLASS 10']) &
+        Q(batch__section__name='CBSE') &
+        Q(batch__subject__name__in=['MATH', 'SCIENCE'])
+    ).select_related('batch', 'enrollment').distinct()
+
+    batches_by_enrollment_id = defaultdict(list)
+    for link in batch_links_qs:
+        batches_by_enrollment_id[link.enrollment_id].append(link.batch)
+
+    enrollments = [e for e in enrollments_qs if e.id in batches_by_enrollment_id]
+    students = [e.student for e in enrollments if e.student_id]
+
+    attendance_qs = TransportAttendance.objects.filter(date=date).filter(
+        Q(enrollment__in=enrollments) | (Q(enrollment__isnull=True) & Q(student__in=students))
     )
-    # Build a lookup: {(student_id, time, action): attendance_obj}
+    # Build a lookup: {(enrollment_id|student_id, time, action): attendance_obj}
     attendance_lookup = {}
     for att in attendance_qs:
-        attendance_lookup[(att.student_id, att.time, att.action)] = att
+        if att.enrollment_id:
+            attendance_lookup[(att.enrollment_id, att.time, att.action)] = att
+        else:
+            attendance_lookup[(att.student_id, att.time, att.action)] = att
 
     grouped = defaultdict(lambda: {"Pickup": [], "Drop": []})
 
-    for student in students:
-        filtered_batches = student.batches.exclude(
-            Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
-            Q(section__name='CBSE') &
-            Q(subject__name__in=['MATH', 'SCIENCE'])
-        )
+    def _parse_time(value):
+        try:
+            return datetime.strptime(value, "%I:%M %p").time()
+        except Exception:
+            return None
 
-        batches_today = [b for b in filtered_batches if current_day in b.days.all()]
-
-        if not batches_today:
+    for enrollment in enrollments:
+        student = enrollment.student
+        batches_today = batches_by_enrollment_id.get(enrollment.id, [])
+        if not batches_today or not student:
             continue
 
-        earliest = min(batches_today, key=lambda b: b.start_time)
-        latest = max(batches_today, key=lambda b: b.end_time)
+        earliest = min(
+            batches_today,
+            key=lambda b: (_parse_time(getattr(b, 'start_time', None)) or datetime.max.time()),
+        )
+        latest = max(
+            batches_today,
+            key=lambda b: (_parse_time(getattr(b, 'end_time', None)) or datetime.min.time()),
+        )
 
         # For Pickup
-        pickup_time_obj = datetime.strptime(earliest.start_time, "%I:%M %p").time()
+        pickup_time_obj = _parse_time(getattr(earliest, 'start_time', None))
+        if not pickup_time_obj:
+            continue
 
-        pickup_attendance = attendance_lookup.get((student.id, str(earliest.start_time), "Pickup"))
+        pickup_time_str = str(getattr(earliest, 'start_time', ''))
+        pickup_attendance = (
+            attendance_lookup.get((enrollment.id, pickup_time_str, "Pickup"))
+            or attendance_lookup.get((student.id, pickup_time_str, "Pickup"))
+        )
         grouped[pickup_time_obj]["Pickup"].append({
-            "student": student,
-            "attendance": pickup_attendance
+            "enrollment": enrollment,
+            "attendance": pickup_attendance,
         })
 
         # For Drop
-        drop_time_obj = datetime.strptime(latest.end_time, "%I:%M %p").time()
+        drop_time_obj = _parse_time(getattr(latest, 'end_time', None))
+        if not drop_time_obj:
+            continue
 
-        drop_attendance = attendance_lookup.get((student.id, str(latest.end_time), "Drop"))
+        drop_time_str = str(getattr(latest, 'end_time', ''))
+        drop_attendance = (
+            attendance_lookup.get((enrollment.id, drop_time_str, "Drop"))
+            or attendance_lookup.get((student.id, drop_time_str, "Drop"))
+        )
         grouped[drop_time_obj]["Drop"].append({
-            "student": student,
-            "attendance": drop_attendance
+            "enrollment": enrollment,
+            "attendance": drop_attendance,
         })
 
     sorted_grouped = OrderedDict(sorted(grouped.items()))
@@ -3797,19 +3866,31 @@ def students_pick_drop(request):
         "next_date": next_date,
         "driver": driver,
         "grouped_transports": sorted_grouped,
+        'academic_sessions': sessions,
+        'active_session': active_session,
+        'selected_session': selected_session,
     })
 
 @login_required(login_url='login')
 def mark_transport_attendance(request):
     if request.method == "POST":
-
-        # clock_time.sleep(5)        
-
-        student_id = request.POST.get("student_id")
+        enrollment_id = request.POST.get("enrollment_id")
+        legacy_student_id = request.POST.get("student_id")
         date_str = request.POST.get("date")
         time = request.POST.get("time")
         action = request.POST.get("action")
         is_present = request.POST.get("present") == "true"
+
+        active_session = AcademicSession.get_active()
+        selected_session_id = (
+            request.GET.get('session')
+            or request.GET.get('academic-session')
+            or request.POST.get('session')
+            or request.POST.get('academic-session')
+        )
+        selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
+        if not selected_session:
+            selected_session = active_session
 
         driver = TransportPerson.objects.filter(user=request.user).first()
 
@@ -3817,10 +3898,25 @@ def mark_transport_attendance(request):
             messages.error(request, 'Invalid Driver')
             return redirect('staff_dashboard')
 
-        student = Student.objects.filter(id=student_id).first()
-        if not student:
-            messages.error(request, "Invalid Student")
-            return redirect('students_pick_drop')
+        enrollment_qs = StudentEnrollment.objects.filter(session=selected_session, active=True).select_related(
+            'student',
+            'student__user',
+            'transport_details',
+            'transport_details__transport_person',
+            'transport_details__transport_mode',
+            'fees',
+        )
+
+        enrollment = enrollment_qs.filter(id=enrollment_id).first() if enrollment_id else None
+        if not enrollment and legacy_student_id:
+            enrollment = enrollment_qs.filter(student_id=legacy_student_id).first()
+        if not enrollment or not enrollment.student:
+            messages.error(request, "Invalid Enrollment")
+            redirect_url = reverse('students_pick_drop')
+            if selected_session:
+                redirect_url += f"?date={datetime.now().date()}&session={selected_session.id}"
+            return redirect(redirect_url)
+        student = enrollment.student
 
         try:
             date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
@@ -3829,15 +3925,19 @@ def mark_transport_attendance(request):
             return redirect('students_pick_drop')
 
         attendance, created = TransportAttendance.objects.get_or_create(
-            student=student,
+            enrollment=enrollment,
             date=date_obj,
             time=time,
             action=action,
             driver=driver,
-            defaults={'is_present': is_present}
+            defaults={'is_present': is_present, 'student': student}
         )
         if not created:
             attendance.is_present = is_present
+            if attendance.student_id != student.id:
+                attendance.student = student
+            if attendance.enrollment_id != enrollment.id:
+                attendance.enrollment = enrollment
             attendance.save()
 
         if is_present:
@@ -3845,7 +3945,10 @@ def mark_transport_attendance(request):
         else:
             messages.success(request, f"{action} marked as Absent for {student.user.first_name} on {date_obj}.")
 
-        return redirect(f"{reverse('students_pick_drop')}?date={date_obj}")
+        redirect_url = f"{reverse('students_pick_drop')}?date={date_obj}"
+        if selected_session:
+            redirect_url += f"&session={selected_session.id}"
+        return redirect(redirect_url)
     else:
         messages.error(request, "Invalid request method.")
         return redirect('students_pick_drop')
@@ -3866,6 +3969,18 @@ def transport_attendance(request, driver_id):
     except Exception:
         messages.error(request, 'Invalid Driver')
         return redirect('staff_dashboard')
+
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
+    if not selected_session:
+        selected_session = active_session
     
     date_str = request.GET.get("date")
     try:
@@ -3878,58 +3993,115 @@ def transport_attendance(request, driver_id):
     next_date = date + timedelta(days=1)
 
     current_day = Day.objects.filter(name=date.strftime("%A")).first()
-    students = Student.objects.filter(
+
+    if not current_day:
+        return render(request, "registration/students_pick_drop.html", {
+            "current_day": None,
+            "date": date,
+            "prev_date": prev_date,
+            "next_date": next_date,
+            "driver": driver,
+            "grouped_transports": {},
+            'academic_sessions': sessions,
+            'active_session': active_session,
+            'selected_session': selected_session,
+        })
+
+    enrollments_qs = StudentEnrollment.objects.filter(
         active=True,
+        session=selected_session,
         fees__cab_fees__gt=0,
-        transport__transport_person=driver,
-        batches__days__name=current_day
-    ).prefetch_related(
-        'batches__days',
-        'batches'
+        transport_details__transport_person=driver,
+        batch_links__batch__days__name=current_day.name,
+    ).select_related(
+        'student',
+        'student__user',
+        'fees',
+        'transport_details',
+        'transport_details__transport_person',
+        'transport_details__transport_mode',
     ).distinct()
+
+    enrollment_ids = [e.id for e in enrollments_qs]
+
+    batch_links_qs = EnrollmentBatch.objects.filter(
+        enrollment_id__in=enrollment_ids,
+        batch__days__name=current_day.name,
+    ).exclude(
+        Q(batch__class_name__name__in=['CLASS 9', 'CLASS 10']) &
+        Q(batch__section__name='CBSE') &
+        Q(batch__subject__name__in=['MATH', 'SCIENCE'])
+    ).select_related('batch', 'enrollment').distinct()
+
+    batches_by_enrollment_id = defaultdict(list)
+    for link in batch_links_qs:
+        batches_by_enrollment_id[link.enrollment_id].append(link.batch)
+
+    enrollments = [e for e in enrollments_qs if e.id in batches_by_enrollment_id]
+    students = [e.student for e in enrollments if e.student_id]
     
-    attendance_qs = TransportAttendance.objects.filter(
-        student__in=students,
-        date=date
+    attendance_qs = TransportAttendance.objects.filter(date=date).filter(
+        Q(enrollment__in=enrollments) | (Q(enrollment__isnull=True) & Q(student__in=students))
     )
-    # Build a lookup: {(student_id, time, action): attendance_obj}
+    # Build a lookup: {(enrollment_id|student_id, time, action): attendance_obj}
     attendance_lookup = {}
     for att in attendance_qs:
-        attendance_lookup[(att.student_id, att.time, att.action)] = att
+        if att.enrollment_id:
+            attendance_lookup[(att.enrollment_id, att.time, att.action)] = att
+        else:
+            attendance_lookup[(att.student_id, att.time, att.action)] = att
 
     grouped = defaultdict(lambda: {"Pickup": [], "Drop": []})
 
-    for student in students:
-        filtered_batches = student.batches.exclude(
-            Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
-            Q(section__name='CBSE') &
-            Q(subject__name__in=['MATH', 'SCIENCE'])
-        )
+    def _parse_time(value):
+        try:
+            return datetime.strptime(value, "%I:%M %p").time()
+        except Exception:
+            return None
 
-        batches_today = [b for b in filtered_batches if current_day in b.days.all()]
-
-        if not batches_today:
+    for enrollment in enrollments:
+        student = enrollment.student
+        batches_today = batches_by_enrollment_id.get(enrollment.id, [])
+        if not batches_today or not student:
             continue
 
-        earliest = min(batches_today, key=lambda b: b.start_time)
-        latest = max(batches_today, key=lambda b: b.end_time)
+        earliest = min(
+            batches_today,
+            key=lambda b: (_parse_time(getattr(b, 'start_time', None)) or datetime.max.time()),
+        )
+        latest = max(
+            batches_today,
+            key=lambda b: (_parse_time(getattr(b, 'end_time', None)) or datetime.min.time()),
+        )
 
         # For Pickup
-        pickup_time_obj = datetime.strptime(earliest.start_time, "%I:%M %p").time()
+        pickup_time_obj = _parse_time(getattr(earliest, 'start_time', None))
+        if not pickup_time_obj:
+            continue
 
-        pickup_attendance = attendance_lookup.get((student.id, str(earliest.start_time), "Pickup"))
+        pickup_time_str = str(getattr(earliest, 'start_time', ''))
+        pickup_attendance = (
+            attendance_lookup.get((enrollment.id, pickup_time_str, "Pickup"))
+            or attendance_lookup.get((student.id, pickup_time_str, "Pickup"))
+        )
         grouped[pickup_time_obj]["Pickup"].append({
-            "student": student,
-            "attendance": pickup_attendance
+            "enrollment": enrollment,
+            "attendance": pickup_attendance,
         })
 
         # For Drop
-        drop_time_obj = datetime.strptime(latest.end_time, "%I:%M %p").time()
+        drop_time_obj = _parse_time(getattr(latest, 'end_time', None))
+        if not drop_time_obj:
+            continue
 
-        drop_attendance = attendance_lookup.get((student.id, str(latest.end_time), "Drop"))
+        drop_time_str = str(getattr(latest, 'end_time', ''))
+        drop_attendance = (
+            attendance_lookup.get((enrollment.id, drop_time_str, "Drop"))
+            or attendance_lookup.get((student.id, drop_time_str, "Drop"))
+        )
         grouped[drop_time_obj]["Drop"].append({
-            "student": student,
-            "attendance": drop_attendance
+            "enrollment": enrollment,
+            "attendance": drop_attendance,
         })
 
     sorted_grouped = OrderedDict(sorted(grouped.items()))
@@ -3941,6 +4113,9 @@ def transport_attendance(request, driver_id):
         "next_date": next_date,
         "driver": driver,
         "grouped_transports": sorted_grouped,
+        'academic_sessions': sessions,
+        'active_session': active_session,
+        'selected_session': selected_session,
     })
 
 
@@ -3948,10 +4123,22 @@ def transport_attendance(request, driver_id):
 def delete_transport_attendance(request):
     # Allow both superusers and drivers to delete attendance
     if request.method == "POST":
-        student_id = request.POST.get("student_id")
+        enrollment_id = request.POST.get("enrollment_id")
+        legacy_student_id = request.POST.get("student_id")
         date_str = request.POST.get("date")
         time = request.POST.get("time")
         action = request.POST.get("action")
+
+        active_session = AcademicSession.get_active()
+        selected_session_id = (
+            request.GET.get('session')
+            or request.GET.get('academic-session')
+            or request.POST.get('session')
+            or request.POST.get('academic-session')
+        )
+        selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
+        if not selected_session:
+            selected_session = active_session
 
         driver = TransportPerson.objects.filter(user=request.user).first()
 
@@ -3959,10 +4146,22 @@ def delete_transport_attendance(request):
             messages.error(request, 'Invalid Driver')
             return redirect('staff_dashboard')
 
-        student = Student.objects.filter(id=student_id).first()
-        if not student:
-            messages.error(request, "Invalid Student")
-            return redirect('students_pick_drop')
+        enrollment_qs = StudentEnrollment.objects.filter(session=selected_session).select_related(
+            'student',
+            'student__user',
+            'transport_details',
+            'transport_details__transport_person',
+        )
+        enrollment = enrollment_qs.filter(id=enrollment_id).first() if enrollment_id else None
+        if not enrollment and legacy_student_id:
+            enrollment = enrollment_qs.filter(student_id=legacy_student_id).first()
+        student = enrollment.student if enrollment else None
+        if not enrollment or not student:
+            messages.error(request, "Invalid Enrollment")
+            redirect_url = reverse('students_pick_drop')
+            if selected_session:
+                redirect_url += f"?date={datetime.now().date()}&session={selected_session.id}"
+            return redirect(redirect_url)
 
         try:
             date_obj = datetime.strptime(date_str, "%Y-%m-%d").date()
@@ -3971,7 +4170,7 @@ def delete_transport_attendance(request):
             return redirect('students_pick_drop')
 
         attendance_filter = {
-            'student': student,
+            'enrollment': enrollment,
             'date': date_obj,
             'time': time,
             'action': action,
@@ -3980,6 +4179,18 @@ def delete_transport_attendance(request):
             attendance_filter['driver'] = driver
 
         attendance = TransportAttendance.objects.filter(**attendance_filter).first()
+        if not attendance:
+            # Legacy fallback
+            legacy_filter = {
+                'student': student,
+                'enrollment__isnull': True,
+                'date': date_obj,
+                'time': time,
+                'action': action,
+            }
+            if not request.user.is_superuser:
+                legacy_filter['driver'] = driver
+            attendance = TransportAttendance.objects.filter(**legacy_filter).first()
 
         if attendance:
             attendance.delete()
@@ -3988,7 +4199,17 @@ def delete_transport_attendance(request):
             messages.error(request, "Attendance record not found.")
 
         if request.user and request.user.is_superuser:
-            return redirect(f"{reverse('transport_attendance', args=[student.transport.transport_person.id])}?date={date_obj}")
+            transport_person = None
+            try:
+                transport_person = enrollment.transport_details.transport_person if enrollment else None
+            except Exception:
+                transport_person = None
+            if transport_person:
+                return redirect(f"{reverse('transport_attendance', args=[transport_person.id])}?date={date_obj}")
+            return redirect(f"{reverse('drivers_list')}?date={date_obj}")
             
-        return redirect(f"{reverse('students_pick_drop')}?date={date_obj}")
+        redirect_url = f"{reverse('students_pick_drop')}?date={date_obj}"
+        if selected_session:
+            redirect_url += f"&session={selected_session.id}"
+        return redirect(redirect_url)
     return redirect('students_pick_drop')

@@ -19,16 +19,21 @@
 
     <div class="row g-4 mx-2">
         <ul class="pagination">
-            <li class="page-item m-0"><a class="m-0 page-link" href="?date={{ prev_date|date:'Y-m-d' }}">Previous</a></li>
+            <li class="page-item m-0"><a class="m-0 page-link"
+                    href="?date={{ prev_date|date:'Y-m-d' }}{% if selected_session %}&session={{ selected_session.id }}{% endif %}">Previous</a>
+            </li>
             <li class="page-item m-0">
                 <p class="m-0 page-link text-dark text-nowrap">{{date|date:'D'}}: {{date|date:'Y-m-d'}}</p>
-            </li> 
-            <li class="page-item m-0"><a class="m-0 page-link" href="?date={{ next_date|date:'Y-m-d' }}">Next</a></li>
+            </li>
+            <li class="page-item m-0"><a class="m-0 page-link"
+                    href="?date={{ next_date|date:'Y-m-d' }}{% if selected_session %}&session={{ selected_session.id }}{% endif %}">Next</a>
+            </li>
             {% if request.user.is_superuser %}
-                <a href="{% url 'drivers_list' %}" style="height: fit-content;" class="btn btn-primary ms-2">Go Back</a>
-            {% endif %} 
+            <a href="{% url 'drivers_list' %}{% if selected_session %}?session={{ selected_session.id }}{% endif %}"
+                style="height: fit-content;" class="btn btn-primary ms-2">Go Back</a>
+            {% endif %}
         </ul>
-        
+
 
         <div class="m-0 mb-2">
             <h5 class="mb-1">Driver: {{ driver.name }}</h5>
@@ -36,47 +41,58 @@
         </div>
 
     </div>
-</div>  
+</div>
 
 <div class="mx-2 px-2">
     <div class="d-flex g-4 w-100 flex-column dates-group pb-3">
-        
+
         {% for time, actions in grouped_transports.items %}
         <h5 class="card-title">{{ time|time:'h:i A' }}</h5>
         <div class="" data-masonry='{"percentPosition": true }' id="driver">
-          <div class="category flex-wrap shuffle-item shuffle-item--visible mb-4 d-flex flex-md-row gap-2">
-              {% for action, students in actions.items %}
-              {% if students %}
-              <div class="w-sm-100">
+            <div class="category flex-wrap shuffle-item shuffle-item--visible mb-4 d-flex flex-md-row gap-2">
+                {% for action, students in actions.items %}
+                {% if students %}
+                <div class="w-sm-100">
                     <ul class="list-group {% if students|length > driver.capacity %} p-2 bg-danger {% endif %}">
-                        <li class="list-group-item bg-dark text-white list-group border-dark text-nowrap"> {{action}}  ({{driver.capacity}})</li>
+                        <li class="list-group-item bg-dark text-white list-group border-dark text-nowrap"> {{action}}
+                            ({{driver.capacity}})</li>
                         {% for student in students %}
-                        <li style="position: relative;" class="list-group-item d-flex align-items-center justify-content-between {% if student.attendance.is_present == False %} bg-danger-subtle {% elif student.attendance.is_present %} bg-success-subtle {% endif %}">
-                            
+                        <li style="position: relative;"
+                            class="list-group-item d-flex align-items-center justify-content-between {% if student.attendance.is_present == False %} bg-danger-subtle {% elif student.attendance.is_present %} bg-success-subtle {% endif %}">
+
                             {% if request.user.is_superuser %}
-                            <a href="{% url 'student_transport_details' student.student.stu_id %}" class="nav-link">{{forloop.counter}}. {{student.student.user.first_name}} {{student.student.user.last_name}}</a>
+                            <a href="{% url 'student_transport_details' student.enrollment.student.stu_id %}"
+                                class="nav-link">{{forloop.counter}}. {{student.enrollment.student.user.first_name}}
+                                {{student.enrollment.student.user.last_name}}</a>
                             {% else %}
-                            <span >{{forloop.counter}}. {{student.student.user.first_name}} {{student.student.user.last_name}}</span>
+                            <span>{{forloop.counter}}. {{student.enrollment.student.user.first_name}}
+                                {{student.enrollment.student.user.last_name}}</span>
                             {% endif %}
 
                             {% if not student.attendance and not request.user.is_superuser %}
                             <div class="d-flex gap-2">
                                 <form method="post" action="{% url 'mark_transport_attendance' %}">
                                     {% csrf_token %}
+                                    {% if selected_session %}
+                                    <input type="hidden" name="session" value="{{ selected_session.id }}">
+                                    {% endif %}
                                     <input type="date" hidden name="date" value="{{ date|date:'Y-m-d' }}">
                                     <input type="text" hidden name="action" value="{{ action }}">
                                     <input type="text" hidden name="time" value="{{ time|time:'h:i A' }}">
-                                    <input type="text" hidden name="student_id" value="{{ student.student.id }}">
+                                    <input type="text" hidden name="enrollment_id" value="{{ student.enrollment.id }}">
                                     <input type="hidden" name="present" value="true">
                                     <button class="btn btn-warning btn-sm" type="submit">Present</button>
                                 </form>
-                                
+
                                 <form method="post" action="{% url 'mark_transport_attendance' %}">
                                     {% csrf_token %}
+                                    {% if selected_session %}
+                                    <input type="hidden" name="session" value="{{ selected_session.id }}">
+                                    {% endif %}
                                     <input type="date" hidden name="date" value="{{ date|date:'Y-m-d' }}">
                                     <input type="text" hidden name="action" value="{{ action }}">
                                     <input type="text" hidden name="time" value="{{ time|time:'h:i A' }}">
-                                    <input type="text" hidden name="student_id" value="{{ student.student.id }}">
+                                    <input type="text" hidden name="enrollment_id" value="{{ student.enrollment.id }}">
                                     <input type="hidden" name="present" value="false">
                                     <button class="btn btn-danger btn-sm" type="submit">Absent</button>
                                 </form>
@@ -87,14 +103,22 @@
                             <div class="d-flex gap-2">
                                 <form method="post" action="{% url 'delete_transport_attendance' %}">
                                     {% csrf_token %}
+                                    {% if selected_session %}
+                                    <input type="hidden" name="session" value="{{ selected_session.id }}">
+                                    {% endif %}
                                     <input type="date" hidden name="date" value="{{ date|date:'Y-m-d' }}">
                                     <input type="text" hidden name="action" value="{{ action }}">
                                     <input type="text" hidden name="time" value="{{ time|time:'h:i A' }}">
-                                    <input type="text" hidden name="student_id" value="{{ student.student.id }}">
+                                    <input type="text" hidden name="enrollment_id" value="{{ student.enrollment.id }}">
                                     <button class="btn btn-danger btn-sm" type="submit" title="Delete Attendance">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"></path>
-                                            <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                            fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                            <path
+                                                d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z">
+                                            </path>
+                                            <path
+                                                d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z">
+                                            </path>
                                         </svg>
                                     </button>
                                 </form>
@@ -106,8 +130,8 @@
                     </ul>
                 </div>
                 {% endif %}
-            {% endfor %}
-          </div>
+                {% endfor %}
+            </div>
         </div>
         {% endfor %}
 
@@ -118,8 +142,8 @@
 
 <script>
     // Prevent double submission for all attendance forms
-    document.querySelectorAll('form[action*="mark_transport_attendance"]').forEach(function(form) {
-        form.addEventListener('submit', function(event) {
+    document.querySelectorAll('form[action*="mark_transport_attendance"]').forEach(function (form) {
+        form.addEventListener('submit', function (event) {
             // Disable only the submit button in the submitted form
             var btn = form.querySelector('button[type="submit"]');
             if (btn) {
