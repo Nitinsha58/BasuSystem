@@ -1,10 +1,5 @@
 from django.urls import path
 from .views import (
-    student_registration, 
-    student_fees_details, 
-    student_parent_details, 
-    student_transport_details,
-    student_update,
     
     student_enrollment_details_update,
     students_enrollment_list,
@@ -15,11 +10,8 @@ from .views import (
     student_enrollment_reg_doc,
     print_enrollment_receipt,
     
-    students_list,
-    student_reg_doc,
     delete_installment,
-    search_students,
-    print_receipt,
+    # search_students,
     mark_attendance,
     mark_present,
     mark_absent,
@@ -69,10 +61,7 @@ from .views import (
 
 
 urlpatterns = [
-    path('', students_list, name='students_list'),
-    path('search-students/', search_students, name='search_students'),
-    path('registration', student_registration, name='student_registration'),
-    path('<uuid:stu_id>', student_update, name='student_update'),
+    # path('search-students/', search_students, name='search_students'),
     path('enrollments', students_enrollment_list, name='students_enrollment_list'),
     path('enrollment/<uuid:stu_id>', student_enrollment_details_update, name='student_enrollment_details_update'),
     path('enrollment/parent/<uuid:stu_id>', student_enrollment_parent_details, name='student_enrollment_parent_details'),
@@ -82,12 +71,6 @@ urlpatterns = [
     path('enrollment/document/<uuid:stu_id>', student_enrollment_reg_doc, name='student_enrollment_reg_doc'),
     path('enrollment/receipt/<uuid:stu_id>', print_enrollment_receipt, name='print_enrollment_receipt'),
 
-    
-    path('<uuid:stu_id>/parent', student_parent_details, name='student_parent_details'),
-    path('<uuid:stu_id>/fees', student_fees_details, name='student_fees_details'),
-    path('<uuid:stu_id>/transport', student_transport_details, name='student_transport_details'),
-    path('<uuid:stu_id>/registration_document', student_reg_doc, name='student_reg_doc'),
-    path('<uuid:stu_id>/receipt', print_receipt, name='receipt'),
     path('delete_installment/<uuid:stu_id>/<int:ins_id>', delete_installment, name='delete_installment'),
 
     path('mark_attendance/', mark_attendance, name='attendance'),

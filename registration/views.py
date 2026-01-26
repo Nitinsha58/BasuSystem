@@ -31,245 +31,6 @@ from django.urls import reverse
 import time as clock_time
 
 @login_required(login_url='login')
-def student_registration(request):
-    form_data = {}
-    if request.method == "POST":
-        form_data = {
-            "first_name": request.POST.get("first_name"),
-            "last_name": request.POST.get("last_name"),
-            "phone": request.POST.get("phone"),
-            "email": request.POST.get("email"),
-            "dob": request.POST.get("dob"),
-            "doj": request.POST.get("doj"),
-            "school_name": request.POST.get("school_name"),
-            "class_enrolled": ClassName.objects.filter(id=request.POST.get("class_enrolled")).first() if request.POST.get("class_enrolled") else '',
-            "subjects": request.POST.getlist("subjects"),  # ManyToMany field
-            "marksheet_submitted": request.POST.get("marksheet_submitted") == "yes",
-            "sat_score": request.POST.get("sat_score"),
-            "remarks": request.POST.get("remarks"),
-            "address": request.POST.get("address"),
-            "last_year_marks_details": request.POST.get("last_year_marks_details"),
-            "aadhar_card_number": request.POST.get("aadhar_card_number"),
-            "gender": request.POST.get("gender"),
-            "course": request.POST.get("course"),
-            "program_duration": request.POST.get("program_duration"),
-        }
-        form = StudentRegistrationForm(form_data)
-
-        if form.is_valid():
-            student = form.save()
-            messages.success(request, "Student Created.")
-            return redirect("student_update", stu_id = student.stu_id)
-        
-        for field, error_list in form.errors.items():
-            for error in error_list:
-                messages.error(request, f"{field}: {error}")
-
-    classes = ClassName.objects.all().order_by('-name')
-    subjects = Subject.objects.all().order_by('name')
-    courses = Student.COURSE_CHOICE
-    durations = Student.DURATION_CHOICE
-
-    return render(request, "registration/student_registration.html", {
-        'classes': classes, 
-        'subjects': subjects,
-        'form': form_data,
-        'courses': courses,
-        'durations': durations
-    })
-
-@login_required(login_url='login')
-def student_update(request, stu_id):
-    student = Student.objects.filter(stu_id=stu_id).first()
-
-    if not student:
-        messages.error(request, 'Invalid Student Id.')
-        return redirect('student_registration')
-    
-    if request.method == 'POST':
-        form_data = {
-            "first_name": request.POST.get("first_name"),
-            "last_name": request.POST.get("last_name"),
-            "phone": request.POST.get("phone"),
-            "email": request.POST.get("email"),
-            "dob": request.POST.get("dob"),
-            "doj": request.POST.get("doj"),
-            "school_name": request.POST.get("school_name"),
-            "class_enrolled": ClassName.objects.filter(id=request.POST.get("class_enrolled")).first() if request.POST.get("class_enrolled") else '',
-            "subjects": request.POST.getlist("subjects"),  # ManyToMany field
-            "batches": request.POST.getlist("batches[]"),  # ManyToMany field
-            "marksheet_submitted": request.POST.get("marksheet_submitted") == "yes",
-            "sat_score": request.POST.get("sat_score"),
-            "remarks": request.POST.get("remarks"),
-            "address": request.POST.get("address"),
-            "last_year_marks_details": request.POST.get("last_year_marks_details"),
-            "aadhar_card_number": request.POST.get("aadhar_card_number"),
-            "gender": request.POST.get("gender"),
-            "course": request.POST.get("course"),
-            "program_duration": request.POST.get("program_duration"),
-            "active": request.POST.get("active") == "Active",
-        }
-        form = StudentUpdateForm(form_data, instance=student)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Student Updated.')
-            return redirect("student_update", stu_id=student.stu_id)
-        
-        for field, error_list in form.errors.items():
-            for error in error_list:
-                messages.error(request, f"{field}: {error}")
-
-        return redirect("student_update", stu_id=student.stu_id)
-    
-    classes = ClassName.objects.all().order_by('-name')
-    subjects = Subject.objects.all().order_by('name')
-    selected_class = ClassName.objects.filter(id=student.class_enrolled.id).first() if student.class_enrolled else None
-    batches = Batch.objects.filter(class_name=selected_class)
-    # WhatsApp group links mapping by class and type
-    WHATSAPP_GROUP_LINKS = {
-        "7": {
-            "student": "https://chat.whatsapp.com/CODPG4w7eFX43VQpOi6BnD",
-            "parent": "https://chat.whatsapp.com/Hi0U7fSFFwbGNlfinyCZII",
-        },
-        "8": {
-            "student": "https://chat.whatsapp.com/H2xTY2qpUOb5EXut75iNwV",
-            "parent": "https://chat.whatsapp.com/CGsBhqddvtI5BNKwzXm2wC",
-        },
-        "9": {
-            "student": "https://chat.whatsapp.com/BasrRWXoC3x88lyXrvctEU",
-            "parent": "https://chat.whatsapp.com/IOj2m12EWZI3fp9rEjF01x",
-        },
-        "10": {
-            "student": "https://chat.whatsapp.com/L0zF6dVCBDNEF1eGEBR1Wg",
-            "parent": "https://chat.whatsapp.com/Lb7Q1Xq1YBz9J2ZfcbK5dC",
-        },
-        "11_PCM": {
-            "student": "https://chat.whatsapp.com/JdbjvZ55nwKDREkmsw2GMD",
-            "parent": "https://chat.whatsapp.com/IbQTtuqBQIALABUPcE688G",
-        },
-        "11_COMMERCE": {
-            "student": "https://chat.whatsapp.com/GruyEBmP0dZ0WOADZlEeic",
-            "parent": "https://chat.whatsapp.com/I6bm2asTs9T4KJEJvKgMCL",
-        },
-        "12_PCM": {
-            "student": "https://chat.whatsapp.com/IsveJm0QuCT9IM9Y93vZ6s",
-            "parent": "https://chat.whatsapp.com/B7wsZHE4oDHDmpvC0UB1YH",
-        },
-        "12_COMMERCE": {
-            "student": "https://chat.whatsapp.com/Esgz3orRZuLEkyQB9iJ3Va",
-            "parent": "https://chat.whatsapp.com/ByZk2Dnu0el5WGanR4SZcB",
-        },
-        "transport_erikshaw": "https://chat.whatsapp.com/Hea0v2pn5NzDdZdzCeE4mL",
-        "transport_cab": "https://chat.whatsapp.com/IvSYxCyANmFL7QjzuHljGF",
-    }
-
-    def get_class_group_key(student):
-        cls = student.class_enrolled.name.upper() if student.class_enrolled else ""
-        if "11" in cls:
-            if "COMMERCE" in cls:
-                return "11_COMMERCE"
-            return "11_PCM"
-        if "12" in cls:
-            if "COMMERCE" in cls:
-                return "12_COMMERCE"
-            return "12_PCM"
-        for num in ["7", "8", "9", "10"]:
-            if num in cls:
-                return num
-        return None
-
-    def get_whatsapp_group_links(student):
-        group_key = get_class_group_key(student)
-        student_link = parent_link = None
-        if group_key and group_key in WHATSAPP_GROUP_LINKS:
-            student_link = WHATSAPP_GROUP_LINKS[group_key].get("student")
-            parent_link = WHATSAPP_GROUP_LINKS[group_key].get("parent")
-        return student_link, parent_link
-
-    def get_transport_group_links(student):
-        links = []
-        if getattr(student, "transport", None):
-            mode = getattr(student.transport, "mode", None)
-            if mode and hasattr(mode, "name"):
-                mode_name = mode.name.lower()
-                if "rikshaw" in mode_name:
-                    links.append(WHATSAPP_GROUP_LINKS.get("transport_erikshaw"))
-                if "cab" in mode_name:
-                    links.append(WHATSAPP_GROUP_LINKS.get("transport_cab"))
-        return [l for l in links if l]
-
-    def generate_wa_me_link(phone, message):
-        import urllib.parse
-        return f"https://wa.me/{phone}?text={urllib.parse.quote(message)}"
-
-    # Compose the join message for WhatsApp with both group links (both links are always included)
-    def get_join_message(student, student_link, parent_link):
-        class_name = student.class_enrolled.name if student.class_enrolled else ""
-        message = (
-            "Dear Parent,\n\n"
-            "We're excited to begin the 2025-26 session!\n\n"
-            "Thank you for your continued support. This year, we've made key improvements and new strategies to boost student results.\n\n"
-            f"👇 Join the official WhatsApp groups for updates:\n\n"
-        )
-        # Always include both links, even if one is missing (show as N/A if not found)
-        message += f"{class_name} Students Group\n{student_link or 'N/A'}\n\n"
-        message += f"{class_name} Parents Group\n{parent_link or 'N/A'}\n\n"
-        message += (
-            "Feel free to reach out for any queries. We're here to help!\n\n"
-            "- BASU Classes"
-        )
-        return message
-
-    # Prepare WhatsApp join links for student, mother, and father (same message for all)
-    student_link, parent_link = get_whatsapp_group_links(student)
-    transport_links = get_transport_group_links(student)
-
-    wa_links = {}
-
-    join_message = get_join_message(student, student_link, parent_link)
-
-    # Student WhatsApp link
-    wa_links['student'] = generate_wa_me_link(
-        '91' + str(student.user.phone),
-        join_message
-    )
-
-    # Mother WhatsApp link
-    mother_phone = getattr(getattr(student, "parent_details", None), "mother_contact", None)
-    if mother_phone:
-        wa_links['mother'] = generate_wa_me_link(
-            '91' + str(mother_phone),
-            join_message
-        )
-
-    # Father WhatsApp link
-    father_phone = getattr(getattr(student, "parent_details", None), "father_contact", None)
-    if father_phone:
-        wa_links['father'] = generate_wa_me_link(
-            '91' + str(father_phone),
-            join_message
-        )
-
-    # Optionally add transport group links for student (separate message for transport)
-    wa_links['transport'] = []
-    for link in transport_links:
-        wa_links['transport'].append(
-            generate_wa_me_link(
-                '91' + str(student.user.phone),
-                f"Dear Parent,\n\nJoin the official transport WhatsApp group for updates:\n{link}\n\n- BASU Classes"
-            )
-        )
-
-
-    return render(request, "registration/student_update.html", {
-        'student': student,
-        'classes': classes, 
-        'subjects': subjects,
-        'batches': batches,
-        'wa_links': wa_links,
-    })
-
-@login_required(login_url='login')
 def student_enrollment_update(request, stu_id):
     student = Student.objects.filter(stu_id=stu_id).first()
 
@@ -574,19 +335,6 @@ def student_enrollment_details_update(request, stu_id):
         # 'wa_links': wa_links,
     })
 
-@login_required(login_url='login')
-def students_list(request):
-    classes = ClassName.objects.all().order_by('-created_at')
-    class_students = [
-        {'class': cls.name, 'students': Student.objects.filter(class_enrolled=cls).order_by('-created_at', 'user__first_name', 'user__last_name').distinct()} for cls in classes ]
-    
-    count = Student.objects.filter(active=True).distinct().count()
-    
-
-    return render(request, "registration/students.html", {
-        'class_students' : class_students,
-        'count': count,
-    })
 
 @login_required(login_url='login')
 def students_enrollment_list(request):
@@ -648,40 +396,6 @@ def student_enrollment_parent_details(request, stu_id):
 
     parent_details = ParentDetails.objects.filter(student=student).first()
     return render(request, "registration/enrollment/student_parent_details.html", {
-        "student": student,
-        "form": form_data,
-        "parent_details": parent_details
-    })
-
-@login_required(login_url='login')
-def student_parent_details(request, stu_id):
-
-    if stu_id and not Student.objects.filter(stu_id=stu_id):
-        messages.error(request, "Invalid Student")
-        return redirect('student_registration')
-    student = Student.objects.filter(stu_id=stu_id).first()
-    form_data = {}
-
-    if request.method == "POST":
-        form_data = {
-            "father_name": request.POST.get("father_name"),
-            "mother_name": request.POST.get("mother_name"),
-            "father_contact": request.POST.get("father_contact"),
-            "mother_contact": request.POST.get("mother_contact"),
-        }
-        form = ParentDetailsForm(form_data)
-
-        if form.is_valid():
-            form.save(student)
-            messages.success(request, "Parent details saved successfully.")
-            return redirect("student_parent_details", stu_id=student.stu_id)
-        
-        for field, error_list in form.errors.items():
-            for error in error_list:
-                messages.error(request, f"{field}: {error}")
-
-    parent_details = ParentDetails.objects.filter(student=student).first()
-    return render(request, "registration/student_parent_details.html", {
         "student": student,
         "form": form_data,
         "parent_details": parent_details
@@ -847,200 +561,6 @@ def student_enrollment_reg_doc(request, stu_id):
         'academic_sessions': sessions,
         'active_session': active_session,
         'selected_session': selected_session,
-    })
-
-@login_required(login_url = 'login')
-def student_fees_details(request, stu_id):
-    student = Student.objects.filter(stu_id=stu_id).first()
-    if not student:
-        messages.error(request, "Invalid Student")
-        return redirect('student_registration')
-
-    fees_details = FeeDetails.objects.filter(student__stu_id=stu_id).first()
-
-    if request.method == 'POST':
-
-        try:
-            with transaction.atomic():
-                fees_details, created = FeeDetails.objects.get_or_create(student=student)
-
-                fees_details.total_fees = request.POST.get("total_fees") or 0
-                fees_details.registration_fee = request.POST.get("registration_fee") or 0
-                fees_details.cab_fees = request.POST.get("cab_fees") or 0
-                fees_details.tuition_fees = request.POST.get("tuition_fees") or 0
-                fees_details.discount = request.POST.get("discount") or 0
-                fees_details.book_fees = request.POST.get("book_fees") or 0
-                fees_details.book_discount = (request.POST.get("book_discount") == 'on')
-                fees_details.registration_discount = (request.POST.get("registration_discount") == 'on')
-
-                fees_details.save()
-
-                # Delete existing installments
-                Installment.objects.filter(fee_details=fees_details).delete()
-
-                for ins in range(1, int(request.POST.get("num_installments") or 1) + 1):
-                    installment = Installment(
-                        fee_details=fees_details,
-                        student=student,
-                        amount=request.POST.get(f'installment_amount_{ins}'),
-                        due_date=request.POST.get(f'installment_due_date_{ins}'),
-                        paid=(request.POST.get(f'paid_{ins}') == 'on') ,
-                        label = request.POST.get(f'installment_label_{ins}'),
-                        payment_type = request.POST.get(f'payment_type_{ins}'),
-                        remark = request.POST.get(f'installment_remark_{ins}'),
-                    )
-                    installment.save()
-        except Exception as e:
-            messages.error(request, "Invalid Data or form.")
-            return redirect('student_fees_details', stu_id=stu_id)
-
-    payment_options = Installment.PAYMENT_CHOICES
-
-    return render(request, "registration/student_fees_details.html", {
-        'student': student,
-        'fees_details': fees_details,
-        'payment_options': payment_options,
-    })
-
-@login_required(login_url='login')
-def student_transport_details(request, stu_id):
-    student = Student.objects.filter(stu_id=stu_id).first()
-    if not student:
-        messages.error(request, "Invalid Student")
-        return redirect('student_registration')
-
-    instance = getattr(student, 'transport', None)
-
-    if request.method == "POST":
-        form = TransportDetailsForm(request.POST, instance=instance)
-        if form.is_valid():
-            transport = form.save(commit=False)
-            transport.student = student
-            transport.save()
-            messages.success(request, "Transport details saved.")
-            return redirect("student_transport_details", stu_id=student.stu_id)
-        else:
-            for field, error_list in form.errors.items():
-                for error in error_list:
-                    messages.error(request, f"{field}: {error}")
-    else:
-        form = TransportDetailsForm(instance=instance)
-    if not instance:
-        return render(request, "registration/student_transport_details.html", {
-            'form': form,
-            'student': student,
-        })
-    WEEKDAYS = Day.objects.all()
-    batch_timings_by_weekday = {}
-    slots = []
-    min_slot_time = None
-    max_slot_time = None
-
-    for day in WEEKDAYS:
-        batches_by_day = student.batches.filter(days=day)
-        if not batches_by_day:
-            continue
-        earliest = min(batches_by_day, key=lambda b: datetime.strptime(b.start_time, "%I:%M %p").time())
-        latest = max(batches_by_day, key=lambda b: datetime.strptime(b.end_time, "%I:%M %p").time())
-        
-        if min_slot_time is None:
-            min_slot_time = earliest.start_time
-        else:
-            min_slot_time = min([min_slot_time, earliest.start_time], key=lambda time: datetime.strptime(time, "%I:%M %p").time())
-        if max_slot_time is None:
-            max_slot_time = latest.end_time
-        else:
-            max_slot_time = max([max_slot_time, latest.end_time], key=lambda time: datetime.strptime(time, "%I:%M %p").time())
-        
-
-        driver_capacity = None
-        assigned_driver = getattr(student.transport, "transport_person", None)
-        if assigned_driver and hasattr(assigned_driver, "capacity"):
-            driver_capacity = assigned_driver.capacity
-            
-            students_qs = Student.objects.filter(
-                transport__transport_person=assigned_driver,
-                active=True,
-                fees__cab_fees__gt=0,
-                batches__days=day,
-            ).distinct()
-            # Calculate pickup (earliest) and drop (latest) counts separately
-            pickup_count = 0
-            drop_count = 0
-            pickup_status = "0"
-            drop_status = "0"
-
-            if earliest and earliest.start_time:
-                pickup_students_qs = []
-                for other_student in students_qs:
-                    batches_on_day = other_student.batches.filter(days=day)
-                    if batches_on_day:
-                        first_batch = min(batches_on_day, key=lambda b: datetime.strptime(b.start_time, "%I:%M %p"))
-                        if first_batch.start_time == earliest.start_time:
-                            pickup_students_qs.append(other_student)
-
-                pickup_count = len(pickup_students_qs)
-
-            if latest and latest.end_time:
-                drop_students_qs = students_qs.filter(batches__end_time=latest.end_time).distinct()
-                drop_count = drop_students_qs.count()
-            
-                drop_students_qs = []
-                for other_student in students_qs:
-                    batches_on_day = other_student.batches.filter(days=day)
-                    if batches_on_day:
-                        last_batch = max(batches_on_day, key=lambda b: datetime.strptime(b.end_time, "%I:%M %p"))
-                        if last_batch.end_time == earliest.end_time:
-                            drop_students_qs.append(other_student)
-                drop_count = len(drop_students_qs)
-
-
-            if driver_capacity is not None:
-                pickup_diff = driver_capacity - pickup_count
-                drop_diff = driver_capacity - drop_count
-
-                pickup_status = {
-                    'diff': pickup_diff,  # keep raw number
-                    'display': f"{'+' if pickup_diff < 0 else '-'}{abs(pickup_diff)}"
-                }
-                drop_status = {
-                    'diff': drop_diff,
-                    'display': f"{'+' if drop_diff < 0 else '-'}{abs(drop_diff)}"
-                }
-
-            driver_status = {
-                "pickup": pickup_status,
-                "pickup_count": pickup_count,
-                "drop": drop_status,
-                "drop_count": drop_count,
-                "capacity": driver_capacity,
-            }
-        else:
-            driver_status = None
-
-        batch_timings_by_weekday[day.name] = {
-            'earliest_start': earliest.start_time if earliest else None,
-            'latest_end': latest.end_time if latest else None,
-            'driver_capacity': driver_capacity,
-            'driver_status': driver_status,
-        }
-
-    # Generate 15-minute time slots with a 15-minute buffer before and after
-    if min_slot_time and max_slot_time:
-        start_dt = datetime.combine(datetime.today(), datetime.strptime(min_slot_time, "%I:%M %p").time()) - timedelta(minutes=30)
-        end_dt = datetime.combine(datetime.today(), datetime.strptime(max_slot_time, "%I:%M %p").time()) + timedelta(minutes=30)
-        slots = []
-        current_time = start_dt
-        while current_time <= end_dt:
-            slots.append(current_time.strftime("%I:%M %p"))
-            current_time += timedelta(minutes=30)
-
-    return render(request, "registration/student_transport_details.html", {
-        'form': form,
-        'student': student,
-        'time_slots': slots,
-        'batch_timings': batch_timings_by_weekday,
-        'weekdays': WEEKDAYS,
     })
 
 @login_required(login_url='login')
@@ -1256,30 +776,6 @@ def delete_installment(request, stu_id, ins_id):
     messages.success(request, "Installment Deleted.")
     return redirect('student_fees_details', stu_id=student.stu_id)
 
-@login_required(login_url='login')
-def student_reg_doc(request, stu_id):
-    if stu_id and not Student.objects.filter(stu_id=stu_id):
-        messages.error(request, "Invalid Student")
-        return redirect('student_registration')
-
-    student = Student.objects.filter(stu_id=stu_id).first()
-    total_discount = 0
-    total_fees = 0
-    if student:
-        fee_details = FeeDetails.objects.filter(student=student).first()
-        total_discount = fee_details.discount + (fee_details.book_fees if fee_details.book_discount else 0) + (fee_details.registration_fee if fee_details.registration_discount else 0)
-
-        total_fees = fee_details.total_fees + fee_details.discount
-        if fee_details.book_discount:
-            total_fees += fee_details.book_fees
-        if fee_details.registration_discount:
-            total_fees += fee_details.registration_fee
-
-    return render(request, "registration/student_reg_doc.html", {
-        'student': Student.objects.filter(stu_id=stu_id).first(),
-        'total_discount': total_discount,
-        'total_fees': total_fees
-    })
 
 @login_required(login_url='login')
 def print_enrollment_receipt(request, stu_id):
@@ -1332,44 +828,32 @@ def print_enrollment_receipt(request, stu_id):
         'selected_session': selected_session,
     })
 
-@login_required(login_url='login')
-def print_receipt(request, stu_id):
-    if stu_id and not Student.objects.filter(stu_id=stu_id):
-        messages.error(request, "Invalid Student")
-        return redirect('student_registration')
-    
-    return render(request, "registration/receipt.html", {
-        'student': Student.objects.filter(stu_id=stu_id).first(),
-        'today': datetime.now()
-    })
-
-@login_required(login_url='login')
-def search_students(request):
-    search_term = request.GET.get('search', '').strip()
-    if search_term:
-        students = Student.objects.filter(
-            Q(user__first_name__icontains=search_term) |
-            Q(user__last_name__icontains=search_term) |
-            Q(user__phone__icontains=search_term) |
-            Q(user__registered_student__school_name__icontains = search_term) |
-            Q(user__registered_student__class_enrolled__name__icontains = search_term) |
-            Q(user__registered_student__subjects__name__icontains = search_term)
-        ).select_related('user')
-        student_list = [
-            {   "stu_id": student.stu_id,
-                "name": f"{student.user.first_name} {student.user.last_name}",
-                "phone": student.user.phone,
-                "class": student.class_enrolled if student.class_enrolled else "N/A",
-                "subjects": ", ".join(subject.name for subject in student.subjects.all()),
-                "school_name": student.school_name,
-                "batches": bool(student.batches.all()),
-            }
-            for student in set(students)
-        ]
-    else:
-        student_list = []
-    return render(request, 'registration/students_results.html', {'students': student_list})
-    
+# @login_required(login_url='login')
+# def search_students(request):
+#     search_term = request.GET.get('search', '').strip()
+#     if search_term:
+#         students = Student.objects.filter(
+#             Q(user__first_name__icontains=search_term) |
+#             Q(user__last_name__icontains=search_term) |
+#             Q(user__phone__icontains=search_term) |
+#             Q(user__registered_student__school_name__icontains = search_term) |
+#             Q(user__registered_student__class_enrolled__name__icontains = search_term) |
+#             Q(user__registered_student__subjects__name__icontains = search_term)
+#         ).select_related('user')
+#         student_list = [
+#             {   "stu_id": student.stu_id,
+#                 "name": f"{student.user.first_name} {student.user.last_name}",
+#                 "phone": student.user.phone,
+#                 "class": student.class_enrolled if student.class_enrolled else "N/A",
+#                 "subjects": ", ".join(subject.name for subject in student.subjects.all()),
+#                 "school_name": student.school_name,
+#                 "batches": bool(student.batches.all()),
+#             }
+#             for student in set(students)
+#         ]
+#     else:
+#         student_list = []
+#     return render(request, 'registration/students_results.html', {'students': student_list})
 
 @login_required(login_url='login')
 def mark_attendance(request, class_id=None, batch_id=None):
