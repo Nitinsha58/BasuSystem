@@ -1,28 +1,52 @@
-from django.db.models.signals import post_save, post_delete, pre_save, m2m_changed
+from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
 
-from .models import TestQuestion, Test, QuestionResponse, RemarkCount, TestResult, StudentBatchLink, Student
+from .models import (
+    EnrollmentBatch,
+    QuestionResponse,
+    RemarkCount,
+    StudentBatchLink,
+    Test,
+    TestQuestion,
+    TestResult,
+)
 
-@receiver(m2m_changed, sender=Student.batches.through)
-def sync_student_batches(sender, instance, action, reverse, model, pk_set, **kwargs):
-    if action == 'post_add':
-        for batch_id in pk_set:
-            link, created = StudentBatchLink.objects.get_or_create(
-                student=instance,
-                batch_id=batch_id,
-                defaults={'active': True}
-            )
-            if not created and not link.active:
-                link.active = True
-                link.save()
-    elif action == 'post_remove':
-        for batch_id in pk_set:
-            StudentBatchLink.objects.filter(
-            student=instance,
-            batch_id=batch_id
-            ).update(active=False)
-    elif action == 'post_clear':
-        StudentBatchLink.objects.filter(student=instance).update(active=False)
+@receiver(post_save, sender=EnrollmentBatch)
+def sync_student_batch_link_on_enrollment_batch_add(sender, instance, created, **kwargs):
+    enrollment = getattr(instance, 'enrollment', None)
+    if not enrollment:
+        return
+
+    student = getattr(enrollment, 'student', None)
+    if not student:
+        return
+
+    link, link_created = StudentBatchLink.objects.get_or_create(
+        student=student,
+        enrollment=enrollment,
+        batch=instance.batch,
+        defaults={'active': True},
+    )
+    if not link_created and not link.active:
+        link.active = True
+        link.save(update_fields=['active'])
+
+
+@receiver(post_delete, sender=EnrollmentBatch)
+def sync_student_batch_link_on_enrollment_batch_remove(sender, instance, **kwargs):
+    enrollment = getattr(instance, 'enrollment', None)
+    if not enrollment:
+        return
+
+    student = getattr(enrollment, 'student', None)
+    if not student:
+        return
+
+    StudentBatchLink.objects.filter(
+        student=student,
+        enrollment=enrollment,
+        batch=instance.batch,
+    ).update(active=False)
 
 @receiver(pre_save, sender=TestQuestion)
 def question_pre_save(sender, instance, **kwargs):

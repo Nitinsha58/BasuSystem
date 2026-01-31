@@ -237,13 +237,14 @@ class EnrollmentBatch(models.Model):
 
 class StudentBatchLink(models.Model):
     student = models.ForeignKey('Student', on_delete=models.CASCADE, related_name='batch_links')
+    enrollment = models.ForeignKey('StudentEnrollment', on_delete=models.CASCADE, null=True, blank=True, related_name='student_batch_links')
     batch = models.ForeignKey('Batch', on_delete=models.CASCADE, related_name='student_links')
     active = models.BooleanField(default=True)
     joined_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        unique_together = ('student', 'batch')
+        unique_together = ('student', 'batch', 'enrollment')
     
     def __str__(self):
         return f"{self.student.user.first_name} - {self.batch}"

@@ -117,8 +117,11 @@ def student_enrollment_update(request, stu_id):
                 for batch_id in batch_ids
                 if batch_id not in existing_ids
             ]
-            if to_create:
-                EnrollmentBatch.objects.bulk_create(to_create)
+            # NOTE: Do not use bulk_create here.
+            # Django does not emit post_save signals for bulk_create(), and we rely on
+            # EnrollmentBatch post_save signals to keep StudentBatchLink in sync.
+            for link in to_create:
+                EnrollmentBatch.objects.create(enrollment=link.enrollment, batch_id=link.batch_id)
 
         messages.success(request, 'Enrollment updated.')
         return redirect(f"{reverse('student_enrollment_update', args=[student.stu_id])}?session={selected_session.id}")
