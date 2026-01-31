@@ -16,39 +16,51 @@
 </style>
 <div id="searchStuModal" class="start-0 d-flex flex-column flex-md-row items-center justify-content-between p-2">
     <div class="position-relative rounded-lg rounded my-2 w-100 bg-white shadow-md"
-      style="height: fit-content; max-width: 400px; z-index: 2355;">
-      <div class="search-form ">
-        <input type="text" class="form-control search-input p-2 fs-5" id="search-stu-input" maxlength="60"
-          placeholder="Search Inquiry..." autocomplete="off" autofocus
-          name="search" 
-          hx-get="/search-inquiries?search={value}"
-          hx-trigger="keyup changed delay:500ms, search" hx-target="#search-inquiries-list">
-        <ul class="position-absolute p-2 mt-2 top-2 w-100 rounded" id="search-inquiries-list">
-  
-        </ul>
-      </div>
+        style="height: fit-content; max-width: 400px; z-index: 2355;">
+        <div class="search-form ">
+            <input type="text" class="form-control search-input p-2 fs-5" id="search-stu-input" maxlength="60"
+                placeholder="Search Inquiry..." autocomplete="off" autofocus name="search"
+                hx-get="/search-inquiries?search={value}" hx-trigger="keyup changed delay:500ms, search"
+                hx-target="#search-inquiries-list">
+        </div>
     </div>
 
-    <div >
+    <div>
         <form id="" action="" method="get" class="d-flex gap-4">
             <div>
-                <select class="form-select" name="type_of_payment" aria-label="Default select example" onchange="this.form.submit()">
+                <label for="type_of_payment" class="form-label">Type of Payment</label>
+                <select class="form-select" name="type_of_payment" aria-label="Default select example"
+                    onchange="this.form.submit()">
                     <option value="any" {% if selected_type == 'any' %} selected {% endif %}>Any</option>
                     {% for key, value in payment_types %}
-                        <option value="{{ key }}" {% if selected_type == key %} selected {% endif %}>{{ value }}</option>
+                    <option value="{{ key }}" {% if selected_type == key %} selected {% endif %}>{{ value }}</option>
                     {% endfor %}
                 </select>
-    
+
                 {% if type_monthly_collection %}
-                    <p class="mt-2">{{ type_monthly_collection }}</p>
+                <p class="mt-2">{{ type_monthly_collection }}</p>
                 {% endif %}
             </div>
 
             <div>
-                <select class="form-select" name="status_type" aria-label="Default select example" id="status_type" onchange="this.form.submit()">
-                        <option value="all" {% if status_type == 'all' %} selected {% endif %}>All</option>
-                        <option value="pending" {% if status_type == 'pending' %} selected {% endif %}>Pending</option>
-                        <option value="done" {% if status_type == 'done' %} selected {% endif %}>Done</option>
+                <label for="status_type" class="form-label">Status</label>
+                <select class="form-select" name="status_type" aria-label="Default select example" id="status_type"
+                    onchange="this.form.submit()">
+                    <option value="all" {% if status_type == 'all' %} selected {% endif %}>All</option>
+                    <option value="pending" {% if status_type == 'pending' %} selected {% endif %}>Pending</option>
+                    <option value="done" {% if status_type == 'done' %} selected {% endif %}>Done</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="session" class="form-label">Session</label>
+                <select class="form-select" name="session" aria-label="Default select example" id="session"
+                    onchange="this.form.submit()">
+                    <option value="any" {% if selected_session_id == 'any' %} selected {% endif %}>All</option>
+                    {% for session in academic_sessions %}
+                    <option value="{{ session.id }}" {% if selected_session and selected_session.id == session.id %}
+                        selected {% endif %}>{{ session.name }}</option>
+                    {% endfor %}
                 </select>
             </div>
 
@@ -79,47 +91,55 @@
     </div>
     <div class="row g-4 mx-2">
         <ul class="pagination">
-            <li class="page-item"><a class="page-link" href="?year={{ prev_month.year }}&month={{ prev_month.month }}">Previous</a></li>
-            <li class="page-item"><a class="page-link" href="?year={{ next_month.year }}&month={{ next_month.month }}">Next</a></li>
-          </ul>
+            <li class="page-item"><a class="page-link"
+                    href="?year={{ prev_month.year }}&month={{ prev_month.month }}&status_type={{ status_type }}&type_of_payment={{ selected_type|default:'any' }}&session={{ selected_session_id|default:'any' }}">Previous</a>
+            </li>
+            <li class="page-item"><a class="page-link"
+                    href="?year={{ next_month.year }}&month={{ next_month.month }}&status_type={{ status_type }}&type_of_payment={{ selected_type|default:'any' }}&session={{ selected_session_id|default:'any' }}">Next</a>
+            </li>
+        </ul>
     </div>
 
-</div>  
+</div>
 
 <div class="mx-2 px-2">
     <div class="d-flex g-4 w-100 dates-group pb-3">
         {% for date, items in dates.items %}
-        <div class="card date-card" style="min-width: 20rem; height: fit-content; border: none;" data-date="{{ date|date:'Y-m-d' }}">
+        <div class="card date-card" style="min-width: 20rem; height: fit-content; border: none;"
+            data-date="{{ date|date:'Y-m-d' }}">
             <ul class="list-group ">
                 <li class="list-group-item text-dark bg-light rounded">{{ date|date:'d b Y ( l )'|title }}</li>
 
                 {% for inst in items %}
-                    <li class="list-group-item p-2 my-2 rounded bg-light-subtle" {% if followup.followup_date %} style="box-shadow: -3px -3px 12px #39299410, 6px 6px 12px #39299420;
+                <li class="list-group-item p-2 my-2 rounded bg-light-subtle" {% if followup.followup_date %} style="box-shadow: -3px -3px 12px #39299410, 6px 6px 12px #39299420;
                         border: 2px solid #392994;" {% endif %}>
-                        <a href="{% url 'student_fees_details' inst.student.stu_id %}" class="text-decoration-none  text-dark">
-                            <div class="">
-                                <span class="fs-5 m-0 mb-1" >{{inst.student.user.first_name}} {{inst.student.user.last_name}}</span>
-                                <span class="">( {{inst.payment_type}} )</span>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <p class="m-0" >
-                                    {{inst.student.class_enrolled|title}}
-                                </p>
-                                <h5 class="m-0">Rs. {{inst.amount}}</h5>
-                            </div>
+                    <a href="{% url 'student_enrollment_fees_details' inst.student.stu_id %}{% if selected_session and selected_session_id != 'any' %}?session={{ selected_session.id }}{% endif %}"
+                        class="text-decoration-none  text-dark">
+                        <div class="">
+                            <span class="fs-5 m-0 mb-1">{{inst.student.user.first_name}}
+                                {{inst.student.user.last_name}}</span>
+                            <span class="">{{ inst.enrollment.session }}</span>
+                            <span class="">( {{inst.payment_type}} )</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
                             <p class="m-0">
-                                {% for subject in inst.student.subjects.all %}
-                                    {{subject.name|title}}
-                                {% endfor %}
+                                {{inst.student.class_enrolled|title}}
                             </p>
+                            <h5 class="m-0">Rs. {{inst.amount}}</h5>
+                        </div>
+                        <p class="m-0">
+                            {% for subject in inst.student.subjects.all %}
+                            {{subject.name|title}}
+                            {% endfor %}
+                        </p>
 
-                            <div class="d-flex justify-content-between align-items-center">
-                                {% if inst.remark %}
-                                <small class="text-muted m-0 mb-2 text-sm">{{inst.remark}}</small>
-                                {% endif %}
+                        <div class="d-flex justify-content-between align-items-center">
+                            {% if inst.remark %}
+                            <small class="text-muted m-0 mb-2 text-sm">{{inst.remark}}</small>
+                            {% endif %}
 
-                                <div class="">
-                                    <a href="{{inst.reminder_link}}" target="_blank" class="btn 
+                            <div class="">
+                                <a href="{{inst.reminder_link}}" target="_blank" class="btn 
                                     {% if inst.reminder_type == 'late' %}
                                     btn-danger
                                     {% elif inst.reminder_type == 'today' %}
@@ -128,17 +148,18 @@
                                     btn-primary
                                     {% endif %}
                                     px-2 py-1">{{inst.reminder_type}}</a>
-                                </div>
                             </div>
+                        </div>
 
-                            {% if inst.paid and inst.due_date %}
-                            <p class="rounded px-2 py-1 m-0" id="status" name="status" style="background: #7AFF91; width: fit-content; ">Payment Done</p>
-                            {% elif not inst.paid and inst.due_date < today %}
-                            <p class="rounded px-2 py-1 m-0" id="status" name="status"  style="background: #FF7C7C; width: fit-content; ">Pending Payment</p>
+                        {% if inst.paid and inst.due_date %}
+                        <p class="rounded px-2 py-1 m-0" id="status" name="status"
+                            style="background: #7AFF91; width: fit-content; ">Payment Done</p>
+                        {% elif not inst.paid and inst.due_date < today %} <p class="rounded px-2 py-1 m-0" id="status"
+                            name="status" style="background: #FF7C7C; width: fit-content; ">Pending Payment</p>
                             {% endif %}
-                            
-                        </a>
-                    </li>
+
+                    </a>
+                </li>
                 {% endfor %}
 
             </ul>
@@ -149,15 +170,15 @@
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function () {
         const searchInput = document.getElementById("search-stu-input");
         const searchList = document.getElementById("search-inquiries-list");
-    
-        searchInput.addEventListener("blur", function() {
+
+        searchInput.addEventListener("blur", function () {
             setTimeout(() => searchList.style.display = "none", 200);
         });
-    
-        searchInput.addEventListener("focus", function() {
+
+        searchInput.addEventListener("focus", function () {
             searchList.style.display = "block";
         });
     });
@@ -183,7 +204,7 @@
 
             sessionStorage.removeItem("inquiriesPosition");
         }
-            window.addEventListener("beforeunload", function () {
+        window.addEventListener("beforeunload", function () {
             sessionStorage.setItem("inquiriesPosition", container.scrollLeft);
         });
 
@@ -194,9 +215,9 @@
                 dateCards[i].querySelector('ul.list-group').children[0].classList.add("bg-dark", "text-white", "border-dark");
                 break;
             }
-            scrollOffset +=  gap + cardWidth;
+            scrollOffset += gap + cardWidth;
         }
-        scrollOffset -= gap*2 + cardWidth;
+        scrollOffset -= gap * 2 + cardWidth;
 
         if (!scrollPosition) {
             container.scrollTo({

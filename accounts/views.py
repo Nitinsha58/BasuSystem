@@ -3,9 +3,10 @@ from datetime import date, timedelta
 import calendar
 from django.shortcuts import render, redirect
 from django.utils import timezone
-from registration.models import Installment
+from registration.models import Installment, AcademicSession
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db.models import Q
 
 from .utility import generate_whatsapp_link
 
@@ -27,10 +28,42 @@ def installments(request):
     # Generate all days of the selected month
     dates = [start_date + timedelta(days=i) for i in range((end_date - start_date).days + 1)]
 
-    # Query installments
-    installments = Installment.objects.select_related('student', 'fee_details__student') \
-        .filter(due_date__range=(start_date, end_date), student__active=True) \
+    academic_sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+
+    selected_session_id = request.GET.get('session')
+    selected_session = None
+    if selected_session_id in (None, ''):
+        selected_session = active_session
+        selected_session_id = str(active_session.id) if active_session else None
+    elif selected_session_id == 'any':
+        selected_session = None
+    else:
+        selected_session = AcademicSession.objects.filter(id=selected_session_id).first()
+        if not selected_session:
+            selected_session = active_session
+            selected_session_id = str(active_session.id) if active_session else 'any'
+
+    # Query installments (month + session scoped)
+    installments = (
+        Installment.objects.select_related(
+            'student',
+            'student__user',
+            'fee_details',
+            'fee_details__student',
+            'fee_details__enrollment',
+            'fee_details__enrollment__session',
+            'enrollment',
+            'enrollment__session',
+        )
+        .filter(due_date__range=(start_date, end_date), student__active=True)
         .order_by('due_date')
+    )
+    if selected_session:
+        installments = installments.filter(
+            Q(enrollment__session=selected_session)
+            | Q(enrollment__isnull=True, fee_details__enrollment__session=selected_session)
+        )
 
     status_type = request.GET.get('status_type', 'all')  # default is 'all'
 
@@ -150,4 +183,8 @@ def installments(request):
         'payment_types': payment_types,
         'selected_type': request.GET.get('type_of_payment', None),
         'status_type': status_type,
+        'academic_sessions': academic_sessions,
+        'active_session': active_session,
+        'selected_session': selected_session,
+        'selected_session_id': selected_session_id,
     })
