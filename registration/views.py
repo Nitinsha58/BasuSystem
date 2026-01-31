@@ -774,7 +774,7 @@ def delete_installment(request, stu_id, ins_id):
     
     Installment.objects.filter(id=ins_id).delete()
     messages.success(request, "Installment Deleted.")
-    return redirect('student_fees_details', stu_id=student.stu_id)
+    return redirect('student_enrollment_fees_details', stu_id=student.stu_id)
 
 
 @login_required(login_url='login')
