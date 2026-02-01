@@ -91,6 +91,9 @@ def student_enrollment_update(request, stu_id):
         enrollment.course = request.POST.get('course') or None
         enrollment.program_duration = request.POST.get('program_duration') or enrollment.program_duration
         enrollment.active = request.POST.get('active') == 'Active'
+        remarks = (request.POST.get('remarks') or "").strip()
+        enrollment.remarks = remarks or None
+
         enrollment.save()
 
         subject_ids_raw = request.POST.getlist('subjects[]') or request.POST.getlist('subjects')
@@ -146,6 +149,46 @@ def student_enrollment_update(request, stu_id):
         'selected_session': selected_session,
     })
 
+
+@login_required(login_url='login')
+def student_registration(request):
+    form = None
+
+    if request.method == "POST":
+        form = StudentRegistrationForm(request.POST, request.FILES or None)
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    student = form.save()
+            except TypeError:
+                # Fallback for forms whose save() signature doesn't accept the above usage
+                student = form.save()
+
+            if not student:
+                student = getattr(form, "instance", None)
+
+            if not student or not getattr(student, "stu_id", None):
+                messages.error(request, "Student created but could not determine Student ID.")
+                return redirect("student_registration")
+
+            messages.success(request, "Student Registered.")
+            return redirect("student_enrollment_details_update", stu_id=student.stu_id)
+
+        for field, error_list in form.errors.items():
+            for error in error_list:
+                messages.error(request, f"{field}: {error}")
+    else:
+        form = StudentRegistrationForm()
+
+    classes = ClassName.objects.all().order_by("-name")
+    subjects = Subject.objects.all().order_by("name")
+
+    return render(request, "registration/enrollment/student_registration.html", {
+        "form": form,
+        "classes": classes,
+        "subjects": subjects,
+    })
+
 @login_required(login_url='login')
 def student_enrollment_details_update(request, stu_id):
     student = Student.objects.filter(stu_id=stu_id).first()
@@ -163,18 +206,9 @@ def student_enrollment_details_update(request, stu_id):
             "dob": request.POST.get("dob"),
             "doj": request.POST.get("doj"),
             "school_name": request.POST.get("school_name"),
-            "class_enrolled": ClassName.objects.filter(id=request.POST.get("class_enrolled")).first() if request.POST.get("class_enrolled") else '',
-            "subjects": request.POST.getlist("subjects"),  # ManyToMany field
-            "batches": request.POST.getlist("batches[]"),  # ManyToMany field
-            "marksheet_submitted": request.POST.get("marksheet_submitted") == "yes",
-            "sat_score": request.POST.get("sat_score"),
-            "remarks": request.POST.get("remarks"),
             "address": request.POST.get("address"),
-            "last_year_marks_details": request.POST.get("last_year_marks_details"),
             "aadhar_card_number": request.POST.get("aadhar_card_number"),
             "gender": request.POST.get("gender"),
-            "course": request.POST.get("course"),
-            "program_duration": request.POST.get("program_duration"),
             "active": request.POST.get("active") == "Active",
         }
         form = StudentUpdateForm(form_data, instance=student)

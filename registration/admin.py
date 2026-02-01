@@ -62,159 +62,156 @@ class AttendanceAdmin(admin.ModelAdmin):
 
 class StudentAdmin(admin.ModelAdmin):
     list_display = [
-        'user_full_name', 'email', 'user__phone', 'gender', 'dob', 'doj', 'school_name',
-        'class_enrolled', 'course', 'program_duration', 'marksheet_submitted', 'sat_score',
-        'active', 'created_at', 'updated_at'
+        'user_full_name', 'email', 'user__phone', 'gender', 'dob', 'doj', 'school_name', 'active', 'created_at', 'updated_at'
     ]
     search_fields = [
         'user__first_name', 'user__last_name', 'user__phone', 'email',
         'school_name', 'aadhar_card_number'
     ]
     list_filter = [
-        'gender', 'course', 'program_duration', 'class_enrolled',
-        'marksheet_submitted', 'active', 'created_at'
+        'gender', 'active', 'created_at'
     ]
     ordering = ['user__first_name', 'user__last_name']
-    actions = ['export_students_csv']
+    # actions = ['export_students_csv']
     list_per_page = 500
 
     def user_full_name(self, obj):
         return f"{obj.user.first_name} {obj.user.last_name}"
     user_full_name.short_description = "Name"
 
-    def export_students_csv(self, request, queryset):
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="students_by_class.csv"'
-        writer = csv.writer(response)
+    # def export_students_csv(self, request, queryset):
+    #     response = HttpResponse(content_type='text/csv')
+    #     response['Content-Disposition'] = 'attachment; filename="students_by_class.csv"'
+    #     writer = csv.writer(response)
         
-        # Write header
-        writer.writerow(['Student Name', 'Phone', 'Mother', 'Father'])
+    #     # Write header
+    #     writer.writerow(['Student Name', 'Phone', 'Mother', 'Father'])
 
-        for student in queryset.select_related('user').prefetch_related('batches__class_name'):
-            writer.writerow([
-            f"{student.user.first_name} {student.user.last_name}",
-            student.user.phone or '',
-            student.parent_details.mother_contact or '', 
-            student.parent_details.father_contact or '',
-            ])
+    #     for student in queryset.select_related('user').prefetch_related('batches__class_name'):
+    #         writer.writerow([
+    #         f"{student.user.first_name} {student.user.last_name}",
+    #         student.user.phone or '',
+    #         student.parent_details.mother_contact or '', 
+    #         student.parent_details.father_contact or '',
+    #         ])
 
-        return response
+    #     return response
     
-    def export_students_with_subject_csv(self, request, queryset):
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="students_with_subjects.csv"'
-        writer = csv.writer(response)
+    # def export_students_with_subject_csv(self, request, queryset):
+    #     response = HttpResponse(content_type='text/csv')
+    #     response['Content-Disposition'] = 'attachment; filename="students_with_subjects.csv"'
+    #     writer = csv.writer(response)
 
-        # Write header
-        writer.writerow(['Student Name', 'Phone', 'Mother', 'Father', 'Subjects'])
+    #     # Write header
+    #     writer.writerow(['Student Name', 'Phone', 'Mother', 'Father', 'Subjects'])
 
-        for student in queryset.select_related('user').prefetch_related('batches__subject'):
-            subjects = set()
-            for batch in student.batches.all():
-                if batch.subject and batch.subject.name:
-                    subjects.add(batch.subject.name)
-            writer.writerow([
-                f"{student.user.first_name} {student.user.last_name}",
-                student.user.phone or '',
-                student.parent_details.mother_contact or '', 
-                student.parent_details.father_contact or '',
-                ",".join(subjects)
-            ])
+    #     for student in queryset.select_related('user').prefetch_related('batches__subject'):
+    #         subjects = set()
+    #         for batch in student.batches.all():
+    #             if batch.subject and batch.subject.name:
+    #                 subjects.add(batch.subject.name)
+    #         writer.writerow([
+    #             f"{student.user.first_name} {student.user.last_name}",
+    #             student.user.phone or '',
+    #             student.parent_details.mother_contact or '', 
+    #             student.parent_details.father_contact or '',
+    #             ",".join(subjects)
+    #         ])
 
-        return response
+    #     return response
 
-    def export_students_with_section_csv(self, request, queryset):
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="students_with_sections.csv"'
-        writer = csv.writer(response)
+    # def export_students_with_section_csv(self, request, queryset):
+    #     response = HttpResponse(content_type='text/csv')
+    #     response['Content-Disposition'] = 'attachment; filename="students_with_sections.csv"'
+    #     writer = csv.writer(response)
 
-        # Write header
-        writer.writerow(['Student Name', 'Phone', 'Mother', 'Father', 'Classes', 'Sections (Section - Subject)'])
+    #     # Write header
+    #     writer.writerow(['Student Name', 'Phone', 'Mother', 'Father', 'Classes', 'Sections (Section - Subject)'])
 
-        for student in queryset.select_related('user').prefetch_related('batches__class_name', 'batches__section', 'batches__subject'):
-            classes = set()
-            sections = set()
-            for batch in student.batches.all():
-                # Collect class names
-                if batch.class_name and batch.class_name.name:
-                    classes.add(batch.class_name.name)
-                # Collect section-subject combinations
-                section_name = batch.section.name if batch.section and batch.section.name else ''
-                subject_name = batch.subject.name if batch.subject and batch.subject.name else ''
-                if section_name or subject_name:
-                    combined = f"{section_name} - {subject_name}" if section_name and subject_name else section_name or subject_name
-                    sections.add(combined)
-            writer.writerow([
-                f"{student.user.first_name} {student.user.last_name}",
-                student.user.phone or '',
-                student.parent_details.mother_contact or '',
-                student.parent_details.father_contact or '',
-                ",".join(classes),
-                ",".join(sections)
-            ])
+    #     for student in queryset.select_related('user').prefetch_related('batches__class_name', 'batches__section', 'batches__subject'):
+    #         classes = set()
+    #         sections = set()
+    #         for batch in student.batches.all():
+    #             # Collect class names
+    #             if batch.class_name and batch.class_name.name:
+    #                 classes.add(batch.class_name.name)
+    #             # Collect section-subject combinations
+    #             section_name = batch.section.name if batch.section and batch.section.name else ''
+    #             subject_name = batch.subject.name if batch.subject and batch.subject.name else ''
+    #             if section_name or subject_name:
+    #                 combined = f"{section_name} - {subject_name}" if section_name and subject_name else section_name or subject_name
+    #                 sections.add(combined)
+    #         writer.writerow([
+    #             f"{student.user.first_name} {student.user.last_name}",
+    #             student.user.phone or '',
+    #             student.parent_details.mother_contact or '',
+    #             student.parent_details.father_contact or '',
+    #             ",".join(classes),
+    #             ",".join(sections)
+    #         ])
 
-        return response
+    #     return response
 
-    def export_mentor_students(self, request, queryset):
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="mentor_students.csv"'
-        writer = csv.writer(response)
+    # def export_mentor_students(self, request, queryset):
+    #     response = HttpResponse(content_type='text/csv')
+    #     response['Content-Disposition'] = 'attachment; filename="mentor_students.csv"'
+    #     writer = csv.writer(response)
 
-        # Write header
-        writer.writerow(['Mentor Name', 'Student Name', 'Phone'])
+    #     # Write header
+    #     writer.writerow(['Mentor Name', 'Student Name', 'Phone'])
 
-        for student in queryset.select_related('user', 'parent_details').prefetch_related('mentorships__mentor__user'):
-            for mentorship in student.mentorships.filter(active=True):
-                mentor = mentorship.mentor
-                if mentor:
-                    writer.writerow([
-                        f"{mentor.user.first_name} {mentor.user.last_name}",
-                        f"{student.user.first_name} {student.user.last_name}",
-                        student.parent_details.mother_contact or student.parent_details.father_contact or student.user.phone or ''
-                    ])
+    #     for student in queryset.select_related('user', 'parent_details').prefetch_related('mentorships__mentor__user'):
+    #         for mentorship in student.mentorships.filter(active=True):
+    #             mentor = mentorship.mentor
+    #             if mentor:
+    #                 writer.writerow([
+    #                     f"{mentor.user.first_name} {mentor.user.last_name}",
+    #                     f"{student.user.first_name} {student.user.last_name}",
+    #                     student.parent_details.mother_contact or student.parent_details.father_contact or student.user.phone or ''
+    #                 ])
 
-        return response
+    #     return response
     
-    def export_students_in_detail(self, request, queryset):
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="students_detailed.csv"'
-        writer = csv.writer(response)
+    # def export_students_in_detail(self, request, queryset):
+    #     response = HttpResponse(content_type='text/csv')
+    #     response['Content-Disposition'] = 'attachment; filename="students_detailed.csv"'
+    #     writer = csv.writer(response)
 
-        # Write header
-        writer.writerow(['Student Name', 'Class', 'Batch', 'Subject', 'School Name', 'Phone', 'Mother Phone', 'Father Phone', 'Status'])
+    #     # Write header
+    #     writer.writerow(['Student Name', 'Class', 'Batch', 'Subject', 'School Name', 'Phone', 'Mother Phone', 'Father Phone', 'Status'])
 
-        for student in queryset.select_related('user').prefetch_related('batches__class_name', 'batches__subject'):
-            batches_info = []
-            for batch in student.batches.all():
-                subject_name = batch.subject.name + "-" + batch.section.name if batch.subject else ''
-                batches_info.append(f"{subject_name}")
-            writer.writerow([
-                f"{student.user.first_name} {student.user.last_name}",
-                ", ".join(set(batch.class_name.name for batch in student.batches.all() if batch.class_name)),
-                ", ".join(batches_info),
-                ", ".join(set(batch.subject.name for batch in student.batches.all() if batch.subject)),
-                student.school_name or '',
-                student.user.phone or '',
-                student.parent_details.mother_contact or '',
-                student.parent_details.father_contact or '',
-                'Active' if student.active else 'Inactive'
-            ])
+    #     for student in queryset.select_related('user').prefetch_related('batches__class_name', 'batches__subject'):
+    #         batches_info = []
+    #         for batch in student.batches.all():
+    #             subject_name = batch.subject.name + "-" + batch.section.name if batch.subject else ''
+    #             batches_info.append(f"{subject_name}")
+    #         writer.writerow([
+    #             f"{student.user.first_name} {student.user.last_name}",
+    #             ", ".join(set(batch.class_name.name for batch in student.batches.all() if batch.class_name)),
+    #             ", ".join(batches_info),
+    #             ", ".join(set(batch.subject.name for batch in student.batches.all() if batch.subject)),
+    #             student.school_name or '',
+    #             student.user.phone or '',
+    #             student.parent_details.mother_contact or '',
+    #             student.parent_details.father_contact or '',
+    #             'Active' if student.active else 'Inactive'
+    #         ])
 
-        return response
+    #     return response
     
-    export_mentor_students.short_description = "Export mentor-student as CSV"
-    actions.append('export_mentor_students')
+    # export_mentor_students.short_description = "Export mentor-student as CSV"
+    # actions.append('export_mentor_students')
 
-    export_students_in_detail.short_description = "Export students in detail as CSV"
-    actions.append('export_students_in_detail')
+    # export_students_in_detail.short_description = "Export students in detail as CSV"
+    # actions.append('export_students_in_detail')
 
-    export_students_with_section_csv.short_description = "Export students with classes and sections (Section - Subject) as CSV"
-    actions.append('export_students_with_section_csv')
+    # export_students_with_section_csv.short_description = "Export students with classes and sections (Section - Subject) as CSV"
+    # actions.append('export_students_with_section_csv')
 
-    export_students_with_subject_csv.short_description = "Export students with subjects as CSV"
-    actions.append('export_students_with_subject_csv')
+    # export_students_with_subject_csv.short_description = "Export students with subjects as CSV"
+    # actions.append('export_students_with_subject_csv')
 
-    export_students_csv.short_description = "Export students as CSV"
+    # export_students_csv.short_description = "Export students as CSV"
 
 class ChapterAdmin(admin.ModelAdmin):
     list_display = ['chapter_name', 'subject', 'class_name', 'created_at', 'updated_at']

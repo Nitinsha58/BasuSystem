@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import (
     
+    student_registration,
     student_enrollment_details_update,
     students_enrollment_list,
     student_enrollment_parent_details,
@@ -63,6 +64,7 @@ from .views import (
 urlpatterns = [
     # path('search-students/', search_students, name='search_students'),
     path('enrollments', students_enrollment_list, name='students_enrollment_list'),
+    path('registration/', student_registration, name='student_registration'),
     path('enrollment/<uuid:stu_id>', student_enrollment_details_update, name='student_enrollment_details_update'),
     path('enrollment/parent/<uuid:stu_id>', student_enrollment_parent_details, name='student_enrollment_parent_details'),
     path('enrollment/update/<uuid:stu_id>', student_enrollment_update, name='student_enrollment_update'),

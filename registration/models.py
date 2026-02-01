@@ -173,7 +173,7 @@ class Student(models.Model):
     
     def active_enrollment(self):
         return self.enrollments.filter(
-            active=True,
+        active=True,
             session__is_active=True
         ).first()
     
@@ -192,6 +192,7 @@ class StudentEnrollment(models.Model):
 
     program_duration = models.CharField(max_length=10, choices=Student.DURATION_CHOICE, default="1 Year" )
     subjects = models.ManyToManyField(Subject, blank=True, related_name="enrollments" )
+    remarks = models.TextField(blank=True, null=True)
     active = models.BooleanField(default=True,help_text="Active enrollment for this session" )
 
     promoted_from = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL, related_name="promoted_to")
