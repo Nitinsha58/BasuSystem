@@ -6,7 +6,7 @@
                 <div class="" style="font-size: 16px;">{{student.name}}</div>
                 <span>{{student.phone}}</span>
             </div>
-            <small class="text-muted">{{student.class}} | Subjects: {{student.subjects}}</small>
+            <small class="text-muted">{{student.active_enrollment.class_name}} | Subjects: {{student.active_enrollment.subjects}}</small>
         </a>
     </li>
     {% endfor %}

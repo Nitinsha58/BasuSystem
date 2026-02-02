@@ -48,7 +48,7 @@
               <span class="">{{forloop.counter}}. {{enroll.student.user.first_name}} {{enroll.student.user.last_name}}</span>
             </a>
             <p class="mb-0 date">{{enroll.student.created_at|date:'d M'}}</p>
-            {% if not enroll.student.batches.all %}
+            {% if not enroll.student.current_batches %}
             <div
               style="position: absolute; background-color: red; border-radius: 50%; width: 8px; height: 8px; right: -6px; top: 50%;"
               class="indicator"></div>

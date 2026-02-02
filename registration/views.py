@@ -64,6 +64,8 @@ def student_enrollment_update(request, stu_id):
         .first()
     )
 
+    has_enrollment = enrollment is not None
+
     batches = (
         Batch.objects.filter(session=selected_session)
         .select_related('class_name', 'subject', 'section')
@@ -75,6 +77,10 @@ def student_enrollment_update(request, stu_id):
         selected_batch_ids = list(
             EnrollmentBatch.objects.filter(enrollment=enrollment).values_list('batch_id', flat=True)
         )
+
+    selected_subject_ids = []
+    if enrollment:
+        selected_subject_ids = list(enrollment.subjects.values_list('id', flat=True))
     
     if request.method == 'POST':
         class_id = request.POST.get('class_name')
@@ -131,14 +137,14 @@ def student_enrollment_update(request, stu_id):
     
     classes = ClassName.objects.all().order_by('-name')
     subjects = Subject.objects.all().order_by('name')
-    if enrollment:
-        selected_subject_ids = list(enrollment.subjects.values_list('id', flat=True))
-    else:
-        selected_subject_ids = list(student.subjects.values_list('id', flat=True))
+
+    page_mode = 'update' if has_enrollment else 'create'
 
     return render(request, "registration/enrollment/student_enrollment_update.html", {
         'student': student,
         'enrollment': enrollment,
+        'has_enrollment': has_enrollment,
+        'page_mode': page_mode,
         'classes': classes,
         'subjects': subjects,
         'selected_subject_ids': selected_subject_ids,
@@ -223,153 +229,9 @@ def student_enrollment_details_update(request, stu_id):
 
         return redirect("student_update", stu_id=student.stu_id)
     
-    classes = ClassName.objects.all().order_by('-name')
-    subjects = Subject.objects.all().order_by('name')
-    selected_class = ClassName.objects.filter(id=student.class_enrolled.id).first() if student.class_enrolled else None
-    batches = Batch.objects.filter(class_name=selected_class)
-
-    # # WhatsApp group links mapping by class and type
-    # WHATSAPP_GROUP_LINKS = {
-    #     "7": {
-    #         "student": "https://chat.whatsapp.com/CODPG4w7eFX43VQpOi6BnD",
-    #         "parent": "https://chat.whatsapp.com/Hi0U7fSFFwbGNlfinyCZII",
-    #     },
-    #     "8": {
-    #         "student": "https://chat.whatsapp.com/H2xTY2qpUOb5EXut75iNwV",
-    #         "parent": "https://chat.whatsapp.com/CGsBhqddvtI5BNKwzXm2wC",
-    #     },
-    #     "9": {
-    #         "student": "https://chat.whatsapp.com/BasrRWXoC3x88lyXrvctEU",
-    #         "parent": "https://chat.whatsapp.com/IOj2m12EWZI3fp9rEjF01x",
-    #     },
-    #     "10": {
-    #         "student": "https://chat.whatsapp.com/L0zF6dVCBDNEF1eGEBR1Wg",
-    #         "parent": "https://chat.whatsapp.com/Lb7Q1Xq1YBz9J2ZfcbK5dC",
-    #     },
-    #     "11_PCM": {
-    #         "student": "https://chat.whatsapp.com/JdbjvZ55nwKDREkmsw2GMD",
-    #         "parent": "https://chat.whatsapp.com/IbQTtuqBQIALABUPcE688G",
-    #     },
-    #     "11_COMMERCE": {
-    #         "student": "https://chat.whatsapp.com/GruyEBmP0dZ0WOADZlEeic",
-    #         "parent": "https://chat.whatsapp.com/I6bm2asTs9T4KJEJvKgMCL",
-    #     },
-    #     "12_PCM": {
-    #         "student": "https://chat.whatsapp.com/IsveJm0QuCT9IM9Y93vZ6s",
-    #         "parent": "https://chat.whatsapp.com/B7wsZHE4oDHDmpvC0UB1YH",
-    #     },
-    #     "12_COMMERCE": {
-    #         "student": "https://chat.whatsapp.com/Esgz3orRZuLEkyQB9iJ3Va",
-    #         "parent": "https://chat.whatsapp.com/ByZk2Dnu0el5WGanR4SZcB",
-    #     },
-    #     "transport_erikshaw": "https://chat.whatsapp.com/Hea0v2pn5NzDdZdzCeE4mL",
-    #     "transport_cab": "https://chat.whatsapp.com/IvSYxCyANmFL7QjzuHljGF",
-    # }
-
-    # def get_class_group_key(student):
-    #     cls = student.class_enrolled.name.upper() if student.class_enrolled else ""
-    #     if "11" in cls:
-    #         if "COMMERCE" in cls:
-    #             return "11_COMMERCE"
-    #         return "11_PCM"
-    #     if "12" in cls:
-    #         if "COMMERCE" in cls:
-    #             return "12_COMMERCE"
-    #         return "12_PCM"
-    #     for num in ["7", "8", "9", "10"]:
-    #         if num in cls:
-    #             return num
-    #     return None
-
-    # def get_whatsapp_group_links(student):
-    #     group_key = get_class_group_key(student)
-    #     student_link = parent_link = None
-    #     if group_key and group_key in WHATSAPP_GROUP_LINKS:
-    #         student_link = WHATSAPP_GROUP_LINKS[group_key].get("student")
-    #         parent_link = WHATSAPP_GROUP_LINKS[group_key].get("parent")
-    #     return student_link, parent_link
-
-    # def get_transport_group_links(student):
-    #     links = []
-    #     if getattr(student, "transport", None):
-    #         mode = getattr(student.transport, "mode", None)
-    #         if mode and hasattr(mode, "name"):
-    #             mode_name = mode.name.lower()
-    #             if "rikshaw" in mode_name:
-    #                 links.append(WHATSAPP_GROUP_LINKS.get("transport_erikshaw"))
-    #             if "cab" in mode_name:
-    #                 links.append(WHATSAPP_GROUP_LINKS.get("transport_cab"))
-    #     return [l for l in links if l]
-
-    # def generate_wa_me_link(phone, message):
-    #     import urllib.parse
-    #     return f"https://wa.me/{phone}?text={urllib.parse.quote(message)}"
-
-    # # Compose the join message for WhatsApp with both group links (both links are always included)
-    # def get_join_message(student, student_link, parent_link):
-    #     class_name = student.class_enrolled.name if student.class_enrolled else ""
-    #     message = (
-    #         "Dear Parent,\n\n"
-    #         "We're excited to begin the 2025-26 session!\n\n"
-    #         "Thank you for your continued support. This year, we've made key improvements and new strategies to boost student results.\n\n"
-    #         f"👇 Join the official WhatsApp groups for updates:\n\n"
-    #     )
-    #     # Always include both links, even if one is missing (show as N/A if not found)
-    #     message += f"{class_name} Students Group\n{student_link or 'N/A'}\n\n"
-    #     message += f"{class_name} Parents Group\n{parent_link or 'N/A'}\n\n"
-    #     message += (
-    #         "Feel free to reach out for any queries. We're here to help!\n\n"
-    #         "- BASU Classes"
-    #     )
-    #     return message
-
-    # # Prepare WhatsApp join links for student, mother, and father (same message for all)
-    # student_link, parent_link = get_whatsapp_group_links(student)
-    # transport_links = get_transport_group_links(student)
-
-    # wa_links = {}
-
-    # join_message = get_join_message(student, student_link, parent_link)
-
-    # # Student WhatsApp link
-    # wa_links['student'] = generate_wa_me_link(
-    #     '91' + str(student.user.phone),
-    #     join_message
-    # )
-
-    # # Mother WhatsApp link
-    # mother_phone = getattr(getattr(student, "parent_details", None), "mother_contact", None)
-    # if mother_phone:
-    #     wa_links['mother'] = generate_wa_me_link(
-    #         '91' + str(mother_phone),
-    #         join_message
-    #     )
-
-    # # Father WhatsApp link
-    # father_phone = getattr(getattr(student, "parent_details", None), "father_contact", None)
-    # if father_phone:
-    #     wa_links['father'] = generate_wa_me_link(
-    #         '91' + str(father_phone),
-    #         join_message
-    #     )
-
-    # # Optionally add transport group links for student (separate message for transport)
-    # wa_links['transport'] = []
-    # for link in transport_links:
-    #     wa_links['transport'].append(
-    #         generate_wa_me_link(
-    #             '91' + str(student.user.phone),
-    #             f"Dear Parent,\n\nJoin the official transport WhatsApp group for updates:\n{link}\n\n- BASU Classes"
-    #         )
-    #     )
-
 
     return render(request, "registration/enrollment/student_details_update.html", {
         'student': student,
-        'classes': classes, 
-        'subjects': subjects,
-        'batches': batches,
-        # 'wa_links': wa_links,
     })
 
 
@@ -864,33 +726,6 @@ def print_enrollment_receipt(request, stu_id):
         'active_session': active_session,
         'selected_session': selected_session,
     })
-
-# @login_required(login_url='login')
-# def search_students(request):
-#     search_term = request.GET.get('search', '').strip()
-#     if search_term:
-#         students = Student.objects.filter(
-#             Q(user__first_name__icontains=search_term) |
-#             Q(user__last_name__icontains=search_term) |
-#             Q(user__phone__icontains=search_term) |
-#             Q(user__registered_student__school_name__icontains = search_term) |
-#             Q(user__registered_student__class_enrolled__name__icontains = search_term) |
-#             Q(user__registered_student__subjects__name__icontains = search_term)
-#         ).select_related('user')
-#         student_list = [
-#             {   "stu_id": student.stu_id,
-#                 "name": f"{student.user.first_name} {student.user.last_name}",
-#                 "phone": student.user.phone,
-#                 "class": student.class_enrolled if student.class_enrolled else "N/A",
-#                 "subjects": ", ".join(subject.name for subject in student.subjects.all()),
-#                 "school_name": student.school_name,
-#                 "batches": bool(student.batches.all()),
-#             }
-#             for student in set(students)
-#         ]
-#     else:
-#         student_list = []
-#     return render(request, 'registration/students_results.html', {'students': student_list})
 
 @login_required(login_url='login')
 def mark_attendance(request, class_id=None, batch_id=None):

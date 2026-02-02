@@ -64,7 +64,18 @@
     </div>
 
     <div class="my-4 mt-2">
-        <h2 class="fw-normal text-dark">Enrollment Details </h2>
+        <h2 class="fw-normal text-dark">
+            {% if has_enrollment %}
+            Update Enrollment
+            {% else %}
+            Create Enrollment
+            {% endif %}
+        </h2>
+        {% if not has_enrollment %}
+        <div class="text-muted">
+            No enrollment exists for <strong>{{ selected_session.name }}</strong>. Fill the form below to create one.
+        </div>
+        {% endif %}
     </div>
 
     <div class="d-flex justify-content-between mb-2 rounded">
@@ -124,8 +135,8 @@
                 <label for="class_name" class="form-label">Class Enrolled*</label>
                 <select class="form-select" name="class_name" id="class_name" required>
                     {% for cls in classes %}
-                    <option value="{{cls.id}}" {% if enrollment and enrollment.class_name == cls %} selected {% elif not
-                        enrollment and student.class_enrolled == cls %} selected {% endif %}>{{cls.name}}</option>
+                    <option value="{{cls.id}}" {% if enrollment and enrollment.class_name == cls %} selected {% elif not enrollment and student.active_enrollment and student.active_enrollment.class_name == cls %}
+                        selected {% endif %}>{{cls.name}}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -144,7 +155,8 @@
                 <label for="program_duration" class="form-label">Duration</label>
                 <select class="form-select" name="program_duration" id="program_duration">
                     {% for duration in student.DURATION_CHOICE %}
-                    <option value="{{duration.0}}" {% if enrollment and duration.0 == enrollment.program_duration %} selected {% endif %}>{{duration.1}}</option>
+                    <option value="{{duration.0}}" {% if enrollment and duration.0 == enrollment.program_duration %}
+                        selected {% endif %}>{{duration.1}}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -153,7 +165,8 @@
         <div class="row justify-content-evenly mt-3">
             <div class="col-md-3">
                 <label for="remarks" class="form-label">Remarks</label>
-                <textarea class="form-control" name="remarks" id="remarks">{% if enrollment and enrollment.remarks %}{{enrollment.remarks}}{% endif %}</textarea>
+                <textarea class="form-control" name="remarks"
+                    id="remarks">{% if enrollment and enrollment.remarks %}{{enrollment.remarks}}{% endif %}</textarea>
             </div>
 
             <div class="col-md-3">
@@ -221,8 +234,14 @@
 
         <div class="row justify-content-evenly mt-3">
             <div class="col-md-3"></div>
-            <div class="col-md-3 mt-4">
-                <button class="btn btn-warning" type="submit">Update Enrollment</button>
+            <div class="col-md-3 mt-4 text-center">
+                <button class="btn btn-warning" type="submit">
+                    {% if has_enrollment %}
+                    Update Enrollment
+                    {% else %}
+                    Create Enrollment
+                    {% endif %}
+                </button>
             </div>
             <div class="col-md-3"></div>
         </div>

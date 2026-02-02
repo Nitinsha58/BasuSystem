@@ -43,7 +43,9 @@
         margin: 0 auto;
     }
 
-    .attendance, .homework, .test {
+    .attendance,
+    .homework,
+    .test {
         display: flex;
         flex-wrap: wrap;
         /* justify-content: space-around; */
@@ -128,9 +130,11 @@
     .green-text {
         color: #28a745;
     }
+
     .blue-text {
         color: #17a2b8;
     }
+
     .red-text {
         color: #dc3545;
     }
@@ -141,16 +145,17 @@
             max-width: 100%;
             min-width: 100%;
         }
+
         .graph-container {
             width: calc(100% - 30px);
         }
+
         .chart-box {
             width: 100%;
             min-width: 100%;
             max-width: 100%;
         }
     }
-
 </style>
 
 {% endblock style %}
@@ -167,27 +172,33 @@
 
         <div class=" mt-4 donut_graph d-flex flex-column gap-2">
             {% if request.user.is_superuser or request.user.teachers %}
-                <div class="bg-success-subtle p-1 d-flex rounded gap-2" style="width: fit-content;">
-                    <a href="{% url 'mentor_remarks' student.active_mentorship.mentor.id student.stu_id %}" class="btn btn-primary">Go Back</a>
-                    <a href="{% url 'mentor_students' %}" class="btn btn-warning">Students Reports</a>
-                </div>
+            <div class="bg-success-subtle p-1 d-flex rounded gap-2" style="width: fit-content;">
+                <a href="{% url 'mentor_remarks' student.active_mentorship.mentor.id student.stu_id %}"
+                    class="btn btn-primary">Go Back</a>
+                <a href="{% url 'mentor_students' %}" class="btn btn-warning">Students Reports</a>
+            </div>
             {% endif %}
             <div class="bg-success-subtle p-4 d-flex flex-column flex-md-row align-items-start">
                 <div class="">
-                    <p style="text-decoration: none;" class="border-0 h2">{{student.user.first_name}} {{student.user.last_name}}</p>
-                    <p class="m-0 mb-1">{{student.class_enrolled}} - {{ student.subjects.all|join:", " }}</p>
+                    <p style="text-decoration: none;" class="border-0 h2">{{student.user.first_name}}
+                        {{student.user.last_name}}</p>
+                    <p class="m-0 mb-1">{{student.active_enrollment.class_name}} - {{ student.active_enrollment.subjects.all|join:", " }}</p>
                     <p class="m-0 mb-1">Joined On: {{student.doj|date:'d M Y'}}</p>
                 </div>
                 <div class="ms-md-4 w-100">
-                    <form method="get" class="rounded p-md-2 pb-3 d-flex flex-md-row flex-md-row gap-2 align-items-end w-100" style="flex-wrap: wrap;">
+                    <form method="get"
+                        class="rounded p-md-2 pb-3 d-flex flex-md-row flex-md-row gap-2 align-items-end w-100"
+                        style="flex-wrap: wrap;">
                         <div class="">
                             <label for="start_date" class="form-label text-nowrap m-0 text-align-center">Start Date: {{ start_date|date:'d M' }}</label>
-                            <input type="date" name="start_date" id="start_date" value="{{start_date|date:'Y-m-d'}}" class="form-control" style="max-width: 150px" required>
+                            <input type="date" name="start_date" id="start_date" value="{{start_date|date:'Y-m-d'}}"
+                                class="form-control" style="max-width: 150px" required>
                         </div>
-                        
+
                         <div class="">
                             <label for="end_date" class="form-label text-nowrap m-0 text-align-center">End Date: {{ end_date|date:'d M' }}</label>
-                            <input type="date" name="end_date" id="end_date" value="{{end_date|date:'Y-m-d'}}" class="form-control" style="max-width: 150px" required>
+                            <input type="date" name="end_date" id="end_date" value="{{end_date|date:'Y-m-d'}}"
+                                class="form-control" style="max-width: 150px" required>
                         </div>
                         <button style="height: fit-content;" class="px-2 btn btn-warning" type="submit">Filter</button>
                     </form>
@@ -195,22 +206,27 @@
             </div>
 
             <div class="stats-wrapper">
-                <h2 >Attendance</h2>
+                <h2>Attendance</h2>
                 <div class="attendance">
                     {% for subject, atten in subjectwise_attendance.items %}
                     {% if atten.present_percentage or atten.absent_percentage %}
-                                    
-                    <a href="{% url 'student_subject_attendance_report' student.stu_id subject.id %}?start_date={{start_date|date:'Y-m-d'}}&end_date={{end_date|date:'Y-m-d'}}" class=" graph-container">
+
+                    <a href="{% url 'student_subject_attendance_report' student.stu_id subject.id %}?start_date={{start_date|date:'Y-m-d'}}&end_date={{end_date|date:'Y-m-d'}}"
+                        class=" graph-container">
 
                         <!-- <canvas id="attendanceChart{{forloop.counter}}"></canvas> -->
                         <div class="graph-box">
                             <p class="graph-title"> {{subject.name}} - {{atten.present_percentage}}% </p>
                             <div class="chart-box">
                                 {% if atten.present_percentage %}
-                                <div class="ratios green" style="max-width: {{atten.present_percentage}}%; min-width: {{atten.present_percentage}}%;"> {{atten.present_count}} </div>
+                                <div class="ratios green"
+                                    style="max-width: {{atten.present_percentage}}%; min-width: {{atten.present_percentage}}%;">
+                                    {{atten.present_count}} </div>
                                 {% endif %}
                                 {% if atten.absent_percentage %}
-                                <div class="ratios red" style="max-width: {{atten.absent_percentage}}%; min-width: {{atten.absent_percentage}}%;"> {{atten.absent_count}} </div>
+                                <div class="ratios red"
+                                    style="max-width: {{atten.absent_percentage}}%; min-width: {{atten.absent_percentage}}%;">
+                                    {{atten.absent_count}} </div>
                                 {% endif %}
                             </div>
                             <div class="d-flex justify-content-around stats-text">
@@ -234,64 +250,80 @@
                 <div class="homework">
 
                     {% for subject, hw in subjectwise_homework.items %}
-                    {% if hw.completed_percentage or hw.partial_done_percentage or hw.pending_percentage %} 
-                        <a href="{% url 'student_subject_homework_report' student.stu_id subject.id %}?start_date={{start_date|date:'Y-m-d'}}&end_date={{end_date|date:'Y-m-d'}}" class=" graph-container">
-                            <!-- <canvas id="homeworkChart{{forloop.counter}}"></canvas> -->
-                            <div class="graph-box">
-                                <p class="graph-title"> {{subject.name}} </p>
-                                <div class="chart-box">
-                                    {% if hw.completed_percentage %}
-                                    <div class="ratios green" style="max-width: {{hw.completed_percentage}}%; min-width: {{hw.completed_percentage}}%;"> {{hw.completed_count}} </div>
-                                    {% endif %}
-                                    {% if hw.partial_done_percentage %}
-                                    <div class="ratios blue" style="max-width: {{hw.partial_done_percentage}}%; min-width: {{hw.partial_done_percentage}}%;"> {{hw.partial_done_count}} </div>
-                                    {% endif %}
-                                    {% if hw.pending_percentage %}
-                                    <div class="ratios red" style="max-width: {{hw.pending_percentage}}%; min-width: {{hw.pending_percentage}}%;"> {{hw.pending_count}} </div>
-                                    {% endif %}
-                                </div>
-                                <div class="d-flex justify-content-around stats-text">
-                                    {% if hw.completed_percentage %}
-                                    <span class="green-text"> {{hw.completed_percentage}}% </span>
-                                    {% endif %}
-                                    {% if hw.partial_done_percentage %}
-                                    <span class="blue-text"> {{hw.partial_done_percentage}}% </span>
-                                    {% endif %}
-                                    {% if hw.pending_percentage %}
-                                    <span class="red-text"> {{hw.pending_percentage}}%</span>
-                                    {% endif %}
-                                </div>
+                    {% if hw.completed_percentage or hw.partial_done_percentage or hw.pending_percentage %}
+                    <a href="{% url 'student_subject_homework_report' student.stu_id subject.id %}?start_date={{start_date|date:'Y-m-d'}}&end_date={{end_date|date:'Y-m-d'}}"
+                        class=" graph-container">
+                        <!-- <canvas id="homeworkChart{{forloop.counter}}"></canvas> -->
+                        <div class="graph-box">
+                            <p class="graph-title"> {{subject.name}} </p>
+                            <div class="chart-box">
+                                {% if hw.completed_percentage %}
+                                <div class="ratios green"
+                                    style="max-width: {{hw.completed_percentage}}%; min-width: {{hw.completed_percentage}}%;">
+                                    {{hw.completed_count}} </div>
+                                {% endif %}
+                                {% if hw.partial_done_percentage %}
+                                <div class="ratios blue"
+                                    style="max-width: {{hw.partial_done_percentage}}%; min-width: {{hw.partial_done_percentage}}%;">
+                                    {{hw.partial_done_count}} </div>
+                                {% endif %}
+                                {% if hw.pending_percentage %}
+                                <div class="ratios red"
+                                    style="max-width: {{hw.pending_percentage}}%; min-width: {{hw.pending_percentage}}%;">
+                                    {{hw.pending_count}} </div>
+                                {% endif %}
                             </div>
-                        </a>
+                            <div class="d-flex justify-content-around stats-text">
+                                {% if hw.completed_percentage %}
+                                <span class="green-text"> {{hw.completed_percentage}}% </span>
+                                {% endif %}
+                                {% if hw.partial_done_percentage %}
+                                <span class="blue-text"> {{hw.partial_done_percentage}}% </span>
+                                {% endif %}
+                                {% if hw.pending_percentage %}
+                                <span class="red-text"> {{hw.pending_percentage}}%</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </a>
 
                     {% endif %}
                     {% endfor %}
                 </div>
 
                 <h2 class="">Test</h2>
-                <div  class="test">
+                <div class="test">
                     {% for subject, test in subjectwise_marks.items %}
                     {% if test.scored or test.deducted %}
-                    <a  href="{% url 'student_subject_test_summary_report' student.stu_id subject.id %}?start_date={{start_date|date:'Y-m-d'}}&end_date={{end_date|date:'Y-m-d'}}" class="graph-container">
+                    <a href="{% url 'student_subject_test_summary_report' student.stu_id subject.id %}?start_date={{start_date|date:'Y-m-d'}}&end_date={{end_date|date:'Y-m-d'}}"
+                        class="graph-container">
                         <!-- <canvas id="testChart{{forloop.counter}}"></canvas>  -->
                         <div class="graph-box">
                             <p class="graph-title">{{subject.name}} - {{test.scored}}% </p>
                             <div class="chart-box">
                                 {% if test.scored %}
-                                <div class="ratios green" style="max-width: {{test.scored}}%; min-width: {{test.scored}}%;"> {{test.scored}} %  </div>
+                                <div class="ratios green"
+                                    style="max-width: {{test.scored}}%; min-width: {{test.scored}}%;"> {{test.scored}} %
+                                </div>
                                 {% endif %}
                                 {% if 100|sub:test.scored %}
-                                <div class="ratios red" style="max-width: calc(100 - {{test.scored}}%); min-width: calc(100 - {{test.scored}}%);" >{{100|sub:test.scored|floatformat:2}}</div>
+                                <div class="ratios red"
+                                    style="max-width: calc(100 - {{test.scored}}%); min-width: calc(100 - {{test.scored}}%);">
+                                    {{100|sub:test.scored|floatformat:2}}</div>
                                 {% endif %}
                             </div>
                             <div class="graph-box">
                                 <p class="graph-title"> {{subject.name}} Test Attendance </p>
                                 <div class="chart-box" style="height: 25px; min-height: 25px;">
                                     {% if test.present %}
-                                    <div class="ratios green" style="max-width: {{test.present_percentage}}%; min-width: {{test.present_percentage}}%;"> {{test.present}}  </div>
+                                    <div class="ratios green"
+                                        style="max-width: {{test.present_percentage}}%; min-width: {{test.present_percentage}}%;">
+                                        {{test.present}} </div>
                                     {% endif %}
                                     {% if test.absent %}
-                                    <div class="ratios red" style="max-width: {{test.absent_percentage}}%; min-width: {{test.absent_percentage}}%;"> {{test.absent}}  </div>
+                                    <div class="ratios red"
+                                        style="max-width: {{test.absent_percentage}}%; min-width: {{test.absent_percentage}}%;">
+                                        {{test.absent}} </div>
                                     {% endif %}
                                 </div>
                             </div>
@@ -299,12 +331,12 @@
                     </a>
                     {% endif %}
                     {% endfor %}
-                </a>
-            </div> 
+                    </a>
+                </div>
 
 
-        </div>
-<!-- 
+            </div>
+            <!-- 
         <h2 class="mt-4">Daily Attendance </h2>
         <div class="calendars d-flex gap-4" style="flex-wrap: wrap;">
 
@@ -404,63 +436,68 @@
 
         </div> -->
 
-        <!-- <h2 class="mt-4">Weekly Tests</h2> -->
-        {% for batch, reports in batch_wise_testssd.items %}
+            <!-- <h2 class="mt-4">Weekly Tests</h2> -->
+            {% for batch, reports in batch_wise_tests.items %}
+            <p>Hello</p>
             {% for test in reports %}
             {% if test.test.is_data_complete_for_graph %}
             <div class="container-md my-4 w-100">
                 <div class="mt-4">
-                <p class="h4 fw-normal">{{test.test.name}}</p>
-                <p class="text-muted fw-normal m-0" style="font-size: 14px;">{{test.test.date|date:'d M Y'}}</p>
-                <p class="text-muted fw-normal m-0" style="font-size: 14px;">{{test.test.batch}}</p>
+                    <p class="h4 fw-normal">{{test.test.name}}</p>
+                    <p class="text-muted fw-normal m-0" style="font-size: 14px;">{{test.test.date|date:'d M Y'}}</p>
+                    <p class="text-muted fw-normal m-0" style="font-size: 14px;">{{test.test.batch}}</p>
                 </div>
 
-                <div  class="container my-4 p-0 w-100 d-lg-flex justify-content-around">
-                <div class="w-100 h-auto" style="overflow-x: auto;">
-                    <canvas id="test_chart_1{{batch.id}}{{forloop.counter}}" class="w-100 h-auto" style="min-width: 700px;" ></canvas>
-                </div>
-                <div class="m-sm-2 p-sm-2 remarks-container">
-                    <ul class="list-group">
-                    {% if not test.marks.percentage %}
-                    <li class="list-group-item bg-dark text-white border-dark">Absent</li>
-                    {% else %}
-                    <li class="list-group-item bg-dark text-white border-dark">Mock Remarks -  {{test.marks.percentage|floatformat:2}}% <br> ({{test.marks.obtained_marks|floatformat:1}}/{{test.marks.max_marks|floatformat:1}})</li>
-                    {% endif %}
-                    {% for remark, count in test.remarks.items %}
-                    <li class="list-group-item d-flex justify-content-between">
-                        <span class="">{{remark}}</span> <span class="fw-normal" >{{count}}%</span> 
-                    </li>
-                    {% endfor %}
-                    </ul>
-                </div>
+                <div class="container my-4 p-0 w-100 d-lg-flex justify-content-around">
+                    <div class="w-100 h-auto" style="overflow-x: auto;">
+                        <canvas id="test_chart_1{{batch.id}}{{forloop.counter}}" class="w-100 h-auto"
+                            style="min-width: 700px;"></canvas>
+                    </div>
+                    <div class="m-sm-2 p-sm-2 remarks-container">
+                        <ul class="list-group">
+                            {% if not test.marks.percentage %}
+                            <li class="list-group-item bg-dark text-white border-dark">Absent</li>
+                            {% else %}
+                            <li class="list-group-item bg-dark text-white border-dark">Mock Remarks -
+                                {{test.marks.percentage|floatformat:2}}% <br>
+                                ({{test.marks.obtained_marks|floatformat:1}}/{{test.marks.max_marks|floatformat:1}})
+                            </li>
+                            {% endif %}
+                            {% for remark, count in test.remarks.items %}
+                            <li class="list-group-item d-flex justify-content-between">
+                                <span class="">{{remark}}</span> <span class="fw-normal">{{count}}%</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
 
                 </div>
             </div>
             {% endif %}
             {% endfor %}
-        {% endfor %}
+            {% endfor %}
 
-</div>
+        </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 
 
-<script>
-{% for batch, reports in batch_wise_tests.items %}   
-{% for report in reports %}
-    {% if report.test.is_data_complete_for_graph %}
-  const ctx1{{batch.id}}{{ forloop.counter }} = document.getElementById('test_chart_1{{batch.id}}{{ forloop.counter }}').getContext('2d');
-  new Chart(ctx1{{batch.id}}{{forloop.counter}}, {
-      type: 'bar',
-      data: {
-        labels: [{% for ch_no, ch_name in report.chapters.items %} '{{ch_name}} {{ch_no}}', {% endfor %}].map(label => label.split(' ')),
-        datasets: [
-            {% for remark, counts in report.correct_remarks.items %}
-                {
-                    label: '{{remark}}',
-                    data: {{counts}},
-                    borderWidth: 1,
+        <script>
+            {% for batch, reports in batch_wise_tests.items %}
+            {% for report in reports %}
+            {% if report.test.is_data_complete_for_graph %}
+            const ctx1{{ batch.id }}{{ forloop.counter }} = document.getElementById('test_chart_1{{batch.id}}{{ forloop.counter }}').getContext('2d');
+            new Chart(ctx1{{ batch.id }}{{ forloop.counter }}, {
+                type: 'bar',
+                data: {
+                    labels: [{% for ch_no, ch_name in report.chapters.items %} '{{ch_name}} {{ch_no}}', {% endfor %}].map(label => label.split(' ')),
+                datasets: [
+                {% for remark, counts in report.correct_remarks.items %}
+            {
+                label: '{{remark}}',
+                    data: { { counts } },
+                borderWidth: 1,
                     maxBarThickness: 60,
                 },
             {% endfor %}
@@ -468,20 +505,20 @@
             {% for remark, counts in report.chapter_wise_test_remarks.items %}
             {
                 label: '{{remark}}',
-                data: {{counts}},
+                    data: { { counts } },
                 borderWidth: 1,
-                maxBarThickness: 60,
+                    maxBarThickness: 60,
             },
             {% endfor %}
         
         ]
       },
-      options: {
+            options: {
                 responsive: false,
-                plugins: {
+                    plugins: {
                     legend: {
                         position: 'top',
-                        labels: {
+                            labels: {
                             font: {
                                 size: 12
                             },
@@ -493,22 +530,22 @@
                 },
                 scales: {
                     responsive: false,
-                    maintainAspectRatio: true,
-                    x: {
+                        maintainAspectRatio: true,
+                            x: {
                         stacked: true, // Enable stacking on the X-axis
-                        ticks: {
+                            ticks: {
                             autoSkip: false,
-                            maxRotation: 0,
-                            minRotation: 0,
-                            font: {
+                                maxRotation: 0,
+                                    minRotation: 0,
+                                        font: {
                                 size: 10
                             }
                         },
                     },
                     y: {
                         stacked: true, // Enable stacking on the Y-axis
-                        beginAtZero: true,
-                        ticks: {
+                            beginAtZero: true,
+                                ticks: {
                             font: {
                                 size: 10
                             }
@@ -519,81 +556,81 @@
     });
 
 
-    {% endif %}
-  {% endfor %}
-  {% endfor %}
-</script>
+            {% endif %}
+            {% endfor %}
+            {% endfor %}
+        </script>
 
 
 
-<script>
+        <script>
 
-    create_pie_chart = (id, labels_list, dataset_label, dataset_data_points, bg_dataset_data_points, title_text = "Demo Chart") => {
-        var ctx1 = document.getElementById(id).getContext('2d');
-        var attendanceChart = new Chart(ctx1, {
-            type: 'pie',
-            data: {
-                labels: labels_list,
-                datasets: [{
-                    label: dataset_label,
-                    data: dataset_data_points, 
-                    backgroundColor: bg_dataset_data_points,
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            boxWidth: 12, 
-                            boxHeight: 12,
-                            font: {
-                                size: 10,
+            create_pie_chart = (id, labels_list, dataset_label, dataset_data_points, bg_dataset_data_points, title_text = "Demo Chart") => {
+                var ctx1 = document.getElementById(id).getContext('2d');
+                var attendanceChart = new Chart(ctx1, {
+                    type: 'pie',
+                    data: {
+                        labels: labels_list,
+                        datasets: [{
+                            label: dataset_label,
+                            data: dataset_data_points,
+                            backgroundColor: bg_dataset_data_points,
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    boxWidth: 12,
+                                    boxHeight: 12,
+                                    font: {
+                                        size: 10,
+                                    }
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: title_text
                             }
                         }
-                    },
-                    title: {
-                        display: true,
-                        text: title_text
                     }
-                }
+                });
+
             }
-        });
 
-    }
+            document.addEventListener('DOMContentLoaded', function () {
 
-    document.addEventListener('DOMContentLoaded', function () {
-
-        create_pie_chart('attendanceChart', ['present ({{combined_attendance.present_count}})', 'Absent ({{combined_attendance.absent_count}})'], 'Attendance', [{{combined_attendance.present_percentage}}, {{combined_attendance.absent_percentage}}], ['#28a745', '#dc3545'], 'Overall Attendance - {{combined_attendance.present_percentage}}%')
-        {% for batch, atten in batchwise_attendance.items %}
+                create_pie_chart('attendanceChart', ['present ({{combined_attendance.present_count}})', 'Absent ({{combined_attendance.absent_count}})'], 'Attendance', [{{ combined_attendance.present_percentage }}, {{ combined_attendance.absent_percentage }}], ['#28a745', '#dc3545'], 'Overall Attendance - {{combined_attendance.present_percentage}}%')
+            {% for batch, atten in batchwise_attendance.items %}
             {% if atten.present_percentage or atten.absent_percentage %}
-                create_pie_chart('attendanceChart{{forloop.counter}}', ['present ({{atten.present_count}})', 'Absent ({{atten.absent_count}})'], 'Attendance', [{{atten.present_percentage}}, {{atten.absent_percentage}}], ['#28a745', '#dc3545'], '{{batch}} - {{atten.present_percentage}}%')   
+            create_pie_chart('attendanceChart{{forloop.counter}}', ['present ({{atten.present_count}})', 'Absent ({{atten.absent_count}})'], 'Attendance', [{{ atten.present_percentage }}, {{ atten.absent_percentage }}], ['#28a745', '#dc3545'], '{{batch}} - {{atten.present_percentage}}%')
             {% endif %}
-        {% endfor %}
-        
-        create_pie_chart('homeworkChart', ['Pending ({{combined_homework.pending_count}})', 'Partial Done ({{combined_homework.partial_done_count}})', 'Completed ({{combined_homework.completed_count}})'], 'Homework Status', [{{combined_homework.pending_percentage}}, {{combined_homework.partial_done_percentage}}, {{combined_homework.completed_percentage}} ], ['#dc3545', '#17a2b8', '#28a745'], 'Overall Homework Status')
-        
-        {% for batch, hw in batchwise_homework.items %}
-            {% if hw.completed_percentage or hw.partial_done_percentage or hw.pending_percentage %} 
-            create_pie_chart('homeworkChart{{forloop.counter}}', ['Pending ({{hw.pending_count}})', 'Partial Done ({{hw.partial_done_count}})', 'Completed ({{hw.completed_count}})'], 'Homework Status', [{{hw.pending_percentage}}, {{hw.partial_done_percentage}}, {{hw.completed_percentage}} ], ['#dc3545', '#17a2b8', '#28a745'], '{{batch}}')
-            {% endif %}
-        {% endfor %}
+            {% endfor %}
 
-        create_pie_chart('testChart', ['Avg Score ({{combined_marks.scored}})', 'Present ({{combined_marks.present}})', 'Absent ({{combined_marks.absent}})', ], 'Test Status', [{{combined_marks.scored}}, {{combined_marks.deducted}}, 0, 0], ['#28a745', '#dc3545','#28a745','#dc3545'], 'Test Status')
-        {% for batch, test in batchwise_marks.items %}
-            {% if test.scored or test.deducted %}
-                create_pie_chart('testChart{{forloop.counter}}', ['Avg Score ({{test.scored}})','Present ({{test.present}})', 'Absent ({{test.absent}})', ], 'Test Status', [{{test.scored}}, {{test.deducted}}, 0, 0], ['#28a745', '#dc3545','#28a745','#dc3545',], '{{batch}}')
+            create_pie_chart('homeworkChart', ['Pending ({{combined_homework.pending_count}})', 'Partial Done ({{combined_homework.partial_done_count}})', 'Completed ({{combined_homework.completed_count}})'], 'Homework Status', [{{ combined_homework.pending_percentage }}, {{ combined_homework.partial_done_percentage }}, {{ combined_homework.completed_percentage }}], ['#dc3545', '#17a2b8', '#28a745'], 'Overall Homework Status')
+
+            {% for batch, hw in batchwise_homework.items %}
+            {% if hw.completed_percentage or hw.partial_done_percentage or hw.pending_percentage %}
+            create_pie_chart('homeworkChart{{forloop.counter}}', ['Pending ({{hw.pending_count}})', 'Partial Done ({{hw.partial_done_count}})', 'Completed ({{hw.completed_count}})'], 'Homework Status', [{{ hw.pending_percentage }}, {{ hw.partial_done_percentage }}, {{ hw.completed_percentage }}], ['#dc3545', '#17a2b8', '#28a745'], '{{batch}}')
             {% endif %}
-        {% endfor %}
+            {% endfor %}
+
+            create_pie_chart('testChart', ['Avg Score ({{combined_marks.scored}})', 'Present ({{combined_marks.present}})', 'Absent ({{combined_marks.absent}})',], 'Test Status', [{{ combined_marks.scored }}, {{ combined_marks.deducted }}, 0, 0], ['#28a745', '#dc3545', '#28a745', '#dc3545'], 'Test Status')
+            {% for batch, test in batchwise_marks.items %}
+            {% if test.scored or test.deducted %}
+            create_pie_chart('testChart{{forloop.counter}}', ['Avg Score ({{test.scored}})', 'Present ({{test.present}})', 'Absent ({{test.absent}})',], 'Test Status', [{{ test.scored }}, {{ test.deducted }}, 0, 0], ['#28a745', '#dc3545', '#28a745', '#dc3545',], '{{batch}}')
+            {% endif %}
+            {% endfor %}
 
     });
-</script>
+        </script>
 
 
 
-<!-- <script>
+        <!-- <script>
     // Save date range to localStorage when form is submitted
     document.querySelector("form").addEventListener("submit", function () {
       const start = document.getElementById("start_date").value;
@@ -613,4 +650,4 @@
   </script>
    -->
 
-{% endblock dashboard %}
+        {% endblock dashboard %}

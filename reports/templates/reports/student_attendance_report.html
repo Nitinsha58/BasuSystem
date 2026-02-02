@@ -43,7 +43,9 @@
         margin: 0 auto;
     }
 
-    .attendance, .homework, .test {
+    .attendance,
+    .homework,
+    .test {
         display: flex;
         flex-wrap: wrap;
         /* justify-content: space-around; */
@@ -123,9 +125,11 @@
     .green-text {
         color: #28a745;
     }
+
     .blue-text {
         color: #17a2b8;
     }
+
     .red-text {
         color: #dc3545;
     }
@@ -136,9 +140,11 @@
             max-width: 100%;
             min-width: 100%;
         }
+
         .graph-container {
             width: calc(100% - 30px);
         }
+
         .chart-box {
             width: 100%;
             min-width: 100%;
@@ -156,7 +162,6 @@
             margin: 15px;
         }
     }
-
 </style>
 
 {% endblock style %}
@@ -169,26 +174,33 @@
 
         <div class=" mt-4 donut_graph d-flex flex-column gap-2">
             {% if request.user.is_superuser or request.user.teachers %}
-                <div class="bg-success-subtle p-1 d-flex rounded gap-2" style="width: fit-content;">
-                    <a href="{% url 'student_report' student.stu_id %}" class="btn btn-primary">Go Back</a>
-                </div>
+            <div class="bg-success-subtle p-1 d-flex rounded gap-2" style="width: fit-content;">
+                <a href="{% url 'student_report' student.stu_id %}" class="btn btn-primary">Go Back</a>
+            </div>
             {% endif %}
             <div class="bg-success-subtle p-4 d-flex flex-column flex-md-row align-items-start">
                 <div class="">
-                    <p style="text-decoration: none;" class="border-0 h2">{{student.user.first_name}} {{student.user.last_name}}</p>
-                    <p class="m-0 mb-1">{{student.class_enrolled}} - {{ student.subjects.all|join:", " }}</p>
+                    <p style="text-decoration: none;" class="border-0 h2">{{student.user.first_name}}
+                        {{student.user.last_name}}</p>
+                    <p class="m-0 mb-1">{{student.active_enrollment.class_name}} - {{ student.active_enrollment.subjects.all|join:", " }}</p>
                     <p class="m-0 mb-1">Joined On: {{student.doj|date:'d M Y'}}</p>
                 </div>
                 <div class="ms-md-4 w-100">
-                    <form method="get" class="rounded p-md-2 pb-3 d-flex flex-md-row flex-md-row gap-2 align-items-end w-100" style="flex-wrap: wrap;">
+                    <form method="get"
+                        class="rounded p-md-2 pb-3 d-flex flex-md-row flex-md-row gap-2 align-items-end w-100"
+                        style="flex-wrap: wrap;">
                         <div class="">
-                            <label for="start_date" class="form-label text-nowrap m-0 text-align-center">Start Date: {{ start_date|date:'d M' }}</label>
-                            <input type="date" name="start_date" id="start_date" value="{{start_date|date:'Y-m-d'}}" class="form-control" style="max-width: 150px" required>
+                            <label for="start_date" class="form-label text-nowrap m-0 text-align-center">Start Date: {{
+                                start_date|date:'d M' }}</label>
+                            <input type="date" name="start_date" id="start_date" value="{{start_date|date:'Y-m-d'}}"
+                                class="form-control" style="max-width: 150px" required>
                         </div>
-                        
+
                         <div class="">
-                            <label for="end_date" class="form-label text-nowrap m-0 text-align-center">End Date: {{ end_date|date:'d M' }}</label>
-                            <input type="date" name="end_date" id="end_date" value="{{end_date|date:'Y-m-d'}}" class="form-control" style="max-width: 150px" required>
+                            <label for="end_date" class="form-label text-nowrap m-0 text-align-center">End Date: {{
+                                end_date|date:'d M' }}</label>
+                            <input type="date" name="end_date" id="end_date" value="{{end_date|date:'Y-m-d'}}"
+                                class="form-control" style="max-width: 150px" required>
                         </div>
                         <button style="height: fit-content;" class="px-2 btn btn-warning" type="submit">Filter</button>
                     </form>
@@ -196,17 +208,21 @@
             </div>
 
             <div class="stats-wrapper">
-                <h2 >Attendance</h2>
+                <h2>Attendance</h2>
                 <div class="attendance">
                     <div class="graph-container">
                         <div class="graph-box">
                             <p class="graph-title">Overall Attendance - {{combined_attendance.present_percentage}}%</p>
                             <div class="chart-box">
                                 {% if combined_attendance.present_percentage %}
-                                <div class="ratios green" style="max-width: {{combined_attendance.present_percentage}}%; min-width: {{combined_attendance.present_percentage}}%;"> {{combined_attendance.present_count}} </div>
+                                <div class="ratios green"
+                                    style="max-width: {{combined_attendance.present_percentage}}%; min-width: {{combined_attendance.present_percentage}}%;">
+                                    {{combined_attendance.present_count}} </div>
                                 {% endif %}
                                 {% if combined_attendance.absent_percentage %}
-                                <div class="ratios red" style="max-width: {{combined_attendance.absent_percentage}}%; min-width: {{combined_attendance.absent_percentage}}%;"> {{combined_attendance.absent_count}} </div>
+                                <div class="ratios red"
+                                    style="max-width: {{combined_attendance.absent_percentage}}%; min-width: {{combined_attendance.absent_percentage}}%;">
+                                    {{combined_attendance.absent_count}} </div>
                                 {% endif %}
                             </div>
                             <div class="d-flex justify-content-around stats-text">
@@ -219,18 +235,23 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     {% for batch, atten in batchwise_attendance.items %}
                     {% if atten.present_percentage or atten.absent_percentage %}
                     <div class="graph-container">
                         <div class="graph-box">
-                            <p class="graph-title"> {{batch.subject.name}} {{batch.section.name}} - {{atten.present_percentage}}% </p>
+                            <p class="graph-title"> {{batch.subject.name}} {{batch.section.name}} -
+                                {{atten.present_percentage}}% </p>
                             <div class="chart-box">
                                 {% if atten.present_percentage %}
-                                <div class="ratios green" style="max-width: {{atten.present_percentage}}%; min-width: {{atten.present_percentage}}%;"> {{atten.present_count}} </div>
+                                <div class="ratios green"
+                                    style="max-width: {{atten.present_percentage}}%; min-width: {{atten.present_percentage}}%;">
+                                    {{atten.present_count}} </div>
                                 {% endif %}
                                 {% if atten.absent_percentage %}
-                                <div class="ratios red" style="max-width: {{atten.absent_percentage}}%; min-width: {{atten.absent_percentage}}%;"> {{atten.absent_count}} </div>
+                                <div class="ratios red"
+                                    style="max-width: {{atten.absent_percentage}}%; min-width: {{atten.absent_percentage}}%;">
+                                    {{atten.absent_count}} </div>
                                 {% endif %}
                             </div>
                             <div class="d-flex justify-content-around stats-text">
@@ -254,56 +275,61 @@
         <div class="calendars d-flex flex-column gap-4 justify-content-center align-items-center mt-4">
             <div class="w-100 d-flex flex-column gap-4 justify-content-center align-items-center">
                 {% for batch, atten in batchwise_attendance.items %}
-                    {% if atten.present_percentage or atten.absent_percentage %}
-                    <div class="graph-container">
-                        <div class="graph-box">
-                            <h2> {{batch.subject.name}} {{batch.section.name}} - {{atten.present_percentage}}% </h2>
-                            <div class="chart-box">
-                                {% if atten.present_percentage %}
-                                <div class="ratios green" style="max-width: {{atten.present_percentage}}%; min-width: {{atten.present_percentage}}%;"> {{atten.present_count}} </div>
-                                {% endif %}
-                                {% if atten.absent_percentage %}
-                                <div class="ratios red" style="max-width: {{atten.absent_percentage}}%; min-width: {{atten.absent_percentage}}%;"> {{atten.absent_count}}</div>
-                                {% endif %}
-                            </div>
-                            <div class="d-flex justify-content-around stats-text">
-                                {% if atten.present_percentage %}
-                                <span class="green-text"> {{atten.present_percentage}}% </span>
-                                {% endif %}
-                                {% if atten.absent_percentage %}
-                                <span class="red-text"> {{atten.absent_percentage}}%</span>
-                                {% endif %}
-                            </div>
+                {% if atten.present_percentage or atten.absent_percentage %}
+                <div class="graph-container">
+                    <div class="graph-box">
+                        <h2> {{batch.subject.name}} {{batch.section.name}} - {{atten.present_percentage}}% </h2>
+                        <div class="chart-box">
+                            {% if atten.present_percentage %}
+                            <div class="ratios green"
+                                style="max-width: {{atten.present_percentage}}%; min-width: {{atten.present_percentage}}%;">
+                                {{atten.present_count}} </div>
+                            {% endif %}
+                            {% if atten.absent_percentage %}
+                            <div class="ratios red"
+                                style="max-width: {{atten.absent_percentage}}%; min-width: {{atten.absent_percentage}}%;">
+                                {{atten.absent_count}}</div>
+                            {% endif %}
+                        </div>
+                        <div class="d-flex justify-content-around stats-text">
+                            {% if atten.present_percentage %}
+                            <span class="green-text"> {{atten.present_percentage}}% </span>
+                            {% endif %}
+                            {% if atten.absent_percentage %}
+                            <span class="red-text"> {{atten.absent_percentage}}%</span>
+                            {% endif %}
                         </div>
                     </div>
-                    {% endif %}
+                </div>
+                {% endif %}
 
-                    <div class="d-flex gap-4 justify-content-center" style="flex-wrap: wrap; width: 100%;">
+                <div class="d-flex gap-4 justify-content-center" style="flex-wrap: wrap; width: 100%;">
                     {% for month_data in atten.batch_calendar %}
-                        <div class="calendar_container ">
-                            <div class="d-flex justify-content-center align-items-center">
-                                <p class="m-0" style="font-weight: 500; font-size: 20px;">
-                                    {{ month_data.month_name }} {{ month_data.year }}
-                                </p>
-                            </div>
-                            <div class="row text-center font-weight-bold mx-1 mb-1" style="font-size: 12px; font-weight: 500;">
-                                <div class="col" style="max-width: 30px;">S</div>
-                                <div class="col" style="max-width: 30px;">M</div>
-                                <div class="col" style="max-width: 30px;">T</div>
-                                <div class="col" style="max-width: 30px;">W</div>
-                                <div class="col" style="max-width: 30px;">T</div>
-                                <div class="col" style="max-width: 30px;">F</div>
-                                <div class="col" style="max-width: 30px;">S</div>
-                            </div>
-                        
-                            <div class="bg-white rounded py-1">
-                                {% for week in month_data.calendar %}
-                                <div class="row text-center mx-1">
-                                    {% for day in week %}
-                                    <div class="col"
-                                        style="height: 30px; max-width: 30px; display: flex; justify-content: center; align-items: center;">
-                                        {% if day %}
-                                        <p class="text-small m-0 
+                    <div class="calendar_container ">
+                        <div class="d-flex justify-content-center align-items-center">
+                            <p class="m-0" style="font-weight: 500; font-size: 20px;">
+                                {{ month_data.month_name }} {{ month_data.year }}
+                            </p>
+                        </div>
+                        <div class="row text-center font-weight-bold mx-1 mb-1"
+                            style="font-size: 12px; font-weight: 500;">
+                            <div class="col" style="max-width: 30px;">S</div>
+                            <div class="col" style="max-width: 30px;">M</div>
+                            <div class="col" style="max-width: 30px;">T</div>
+                            <div class="col" style="max-width: 30px;">W</div>
+                            <div class="col" style="max-width: 30px;">T</div>
+                            <div class="col" style="max-width: 30px;">F</div>
+                            <div class="col" style="max-width: 30px;">S</div>
+                        </div>
+
+                        <div class="bg-white rounded py-1">
+                            {% for week in month_data.calendar %}
+                            <div class="row text-center mx-1">
+                                {% for day in week %}
+                                <div class="col"
+                                    style="height: 30px; max-width: 30px; display: flex; justify-content: center; align-items: center;">
+                                    {% if day %}
+                                    <p class="text-small m-0 
                                             {% if day.attendance == 'Present' %}
                                                 bg-success-subtle
                                             {% elif day.attendance == 'Absent' %}
@@ -312,29 +338,31 @@
                                                 bg-light
                                             {% endif %}
                                         p-0 rounded-circle text-dark"
-                                            style="height: 20px; min-width: 20px; font-size: 10px; display: flex; justify-content: center; align-items: center;">
-                                            {{ day.date.day }}</p>
-                                        {% endif %}
-                                    </div>
-                                    {% endfor %}
+                                        style="height: 20px; min-width: 20px; font-size: 10px; display: flex; justify-content: center; align-items: center;">
+                                        {{ day.date.day }}</p>
+                                    {% endif %}
                                 </div>
                                 {% endfor %}
                             </div>
-                            <div class="mt-2 d-flex justify-content-center align-items-center">
-                                <p class="m-0">Overall ({{ month_data.present_count }}/{{ month_data.present_count|add:month_data.absent_count }}) {{ month_data.percentage }}%</p>
-                            </div>
+                            {% endfor %}
                         </div>
+                        <div class="mt-2 d-flex justify-content-center align-items-center">
+                            <p class="m-0">Overall ({{ month_data.present_count }}/{{
+                                month_data.present_count|add:month_data.absent_count }}) {{ month_data.percentage }}%
+                            </p>
+                        </div>
+                    </div>
                     {% endfor %}
                 </div>
                 {% endfor %}
             </div>
         </div>
 
-</div>
+    </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- 
+    <!-- 
 <script>
     // Save date range to localStorage when form is submitted
     document.querySelector("form").addEventListener("submit", function () {
@@ -355,4 +383,4 @@
   </script>
    -->
 
-{% endblock dashboard %}
+    {% endblock dashboard %}

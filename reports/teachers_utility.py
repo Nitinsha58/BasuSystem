@@ -24,13 +24,41 @@ def exclude_special_batches(batches):
         Q(subject__name__in=['MATH', 'SCIENCE'])
     )
 
+
+def filter_active_session_batches(batches):
+    """Limit batches to those that have active-session enrollments."""
+    return batches.filter(
+        enrollment_links__enrollment__session__is_active=True,
+        enrollment_links__enrollment__active=True,
+    ).distinct()
+
 def percentage(part, total):
     return round((part / total * 100), 1) if total > 0 else 0
 
 
+def get_active_students_for_batches(batches):
+    """Return students who are enrolled in these batches for the active session."""
+    return Student.objects.filter(
+        enrollments__batch_links__batch__in=batches,
+        enrollments__session__is_active=True,
+        enrollments__active=True,
+        active=True,
+    ).distinct()
+
+
+def get_active_students_for_batch(batch):
+    """Return students who are enrolled in this batch for the active session."""
+    return Student.objects.filter(
+        enrollments__batch_links__batch=batch,
+        enrollments__session__is_active=True,
+        enrollments__active=True,
+        active=True,
+    ).distinct()
+
+
 def get_teacher_attendance_performance(teacher, start_date, end_date):
-    batches = exclude_special_batches(teacher.batches.all())
-    students = Student.objects.filter(batches__in=batches, active=True).distinct()
+    batches = exclude_special_batches(filter_active_session_batches(teacher.batches.all()))
+    students = get_active_students_for_batches(batches)
 
     attendance_qs = Attendance.objects.filter(
         student__in=students,
@@ -51,10 +79,10 @@ def get_teacher_attendance_performance(teacher, start_date, end_date):
 
 def get_teacher_batchwise_attendance_performance(teacher, start_date, end_date):
     result = {}
-    batches = exclude_special_batches(teacher.batches.all())
+    batches = exclude_special_batches(filter_active_session_batches(teacher.batches.all()))
 
     for batch in batches:
-        students = Student.objects.filter(batches=batch, active=True).distinct()
+        students = get_active_students_for_batch(batch)
         attendance_qs = Attendance.objects.filter(
             student__in=students,
             batch=batch,
@@ -77,8 +105,8 @@ def get_teacher_batchwise_attendance_performance(teacher, start_date, end_date):
     return result
 
 def get_teacher_combined_homework_performance(teacher, start_date, end_date):
-    batches = exclude_special_batches(teacher.batches.all())
-    students = Student.objects.filter(batches__in=batches, active=True).distinct()
+    batches = exclude_special_batches(filter_active_session_batches(teacher.batches.all()))
+    students = get_active_students_for_batches(batches)
 
     homework_qs = Homework.objects.filter(
         student__in=students,
@@ -103,10 +131,10 @@ def get_teacher_combined_homework_performance(teacher, start_date, end_date):
 
 def get_teacher_batchwise_homework_performance(teacher, start_date, end_date):
     result = {}
-    batches = exclude_special_batches(teacher.batches.all())
+    batches = exclude_special_batches(filter_active_session_batches(teacher.batches.all()))
 
     for batch in batches:
-        students = Student.objects.filter(batches=batch, active=True).distinct()
+        students = get_active_students_for_batch(batch)
         homework_qs = Homework.objects.filter(
             student__in=students,
             batch=batch,
@@ -151,14 +179,14 @@ def is_absent(test, student):
     return False  # Student is present or test has no activity at all
 
 def get_teacher_marks_percentage(teacher, start_date, end_date):
-    included_batches = exclude_special_batches(teacher.batches.all())
+    included_batches = exclude_special_batches(filter_active_session_batches(teacher.batches.all()))
 
     tests = Test.objects.filter(
         batch__in=included_batches,
         date__range=(start_date, end_date)
     ).distinct()
 
-    students = Student.objects.filter(batches__in=included_batches, active=True).distinct()
+    students = get_active_students_for_batches(included_batches)
     student_ids = list(students.values_list('id', flat=True))
     test_ids = list(tests.values_list('id', flat=True))
 
@@ -196,10 +224,10 @@ def get_teacher_marks_percentage(teacher, start_date, end_date):
 
 def get_teacher_batchwise_marks_performance(teacher, start_date, end_date):
     result = {}
-    batches = exclude_special_batches(teacher.batches.all())
+    batches = exclude_special_batches(filter_active_session_batches(teacher.batches.all()))
 
     for batch in batches:
-        students = Student.objects.filter(batches=batch, active=True).distinct()
+        students = get_active_students_for_batch(batch)
         tests = Test.objects.filter(batch=batch, date__range=(start_date, end_date)).distinct()
 
         student_ids = list(students.values_list('id', flat=True))
@@ -245,12 +273,12 @@ def get_batches_test_performance(start_date, end_date):
     if not end_date:
         end_date = date.today()
 
-    batches = Batch.objects.all()
+    batches = filter_active_session_batches(Batch.objects.all())
     result = {}
 
     for batch in batches:
         tests = Test.objects.filter(batch=batch, date__range=(start_date, end_date))
-        students = Student.objects.filter(batches=batch, active=True)
+        students = get_active_students_for_batch(batch)
 
         if not tests.exists() or not students.exists():
             continue
@@ -283,11 +311,11 @@ def get_batches_attendance_performance(start_date, end_date):
     if not end_date:
         end_date = date.today()
 
-    batches = Batch.objects.all()
+    batches = filter_active_session_batches(Batch.objects.all())
     result = {}
 
     for batch in batches:
-        students = Student.objects.filter(batches=batch, active=True)
+        students = get_active_students_for_batch(batch)
         if not students.exists():
             continue
 
@@ -331,11 +359,11 @@ def get_batches_homework_performance(start_date, end_date):
     if not end_date:
         end_date = date.today()
 
-    batches = Batch.objects.all()
+    batches = filter_active_session_batches(Batch.objects.all())
     result = {}
 
     for batch in batches:
-        students = Student.objects.filter(batches=batch, active=True)
+        students = get_active_students_for_batch(batch)
         if not students.exists():
             continue
 

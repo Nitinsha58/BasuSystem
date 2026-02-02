@@ -27,6 +27,7 @@ from registration.models import (
     StudentRemark,
     Mentor,
     Subject,
+    StudentEnrollment,
     )
 from django.utils import timezone
 from collections import defaultdict
@@ -69,6 +70,8 @@ from .utility import (
     has_report,
     compare_student_performance_by_week,
     get_batch_performance_over_time,
+
+    get_student_batches_qs,
 )
 
 from .teachers_utility import (
@@ -88,7 +91,7 @@ def student_report(request, stu_id):
     student = Student.objects.filter(stu_id=stu_id).first()
     if stu_id and not student:
         messages.error(request, "Invalid Student")
-        return redirect('batchwise_students')
+        return redirect('students_enrollment_list')
 
     start_date_str = request.GET.get('start_date')
     end_date_str = request.GET.get('end_date')
@@ -110,88 +113,24 @@ def student_report(request, stu_id):
             start_date = today.replace(day=1)
             end_date = today
     
-    batches = student.batches.all().filter(class_name=student.class_enrolled).exclude(
+    batches = get_student_batches_qs(student).exclude(
             Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
             Q(section__name='CBSE') &
             Q(subject__name__in=['MATH', 'SCIENCE'])
         ).order_by('-created_at')
 
-    # combined_attendance = get_combined_attendance(student, start_date, end_date)
-    # batchwise_attendance = get_batchwise_attendance(student,start_date, end_date)
     subjectwise_attendance = get_subjectwise_attendance(student, start_date, end_date)
-    # combined_homework = get_combined_homework(student, start_date, end_date)
-    # batchwise_homework = get_batchwise_homework(student, start_date, end_date)
     subjectwise_homework = get_subjectwise_homework(student, start_date, end_date)
-    # combined_marks = get_marks_percentage(student, start_date, end_date)
-    # batchwise_marks = get_batchwise_marks(student, start_date, end_date)
+
     subjectwise_marks = get_subjectwise_marks(student, start_date, end_date)
-
-    # calendar_data = get_monthly_calendar(student, start_date, end_date)
-    # batch_wise_tests = {}
-
-    # for batch in batches:
-    #     tests = Test.objects.filter(batch=batch, date__range=(start_date, end_date)).order_by('-date')
-    #     test_reports = []
-
-    #     for test in tests:
-    #         test_chapters = get_chapters_from_questions(test)
-    #         responses = QuestionResponse.objects.filter(test=test, student=student).select_related('question', 'remark')
-    #         test_result = TestResult.objects.filter(test=test, student=student).first()
-
-    #         # If no responses and no result, mark as absent (same as student_report)
-    #         if not responses.exists() and not test_result:
-    #             test_reports.append({
-    #                 'test': test,
-    #                 'chapters': test_chapters,
-    #                 'absent': True,
-    #             })
-    #             continue
-            
-    #         chapter_remarks = calculate_testwise_remarks(responses, test_chapters)
-    #         # Ensure 'Correct' always appears first
-    #         chapter_remarks = {k: chapter_remarks[k] for k in sorted(chapter_remarks.keys(), key=lambda x: (x != 'Correct', x))}
-
-    #         marks_data = calculate_marks(responses, test_chapters)
-
-
-    #         test_reports.append({
-    #             'test': test,
-    #             'chapters': test_chapters,
-    #             'marks_total': marks_data['total'],
-    #             'marks_deducated': marks_data['deducted'],
-    #             'marks_obtained': marks_data['obtained'],
-    #             'remarks': marks_data['remarks'],
-    #             'max_marks': marks_data['max_marks'],
-    #             'marks': {
-    #                 'percentage': marks_data['percentage'],
-    #                 'obtained_marks': marks_data['obtained_total'],
-    #                 'max_marks': marks_data['total_max'],
-    #             },
-    #             'chapter_wise_test_remarks': chapter_remarks,
-    #             'absent': False,
-    #         })
-
-    #     batch_wise_tests[batch] = test_reports
 
     return render(request, 'reports/student_report.html', {
         'student': student,
-        # 'combined_attendance': combined_attendance,
-        # 'batchwise_attendance': batchwise_attendance,
         'subjectwise_attendance': subjectwise_attendance,
-
-        # 'combined_homework': combined_homework,
-        # 'batchwise_homework': batchwise_homework,
         'subjectwise_homework': subjectwise_homework,
-
-        # 'combined_marks': combined_marks,
-        # 'batchwise_marks': batchwise_marks,
         'subjectwise_marks': subjectwise_marks,
-
-        # 'calendar_data': calendar_data,
         'start_date': start_date,
         'end_date': end_date,
-
-        # 'batch_wise_tests': batch_wise_tests,
         'batches': batches,
     })
 
@@ -223,7 +162,7 @@ def student_attendance_report(request, stu_id):
             start_date = today.replace(day=1)
             end_date = today
     
-    batches = student.batches.all().filter(class_name=student.class_enrolled).exclude(
+    batches = get_student_batches_qs(student).exclude(
             Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
             Q(section__name='CBSE') &
             Q(subject__name__in=['MATH', 'SCIENCE'])
@@ -317,7 +256,7 @@ def student_homework_report(request, stu_id):
             start_date = today.replace(day=1)
             end_date = today
     
-    batches = student.batches.all().filter(class_name=student.class_enrolled).exclude(
+    batches = get_student_batches_qs(student).exclude(
             Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
             Q(section__name='CBSE') &
             Q(subject__name__in=['MATH', 'SCIENCE'])
@@ -456,7 +395,7 @@ def student_test_summary_report(request, stu_id):
             start_date = today.replace(day=1)
             end_date = today
     
-    batches = student.batches.all().filter(class_name=student.class_enrolled).exclude(
+    batches = get_student_batches_qs(student).exclude(
             Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
             Q(section__name='CBSE') &
             Q(subject__name__in=['MATH', 'SCIENCE'])
@@ -484,7 +423,7 @@ def student_personal_report(request, stu_id):
     student = Student.objects.filter(stu_id=stu_id).first()
     if stu_id and not student:
         messages.error(request, "Invalid Student")
-        return redirect('batchwise_students')
+        return redirect('students_enrollment_list')
 
     start_date_str = request.GET.get('start_date')
     end_date_str = request.GET.get('end_date')
@@ -506,7 +445,7 @@ def student_personal_report(request, stu_id):
             start_date = today.replace(day=1)
             end_date = today
     
-    batches = student.batches.all().filter(class_name=student.class_enrolled).exclude(
+    batches = get_student_batches_qs(student).exclude(
             Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
             Q(section__name='CBSE') &
             Q(subject__name__in=['MATH', 'SCIENCE'])
@@ -527,19 +466,6 @@ def student_personal_report(request, stu_id):
     })
 
 
-@login_required(login_url='login')
-def batchwise_students(request):
-    batches = Batch.objects.all().order_by('-created_at')
-    batch_students = [
-        {'batch': batch, 'students': Student.objects.filter(batches=batch).order_by('-created_at', 'user__first_name', 'user__last_name').distinct()} for batch in batches
-    ]
-    
-    count = Student.objects.all().distinct().count()
-    
-    return render(request, "reports/batchwise_students.html", {
-        'batch_students': batch_students,
-        'count': count,
-    })
 
 @login_required(login_url='login')
 def mentor_students(request):
@@ -579,8 +505,10 @@ def mentor_students(request):
             if mentor:
                 mentorships = mentor.mentorships.filter(
                     active=True,
-                    student__class_enrolled=class_name,
                     student__active=True,
+                ).filter(
+                    Q(enrollment__class_name=class_name, enrollment__session__is_active=True, enrollment__active=True)
+                    | Q(enrollment__isnull=True, student__enrollments__class_name=class_name, student__enrollments__session__is_active=True, student__enrollments__active=True)
                 ).order_by(
                     '-created_at',
                     'student__user__first_name',
@@ -589,9 +517,11 @@ def mentor_students(request):
             else:
                 mentorships = Mentorship.objects.filter(
                     active=True,
-                    student__class_enrolled=class_name,
                     student__active=True,
                     mentor=ment,
+                ).filter(
+                    Q(enrollment__class_name=class_name, enrollment__session__is_active=True, enrollment__active=True)
+                    | Q(enrollment__isnull=True, student__enrollments__class_name=class_name, student__enrollments__session__is_active=True, student__enrollments__active=True)
                 )
             if mentorships.exists():
                 mentorship_list[ment][class_name] = mentorships
@@ -619,15 +549,28 @@ def teacher_students(request):
     for class_name in classes:
         # batches for this class assigned to the teacher (or all batches if superuser)
         if teacher:
-            batches = teacher.batches.filter(class_name=class_name).order_by('-created_at')
+            batches = teacher.batches.filter(
+                class_name=class_name,
+                enrollment_links__enrollment__session__is_active=True,
+                enrollment_links__enrollment__active=True,
+            ).distinct().order_by('-created_at')
         else:
-            batches = Batch.objects.filter(class_name=class_name).order_by('-created_at')
+            batches = Batch.objects.filter(
+                class_name=class_name,
+                enrollment_links__enrollment__session__is_active=True,
+                enrollment_links__enrollment__active=True,
+            ).distinct().order_by('-created_at')
 
         # build batchwise student lists and a deduplicated classwise list
         class_student_set = []
         seen = set()
         for batch in batches:
-            students_qs = Student.objects.filter(batches=batch, active=True).order_by(
+            students_qs = Student.objects.filter(
+                enrollments__batch_links__batch=batch,
+                enrollments__session__is_active=True,
+                enrollments__active=True,
+                active=True,
+            ).order_by(
                 '-created_at', 'user__first_name', 'user__last_name'
             ).distinct()
             students = list(students_qs)
@@ -665,11 +608,14 @@ def regular_absent_students(request):
     earliest_date = latest_date - timedelta(days=n_days*2)
 
     data = defaultdict(lambda: defaultdict(list))
-    batches = Batch.objects.prefetch_related(
+    batches = Batch.objects.filter(
+        enrollment_links__enrollment__session__is_active=True,
+        enrollment_links__enrollment__active=True,
+    ).distinct().prefetch_related(
         Prefetch(
             'attendance',
             queryset=Attendance.objects.filter(type=selected_type, date__lte=latest_date, date__gte=latest_date - timedelta(days=n_days*2))
-            .select_related('student', 'student__user', 'student__class_enrolled')
+            .select_related('student', 'student__user')
             .order_by('-date'),
             to_attr='recent_attendance'
         )
@@ -687,11 +633,17 @@ def regular_absent_students(request):
             if len(records) < n_days:
                 continue
 
-            if not batch in student.batches.all():
+            # Ensure student belongs to this batch (session-aware)
+            if not Batch.objects.filter(
+                id=batch.id,
+                enrollment_links__enrollment__student=student,
+                enrollment_links__enrollment__session__is_active=True,
+                enrollment_links__enrollment__active=True,
+            ).exists():
                 continue
 
             if all(not att.is_present for att in records[:n_days]):
-                class_name = student.class_enrolled.name if student.class_enrolled else "Unknown"
+                class_name = batch.class_name.name if batch.class_name else "Unknown"
                 data[class_name][batch].append(student)
 
     # Convert defaultdicts to normal dicts/lists for template compatibility
@@ -760,7 +712,10 @@ def teacher_report(request, teacher_id):
         'start_date': start_date,
         'end_date': end_date,
 
-        'batches': teacher.batches.all().exclude(
+        'batches': teacher.batches.filter(
+            enrollment_links__enrollment__session__is_active=True,
+            enrollment_links__enrollment__active=True,
+        ).distinct().exclude(
             Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
             Q(section__name='CBSE') &
             Q(subject__name__in=['MATH', 'SCIENCE'])
@@ -810,7 +765,7 @@ def mentor_remarks(request, mentor_id, student_id):
     student_test_report = get_student_test_report(student, filter_start_date, filter_end_date)
     student_retest_report = get_student_retest_report(student, filter_start_date, filter_end_date)
 
-    batches = student.batches.all().filter(class_name=student.class_enrolled).order_by('-created_at')
+    batches = get_student_batches_qs(student).order_by('-created_at')
 
     remark = MentorRemark.objects.filter(
         mentor=mentor, student=student,
@@ -882,7 +837,7 @@ def mentor_remarks(request, mentor_id, student_id):
         remark.save()
 
         # Handle ActionSuggested per batch
-        for batch in student.batches.all():
+        for batch in batches:
             action_ids = request.POST.getlist(f'actions_{batch.id}')
             if action_ids:
                 actions = Action.objects.filter(id__in=action_ids)
@@ -958,13 +913,21 @@ def compare_student_performance(request, class_id=None, batch_id=None):
         messages.error(request, "Invalid Class")
         return redirect('compare_performance')
 
-    if batch_id and not Batch.objects.filter(id=batch_id).exists():
+    if batch_id and not Batch.objects.filter(
+        id=batch_id,
+        enrollment_links__enrollment__session__is_active=True,
+        enrollment_links__enrollment__active=True,
+    ).exists():
         messages.error(request, "Invalid Batch")
         return redirect('compare_class', class_id=class_id)
 
     if class_id:
         cls = ClassName.objects.filter(id=class_id).first()
-        batches = Batch.objects.filter(class_name=cls).order_by('created_at').exclude(
+        batches = Batch.objects.filter(
+            class_name=cls,
+            enrollment_links__enrollment__session__is_active=True,
+            enrollment_links__enrollment__active=True,
+        ).distinct().order_by('created_at').exclude(
             Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
             Q(section__name='CBSE') &
             Q(subject__name__in=['MATH', 'SCIENCE'])
@@ -973,7 +936,11 @@ def compare_student_performance(request, class_id=None, batch_id=None):
         batches = None
 
     if batch_id:
-        batch = Batch.objects.filter(id=batch_id).first()
+        batch = Batch.objects.filter(
+            id=batch_id,
+            enrollment_links__enrollment__session__is_active=True,
+            enrollment_links__enrollment__active=True,
+        ).distinct().first()
 
     if batch_id and not batch:
         messages.error(request, "Invalid Batch")
@@ -1247,7 +1214,10 @@ def admin_report(request):
             start_date = today.replace(day=1)
             end_date = today
     
-    batches = Batch.objects.all()
+    batches = Batch.objects.filter(
+        enrollment_links__enrollment__session__is_active=True,
+        enrollment_links__enrollment__active=True,
+    ).distinct()
 
     batch_performance = get_batches_test_performance(
         start_date,

@@ -1,7 +1,6 @@
 from django.urls import path
 from .views import (
     student_report,
-    batchwise_students,
     mentor_students,
     teacher_students,
     student_personal_report,
@@ -41,7 +40,6 @@ urlpatterns = [
     path('compare_performance/<int:class_id>/<int:batch_id>/', compare_student_performance, name='compare_batch'),
 
     path('personal_report/<uuid:stu_id>/', student_personal_report , name='student_personal_report'),
-    path('batchwise_students/', batchwise_students, name='batchwise_students'),
     path('mentor_students/', mentor_students, name='mentor_students'),
     path('regular_absent_students/', regular_absent_students, name='regular_absent_students'),
 

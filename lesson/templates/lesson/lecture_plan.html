@@ -4,7 +4,7 @@
 {% block style %}
 <style>
     html {
-      scroll-behavior: auto !important;
+        scroll-behavior: auto !important;
     }
 </style>
 {% endblock style %}
@@ -15,31 +15,31 @@
     {% if classes and not cls %}
     <div class="row g-2">
         {% if request.user.teachers %}
-            {% for c in request.user.teachers.get_classes %}
-            <div class="col-6 col-md-3 flex justify-content-center align-items-center">
-                <a href="{% url 'lecture_plan_class' c.id %}" class="nav-link">
-                    <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
-                </a>
-            </div>
-            {% endfor %}
+        {% for c in request.user.teachers.get_classes %}
+        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+            <a href="{% url 'lecture_plan_class' c.id %}" class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
+            </a>
+        </div>
+        {% endfor %}
         {% elif request.user.registered_student %}
-            {% for c in classes %}
-                {% if c == request.user.registered_student.class_enrolled %}
-                <div class="col-6 col-md-3 flex justify-content-center align-items-center">
-                    <a href="{% url 'lecture_plan_class' c.id %}" class="nav-link">
-                        <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
-                    </a>
-                </div>
-                {% endif %}
-            {% endfor %}
-        {% else %}    
-            {% for c in classes %}
-            <div class="col-6 col-md-3 flex justify-content-center align-items-center">
-                <a href="{% url 'lecture_plan_class' c.id %}" class="nav-link">
-                    <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
-                </a>
-            </div>
-            {% endfor %}
+        {% for c in classes %}
+        {% if c == request.user.registered_student.active_enrollment.class_name %}
+        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+            <a href="{% url 'lecture_plan_class' c.id %}" class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
+            </a>
+        </div>
+        {% endif %}
+        {% endfor %}
+        {% else %}
+        {% for c in classes %}
+        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+            <a href="{% url 'lecture_plan_class' c.id %}" class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
+            </a>
+        </div>
+        {% endfor %}
         {% endif %}
     </div>
     {% endif %}
@@ -58,32 +58,32 @@
     <h2 class="heading m-2">Select Batch</h2>
     <div class="row g-2">
         {% if request.user.teachers %}
-            {% for b in request.user.teachers.batches.all %}
-                {% if b.class_name == cls %}
-                <div class="col-6 col-md-3 flex justify-content-center align-items-center">
-                    <a href="{% url 'lecture_plan_batch' cls.id b.id %}" class="nav-link">
-                        <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{b.section.name}} {{b.subject.name}}</div>
-                    </a>
-                </div>
-                {% endif %}
-            {% endfor %}
+        {% for b in request.user.teachers.batches.all %}
+        {% if b.class_name == cls %}
+        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+            <a href="{% url 'lecture_plan_batch' cls.id b.id %}" class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{b.section.name}} {{b.subject.name}}</div>
+            </a>
+        </div>
+        {% endif %}
+        {% endfor %}
         {% elif request.user.registered_student %}
-            {% for b in request.user.registered_student.batches.all %}
-                <div class="col-6 col-md-3 flex justify-content-center align-items-center">
-                    <a href="{% url 'lecture_plan_batch' cls.id b.id %}" class="nav-link">
-                        <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{b.section.name}} {{b.subject.name}}</div>
-                    </a>
-                </div>
-            {% endfor %}
+        {% for b in request.user.registered_student.current_batches %}
+        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+            <a href="{% url 'lecture_plan_batch' cls.id b.id %}" class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{b.section.name}} {{b.subject.name}}</div>
+            </a>
+        </div>
+        {% endfor %}
 
         {% else %}
-            {% for b in batches %}
-                <div class="col-6 col-md-3 flex justify-content-center align-items-center">
-                    <a href="{% url 'lecture_plan_batch' cls.id b.id %}" class="nav-link">
-                        <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{b.section.name}} {{b.subject.name}}</div>
-                    </a>
-                </div>
-            {% endfor %}
+        {% for b in batches %}
+        <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+            <a href="{% url 'lecture_plan_batch' cls.id b.id %}" class="nav-link">
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{b.section.name}} {{b.subject.name}}</div>
+            </a>
+        </div>
+        {% endfor %}
         {% endif %}
     </div>
     {% endif %}
@@ -97,7 +97,8 @@
         </div>
         <div class="col-6 col-md-3 flex justify-content-center align-items-center">
             <a href="{% url 'lecture_plan_class' cls.id %}" class="nav-link">
-                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{batch.section.name}} {{batch.subject.name}}</div>
+                <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{batch.section.name}}
+                    {{batch.subject.name}}</div>
             </a>
         </div>
     </div>
@@ -139,44 +140,58 @@
                             ">
                             <div class="d-flex justify-content-between align-items-center w-100">
                                 <p class="m-0">
-                                    {{lecture.lesson.sequence}}. {{lecture.lesson.topic}} 
+                                    {{lecture.lesson.sequence}}. {{lecture.lesson.topic}}
                                     {% if lecture.lecture %}
-                                        ({{lecture.lecture.status}})
+                                    ({{lecture.lecture.status}})
                                     {% endif %}
                                 </p>
                                 {% if lecture.lecture %}
                                 <p class="m-0 me-2">{{lecture.lecture.date|date:'Y-m-d'}}</p>
                                 {% else %}
-                                    {% if lecture.is_forward_lesson and lecture.scheduled_date %}
-                                    <p class="m-0 me-2">{{lecture.scheduled_date|date:'d M Y'}}</p>
-                                    {% endif %}
+                                {% if lecture.is_forward_lesson and lecture.scheduled_date %}
+                                <p class="m-0 me-2">{{lecture.scheduled_date|date:'d M Y'}}</p>
+                                {% endif %}
                                 {% endif %}
                             </div>
 
                             {% if request.user.is_superuser %}
                             <div class="d-flex gap-2">
                                 {% if request.user and request.user.is_superuser and not lecture.lecture %}
-                                <form action="{% url 'add_lecture' cls.id batch.id lecture.lesson.id %}" class="d-flex gap-2" method="post">
+                                <form action="{% url 'add_lecture' cls.id batch.id lecture.lesson.id %}"
+                                    class="d-flex gap-2" method="post">
                                     {% csrf_token %}
                                     {% if not lecture.lecture and lecture.is_forward_lesson and lecture.scheduled_date %}
-                                    <input type="date" class="form-control" name="date" id="date-{{lecture.lecture.id}}" value="{{lecture.scheduled_date|date:'Y-m-d'}}">
+                                    <input type="date" class="form-control" name="date" id="date-{{lecture.lecture.id}}"
+                                        value="{{lecture.scheduled_date|date:'Y-m-d'}}">
                                     {% else %}
-                                    <input type="date" class="form-control" name="date" id="date-{{lecture.lecture.id}}" value="{{today|date:'Y-m-d'}}">
+                                    <input type="date" class="form-control" name="date" id="date-{{lecture.lecture.id}}"
+                                        value="{{today|date:'Y-m-d'}}">
                                     {% endif %}
 
-                                    <button class="d-flex justify-content-center align-items-center py-2 px-2 btn bg-success btn-outline-light fw-semibold text-decoration-none">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check-square" viewBox="0 0 16 16">
-                                            <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
-                                            <path d="M10.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/>
+                                    <button
+                                        class="d-flex justify-content-center align-items-center py-2 px-2 btn bg-success btn-outline-light fw-semibold text-decoration-none">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                            fill="currentColor" class="bi bi-check-square" viewBox="0 0 16 16">
+                                            <path
+                                                d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z" />
+                                            <path
+                                                d="M10.97 4.97a.75.75 0 0 1 1.071 1.05l-3.992 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z" />
                                         </svg>
                                     </button>
                                 </form>
                                 {% endif %}
                                 {% if request.user and request.user.is_superuser and lecture.lecture %}
-                                <a data-batch_id="{{batch.id}}" data-cls_id="{{cls.id}}" data-lecture_id="{{lecture.lecture.id}}" class="delete-link d-flex justify-content-center align-items-center py-2 px-2 btn bg-danger btn-outline-light fw-semibold text-decoration-none">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"></path>
-                                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
+                                <a data-batch_id="{{batch.id}}" data-cls_id="{{cls.id}}"
+                                    data-lecture_id="{{lecture.lecture.id}}"
+                                    class="delete-link d-flex justify-content-center align-items-center py-2 px-2 btn bg-danger btn-outline-light fw-semibold text-decoration-none">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                                        class="bi bi-trash" viewBox="0 0 16 16">
+                                        <path
+                                            d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z">
+                                        </path>
+                                        <path
+                                            d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z">
+                                        </path>
                                     </svg>
                                 </a>
                                 {% endif %}
@@ -196,17 +211,23 @@
                                 <div class="d-flex justify-content-between align-items-center w-100">
                                     <p class="m-0 ms-3">
                                         {{lec.lesson.topic}}
-                                            {% if lec.status == 'pending' %}
-                                                (Delayed)
-                                            {% endif %}
+                                        {% if lec.status == 'pending' %}
+                                        (Delayed)
+                                        {% endif %}
                                     </p>
                                     <p class="m-0 me-2">{{lec.date|date:'Y-m-d'}}</p>
                                 </div>
                                 {% if request.user and request.user.is_superuser and lec %}
-                                <a data-batch_id="{{batch.id}}" data-cls_id="{{cls.id}}" data-lecture_id="{{lec.id}}" class="delete-link d-flex justify-content-center align-items-center py-2 px-2 btn bg-danger btn-outline-light fw-semibold text-decoration-none">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"></path>
-                                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
+                                <a data-batch_id="{{batch.id}}" data-cls_id="{{cls.id}}" data-lecture_id="{{lec.id}}"
+                                    class="delete-link d-flex justify-content-center align-items-center py-2 px-2 btn bg-danger btn-outline-light fw-semibold text-decoration-none">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                                        class="bi bi-trash" viewBox="0 0 16 16">
+                                        <path
+                                            d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z">
+                                        </path>
+                                        <path
+                                            d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z">
+                                        </path>
                                     </svg>
                                 </a>
                                 {% endif %}
@@ -222,7 +243,7 @@
             {% endfor %}
         </ul>
     </div>
-    
+
     {% if mismatches %}
     <div id="mismatchesModal" class="my-4 d-none">
         <form action="" method="post" class="bg-white rounded-lg p-2 py-md-4 p-md-4 rounded">
@@ -247,19 +268,31 @@
                         {% endif %}
                     ">
                         <div class="d-flex gap-2 gap-md-4 flex-column flex-md-row w-100">
-                            <select class="form-select mismatch_reason" style="width: fit-content;" name="mismatch_reason" required>
+                            <select class="form-select mismatch_reason" style="width: fit-content;"
+                                name="mismatch_reason" required>
                                 <option value="">Select reason</option>
                                 {% for reason in mismatch_reason_choices %}
-                                <option value="{{reason.0}}" {% if reason.0 == mismatch.reason %} selected {% endif %} >{{reason.0}}</option>
+                                <option value="{{reason.0}}" {% if reason.0 == mismatch.reason %} selected {% endif %}>
+                                    {{reason.0}}</option>
                                 {% endfor %}
                             </select>
-                            <input type="date" class="form-control mismatch_date" style="width: fit-content;" value="{{mismatch.date|date:'Y-m-d'}}" required>
-                            <input type="text" class="form-control mismatch_remark" value="{{mismatch.remark}}" placeholder="remark...">
-                            <input type="hidden" class="form-control mismatch_data" name="mismatches[]" value="{{mismatch.id}}:{{mismatch.reason}}:{{mismatch.date|date:'Y-m-d'}}:{{mismatch.remark}}" required>
-                            <div class="px-2 py-2 d-flex align-items-center justify-content-center btn btn-outline-danger fw-semibold text-decoration-none" onclick="deleteMismatch(event)">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"></path>
-                                    <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
+                            <input type="date" class="form-control mismatch_date" style="width: fit-content;"
+                                value="{{mismatch.date|date:'Y-m-d'}}" required>
+                            <input type="text" class="form-control mismatch_remark" value="{{mismatch.remark}}"
+                                placeholder="remark...">
+                            <input type="hidden" class="form-control mismatch_data" name="mismatches[]"
+                                value="{{mismatch.id}}:{{mismatch.reason}}:{{mismatch.date|date:'Y-m-d'}}:{{mismatch.remark}}"
+                                required>
+                            <div class="px-2 py-2 d-flex align-items-center justify-content-center btn btn-outline-danger fw-semibold text-decoration-none"
+                                onclick="deleteMismatch(event)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                                    class="bi bi-trash" viewBox="0 0 16 16">
+                                    <path
+                                        d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z">
+                                    </path>
+                                    <path
+                                        d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z">
+                                    </path>
                                 </svg>
                             </div>
                         </div>
@@ -270,53 +303,61 @@
 
             <div class="d-flex justify-content-between align-items-center">
                 <div class="d-flex justify-content-end mt-4">
-                    <div id="add-mismatch" onclick=""  class="px-4 py-2 btn btn-success me-2">Add Mismatch</div>
+                    <div id="add-mismatch" onclick="" class="px-4 py-2 btn btn-success me-2">Add Mismatch</div>
                 </div>
             </div>
         </form>
     </div>
     {% else %}
-        <div id="mismatchesModal" class="my-4 d-none">
-            <form action="" method="post" class="bg-white rounded-lg p-2 py-md-4 p-md-4 rounded">
-                {% csrf_token %}
-                <div class="d-flex justify-content-between align-items-center">
-                    <h3 class="text-xl font-semibold ">Mismatch</h3>
-                    <div class="d-flex justify-content-end mt-4">
-                        <div id="cancelButtonMis" class="px-4 py-2 btn btn-primary me-2">Cancel</div>
-                        <button id="confirmButton" type="submit" class="px-4 py-2 btn btn-warning ">Save</button>
-                    </div>
+    <div id="mismatchesModal" class="my-4 d-none">
+        <form action="" method="post" class="bg-white rounded-lg p-2 py-md-4 p-md-4 rounded">
+            {% csrf_token %}
+            <div class="d-flex justify-content-between align-items-center">
+                <h3 class="text-xl font-semibold ">Mismatch</h3>
+                <div class="d-flex justify-content-end mt-4">
+                    <div id="cancelButtonMis" class="px-4 py-2 btn btn-primary me-2">Cancel</div>
+                    <button id="confirmButton" type="submit" class="px-4 py-2 btn btn-warning ">Save</button>
                 </div>
-                <div class="container mt-3">
-                    <ul class="list-group drag-container">
-                        <li draggable="true" class="draggable list-group-item d-flex align-items-md-center ">
-                            <div class="d-flex gap-2 gap-md-4 flex-column flex-md-row w-100">
-                                <select class="form-select mismatch_reason" style="width: fit-content;" name="mismatch_reason" required>
-                                    <option value="">Select reason</option>
-                                    {% for reason in mismatch_reason_choices %}
-                                    <option value="{{reason.0}}">{{reason.0}}</option>
-                                    {% endfor %}
-                                </select>
-                                <input type="date" class="form-control mismatch_date" style="width: fit-content;" required>
-                                <input type="text" class="form-control mismatch_remark" value="" placeholder="remark...">
-                                <input type="hidden" class="form-control mismatch_data" name="mismatches[]" value=": : :" required>
-                                <div class="px-2 py-2 d-flex align-items-center justify-content-center btn btn-outline-danger fw-semibold text-decoration-none" onclick="deleteMismatch(event)">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"></path>
-                                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
-                                    </svg>
-                                </div>
+            </div>
+            <div class="container mt-3">
+                <ul class="list-group drag-container">
+                    <li draggable="true" class="draggable list-group-item d-flex align-items-md-center ">
+                        <div class="d-flex gap-2 gap-md-4 flex-column flex-md-row w-100">
+                            <select class="form-select mismatch_reason" style="width: fit-content;"
+                                name="mismatch_reason" required>
+                                <option value="">Select reason</option>
+                                {% for reason in mismatch_reason_choices %}
+                                <option value="{{reason.0}}">{{reason.0}}</option>
+                                {% endfor %}
+                            </select>
+                            <input type="date" class="form-control mismatch_date" style="width: fit-content;" required>
+                            <input type="text" class="form-control mismatch_remark" value="" placeholder="remark...">
+                            <input type="hidden" class="form-control mismatch_data" name="mismatches[]" value=": : :"
+                                required>
+                            <div class="px-2 py-2 d-flex align-items-center justify-content-center btn btn-outline-danger fw-semibold text-decoration-none"
+                                onclick="deleteMismatch(event)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                                    class="bi bi-trash" viewBox="0 0 16 16">
+                                    <path
+                                        d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z">
+                                    </path>
+                                    <path
+                                        d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z">
+                                    </path>
+                                </svg>
                             </div>
-                        </li>
-                    </ul>
-                </div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
 
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="d-flex justify-content-end mt-4">
-                        <div id="add-mismatch" onclick=""  class="px-4 py-2 btn btn-success me-2">Add Mismatch</div>
-                    </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex justify-content-end mt-4">
+                    <div id="add-mismatch" onclick="" class="px-4 py-2 btn btn-success me-2">Add Mismatch</div>
                 </div>
-            </form>
-        </div>
+            </div>
+        </form>
+    </div>
     {% endif %}
 
     {% endif %}
@@ -324,34 +365,34 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-      const mismatchesBtn = document.getElementById("mismatchesBtn");
-      const lessonPlanContainer = document.getElementById("lessonPlanContainer");
-      const modal = document.getElementById("mismatchesModal");
-      const confirmButton = document.getElementById("confirmButton");
-      const cancelButtonMis = document.getElementById("cancelButtonMis");
+        const mismatchesBtn = document.getElementById("mismatchesBtn");
+        const lessonPlanContainer = document.getElementById("lessonPlanContainer");
+        const modal = document.getElementById("mismatchesModal");
+        const confirmButton = document.getElementById("confirmButton");
+        const cancelButtonMis = document.getElementById("cancelButtonMis");
 
-    mismatchesBtn.addEventListener("click", function () {
-        lessonPlanContainer.classList.add("d-none");
+        mismatchesBtn.addEventListener("click", function () {
+            lessonPlanContainer.classList.add("d-none");
 
-        const scrollPosition = window.scrollY || document.documentElement.scrollTop;
-        modal.style.top = `${scrollPosition}px`;
-        modal.classList.remove('d-none');
-      });
-  
-      cancelButtonMis.addEventListener("click", function () {
-        modal.classList.add("d-none");
-        document.getElementsByTagName('html')[0].style.overflow = 'auto';
-        document.getElementsByTagName('body')[0].style.overflow = 'auto';
-        lessonPlanContainer.classList.remove("d-none");
+            const scrollPosition = window.scrollY || document.documentElement.scrollTop;
+            modal.style.top = `${scrollPosition}px`;
+            modal.classList.remove('d-none');
+        });
 
-      });
+        cancelButtonMis.addEventListener("click", function () {
+            modal.classList.add("d-none");
+            document.getElementsByTagName('html')[0].style.overflow = 'auto';
+            document.getElementsByTagName('body')[0].style.overflow = 'auto';
+            lessonPlanContainer.classList.remove("d-none");
+
+        });
     });
 </script>
 
 <script>
-function getMismatchHTML() {
-    // Use template literals and Django template tags for reasons
-    return `
+    function getMismatchHTML() {
+        // Use template literals and Django template tags for reasons
+        return `
         <li draggable="true" class="draggable list-group-item d-flex align-items-md-center ">
             <div class="d-flex gap-2 gap-md-4 flex-column flex-md-row w-100">
                 <select class="form-select mismatch_reason" style="width: fit-content;" name="mismatch_reason" required>
@@ -372,107 +413,107 @@ function getMismatchHTML() {
             </div>
         </li>
     `;
-}
+    }
 
-function createElementFromHTML(htmlString) {
-    var div = document.createElement('div');
-    div.innerHTML = htmlString.trim();
-    return div.firstChild;
-}
+    function createElementFromHTML(htmlString) {
+        var div = document.createElement('div');
+        div.innerHTML = htmlString.trim();
+        return div.firstChild;
+    }
 
-function addMismatch() {
-    const container = document.querySelector('#mismatchesModal .drag-container');
-    const newMismatch = createElementFromHTML(getMismatchHTML());
-    container.appendChild(newMismatch);
-    bindMismatchInputListeners(newMismatch);
-    updateMismatchInputs();
-}
-
-function updateMismatchInputs() {
-    const items = document.querySelectorAll('#mismatchesModal .draggable');
-    items.forEach((item) => {
-        const reason = item.querySelector('.mismatch_reason').value.trim();
-        const date = item.querySelector('.mismatch_date').value.trim();
-        const remark = item.querySelector('.mismatch_remark').value.trim();
-        const hiddenInput = item.querySelector('.mismatch_data');
-        console.log("Updated Mismatched Triggered. Reason:", reason, "Date:", date, "Remark:", remark);
-        if (hiddenInput) {
-            // If the hidden input already has an ID prefix, retain it
-
-            const parts = hiddenInput.value.split(':');
-            const idPart = parts[0] || '';
-            hiddenInput.value = `${idPart}:${reason}:${date}:${remark}`;
-        } else {
-            hiddenInput.value = `:${reason}:${date}:${remark}`;
-        }
-
-        console.log("Hidden Input Value Updated:", hiddenInput.value);
-    });
-}
-
-function bindMismatchInputListeners(item) {
-    // If item is provided, bind only to that item, else bind to all
-    const items = item ? [item] : document.querySelectorAll('#mismatchesModal .draggable');
-    items.forEach((itm) => {
-        itm.querySelector('.mismatch_reason').addEventListener('change', updateMismatchInputs);
-        itm.querySelector('.mismatch_date').addEventListener('input', updateMismatchInputs);
-        itm.querySelector('.mismatch_remark').addEventListener('input', updateMismatchInputs);
-    });
-}
-
-function deleteMismatch(event) {
-    const li = event.target.closest('li.draggable');
-    if (li) {
-        li.remove();
+    function addMismatch() {
+        const container = document.querySelector('#mismatchesModal .drag-container');
+        const newMismatch = createElementFromHTML(getMismatchHTML());
+        container.appendChild(newMismatch);
+        bindMismatchInputListeners(newMismatch);
         updateMismatchInputs();
     }
-}
 
-document.addEventListener("DOMContentLoaded", function () {
-    const addMismatchBtn = document.getElementById("add-mismatch");
-    if (addMismatchBtn) {
-        addMismatchBtn.addEventListener("click", addMismatch);
+    function updateMismatchInputs() {
+        const items = document.querySelectorAll('#mismatchesModal .draggable');
+        items.forEach((item) => {
+            const reason = item.querySelector('.mismatch_reason').value.trim();
+            const date = item.querySelector('.mismatch_date').value.trim();
+            const remark = item.querySelector('.mismatch_remark').value.trim();
+            const hiddenInput = item.querySelector('.mismatch_data');
+            console.log("Updated Mismatched Triggered. Reason:", reason, "Date:", date, "Remark:", remark);
+            if (hiddenInput) {
+                // If the hidden input already has an ID prefix, retain it
+
+                const parts = hiddenInput.value.split(':');
+                const idPart = parts[0] || '';
+                hiddenInput.value = `${idPart}:${reason}:${date}:${remark}`;
+            } else {
+                hiddenInput.value = `:${reason}:${date}:${remark}`;
+            }
+
+            console.log("Hidden Input Value Updated:", hiddenInput.value);
+        });
     }
 
-    // Initial binding for existing mismatches
-    bindMismatchInputListeners();
-});
+    function bindMismatchInputListeners(item) {
+        // If item is provided, bind only to that item, else bind to all
+        const items = item ? [item] : document.querySelectorAll('#mismatchesModal .draggable');
+        items.forEach((itm) => {
+            itm.querySelector('.mismatch_reason').addEventListener('change', updateMismatchInputs);
+            itm.querySelector('.mismatch_date').addEventListener('input', updateMismatchInputs);
+            itm.querySelector('.mismatch_remark').addEventListener('input', updateMismatchInputs);
+        });
+    }
+
+    function deleteMismatch(event) {
+        const li = event.target.closest('li.draggable');
+        if (li) {
+            li.remove();
+            updateMismatchInputs();
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const addMismatchBtn = document.getElementById("add-mismatch");
+        if (addMismatchBtn) {
+            addMismatchBtn.addEventListener("click", addMismatch);
+        }
+
+        // Initial binding for existing mismatches
+        bindMismatchInputListeners();
+    });
 </script>
 
 
 <script>
-      document.addEventListener("DOMContentLoaded", function () {
-      const deleteLinks = document.querySelectorAll(".delete-link");
-      const deleteModal = document.getElementById("deleteConfirmationModal");
-      const confirmButton = document.getElementById("confirmDeleteButton");
-      const deleteCancelButton = document.getElementById("cancelButton");
-  
-      let deleteUrl = "";
-  
-      deleteLinks.forEach(link => {
-        link.addEventListener("click", function (event) {
-          event.preventDefault();
-          document.getElementsByTagName('html')[0].style.overflow = 'hidden';
-          document.getElementsByTagName('body')[0].style.overflow = 'hidden';
-          deleteUrl = `/lesson/delete-lecture/${this.dataset.cls_id}/${this.dataset.batch_id}/${this.dataset.lecture_id}/`; // Construct the delete URL
+    document.addEventListener("DOMContentLoaded", function () {
+        const deleteLinks = document.querySelectorAll(".delete-link");
+        const deleteModal = document.getElementById("deleteConfirmationModal");
+        const confirmButton = document.getElementById("confirmDeleteButton");
+        const deleteCancelButton = document.getElementById("cancelButton");
 
-          const scrollPosition = window.scrollY || document.documentElement.scrollTop;
-          deleteModal.style.top = `${scrollPosition}px`;
-          deleteModal.classList.remove('d-none');
+        let deleteUrl = "";
+
+        deleteLinks.forEach(link => {
+            link.addEventListener("click", function (event) {
+                event.preventDefault();
+                document.getElementsByTagName('html')[0].style.overflow = 'hidden';
+                document.getElementsByTagName('body')[0].style.overflow = 'hidden';
+                deleteUrl = `/lesson/delete-lecture/${this.dataset.cls_id}/${this.dataset.batch_id}/${this.dataset.lecture_id}/`; // Construct the delete URL
+
+                const scrollPosition = window.scrollY || document.documentElement.scrollTop;
+                deleteModal.style.top = `${scrollPosition}px`;
+                deleteModal.classList.remove('d-none');
+            });
         });
-      });
-  
-      confirmButton.addEventListener("click", function () {
-        if (deleteUrl) {
-          window.location.href = deleteUrl; // Redirect to the delete URL
-        }
-      });
-  
-      deleteCancelButton.addEventListener("click", function () {
-        deleteModal.classList.add("d-none");
-        document.getElementsByTagName('html')[0].style.overflow = 'auto';
-        document.getElementsByTagName('body')[0].style.overflow = 'auto';
-      });
+
+        confirmButton.addEventListener("click", function () {
+            if (deleteUrl) {
+                window.location.href = deleteUrl; // Redirect to the delete URL
+            }
+        });
+
+        deleteCancelButton.addEventListener("click", function () {
+            deleteModal.classList.add("d-none");
+            document.getElementsByTagName('html')[0].style.overflow = 'auto';
+            document.getElementsByTagName('body')[0].style.overflow = 'auto';
+        });
     });
 </script>
 

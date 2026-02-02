@@ -122,21 +122,21 @@ class Student(models.Model):
     stu_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     user = models.OneToOneField(BaseUser, on_delete=models.CASCADE, related_name="registered_student")
     
-    course = models.CharField(max_length=65, choices=COURSE_CHOICE, blank=True, null=True)
-    batches = models.ManyToManyField('Batch', related_name='students', blank=True)
+    # course = models.CharField(max_length=65, choices=COURSE_CHOICE, blank=True, null=True)
+    # batches = models.ManyToManyField('Batch', related_name='students', blank=True)
 
-    program_duration = models.CharField(max_length=10, choices=DURATION_CHOICE, blank=True, default='1 Year')
+    # program_duration = models.CharField(max_length=10, choices=DURATION_CHOICE, blank=True, default='1 Year')
     email = models.EmailField(unique=True, blank=True, null=True)
     dob = models.DateField()
     doj = models.DateField(blank=True, null=True)
     school_name = models.CharField(max_length=100)
-    class_enrolled = models.ForeignKey(ClassName, on_delete=models.CASCADE, related_name="students")
-    subjects = models.ManyToManyField(Subject, blank=True, related_name='students')
-    marksheet_submitted = models.BooleanField(default=False)
-    sat_score = models.PositiveIntegerField(blank=True, null=True)
+    # class_enrolled = models.ForeignKey(ClassName, on_delete=models.CASCADE, related_name="students")
+    # subjects = models.ManyToManyField(Subject, blank=True, related_name='students')
+    # marksheet_submitted = models.BooleanField(default=False)
+    # sat_score = models.PositiveIntegerField(blank=True, null=True)
     remarks = models.TextField(blank=True, null=True)
     address = models.TextField(blank=True, null=True)
-    last_year_marks_details = models.TextField(blank=True, null=True)
+    # last_year_marks_details = models.TextField(blank=True, null=True)
     aadhar_card_number = models.CharField(max_length=20, blank=True, null=True)
     gender = models.CharField(max_length=10, choices=GENDER_CHOICE, blank=True, null=True)
     active = models.BooleanField(default=True)
@@ -432,8 +432,15 @@ class Test(models.Model):
         return f"{self.name} -  {self.batch.__str__()}"
     
     def calculate_completion(self):
-        # Get all students currently in the batch
-        current_batch_students = set(self.batch.students.values_list('id', flat=True))
+        # Get all students for this batch via EnrollmentBatch (session-aware)
+        enrollments_qs = StudentEnrollment.objects.filter(batch_links__batch=self.batch)
+        if self.batch.session_id:
+            enrollments_qs = enrollments_qs.filter(session_id=self.batch.session_id)
+            # For the active session, only count currently-active enrollments
+            if getattr(self.batch.session, 'is_active', False):
+                enrollments_qs = enrollments_qs.filter(active=True)
+
+        current_batch_students = set(enrollments_qs.values_list('student_id', flat=True).distinct())
         
         # Get all students who have results for this test
         students_with_results = set(self.results.values_list('student_id', flat=True))
@@ -457,7 +464,13 @@ class Test(models.Model):
         self.save()
     
     def is_data_complete_for_graph(self):
-        student_ids_in_batch = set(self.batch.students.values_list('id', flat=True))
+        enrollments_qs = StudentEnrollment.objects.filter(batch_links__batch=self.batch)
+        if self.batch.session_id:
+            enrollments_qs = enrollments_qs.filter(session_id=self.batch.session_id)
+            if getattr(self.batch.session, 'is_active', False):
+                enrollments_qs = enrollments_qs.filter(active=True)
+
+        student_ids_in_batch = set(enrollments_qs.values_list('student_id', flat=True).distinct())
         student_ids_with_results = set(self.results.values_list('student_id', flat=True))
         student_ids_with_responses = set(self.responses.values_list('student_id', flat=True))
 

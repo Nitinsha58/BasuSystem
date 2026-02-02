@@ -6,6 +6,7 @@ from collections import defaultdict
 from registration.models import (
     ClassName, 
     Student, 
+    StudentEnrollment,
     Batch, 
     Attendance, 
     Homework,
@@ -36,8 +37,54 @@ from django.shortcuts import render, redirect
 from itertools import groupby
 
 
+def _get_student_batches_qs(student):
+    """Return a queryset of batches for the student's *current* enrollment.
+
+    Preference order:
+    1) StudentEnrollment (active session) via EnrollmentBatch (authoritative)
+    2) StudentBatchLink (compat layer, driven from EnrollmentBatch)
+    3) student.batches (legacy fallback while migration is in progress)
+    """
+    enrollment = StudentEnrollment.get_current_for_student(student)
+    if enrollment:
+        return Batch.objects.filter(enrollment_links__enrollment=enrollment).distinct()
+
+    # compat layer: prefer links tied to the active enrollment/session
+    active_links_qs = StudentBatchLink.objects.filter(
+        student=student,
+        active=True,
+        enrollment__session__is_active=True,
+        enrollment__active=True,
+    )
+    if active_links_qs.exists():
+        return Batch.objects.filter(student_links__in=active_links_qs).distinct()
+
+    # fallback: legacy links that don't have enrollment attached
+    legacy_links_qs = StudentBatchLink.objects.filter(student=student, active=True, enrollment__isnull=True)
+    if legacy_links_qs.exists():
+        return Batch.objects.filter(student_links__in=legacy_links_qs).distinct()
+
+    return student.current_batches()
+
+
+def _get_student_subjects_qs(student):
+    student_batches = _get_student_batches_qs(student)
+    return Subject.objects.filter(batches__in=student_batches).distinct()
+
+
+def get_student_batches_qs(student):
+    """Public wrapper for enrollment-based batch lookup."""
+    return _get_student_batches_qs(student)
+
+
+def get_student_subjects_qs(student):
+    """Public wrapper for enrollment-based subject lookup."""
+    return _get_student_subjects_qs(student)
+
+
 def get_combined_attendance(student, start_date, end_date):
-    excluded_batches = student.batches.all().filter(
+    student_batches = _get_student_batches_qs(student)
+    excluded_batches = student_batches.filter(
         Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
         Q(section__name='CBSE') &
         Q(subject__name__in=['MATH', 'SCIENCE'])
@@ -50,7 +97,7 @@ def get_combined_attendance(student, start_date, end_date):
     attendance_qs = Attendance.objects.filter(
         student=student,
         date__range=(effective_start_date, end_date),
-        batch__in=student.batches.all()
+        batch__in=student_batches
     ).exclude(batch__in=excluded_batches)
 
     total_present = attendance_qs.filter(is_present=True).count()
@@ -70,11 +117,7 @@ def get_subjectwise_attendance(student, start_date, end_date):
     doj = getattr(student, 'doj', None)
     effective_start_date = max(start_date, doj) if doj else start_date
 
-    subject_ids = StudentBatchLink.objects.filter(
-        student=student
-    ).values_list('batch__subject_id', flat=True).distinct()
-
-    subjects = Subject.objects.filter(id__in=subject_ids)
+    subjects = _get_student_subjects_qs(student)
 
     for subject in subjects:
         attendance_qs = Attendance.objects.filter(
@@ -106,7 +149,7 @@ def get_batchwise_attendance(student, start_date, end_date):
     doj = getattr(student, 'doj', None)
     effective_start_date = max(start_date, doj) if doj else start_date
 
-    for batch in student.batches.all().exclude(
+    for batch in _get_student_batches_qs(student).exclude(
             Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
             Q(section__name='CBSE') &
             Q(subject__name__in=['MATH', 'SCIENCE'])
@@ -313,8 +356,10 @@ def get_combined_homework(student, start_date, end_date):
     doj = getattr(student, 'doj', None)
     effective_start_date = max(start_date, doj) if doj else start_date
 
+    student_batches = _get_student_batches_qs(student)
+
     # Exclude batches as in get_batchwise_homework
-    excluded_batches = student.batches.all().filter(
+    excluded_batches = student_batches.filter(
         Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
         Q(section__name='CBSE') &
         Q(subject__name__in=['MATH', 'SCIENCE'])
@@ -322,7 +367,7 @@ def get_combined_homework(student, start_date, end_date):
     homework_qs = Homework.objects.filter(
         student=student,
         date__range=(effective_start_date, end_date),
-        batch__in=student.batches.all()
+        batch__in=student_batches
     ).exclude(batch__in=excluded_batches)
 
     total = homework_qs.count()
@@ -346,11 +391,7 @@ def get_subjectwise_homework(student, start_date, end_date):
 
     result = {}
 
-    subject_ids = StudentBatchLink.objects.filter(
-        student=student
-    ).values_list('batch__subject_id', flat=True).distinct()
-
-    subjects = Subject.objects.filter(id__in=subject_ids)
+    subjects = _get_student_subjects_qs(student)
 
     for subject in subjects:
         homework_qs = Homework.objects.filter(
@@ -381,7 +422,7 @@ def get_batchwise_homework(student, start_date, end_date):
     doj = getattr(student, 'doj', None)
     effective_start_date = max(start_date, doj) if doj else start_date
     result = {}
-    for batch in student.batches.all().exclude(
+    for batch in _get_student_batches_qs(student).exclude(
             Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
             Q(section__name='CBSE') &
             Q(subject__name__in=['MATH', 'SCIENCE'])
@@ -641,7 +682,7 @@ def get_subject_test_calendar(student, subject, start_date, end_date):
         subject_obj = subject
 
     # Only consider tests from the batches the student actually belongs to for this subject
-    student_batches_for_subject = student.batches.filter(subject=subject_obj)
+    student_batches_for_subject = _get_student_batches_qs(student).filter(subject=subject_obj)
 
     tests = Test.objects.filter(
         batch__in=student_batches_for_subject,
@@ -817,7 +858,8 @@ def get_marks_percentage(student, start_date, end_date):
     Calculates the marks percentage and test attendance for a given student
     within the specified date range, excluding specific batches.
     """
-    excluded_batches = student.batches.all().filter(
+    student_batches = _get_student_batches_qs(student)
+    excluded_batches = student_batches.filter(
         Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
         Q(section__name='CBSE') &
         Q(subject__name__in=['MATH', 'SCIENCE'])
@@ -825,7 +867,7 @@ def get_marks_percentage(student, start_date, end_date):
 
     tests = Test.objects.filter(
         date__range=(start_date, end_date)
-        ,batch__in=student.batches.all()
+        ,batch__in=student_batches
     ).exclude(batch__in=excluded_batches)
 
     total_max_marks = 0
@@ -869,7 +911,7 @@ def get_batchwise_marks(student, start_date, end_date):
     """
     result = {}
 
-    for batch in student.batches.all().exclude(
+    for batch in _get_student_batches_qs(student).exclude(
         Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
         Q(section__name='CBSE') &
         Q(subject__name__in=['MATH', 'SCIENCE'])
@@ -1026,6 +1068,8 @@ def get_subjectwise_marks(student, start_date, end_date):
             'present_percentage': round((present_count / (present_count + absent_count) * 100) if (present_count + absent_count) > 0 else 0, 2),
             'absent_percentage': round((absent_count / (present_count + absent_count) * 100) if (present_count + absent_count) > 0 else 0, 2),
         }
+    
+        print(result)
 
     return result
 
@@ -1034,14 +1078,15 @@ def get_subjectwise_test_reports(student, start_date, end_date):
     effective_start_date = max(start_date, doj) if doj else start_date
 
     # All subjects the student actually belongs to
-    subjects = student.batches.all().values_list('subject__name', flat=True).distinct()
+    student_batches = _get_student_batches_qs(student)
+    subjects = student_batches.values_list('subject__name', flat=True).distinct()
     result = {}
 
     for subject_name in subjects:
         subject_obj = Subject.objects.filter(name=subject_name).first()
 
         # Get all batches the student belongs to for this subject
-        student_batches_for_subject = student.batches.filter(subject__name=subject_name)
+        student_batches_for_subject = student_batches.filter(subject__name=subject_name)
 
         # FIX: Only tests from student's batches (NOT all batches of that subject)
         tests_qs = Test.objects.filter(
@@ -1158,7 +1203,7 @@ def get_subject_test_reports(student, subject, start_date, end_date):
         subject_obj = subject
 
     # Only consider tests from the batches the student actually belongs to for this subject
-    student_batches_for_subject = student.batches.filter(subject=subject_obj)
+    student_batches_for_subject = _get_student_batches_qs(student).filter(subject=subject_obj)
     tests = Test.objects.filter(
         batch__in=student_batches_for_subject,
         date__range=(effective_start_date, end_date)
@@ -1230,7 +1275,7 @@ def calculate_subject_tests_report(student, subject, start_date, end_date):
     Generates detailed test reports for a student in a specific subject within a date range.
     """
     # Get all batches the student belongs to for this subject
-    student_batches_for_subject = student.batches.filter(subject=subject)
+    student_batches_for_subject = _get_student_batches_qs(student).filter(subject=subject)
     tests_qs = Test.objects.filter(
         batch__in=student_batches_for_subject,
         date__range=(start_date, end_date)
@@ -1419,7 +1464,7 @@ def calculate_subject_chapter_remarks(student, subject, start_date, end_date):
     Returns a dict: {remark: [deducted_marks_per_chapter]}
     """
     # Get all batches the student belongs to for this subject
-    student_batches_for_subject = student.batches.filter(subject=subject)
+    student_batches_for_subject = _get_student_batches_qs(student).filter(subject=subject)
     if not student_batches_for_subject.exists():
         chapters = {}
         chapter_wise_remarks = {}
@@ -1732,7 +1777,7 @@ def generate_group_report_data_v2(request, start_date: datetime.date, end_date: 
             'batches_data': []
         }
 
-        for batch in student.batches.all().exclude(
+        for batch in _get_student_batches_qs(student).exclude(
             Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
             Q(section__name='CBSE') &
             Q(subject__name__in=['MATH', 'SCIENCE'])
@@ -1797,6 +1842,7 @@ def generate_single_student_report_data(student, start_date: date, end_date: dat
             'test_marks': calculate_test_scores_percentage(student, batch, start_date, end_date),
         })
 
+        print(batches_by_class_subject[key]['batches'][-1])
     return batches_by_class_subject
 
 
@@ -1843,7 +1889,7 @@ def get_student_test_report(student, start_date, end_date):
         subject_obj = batches_by_class_subject[key]['subject']
 
         # Only include tests from the student's own batches for this class+subject
-        student_batches_for_subject = student.batches.filter(
+        student_batches_for_subject = _get_student_batches_qs(student).filter(
             subject=subject_obj,
             class_name=class_obj
         )
@@ -1984,7 +2030,7 @@ def get_student_retest_report(student, start_date, end_date):
         subject_obj = batches_by_class_subject[key]['subject']
 
         # Only include tests from the student's own batches for this class+subject and within date range
-        student_batches_for_subject = student.batches.filter(
+        student_batches_for_subject = _get_student_batches_qs(student).filter(
             subject=subject_obj,
             class_name=class_obj
         )
@@ -2066,7 +2112,12 @@ def compare_student_performance_by_week(batch, start_date, end_date):
     Considers student's join date (doj): if test is before join date, test value is blank.
     """
     tests = Test.objects.filter(batch=batch, date__range=(start_date, end_date)).order_by('date')
-    students = Student.objects.filter(batches=batch, active=True)
+    students = Student.objects.filter(
+        enrollments__batch_links__batch=batch,
+        enrollments__session__is_active=True,
+        enrollments__active=True,
+        active=True,
+    ).distinct()
     students_list = []
 
     # Pre-fetch all results for efficiency
@@ -2213,7 +2264,12 @@ def get_batch_performance_over_time(batch, start_date, end_date):
             date__range=(current, last_date)
         )
 
-        students = Student.objects.filter(batches=batch, active=True)
+        students = Student.objects.filter(
+            enrollments__batch_links__batch=batch,
+            enrollments__session__is_active=True,
+            enrollments__active=True,
+            active=True,
+        ).distinct()
         total_percentage = 0
         student_count = 0
 

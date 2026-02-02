@@ -13,82 +13,88 @@
             {% endif %}
         </div>
         <div class="mb-2">
-            <a href="{% url 'student_report' student.stu_id %}?start_date={{ filter_start_date|date:'Y-m-d' }}&end_date={{ filter_end_date|date:'Y-m-d' }}" target="_blank" class="border-0 h2" style="text-decoration: none;">{{student.user.first_name}} {{student.user.last_name}}'s Remark    ({{ start_date|date:'d M' }} - {{ end_date|date:'d M' }})</a>
-            <p class="m-0 mb-1">{{student.class_enrolled}} - {{ student.subjects.all|join:", " }} 
+            <a href="{% url 'student_report' student.stu_id %}?start_date={{ filter_start_date|date:'Y-m-d' }}&end_date={{ filter_end_date|date:'Y-m-d' }}"
+                target="_blank" class="border-0 h2" style="text-decoration: none;">{{student.user.first_name}}
+                {{student.user.last_name}}'s Remark ({{ start_date|date:'d M' }} - {{ end_date|date:'d M' }})</a>
+            <p class="m-0 mb-1">{{student.active_enrollment.class_name}} - {{ student.active_enrollment.subjects.all|join:", " }}
                 {% if remark.recommendation %}
-                <p class="btn btn-warning m-0">Recommended for {{recommendation_label}}</p> 
-                {% else %}
-                <p class="btn btn-warning m-0">Recommend for {{recommendation_label}}</p>
-                {% endif %} 
-                
-                <p class="btn btn-danger m-0" id="mentor-remarks-btn">Student Remarks</p>
-            </p>
+            <p class="btn btn-warning m-0">Recommended for {{recommendation_label}}</p>
+            {% else %}
+            <p class="btn btn-warning m-0">Recommend for {{recommendation_label}}</p>
+            {% endif %}
+
+            <p class="btn btn-danger m-0" id="mentor-remarks-btn">Student Remarks</p>
         </div>
         <div class="mb-3">
             <p class="m-0 mb-1">Joined On: {{student.doj|date:'d M Y'}}</p>
-            <b class="m-0 mb-1">Mother: +91 {{student.parent_details.mother_contact}} - Father: +91 {{student.parent_details.father_contact}}</b>
+            <b class="m-0 mb-1">Mother: +91 {{student.parent_details.mother_contact}} - Father: +91
+                {{student.parent_details.father_contact}}</b>
         </div>
 
         <div class="w-100">
-            <form method="get" class="rounded d-flex flex-md-row flex-md-row gap-2 align-items-end w-100" style="flex-wrap: wrap;">
+            <form method="get" class="rounded d-flex flex-md-row flex-md-row gap-2 align-items-end w-100"
+                style="flex-wrap: wrap;">
                 <div class="">
                     <label for="filter_start_date" class="form-label text-nowrap m-0 text-align-center">Start Date: {{ filter_start_date|date:'d M' }}</label>
-                    <input type="date" name="filter_start_date" id="filter_start_date" value="{{filter_start_date|date:'Y-m-d'}}" class="form-control" style="max-width: 150px" required>
+                    <input type="date" name="filter_start_date" id="filter_start_date"
+                        value="{{filter_start_date|date:'Y-m-d'}}" class="form-control" style="max-width: 150px"
+                        required>
                 </div>
-                
+
                 <div class="">
                     <label for="filter_end_date" class="form-label text-nowrap m-0 text-align-center">End Date: {{ filter_end_date|date:'d M' }}</label>
-                    <input type="date" name="filter_end_date" id="filter_end_date" value="{{filter_end_date|date:'Y-m-d'}}" class="form-control" style="max-width: 150px" required>
+                    <input type="date" name="filter_end_date" id="filter_end_date"
+                        value="{{filter_end_date|date:'Y-m-d'}}" class="form-control" style="max-width: 150px" required>
                 </div>
                 <button style="height: fit-content;" class="px-2 btn btn-warning" type="submit">Filter</button>
             </form>
         </div>
-        
-        <p class="border-0 h2 mt-4" >Subject Test Summary</p>
+
+        <p class="border-0 h2 mt-4">Subject Test Summary</p>
         <div class="g-3 d-flex justify-content-between">
             <table class="table">
                 <thead class="table-dark">
-                <tr>
-                    <th scope="col">Subject</th>
-                    <th scope="col">Attendance</th>
-                    <th scope="col">Homework</th>
-                    <th scope="col">Test Marks</th>
-                </tr>
+                    <tr>
+                        <th scope="col">Subject</th>
+                        <th scope="col">Attendance</th>
+                        <th scope="col">Homework</th>
+                        <th scope="col">Test Marks</th>
+                    </tr>
                 </thead>
                 <tbody>
-                {% for subject, cls in stu_performance.items %}
-                <tr class="table-active" >
-                    <th class="col">{{ subject }}</th>
-                    <td></td>
-                    <td></td>
-                    <td></td>
-                </tr>
-                {% for batch in cls.batches %}
-                <tr class="">
-                    <td>{{ batch.batch_name }} {% if not batch.active %} <span class="text-danger">( Inactive )</span> {% endif %} </td>
-                    <td> ({{ batch.attendance.present }} / {{ batch.attendance.total }} ) {{ batch.attendance.percentage }} %</td>
-                    <td> ({{ batch.homework.completed }} / {{ batch.homework.total }} )  {{ batch.homework.percentage }} %</td>
-                    <td>{{ batch.test_marks }} %</td>
-                </tr>
-                {% endfor %}
-                {% endfor %}
+                    {% for subject, cls in stu_performance.items %}
+                    <tr class="table-active">
+                        <th class="col">{{ subject }}</th>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    {% for batch in cls.batches %}
+                    <tr class="">
+                        <td>{{ batch.batch_name }} {% if not batch.active %} <span class="text-danger">( Inactive )</span> {% endif %} </td>
+                        <td> ({{ batch.attendance.present }} / {{ batch.attendance.total }} ) {{ batch.attendance.percentage }} %</td>
+                        <td> ({{ batch.homework.completed }} / {{ batch.homework.total }} ) {{ batch.homework.percentage }} %</td>
+                        <td>{{ batch.test_marks }} %</td>
+                    </tr>
+                    {% endfor %}
+                    {% endfor %}
 
 
-                {% if not stu_performance %}
-                <tr>
-                    <th scope="row">
-                    <a href="" class="nav-link">
-                        {{ stu_performance.student_name }}
-                    </a>
-                    </th>
-                    <td colspan="5" class="text-center">No data available</td>
-                </tr>
-                {% endif %}
+                    {% if not stu_performance %}
+                    <tr>
+                        <th scope="row">
+                            <a href="" class="nav-link">
+                                {{ stu_performance.student_name }}
+                            </a>
+                        </th>
+                        <td colspan="5" class="text-center">No data available</td>
+                    </tr>
+                    {% endif %}
                 </tbody>
             </table>
         </div>
 
-        <p class="border-0 h2 mt-4" >Subjectwise Test Detail</p>
+        <p class="border-0 h2 mt-4">Subjectwise Test Detail</p>
         <div class="g-3 d-flex justify-content-between">
             <table class="table">
                 <thead class="table-dark">
@@ -101,39 +107,41 @@
                     </tr>
                 </thead>
                 <tbody>
-                {% for batch, details in student_test_report.items %}
+                    {% for batch, details in student_test_report.items %}
                     {% if details.tests|length != 0 %}
-                        {% for test in details.tests %}
-                        <tr {% if forloop.first %} class="table-active" {% endif %}>
-                            {% if forloop.first %}
-                                <td>{{ batch }}</td>
-                            {% else %}
-                                <td></td> 
-                            {% endif %}
+                    {% for test in details.tests %}
+                    <tr {% if forloop.first %} class="table-active" {% endif %}>
+                        {% if forloop.first %}
+                        <td>{{ batch }}</td>
+                        {% else %}
+                        <td></td>
+                        {% endif %}
 
-                            {% if forloop.first %}
-                                <td> ( {{ details.attendance.present }} / {{ details.attendance.total }} ) {{ details.attendance.percentage }}% </td>
-                            {% else %}
-                                <td></td> 
-                            {% endif %}
+                        {% if forloop.first %}
+                        <td> ( {{ details.attendance.present }} / {{ details.attendance.total }} ) {{ details.attendance.percentage }}% </td>
+                        {% else %}
+                        <td></td>
+                        {% endif %}
 
-                            {% if forloop.first %}
-                                <td> ( {{ details.homework.completed }} / {{ details.homework.total }} ) {{ details.homework.percentage }}%</td>
-                            {% else %}
-                                <td></td> 
-                            {% endif %}
-                            <td class="d-flex flex-column">
-                                <a href="{% url 'add_student_result' test.test.batch.id test.test.id student.id %}" target="_blank" class="m-0 nav-link">{{ test.test.name }} ({{test.test.batch.section.name|title}})</a> 
-                                <small class="text-dark">{{test.test.date}}</small>
-                            </td>
-                            {% if test.is_absent  %}
-                            <td class="text-danger"> AB </td>
-                            {% else %}
-                            <td>{{ test.result.total_marks_obtained }} / {{ test.result.total_max_marks }} ( {{ test.result.percentage|floatformat:2 }}%)</td>
-                            {% endif %}
-                        </tr>
-                        {% endfor %}
-                        
+                        {% if forloop.first %}
+                        <td> ( {{ details.homework.completed }} / {{ details.homework.total }} ) {{ details.homework.percentage }}%</td>
+                        {% else %}
+                        <td></td>
+                        {% endif %}
+                        <td class="d-flex flex-column">
+                            <a href="{% url 'add_student_result' test.test.batch.id test.test.id student.id %}"
+                                target="_blank" class="m-0 nav-link">{{ test.test.name }}
+                                ({{test.test.batch.section.name|title}})</a>
+                            <small class="text-dark">{{test.test.date}}</small>
+                        </td>
+                        {% if test.is_absent %}
+                        <td class="text-danger"> AB </td>
+                        {% else %}
+                        <td>{{ test.result.total_marks_obtained }} / {{ test.result.total_max_marks }} ( {{ test.result.percentage|floatformat:2 }}%)</td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+
                     {% else %}
                     <tr class="table-active">
                         <td>{{ batch }}</td>
@@ -144,12 +152,12 @@
                     </tr>
                     {% endif %}
 
-                {% endfor %}
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
 
-        <p class="border-0 h2 mt-4" >Subjectwise ReTest Suggestions</p>
+        <p class="border-0 h2 mt-4">Subjectwise ReTest Suggestions</p>
         <div class="g-3 d-flex justify-content-between">
             <table class="table">
                 <thead class="table-dark">
@@ -162,29 +170,30 @@
                     </tr>
                 </thead>
                 <tbody>
-                {% for batch, details in student_retest_report.items %}
+                    {% for batch, details in student_retest_report.items %}
                     {% for test in details.tests %}
                     <tr {% if forloop.first %} class="table-active" {% endif %}>
                         {% if forloop.first %}
-                            <td>{{ batch }}</td>
+                        <td>{{ batch }}</td>
                         {% else %}
-                             <td></td> 
+                        <td></td>
                         {% endif %}
                         <td class="d-flex flex-column">
-                            <a href="{% url 'add_student_result' test.test.batch.id test.test.id student.id %}" target="_blank" class="m-0 nav-link">{{ test.test.name }}</a> 
+                            <a href="{% url 'add_student_result' test.test.batch.id test.test.id student.id %}"
+                                target="_blank" class="m-0 nav-link">{{ test.test.name }}</a>
                             <small class="text-dark">{{test.test.date}}</small>
                         </td>
-                        
+
                         <td class="">
                             {% if test.retest_suggested and test.result.previous_marks %}
-                                <span class="bg-success rounded text-light mx-2 my-1 py-1 px-2">Taken </span>
+                            <span class="bg-success rounded text-light mx-2 my-1 py-1 px-2">Taken </span>
                             {% elif test.retest_suggested %}
-                                <span class="bg-danger rounded text-light mx-2 my-1 py-1 px-2">Suggested </span>
+                            <span class="bg-danger rounded text-light mx-2 my-1 py-1 px-2">Suggested </span>
                             {% endif %}
                         </td>
 
                         {% if test.result and test.result.previous_marks %}
-                        <td class="text-dark" >{{ test.result.previous_marks }}</td>
+                        <td class="text-dark">{{ test.result.previous_marks }}</td>
                         {% elif test.result %}
                         <td>{{ test.result.total_marks_obtained }} / {{ test.result.total_max_marks }} ( {{ test_data.result.percentage|floatformat:2 }}%)</td>
                         {% else %}
@@ -201,7 +210,7 @@
                         {% endif %}
                     </tr>
                     {% endfor %}
-                {% endfor %}
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
@@ -209,47 +218,16 @@
     </div>
 
     {% if remark %}
-    <form class="g-3 bg-light rounded p-2 pb-3" method="post" action="{% url 'mentor_remarks' mentor.id student.stu_id %}?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}">
+    <form class="g-3 bg-light rounded p-2 pb-3" method="post"
+        action="{% url 'mentor_remarks' mentor.id student.stu_id %}?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}">
         {% csrf_token %}
 
         <div class="row justify-content-evenly mt-3">
             <div class="col-md-3">
                 <label for="mentor_remark" class="form-label">Mentor Remarks</label>
-                <textarea class="form-control" name="mentor_remark" id="mentor_remark">{{remark.mentor_remark}}</textarea>
-                                                
-                <ul class="list-group">
-                    <li class="list-group-item bg-dark text-white list-group border-dark mt-2 mb-1">Negatives</li>
+                <textarea class="form-control" name="mentor_remark"
+                    id="mentor_remark">{{remark.mentor_remark}}</textarea>
 
-                    <div class="p-2 border rounded">
-                            {% for n_remark in negatives %}
-                            <li class="list-group-item ">
-                                <div class=" d-flex justify-content-between">
-                                    <label for="n_remark_mentor{{n_remark.id}}" class="text-decoration-none text-dark m-0" style="display: flex; justify-content: space-between;" target="_blank">
-                                        {{n_remark.name}}
-                                    </label>
-                                    <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;" name="n_remark_mentor[]" type="checkbox" value="{{n_remark.id}}" {% if n_remark in remark.mentor_negative.all %} checked {% endif %}  id="n_remark_mentor{{n_remark.id}}">
-                                </div>
-                            </li>
-                            {% endfor %}
-
-                            <li class="list-group-item bg-dark text-white list-group border-dark mt-2 mb-1">Positives</li>
-                            {% for p_remark in positives %}
-                            <li class="list-group-item ">
-                                <div class=" d-flex justify-content-between">
-                                    <label for="p_remark_mentor{{p_remark.id}}" class="text-decoration-none text-dark m-0" style="display: flex; justify-content: space-between;" target="_blank">
-                                        {{p_remark.name}}
-                                    </label>
-                                    <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;" name="p_remark_mentor[]" type="checkbox" value="{{p_remark.id}}" {% if p_remark in remark.mentor_positive.all %} checked {% endif %} id="p_remark_mentor{{p_remark.id}}">
-                                </div>
-                            </li>
-                            {% endfor %}
-                    </div>
-                </ul>
-            </div>
-
-            <div class="col-md-3">
-                <label for="parent_remark" class="form-label">Parent Remarks</label>
-                <textarea class="form-control" name="parent_remark" id="parent_remark">{{remark.parent_remark}}</textarea>
                 <ul class="list-group">
                     <li class="list-group-item bg-dark text-white list-group border-dark mt-2 mb-1">Negatives</li>
 
@@ -257,10 +235,13 @@
                         {% for n_remark in negatives %}
                         <li class="list-group-item ">
                             <div class=" d-flex justify-content-between">
-                                <label for="n_remark_parent{{n_remark.id}}" class="text-decoration-none text-dark m-0" style="display: flex; justify-content: space-between;" target="_blank">
+                                <label for="n_remark_mentor{{n_remark.id}}" class="text-decoration-none text-dark m-0"
+                                    style="display: flex; justify-content: space-between;" target="_blank">
                                     {{n_remark.name}}
                                 </label>
-                                <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;" name="n_remark_parent[]" type="checkbox" value="{{n_remark.id}}" {% if n_remark in remark.parent_negative.all %} checked {% endif %}  id="n_remark_parent{{n_remark.id}}">
+                                <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;"
+                                    name="n_remark_mentor[]" type="checkbox" value="{{n_remark.id}}" {% if n_remark in remark.mentor_negative.all %} checked {% endif %}
+                                    id="n_remark_mentor{{n_remark.id}}">
                             </div>
                         </li>
                         {% endfor %}
@@ -269,10 +250,53 @@
                         {% for p_remark in positives %}
                         <li class="list-group-item ">
                             <div class=" d-flex justify-content-between">
-                                <label for="p_remark_parent{{p_remark.id}}" class="text-decoration-none text-dark m-0" style="display: flex; justify-content: space-between;" target="_blank">
+                                <label for="p_remark_mentor{{p_remark.id}}" class="text-decoration-none text-dark m-0"
+                                    style="display: flex; justify-content: space-between;" target="_blank">
                                     {{p_remark.name}}
                                 </label>
-                                <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;" name="p_remark_parent[]" type="checkbox" value="{{p_remark.id}}" {% if p_remark in remark.parent_positive.all %} checked {% endif %} id="p_remark_parent{{p_remark.id}}">
+                                <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;"
+                                    name="p_remark_mentor[]" type="checkbox" value="{{p_remark.id}}" {% if p_remark in remark.mentor_positive.all %} checked {% endif %}
+                                    id="p_remark_mentor{{p_remark.id}}">
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </div>
+                </ul>
+            </div>
+
+            <div class="col-md-3">
+                <label for="parent_remark" class="form-label">Parent Remarks</label>
+                <textarea class="form-control" name="parent_remark"
+                    id="parent_remark">{{remark.parent_remark}}</textarea>
+                <ul class="list-group">
+                    <li class="list-group-item bg-dark text-white list-group border-dark mt-2 mb-1">Negatives</li>
+
+                    <div class="p-2 border rounded">
+                        {% for n_remark in negatives %}
+                        <li class="list-group-item ">
+                            <div class=" d-flex justify-content-between">
+                                <label for="n_remark_parent{{n_remark.id}}" class="text-decoration-none text-dark m-0"
+                                    style="display: flex; justify-content: space-between;" target="_blank">
+                                    {{n_remark.name}}
+                                </label>
+                                <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;"
+                                    name="n_remark_parent[]" type="checkbox" value="{{n_remark.id}}" {% if n_remark in remark.parent_negative.all %} checked {% endif %}
+                                    id="n_remark_parent{{n_remark.id}}">
+                            </div>
+                        </li>
+                        {% endfor %}
+
+                        <li class="list-group-item bg-dark text-white list-group border-dark mt-2 mb-1">Positives</li>
+                        {% for p_remark in positives %}
+                        <li class="list-group-item ">
+                            <div class=" d-flex justify-content-between">
+                                <label for="p_remark_parent{{p_remark.id}}" class="text-decoration-none text-dark m-0"
+                                    style="display: flex; justify-content: space-between;" target="_blank">
+                                    {{p_remark.name}}
+                                </label>
+                                <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;"
+                                    name="p_remark_parent[]" type="checkbox" value="{{p_remark.id}}" {% if p_remark in remark.parent_positive.all %} checked {% endif %}
+                                    id="p_remark_parent{{p_remark.id}}">
                             </div>
                         </li>
                         {% endfor %}
@@ -284,17 +308,16 @@
         <div class="row justify-content-evenly mt-3">
             {% for batch in batches %}
             {% with suggestion=remark.action_suggestions.all|get_suggestion:batch %}
-                <div class="col-md-3">
+            <div class="col-md-3">
                 <label for="actions_{{ batch.id }}" class="form-label">{{ batch }}</label>
                 <select class="form-select" name="actions_{{ batch.id }}" multiple id="actions_{{ batch.id }}">
                     {% for action in actions %}
-                    <option value="{{ action.id }}" 
-                        {% if suggestion and action in suggestion.action.all %}selected{% endif %}>
+                    <option value="{{ action.id }}" {% if suggestion and action in suggestion.action.all %} selected {% endif %}>
                         {{ action.name }}
                     </option>
                     {% endfor %}
                 </select>
-                </div>
+            </div>
             {% endwith %}
             {% endfor %}
 
@@ -313,40 +336,47 @@
     </form>
 
     {% else %}
-    <form class="g-3 bg-light rounded p-2 pb-3" method="post" action="{% url 'mentor_remarks' mentor.id student.stu_id %}?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}">
+    <form class="g-3 bg-light rounded p-2 pb-3" method="post"
+        action="{% url 'mentor_remarks' mentor.id student.stu_id %}?start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}">
         {% csrf_token %}
 
         <div class="row justify-content-evenly mt-3">
             <div class="col-md-3">
                 <label for="mentor_remark" class="form-label">Mentor Remarks</label>
                 <textarea class="form-control" name="mentor_remark" id="mentor_remark"></textarea>
-                                
+
                 <ul class="list-group">
                     <li class="list-group-item bg-dark text-white list-group border-dark mt-2 mb-1">Negatives</li>
 
-                    <div  class="p-2 border rounded">
-                            {% for n_remark in negatives %}
-                            <li class="list-group-item ">
-                                <div class=" d-flex justify-content-between">
-                                    <label for="n_remark_mentor{{n_remark.id}}" class="text-decoration-none text-dark m-0" style="display: flex; justify-content: space-between;" target="_blank">
-                                        {{n_remark.name}}
-                                    </label>
-                                    <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;" name="n_remark_mentor[]" type="checkbox" value="{{n_remark.id}}" id="n_remark_mentor{{n_remark.id}}">
-                                </div>
-                            </li>
-                            {% endfor %}
+                    <div class="p-2 border rounded">
+                        {% for n_remark in negatives %}
+                        <li class="list-group-item ">
+                            <div class=" d-flex justify-content-between">
+                                <label for="n_remark_mentor{{n_remark.id}}" class="text-decoration-none text-dark m-0"
+                                    style="display: flex; justify-content: space-between;" target="_blank">
+                                    {{n_remark.name}}
+                                </label>
+                                <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;"
+                                    name="n_remark_mentor[]" type="checkbox" value="{{n_remark.id}}"
+                                    id="n_remark_mentor{{n_remark.id}}">
+                            </div>
+                        </li>
+                        {% endfor %}
 
-                            <li class="list-group-item bg-dark text-white list-group border-dark mt-2 mb-1">Positives</li>
-                            {% for p_remark in positives %}
-                            <li class="list-group-item ">
-                                <div class=" d-flex justify-content-between">
-                                    <label for="p_remark_mentor{{p_remark.id}}" class="text-decoration-none text-dark m-0" style="display: flex; justify-content: space-between;" target="_blank">
-                                        {{p_remark.name}}
-                                    </label>
-                                    <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;" name="p_remark_mentor[]" type="checkbox" value="{{p_remark.id}}" id="p_remark_mentor{{p_remark.id}}">
-                                </div>
-                            </li>
-                            {% endfor %}
+                        <li class="list-group-item bg-dark text-white list-group border-dark mt-2 mb-1">Positives</li>
+                        {% for p_remark in positives %}
+                        <li class="list-group-item ">
+                            <div class=" d-flex justify-content-between">
+                                <label for="p_remark_mentor{{p_remark.id}}" class="text-decoration-none text-dark m-0"
+                                    style="display: flex; justify-content: space-between;" target="_blank">
+                                    {{p_remark.name}}
+                                </label>
+                                <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;"
+                                    name="p_remark_mentor[]" type="checkbox" value="{{p_remark.id}}"
+                                    id="p_remark_mentor{{p_remark.id}}">
+                            </div>
+                        </li>
+                        {% endfor %}
                     </div>
                 </ul>
 
@@ -355,34 +385,40 @@
             <div class="col-md-3">
                 <label for="parent_remark" class="form-label">Parent Remarks</label>
                 <textarea class="form-control" name="parent_remark" id="parent_remark"></textarea>
-                
+
                 <ul class="list-group">
                     <li class="list-group-item bg-dark text-white list-group border-dark mt-2 mb-1">Negatives</li>
 
                     <div class="p-2 border rounded">
-                            {% csrf_token %}
-                            {% for n_remark in negatives %}
-                            <li class="list-group-item ">
-                                <div class=" d-flex justify-content-between">
-                                    <label for="n_remark_parent{{n_remark.id}}" class="text-decoration-none text-dark m-0" style="display: flex; justify-content: space-between;" target="_blank">
-                                        {{n_remark.name}}
-                                    </label>
-                                    <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;" name="n_remark_parent[]" type="checkbox" value="{{n_remark.id}}" id="n_remark_parent{{n_remark.id}}">
-                                </div>
-                            </li>
-                            {% endfor %}
+                        {% csrf_token %}
+                        {% for n_remark in negatives %}
+                        <li class="list-group-item ">
+                            <div class=" d-flex justify-content-between">
+                                <label for="n_remark_parent{{n_remark.id}}" class="text-decoration-none text-dark m-0"
+                                    style="display: flex; justify-content: space-between;" target="_blank">
+                                    {{n_remark.name}}
+                                </label>
+                                <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;"
+                                    name="n_remark_parent[]" type="checkbox" value="{{n_remark.id}}"
+                                    id="n_remark_parent{{n_remark.id}}">
+                            </div>
+                        </li>
+                        {% endfor %}
 
-                            <li class="list-group-item bg-dark text-white list-group border-dark mt-2 mb-1">Positives</li>
-                            {% for p_remark in positives %}
-                            <li class="list-group-item ">
-                                <div class=" d-flex justify-content-between">
-                                    <label for="p_remark_parent{{p_remark.id}}" class="text-decoration-none text-dark m-0" style="display: flex; justify-content: space-between;" target="_blank">
-                                        {{p_remark.name}}
-                                    </label>
-                                    <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;" name="p_remark_parent[]" type="checkbox" value="{{p_remark.id}}" id="p_remark_parent{{p_remark.id}}">
-                                </div>
-                            </li>
-                            {% endfor %}
+                        <li class="list-group-item bg-dark text-white list-group border-dark mt-2 mb-1">Positives</li>
+                        {% for p_remark in positives %}
+                        <li class="list-group-item ">
+                            <div class=" d-flex justify-content-between">
+                                <label for="p_remark_parent{{p_remark.id}}" class="text-decoration-none text-dark m-0"
+                                    style="display: flex; justify-content: space-between;" target="_blank">
+                                    {{p_remark.name}}
+                                </label>
+                                <input class="form-check-input" style="font-size: 20px; border: 2px solid gray;"
+                                    name="p_remark_parent[]" type="checkbox" value="{{p_remark.id}}"
+                                    id="p_remark_parent{{p_remark.id}}">
+                            </div>
+                        </li>
+                        {% endfor %}
                     </div>
                 </ul>
 
@@ -422,15 +458,17 @@
 
 <div id="MentorRemarksModal"
     class="d-none position-absolute start-0 w-100 vh-100 position-absolute d-flex items-center align-items-center justify-content-center bg-black bg-opacity-50">
-    <div class="bg-white rounded-lg shadow-lg p-4 rounded " style="max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
+    <div class="bg-white rounded-lg shadow-lg p-4 rounded "
+        style="max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto;">
         <h3 class="text-xl font-semibold mb-1">{{student.user.first_name}} {{student.user.last_name}}'s Remarks</h3>
         <p class="mb-4">Add remarks or details about parent discussion.</p>
-        
+
         <div class="search-form ">
-            <form class="d-flex flex-column" action="{% url 'add-student-remarks' mentor.id student.stu_id %}" method="POST" id="add-remark-form">
+            <form class="d-flex flex-column" action="{% url 'add-student-remarks' mentor.id student.stu_id %}"
+                method="POST" id="add-remark-form">
                 {% csrf_token %}
-                <textarea name="student_remark" class="form-control search-input p-2 my-2" rows="4" id="search-stu-input" 
-                    placeholder="Add remarks..." autocomplete="off" ></textarea>
+                <textarea name="student_remark" class="form-control search-input p-2 my-2" rows="4"
+                    id="search-stu-input" placeholder="Add remarks..." autocomplete="off"></textarea>
 
                 <div class="d-flex justify-content-between">
                     <button id="cancelButton" class="px-4 py-2 btn btn-primary me-2">Cancel</button>
@@ -450,10 +488,17 @@
                     </div>
                     {% if request.user.is_superuser %}
                     <div class="bg-light p-2 rounded">
-                        <a href="{% url 'delete-student-remark' remark.id mentor.id student.stu_id %}" data-mentor_id="{{mentor.id}}" data-remark_id="{{remark.id}}" data-stu_id="{{student.stu_id}}" class="delete-link btn btn-danger btn-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                                <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"></path>
-                                <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
+                        <a href="{% url 'delete-student-remark' remark.id mentor.id student.stu_id %}"
+                            data-mentor_id="{{mentor.id}}" data-remark_id="{{remark.id}}"
+                            data-stu_id="{{student.stu_id}}" class="delete-link btn btn-danger btn-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                                class="bi bi-trash" viewBox="0 0 16 16">
+                                <path
+                                    d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z">
+                                </path>
+                                <path
+                                    d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z">
+                                </path>
                             </svg>
                         </a>
                     </div>
