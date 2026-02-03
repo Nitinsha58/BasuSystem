@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block dashboard %}
+<div class="container-sm p-4">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <h2 class="fw-normal text-dark mb-1">Confirm enrollment deletion</h2>
+            <div class="text-muted">
+                You are about to delete <strong>{{ selected_session.name }}</strong> enrollment for
+                <strong>{{ student.user.first_name }} {{ student.user.last_name }}</strong> ({{ student.user.phone }}).
+            </div>
+        </div>
+        <a class="btn btn-outline-secondary"
+            href="{% url 'student_enrollment_update' student.stu_id %}?session={{ selected_session.id }}">Back</a>
+    </div>
+
+    <div class="alert alert-danger" role="alert">
+        <div class="fw-semibold">This action cannot be undone.</div>
+        <div class="small">Deleting the enrollment will also delete (or detach) related records linked to this
+            enrollment.</div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header bg-white fw-semibold">Enrollment</div>
+                <div class="card-body">
+                    <div><span class="fw-semibold">Session:</span> {{ enrollment.session.name }}</div>
+                    <div><span class="fw-semibold">Class:</span> {{ enrollment.class_name.name }}</div>
+                    <div><span class="fw-semibold">Status:</span> {% if enrollment.active %}Active{% else %}Not Active{% endif %}</div>
+                    <div class="mt-2">
+                        <div class="fw-semibold">Subjects ({{ related_counts.subjects }})</div>
+                        <div class="text-muted small">
+                            {% for s in subjects %}
+                            {{ s.name }}{% if not forloop.last %}, {% endif %}
+                            {% empty %}
+                            No subjects
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <div class="fw-semibold">Batches ({{ related_counts.batches }})</div>
+                        <div class="text-muted small">
+                            {% for b in batches %}
+                            {{ b.class_name.name }} {{ b.section.name }} — {{ b.subject.name }}{% if not forloop.last %}<br>{% endif %}
+                            {% empty %}
+                            No batches
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header bg-white fw-semibold">Related records</div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Parent Details
+                            <span class="badge text-bg-{% if parent_details %}warning{% else %}secondary{% endif %}">
+                                {% if parent_details %}Will delete{% else %}None{% endif %}
+                            </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Fees
+                            <span class="badge text-bg-{% if fees %}warning{% else %}secondary{% endif %}">
+                                {% if fees %}Will delete{% else %}None{% endif %}
+                            </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Transport Details
+                            <span class="badge text-bg-{% if transport_details %}warning{% else %}secondary{% endif %}">
+                                {% if transport_details %}Will delete{% else %}None{% endif %}
+                            </span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Installments
+                            <span class="badge text-bg-warning">{{ related_counts.installments }}</span>
+                        </li>
+                        {% if installment_preview %}
+                        <li class="list-group-item">
+                            <div class="fw-semibold small mb-1">Installment preview</div>
+                            <div class="text-muted small">
+                                {% for ins in installment_preview %}
+                                {{ ins.label|default:"Installment" }} — ₹{{ ins.amount }} — due {{ ins.due_date|date:"d M Y" }}{% if ins.paid %} (paid){% endif %}<br>
+                                {% endfor %}
+                            </div>
+                        </li>
+                        {% endif %}
+
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Attendance records
+                            <span class="badge text-bg-warning">{{ related_counts.attendances }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Homework records
+                            <span class="badge text-bg-warning">{{ related_counts.homeworks }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Test results
+                            <span class="badge text-bg-warning">{{ related_counts.results }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Test responses
+                            <span class="badge text-bg-warning">{{ related_counts.responses }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Mentorships
+                            <span class="badge text-bg-warning">{{ related_counts.mentorships }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Remarks
+                            <span class="badge text-bg-warning">{{ related_counts.student_remarks|add:related_counts.test_remarks }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Transport attendance
+                            <span class="badge text-bg-warning">{{ related_counts.transport_attendances }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <form class="mt-3" method="post"
+                action="{% url 'student_enrollment_delete' student.stu_id %}?session={{ selected_session.id }}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger w-100"
+                    onclick="return confirm('Final confirmation: delete this enrollment for {{ selected_session.name }}?');">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor"
+                        class="bi bi-trash" viewBox="0 0 16 16" style="pointer-events: none;">
+                        <path
+                            d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z">
+                        </path>
+                        <path
+                            d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z">
+                        </path>
+                    </svg>
+                    Delete enrollment
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock dashboard %}

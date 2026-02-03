@@ -49,93 +49,106 @@
         <h2 class="fw-normal text-dark">Student Details </h2>
     </div>
 
-    <form class="g-3 bg-light rounded p-2 pb-3" name="enrollment_update_form" method="post">
-      {% csrf_token %}
-      <div class="row justify-content-evenly mt-3">
-        <div class="col-md-3">
-          <label for="first_name" class="form-label">First name*</label>
-          <input type="text" class="form-control" name="first_name" id="first_name" required>
-        </div>
-        <div class="col-md-3">
-          <label for="last_name" class="form-label">Last name</label>
-          <input type="text" class="form-control" name="last_name" id="last_name">
+    <div class="position-relative">
+      <form class="g-3 bg-light rounded p-2 pb-3" name="enrollment_update_form" method="post">
+        {% csrf_token %}
+        <div class="row justify-content-evenly mt-3">
+          <div class="col-md-3">
+            <label for="first_name" class="form-label">First name*</label>
+              <input type="text" class="form-control" name="first_name" id="first_name" required
+                hx-get="{% url 'student_registration_lookup' %}" hx-trigger="keyup changed delay:400ms"
+                hx-target="#student-lookup-panel" hx-include="#first_name,#last_name,#phone" hx-swap="innerHTML">
+          </div>
+          <div class="col-md-3">
+            <label for="last_name" class="form-label">Last name</label>
+            <input type="text" class="form-control" name="last_name" id="last_name"
+                hx-get="{% url 'student_registration_lookup' %}" hx-trigger="keyup changed delay:400ms"
+                hx-target="#student-lookup-panel" hx-include="#first_name,#last_name,#phone" hx-swap="innerHTML">
+          </div>
+      
+          <div class="col-md-3">
+            <label for="phone" class="form-label">Phone*</label>
+            <input type="text" minlength="10" maxlength="10" class="form-control" name="phone" id="phone" required
+                hx-get="{% url 'student_registration_lookup' %}" hx-trigger="keyup changed delay:400ms"
+                hx-target="#student-lookup-panel" hx-include="#first_name,#last_name,#phone" hx-swap="innerHTML">
+          </div>
         </div>
     
-        <div class="col-md-3">
-          <label for="phone" class="form-label">Phone*</label>
-          <input type="text" minlength="10" maxlength="10" class="form-control" name="phone" id="phone" required>
+        <div class="row justify-content-evenly mt-3">
+          <div class="col-md-3">
+              <label for="email" class="form-label">Email*</label>
+              <input type="email" class="form-control" name="email" id="email">
+          </div>
+      
+          <div class="col-md-3">
+            <label for="dob" class="form-label">Date of Birth*</label>
+            <input type="date" class="form-control" name="dob" id="dob" required>
+          </div>
+      
+          <div class="col-md-3">
+            <label for="doj" class="form-label">Date of Joining*</label>
+            <input type="date" class="form-control" name="doj" id="doj" required>
+          </div>
         </div>
-      </div>
+    
+        <div class="row justify-content-evenly mt-3">
+          <div class="col-md-3">
+            <label for="address" class="form-label">Address*</label>
+            <textarea class="form-control" name="address" id="address"></textarea>
+          </div>
   
-      <div class="row justify-content-evenly mt-3">
-        <div class="col-md-3">
-            <label for="email" class="form-label">Email*</label>
-            <input type="email" class="form-control" name="email" id="email">
+          <div class="col-md-3">
+            <label for="school_name" class="form-label">School Name*</label>
+            <input type="text" class="form-control" name="school_name" id="school_name" required>
+          </div>
+      
+          <div class="col-md-3">
+            <label for="aadhar_card_number" class="form-label">Aadhar Card Number</label>
+            <input type="text" class="form-control" name="aadhar_card_number" id="aadhar_card_number">
+          </div>
+      
         </div>
     
-        <div class="col-md-3">
-          <label for="dob" class="form-label">Date of Birth*</label>
-          <input type="date" class="form-control" name="dob" id="dob" required>
-        </div>
-    
-        <div class="col-md-3">
-          <label for="doj" class="form-label">Date of Joining*</label>
-          <input type="date" class="form-control" name="doj" id="doj" required>
-        </div>
-      </div>
+        <div class="row justify-content-evenly mt-3">
+          <div class="col-md-3">
+            <label for="gender" class="form-label">Gender</label>
+            <select class="form-select" name="gender" id="gender">
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
   
-      <div class="row justify-content-evenly mt-3">
-        <div class="col-md-3">
-          <label for="address" class="form-label">Address*</label>
-          <textarea class="form-control" name="address" id="address"></textarea>
-        </div>
-
-        <div class="col-md-3">
-          <label for="school_name" class="form-label">School Name*</label>
-          <input type="text" class="form-control" name="school_name" id="school_name" required>
-        </div>
-    
-        <div class="col-md-3">
-          <label for="aadhar_card_number" class="form-label">Aadhar Card Number</label>
-          <input type="text" class="form-control" name="aadhar_card_number" id="aadhar_card_number">
-        </div>
-    
-      </div>
+          <div class="col-md-3">
+            <label for="batches" class="form-label">Status</label>
+            <select class="form-select" name="active" id="active">
+              <option value="Active">Active</option>
+              <option value="Not Active">Not Active</option>
+            </select>
+          </div>
   
-      <div class="row justify-content-evenly mt-3">
-        <div class="col-md-3">
-          <label for="gender" class="form-label">Gender</label>
-          <select class="form-select" name="gender" id="gender">
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Other">Other</option>
-          </select>
+          <div class="col-md-3">
+          </div>
         </div>
-
-        <div class="col-md-3">
-          <label for="batches" class="form-label">Status</label>
-          <select class="form-select" name="active" id="active">
-            <option value="Active">Active</option>
-            <option value="Not Active">Not Active</option>
-          </select>
+  
+        <div class="row justify-content-evenly mt-3">
+          <div class="col-md-3">
+          </div>
+          <div class="col-md-3 mt-4">
+            <button class="btn btn-warning" type="submit">Create Student</button>
+          </div>
+          <div class="col-md-3">
+          </div>
         </div>
-
-        <div class="col-md-3">
-        </div>
+  
+  
+      </form>
+  
+      <div class="card-body position-absolute end-0" style="max-width: fit-content;" id="student-lookup-panel">
+        {% include 'registration/enrollment/_student_registration_lookup.html' with query_present=False %}
       </div>
+    </div>
 
-      <div class="row justify-content-evenly mt-3">
-        <div class="col-md-3">
-        </div>
-        <div class="col-md-3 mt-4">
-          <button class="btn btn-warning" type="submit">Create Student</button>
-        </div>
-        <div class="col-md-3">
-        </div>
-      </div>
-
-
-    </form>
 </div>
 </div>
 

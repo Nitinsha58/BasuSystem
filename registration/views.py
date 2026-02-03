@@ -31,6 +31,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.urls import reverse
 import time as clock_time
+import re
 
 
 def _get_selected_session(request):
@@ -409,6 +410,185 @@ def student_registration(request):
         "form": form,
         "classes": classes,
         "subjects": subjects,
+    })
+
+
+@login_required(login_url='login')
+def student_registration_lookup(request):
+    first_name = (request.GET.get('first_name') or '').strip()
+    last_name = (request.GET.get('last_name') or '').strip()
+    phone_raw = (request.GET.get('phone') or '').strip()
+    phone = re.sub(r'\D', '', phone_raw)
+
+    tokens = [t for t in f"{first_name} {last_name}".split() if len(t) >= 2]
+
+    # Keep the lookup quiet until there's enough signal.
+    has_meaningful_input = (len(phone) >= 3) or bool(tokens)
+    if not has_meaningful_input:
+        return render(request, "registration/enrollment/_student_registration_lookup.html", {
+            "students": [],
+            "phone_exact_student": None,
+            "query_present": False,
+        })
+
+    base_qs = Student.objects.select_related('user').all()
+
+    # Duplicate-phone detection (exact match only).
+    phone_exact_student = None
+    if len(phone) == 10:
+        phone_exact_student = base_qs.filter(user__phone=phone).first()
+
+    filters = Q()
+    if phone:
+        filters &= Q(user__phone__icontains=phone)
+    for token in tokens:
+        filters &= (Q(user__first_name__icontains=token) | Q(user__last_name__icontains=token))
+
+    students_qs = base_qs.filter(filters).order_by('user__first_name', 'user__last_name')[:10]
+    students = list(students_qs)
+
+    if phone_exact_student and phone_exact_student not in students:
+        students.insert(0, phone_exact_student)
+
+    student_ids = [s.id for s in students]
+    enrollments_by_student_id = {sid: [] for sid in student_ids}
+    if student_ids:
+        enrollments_qs = (
+            StudentEnrollment.objects
+            .filter(student_id__in=student_ids)
+            .select_related('session', 'class_name')
+            .prefetch_related('subjects')
+            .order_by('-session__start_date', '-created_at')
+        )
+        for enrollment in enrollments_qs:
+            enrollments_by_student_id.setdefault(enrollment.student_id, []).append(enrollment)
+
+    results = []
+    for student in students:
+        enrollments = enrollments_by_student_id.get(student.id, [])
+        active_enrollment = None
+        previous_enrollment = None
+
+        for e in enrollments:
+            if e.session.is_active and e.active:
+                active_enrollment = e
+                break
+
+        for e in enrollments:
+            if active_enrollment and e.id == active_enrollment.id:
+                continue
+            if e.session.is_active and active_enrollment is None and e.active:
+                # Defensive: if multiple active-session enrollments exist, avoid showing it as previous.
+                continue
+            previous_enrollment = e
+            break
+
+        results.append({
+            'student': student,
+            'active_enrollment': active_enrollment,
+            'previous_enrollment': previous_enrollment,
+        })
+
+    return render(request, "registration/enrollment/_student_registration_lookup.html", {
+        "results": results,
+        "phone_exact_student": phone_exact_student,
+        "query_present": True,
+    })
+
+
+@login_required(login_url='login')
+def student_enrollment_delete(request, stu_id):
+    if request.method != 'POST':
+        messages.error(request, 'Invalid request.')
+        return redirect('student_enrollment_update', stu_id=stu_id)
+
+    student = Student.objects.filter(stu_id=stu_id).first()
+    if not student:
+        messages.error(request, 'Invalid Student Id.')
+        return redirect('students_enrollment_list')
+
+    _, _, selected_session = _get_selected_session(request)
+    if not selected_session:
+        messages.error(request, 'No academic session selected.')
+        return redirect('student_enrollment_update', stu_id=student.stu_id)
+
+    enrollment = StudentEnrollment.objects.filter(student=student, session=selected_session).first()
+    if not enrollment:
+        messages.error(request, f'No enrollment found for {selected_session.name}.')
+        return redirect(f"{reverse('student_enrollment_update', args=[student.stu_id])}?session={selected_session.id}")
+
+    with transaction.atomic():
+        enrollment.delete()
+
+    messages.success(request, f'Enrollment deleted for {selected_session.name}.')
+    return redirect(f"{reverse('student_enrollment_update', args=[student.stu_id])}?session={selected_session.id}")
+
+
+@login_required(login_url='login')
+def student_enrollment_delete_confirm(request, stu_id):
+    student = Student.objects.filter(stu_id=stu_id).select_related('user').first()
+    if not student:
+        messages.error(request, 'Invalid Student Id.')
+        return redirect('students_enrollment_list')
+
+    _, _, selected_session = _get_selected_session(request)
+    if not selected_session:
+        messages.error(request, 'No academic session selected.')
+        return redirect('student_enrollment_update', stu_id=student.stu_id)
+
+    enrollment = (
+        StudentEnrollment.objects
+        .filter(student=student, session=selected_session)
+        .select_related('session', 'class_name')
+        .prefetch_related('subjects')
+        .first()
+    )
+    if not enrollment:
+        messages.error(request, f'No enrollment found for {selected_session.name}.')
+        return redirect(f"{reverse('student_enrollment_update', args=[student.stu_id])}?session={selected_session.id}")
+
+    batch_links = (
+        enrollment.batch_links
+        .select_related('batch', 'batch__class_name', 'batch__section', 'batch__subject')
+        .all()
+    )
+    batches = [link.batch for link in batch_links]
+
+    subjects = list(enrollment.subjects.all())
+
+    fees = getattr(enrollment, 'fees', None)
+    parent_details = getattr(enrollment, 'parent_details', None)
+    transport_details = getattr(enrollment, 'transport_details', None)
+
+    related_counts = {
+        'batches': len(batches),
+        'subjects': len(subjects),
+        'installments': enrollment.installments.count(),
+        'attendances': enrollment.attendances.count(),
+        'homeworks': enrollment.homeworks.count(),
+        'results': enrollment.results.count(),
+        'responses': enrollment.responses.count(),
+        'remark_count': enrollment.remark_count.count(),
+        'mentorships': enrollment.mentorships.count(),
+        'student_remarks': enrollment.student_remarks.count(),
+        'test_remarks': enrollment.test_remarks.count(),
+        'transport_attendances': enrollment.transport_attendances.count(),
+    }
+
+    # Keep a short preview list for large collections.
+    installment_preview = list(enrollment.installments.order_by('due_date').all()[:5])
+
+    return render(request, 'registration/enrollment/enrollment_delete_confirm.html', {
+        'student': student,
+        'selected_session': selected_session,
+        'enrollment': enrollment,
+        'batches': batches,
+        'subjects': subjects,
+        'fees': fees,
+        'parent_details': parent_details,
+        'transport_details': transport_details,
+        'related_counts': related_counts,
+        'installment_preview': installment_preview,
     })
 
 @login_required(login_url='login')

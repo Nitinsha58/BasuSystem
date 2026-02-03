@@ -2,10 +2,13 @@ from django.urls import path
 from .views import (
     
     student_registration,
+    student_registration_lookup,
     student_enrollment_details_update,
     students_enrollment_list,
     student_enrollment_parent_details,
     student_enrollment_update,
+    student_enrollment_delete,
+    student_enrollment_delete_confirm,
     student_enrollment_transport_details,
     student_enrollment_fees_details,
     student_enrollment_reg_doc,
@@ -70,11 +73,14 @@ from .views import (
 
 urlpatterns = [
     # path('search-students/', search_students, name='search_students'),
+    path('registration/lookup/', student_registration_lookup, name='student_registration_lookup'),
     path('enrollments', students_enrollment_list, name='students_enrollment_list'),
     path('registration/', student_registration, name='student_registration'),
     path('enrollment/<uuid:stu_id>', student_enrollment_details_update, name='student_enrollment_details_update'),
     path('enrollment/parent/<uuid:stu_id>', student_enrollment_parent_details, name='student_enrollment_parent_details'),
     path('enrollment/update/<uuid:stu_id>', student_enrollment_update, name='student_enrollment_update'),
+    path('enrollment/delete/<uuid:stu_id>', student_enrollment_delete, name='student_enrollment_delete'),
+    path('enrollment/delete/<uuid:stu_id>/confirm', student_enrollment_delete_confirm, name='student_enrollment_delete_confirm'),
     path('enrollment/fees/<uuid:stu_id>', student_enrollment_fees_details, name='student_enrollment_fees_details'),
     path('enrollment/transport/<uuid:stu_id>', student_enrollment_transport_details, name='student_enrollment_transport_details'),
     path('enrollment/document/<uuid:stu_id>', student_enrollment_reg_doc, name='student_enrollment_reg_doc'),
