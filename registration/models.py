@@ -147,11 +147,17 @@ class Student(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def needs_mentor(self):
-        last = self.mentorships.order_by('-updated_at').first()
-        return last is None or not last.active
+        enrollment = self.active_enrollment()
+        if enrollment:
+            return enrollment.needs_mentor()
+        # No active enrollment => cannot have an active, session-scoped mentorship
+        return True
     
     def active_mentorship(self):
-        return self.mentorships.filter(active=True).order_by('-updated_at').first()
+        enrollment = self.active_enrollment()
+        if enrollment:
+            return enrollment.active_mentorship()
+        return None
 
     def has_active_mentorship(self):
         return self.active_mentorship() is not None
@@ -225,6 +231,16 @@ class StudentEnrollment(models.Model):
             session__is_active=True,
             active=True
         ).first()
+
+    def needs_mentor(self):
+        last = self.mentorships.order_by('-updated_at').first()
+        return last is None or not last.active
+
+    def active_mentorship(self):
+        return self.mentorships.filter(active=True).order_by('-updated_at').first()
+
+    def has_active_mentorship(self):
+        return self.active_mentorship() is not None
 
 
 class EnrollmentBatch(models.Model):

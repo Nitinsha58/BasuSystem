@@ -502,27 +502,32 @@ def mentor_students(request):
         if mentor and ment != mentor:
             continue
         for class_name in classes:
-            if mentor:
-                mentorships = mentor.mentorships.filter(
+            mentorships_base = (
+                (mentor.mentorships if mentor else Mentorship.objects).filter(
                     active=True,
-                    student__active=True,
-                ).filter(
-                    Q(enrollment__class_name=class_name, enrollment__session__is_active=True, enrollment__active=True)
-                    | Q(enrollment__isnull=True, student__enrollments__class_name=class_name, student__enrollments__session__is_active=True, student__enrollments__active=True)
-                ).order_by(
-                    '-created_at',
-                    'student__user__first_name',
-                    'student__user__last_name'
-                ).distinct()
-            else:
-                mentorships = Mentorship.objects.filter(
-                    active=True,
-                    student__active=True,
                     mentor=ment,
-                ).filter(
-                    Q(enrollment__class_name=class_name, enrollment__session__is_active=True, enrollment__active=True)
-                    | Q(enrollment__isnull=True, student__enrollments__class_name=class_name, student__enrollments__session__is_active=True, student__enrollments__active=True)
+                    enrollment__isnull=False,
+                    enrollment__active=True,
+                    enrollment__session__is_active=True,
+                    enrollment__class_name=class_name,
+                    enrollment__student__active=True,
                 )
+                .select_related(
+                    'mentor__user',
+                    'enrollment',
+                    'enrollment__student',
+                    'enrollment__student__user',
+                    'enrollment__class_name',
+                    'enrollment__session',
+                )
+                .order_by(
+                    '-created_at',
+                    'enrollment__student__user__first_name',
+                    'enrollment__student__user__last_name'
+                )
+            )
+
+            mentorships = mentorships_base
             if mentorships.exists():
                 mentorship_list[ment][class_name] = mentorships
     # students = generate_group_report_data_v2(request, start_date, end_date)
