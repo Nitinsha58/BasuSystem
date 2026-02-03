@@ -92,13 +92,13 @@ def lesson_plan(request, class_id=None, batch_id=None):
         messages.error(request, "Invalid Class")
         return redirect('lesson_plan')
     
-    if batch_id and not Batch.objects.filter(id=batch_id).exists():
+    if batch_id and not Batch.objects.filter(id=batch_id, session__is_active=True).exists():
         messages.error(request, "Invalid Batch")
         return redirect('lesson_plan_class', class_id=class_id)
 
     if class_id:
         cls = ClassName.objects.filter(id=class_id).first()
-        batches = Batch.objects.filter(class_name=cls).order_by('created_at').exclude(
+        batches = Batch.objects.filter(class_name=cls, session__is_active=True).order_by('created_at').exclude(
             Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
             Q(section__name='CBSE') &
             Q(subject__name__in=['MATH', 'SCIENCE'])
@@ -107,7 +107,7 @@ def lesson_plan(request, class_id=None, batch_id=None):
         batches = None
     
     if batch_id:
-        batch = Batch.objects.filter(id=batch_id).first()
+        batch = Batch.objects.filter(id=batch_id, session__is_active=True).first()
 
     if batch_id and not batch:
         messages.error(request, "Invalid Batch")
@@ -181,7 +181,7 @@ def lecture_plan(request, class_id=None, batch_id=None):
     today = datetime.today()
 
     classes = ClassName.objects.all().order_by('created_at')
-    batches = Batch.objects.filter(class_name=cls).order_by('created_at').exclude(
+    batches = Batch.objects.filter(class_name=cls, session__is_active=True).order_by('created_at').exclude(
         Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
         Q(section__name='CBSE') &
         Q(subject__name__in=['MATH', 'SCIENCE'])
@@ -321,13 +321,13 @@ def add_bulk_lecture_dates(request, class_id=None, batch_id=None):
         messages.error(request, "Invalid Class")
         return redirect('lecture_plan')
 
-    if batch_id and not Batch.objects.filter(id=batch_id).exists():
+    if batch_id and not Batch.objects.filter(id=batch_id, session__is_active=True).exists():
         messages.error(request, "Invalid Batch")
         return redirect('lecture_plan_class', class_id=class_id)
 
     if class_id:
         cls = ClassName.objects.filter(id=class_id).first()
-        batches = Batch.objects.filter(class_name=cls).order_by('created_at').exclude(
+        batches = Batch.objects.filter(class_name=cls, session__is_active=True).order_by('created_at').exclude(
             Q(class_name__name__in=['CLASS 9', 'CLASS 10']) &
             Q(section__name='CBSE') &
             Q(subject__name__in=['MATH', 'SCIENCE'])
@@ -336,7 +336,7 @@ def add_bulk_lecture_dates(request, class_id=None, batch_id=None):
         batches = None
 
     if batch_id:
-        batch = Batch.objects.filter(id=batch_id).first()
+        batch = Batch.objects.filter(id=batch_id, session__is_active=True).first()
 
     if batch_id and not batch:
         messages.error(request, "Invalid Batch")

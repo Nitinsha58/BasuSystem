@@ -58,6 +58,13 @@ from .views import (
     students_pick_drop,
     mark_transport_attendance,
     delete_transport_attendance,
+
+    # Batch CRUD
+    batch_list,
+    batch_create,
+    batch_update,
+    batch_delete,
+    batch_copy_from_session,
     )
 
 
@@ -72,6 +79,12 @@ urlpatterns = [
     path('enrollment/transport/<uuid:stu_id>', student_enrollment_transport_details, name='student_enrollment_transport_details'),
     path('enrollment/document/<uuid:stu_id>', student_enrollment_reg_doc, name='student_enrollment_reg_doc'),
     path('enrollment/receipt/<uuid:stu_id>', print_enrollment_receipt, name='print_enrollment_receipt'),
+
+    path('batches/', batch_list, name='batch_list'),
+    path('batches/create/', batch_create, name='batch_create'),
+    path('batches/<int:batch_id>/edit/', batch_update, name='batch_update'),
+    path('batches/<int:batch_id>/delete/', batch_delete, name='batch_delete'),
+    path('batches/copy/', batch_copy_from_session, name='batch_copy_from_session'),
 
     path('delete_installment/<uuid:stu_id>/<int:ins_id>', delete_installment, name='delete_installment'),
 

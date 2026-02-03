@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block dashboard %}
+<div class="container-sm p-4">
+    <div class="my-2">
+        <h2 class="fw-normal text-dark">Batch Management</h2>
+        <div class="text-muted">Manage batches session-wise (Class + Subject + Section).</div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3 rounded">
+        <form action="" method="get" class="">
+            <select name="session" id="academic-session"
+                class="form-select search-input fs-5 me-2 w-auto flex-grow-0 pe-5" onchange="this.form.submit()">
+                {% for session in academic_sessions %}
+                <option value="{{session.id}}" {% if selected_session and session.id == selected_session.id %} selected {% endif %}>
+                    {{session.name}}</option>
+                {% endfor %}
+            </select>
+        </form>
+
+        <div class="d-flex gap-2">
+            {% if selected_session %}
+            <a class="btn btn-success" href="{% url 'batch_create' %}?session={{ selected_session.id }}">+ Create
+                Batch</a>
+            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
+                data-bs-target="#copyFromSessionModal" {% if not copy_source_sessions %}disabled{% endif %}>
+                Copy from Session
+            </button>
+            {% else %}
+            <a class="btn btn-success" href="{% url 'batch_create' %}">+ Create Batch</a>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if selected_session %}
+    <div class="modal fade" id="copyFromSessionModal" tabindex="-1" aria-labelledby="copyFromSessionModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post" action="{% url 'batch_copy_from_session' %}?session={{ selected_session.id }}">
+                    {% csrf_token %}
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="copyFromSessionModalLabel">Copy Batches from Previous Session</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-2">
+                            <div class="text-muted">
+                                Target session: <strong>{{ selected_session.name }}</strong>
+                            </div>
+                        </div>
+
+                        <label for="from_session" class="form-label">Copy from</label>
+                        <select class="form-select" id="from_session" name="from_session" required>
+                            <option value="" selected disabled>Select previous session</option>
+                            {% for s in copy_source_sessions %}
+                            <option value="{{ s.id }}">{{ s.name }}</option>
+                            {% endfor %}
+                        </select>
+
+                        <div class="form-text">
+                            Only older sessions are shown. Existing batches in the target session will be skipped.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Copy Batches</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Optional: auto-select the most recent previous session
+        (function () {
+            const select = document.getElementById('from_session');
+            if (!select) return;
+            if (select.options.length > 1 && !select.value) {
+                select.selectedIndex = 1;
+            }
+        })();
+    </script>
+    {% endif %}
+
+    <div class="bg-light rounded p-2">
+        <div class="table-responsive">
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>Class</th>
+                        <th>Subject</th>
+                        <th>Section</th>
+                        <th>Days</th>
+                        <th>Time</th>
+                        <th>Dates</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for batch in batches %}
+                    <tr>
+                        <td>{{ batch.class_name.name }}</td>
+                        <td>{{ batch.subject.name }}</td>
+                        <td>{{ batch.section.name }}</td>
+                        <td>
+                            {% for d in batch.days.all %}
+                            <span class="badge bg-secondary">{{ d.name }}</span>
+                            {% empty %}
+                            <span class="text-muted">—</span>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            {% if batch.start_time or batch.end_time %}
+                            {{ batch.start_time|default:"" }}{% if batch.start_time and batch.end_time %} - {% endif %}{{ batch.end_time|default:"" }}
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if batch.start_date or batch.end_date %}
+                            {{ batch.start_date|default:"" }}{% if batch.start_date and batch.end_date %} - {% endif %}{{ batch.end_date|default:"" }}
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if selected_session %}
+                            <a class="btn btn-sm btn-warning"
+                                href="{% url 'batch_update' batch.id %}?session={{ selected_session.id }}">Edit</a>
+                            <a class="btn btn-sm btn-danger"
+                                href="{% url 'batch_delete' batch.id %}?session={{ selected_session.id }}">Delete</a>
+                            {% else %}
+                            <a class="btn btn-sm btn-warning" href="{% url 'batch_update' batch.id %}">Edit</a>
+                            <a class="btn btn-sm btn-danger" href="{% url 'batch_delete' batch.id %}">Delete</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted p-4">No batches found for this session.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock dashboard %}

@@ -11,8 +11,7 @@ def validate_class(class_id):
 
 
 def validate_batch(batch_id):
-    from lesson.models import Batch
-    return Batch.objects.filter(id=batch_id).first()
+    return Batch.objects.filter(id=batch_id, session__is_active=True).first()
 
 
 def get_latest_completed_lecture(batch):

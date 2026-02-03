@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block style %}
+<style>
+    .checkbox-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .checkbox-btn {
+        position: relative;
+        cursor: pointer;
+    }
+
+    .checkbox-btn input[type="checkbox"] {
+        display: none;
+    }
+
+    .checkbox-btn span {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 10px 20px;
+        border: 2px solid #ccc;
+        border-radius: 8px;
+        background: #f9f9f9;
+        transition: 0.2s;
+    }
+
+    .checkbox-btn input[type="checkbox"]:checked+span {
+        border-color: #007bff;
+        background: #e0f0ff;
+        color: #007bff;
+    }
+
+    .field-errors {
+        color: #dc3545;
+        font-size: 0.9rem;
+        margin-top: 4px;
+    }
+</style>
+{% endblock style %}
+
+{% block dashboard %}
+<div class="container-sm p-4">
+    <div class="my-2">
+        <h2 class="fw-normal text-dark">
+            {% if page_mode == 'update' %}
+            Update Batch
+            {% else %}
+            Create Batch
+            {% endif %}
+        </h2>
+        <div class="text-muted">Session-wise batch creation and management.</div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3 rounded">
+        <form action="" method="get" class="">
+            <select name="session" id="academic-session"
+                class="form-select search-input fs-5 me-2 w-auto flex-grow-0 pe-5" onchange="this.form.submit()">
+                {% for session in academic_sessions %}
+                <option value="{{session.id}}" {% if selected_session and session.id == selected_session.id %} selected {% endif %}>
+                    {{session.name}}</option>
+                {% endfor %}
+            </select>
+        </form>
+
+        <div class="d-flex gap-2">
+            {% if selected_session %}
+            <a class="btn btn-light" href="{% url 'batch_list' %}?session={{ selected_session.id }}">Back to List</a>
+            {% else %}
+            <a class="btn btn-light" href="{% url 'batch_list' %}">Back to List</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <form class="g-3 bg-light rounded p-2 pb-3" method="post"
+        action="{% if selected_session %}?session={{ selected_session.id }}{% endif %}">
+        {% csrf_token %}
+        {% if selected_session %}
+        <input type="hidden" name="session" value="{{ selected_session.id }}">
+        {% endif %}
+
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <div class="row justify-content-evenly mt-3">
+            <div class="col-md-3">
+                <label class="form-label">Session</label>
+                <div class="form-control bg-white">{{ selected_session.name }}</div>
+            </div>
+            <div class="col-md-3">
+                <label for="id_class_name" class="form-label">Class*</label>
+                {{ form.class_name }}
+                {% for e in form.class_name.errors %}<div class="field-errors">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-md-3">
+                <label for="id_subject" class="form-label">Subject*</label>
+                {{ form.subject }}
+                {% for e in form.subject.errors %}<div class="field-errors">{{ e }}</div>{% endfor %}
+            </div>
+        </div>
+
+        <div class="row justify-content-evenly mt-3">
+            <div class="col-md-3">
+                <label for="id_section" class="form-label">Section*</label>
+                {{ form.section }}
+                {% for e in form.section.errors %}<div class="field-errors">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-md-3">
+                <label for="id_start_time" class="form-label">Start Time</label>
+                {{ form.start_time }}
+                {% for e in form.start_time.errors %}<div class="field-errors">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-md-3">
+                <label for="id_end_time" class="form-label">End Time</label>
+                {{ form.end_time }}
+                {% for e in form.end_time.errors %}<div class="field-errors">{{ e }}</div>{% endfor %}
+            </div>
+        </div>
+
+        <div class="row justify-content-evenly mt-3">
+            <div class="col-md-3">
+                <label for="id_start_date" class="form-label">Start Date</label>
+                {{ form.start_date }}
+                {% for e in form.start_date.errors %}<div class="field-errors">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-md-3">
+                <label for="id_end_date" class="form-label">End Date</label>
+                {{ form.end_date }}
+                {% for e in form.end_date.errors %}<div class="field-errors">{{ e }}</div>{% endfor %}
+            </div>
+            <div class="col-md-3"></div>
+        </div>
+
+        <div class="row justify-content-evenly mt-3 px-5 py-2">
+            <label class="form-label">Days</label>
+            <div class="checkbox-buttons">
+                {% for checkbox in form.days %}
+                <label class="checkbox-btn">
+                    {{ checkbox.tag }}
+                    <span>{{ checkbox.choice_label }}</span>
+                </label>
+                {% endfor %}
+            </div>
+            {% for e in form.days.errors %}<div class="field-errors">{{ e }}</div>{% endfor %}
+        </div>
+
+        <div class="row justify-content-evenly mt-4">
+            <div class="col-md-3"></div>
+            <div class="col-md-3 text-center">
+                {% if page_mode == 'update' %}
+                <button class="btn btn-warning" type="submit">Update Batch</button>
+                {% else %}
+                <div class="d-flex justify-content-center gap-2">
+                    <button class="btn btn-warning" type="submit">Save Batch</button>
+                    <button class="btn btn-outline-warning" type="submit" name="save_add_another" value="1">Save &amp;
+                        Add Another</button>
+                </div>
+                {% endif %}
+            </div>
+            <div class="col-md-3"></div>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Ensure Bootstrap styling on Django form widgets
+    (function () {
+        const ids = ['id_class_name', 'id_subject', 'id_section', 'id_start_time', 'id_end_time', 'id_start_date', 'id_end_date'];
+        ids.forEach((id) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            if (!el.classList.contains('form-select') && el.tagName.toLowerCase() === 'select') {
+                el.classList.add('form-select');
+            }
+            if (el.tagName.toLowerCase() === 'input') {
+                el.classList.add('form-control');
+                if (el.type === 'text') {
+                    // ok
+                }
+                if (el.type === 'date') {
+                    // ok
+                }
+            }
+        });
+    })();
+</script>
+{% endblock dashboard %}

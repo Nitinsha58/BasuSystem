@@ -1,7 +1,7 @@
 from django import forms
 from django.contrib.auth.hashers import make_password
 from django.db import transaction
-from .models import Student, BaseUser, ParentDetails, FeeDetails, Installment, TransportDetails, Batch, Teacher, Mentor, TransportMode, TransportPerson
+from .models import Student, BaseUser, ParentDetails, FeeDetails, Installment, TransportDetails, Batch, Day, Teacher, Mentor, TransportMode, TransportPerson
 from center.models import Subject
 from django.core.exceptions import ValidationError
 from django.contrib import messages
@@ -127,39 +127,60 @@ class StudentUpdateForm(forms.ModelForm):
 
             return phone
 
-        def clean_email(self):
-            email = self.cleaned_data.get("email")
-            if email and Student.objects.exclude(pk=self.instance.pk).filter(email=email).exists():
-                self.add_error("email", "A student with this email already exists.")
-            return email
 
-        def clean(self):
-            cleaned_data = super().clean()
-            dob = cleaned_data.get("dob")
-            doj = cleaned_data.get("doj")
+class BatchForm(forms.ModelForm):
+    days = forms.ModelMultipleChoiceField(
+        queryset=Day.objects.all().order_by('name'),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+    )
 
-            if dob and doj and doj < dob:
-                self.add_error("doj", "Date of joining cannot be earlier than date of birth.")
+    class Meta:
+        model = Batch
+        fields = [
+            'class_name',
+            'section',
+            'subject',
+            'days',
+            'start_time',
+            'end_time',
+            'start_date',
+            'end_date',
+        ]
 
-            return cleaned_data
+    def clean_email(self):
+        email = self.cleaned_data.get("email")
+        if email and Student.objects.exclude(pk=self.instance.pk).filter(email=email).exists():
+            self.add_error("email", "A student with this email already exists.")
+        return email
 
-        def save(self, commit=True):
-            with transaction.atomic():
-                student = super().save(commit=False)
+    def clean(self):
+        cleaned_data = super().clean()
+        dob = cleaned_data.get("dob")
+        doj = cleaned_data.get("doj")
 
-                user = getattr(student, "user", None)
-                if user:
-                    user.first_name = self.cleaned_data["first_name"]
-                    user.last_name = self.cleaned_data["last_name"]
-                    user.phone = self.cleaned_data["phone"]
+        if dob and doj and doj < dob:
+            self.add_error("doj", "Date of joining cannot be earlier than date of birth.")
 
-                    if commit:
-                        user.save()
+        return cleaned_data
+
+    def save(self, commit=True):
+        with transaction.atomic():
+            student = super().save(commit=False)
+
+            user = getattr(student, "user", None)
+            if user:
+                user.first_name = self.cleaned_data["first_name"]
+                user.last_name = self.cleaned_data["last_name"]
+                user.phone = self.cleaned_data["phone"]
 
                 if commit:
-                    student.save()
+                    user.save()
 
-            return student
+            if commit:
+                student.save()
+
+        return student
 
 class ParentDetailsForm(forms.ModelForm):
     father_name = forms.CharField(max_length=255, required=False)
@@ -208,7 +229,7 @@ class TeacherForm(forms.ModelForm):
     first_name = forms.CharField(max_length=255, required=False)
     last_name = forms.CharField(max_length=255, required=False)
     phone = forms.CharField(max_length=15, required=False)
-    batches = forms.ModelMultipleChoiceField(queryset=Batch.objects.all(), required=False)
+    batches = forms.ModelMultipleChoiceField(queryset=Batch.objects.filter(session__is_active=True), required=False)
 
     class Meta:
         model = Teacher

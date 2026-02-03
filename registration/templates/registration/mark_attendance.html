@@ -11,18 +11,18 @@
 <h3 class="heading m-2">Select Batch</h3>
 <div class="content-container m-2">
     <div class="batch-buttons m-2">
-        {% for batch in user.teachers.batches.all %}
-            {% url 'mark_attendance' batch.id as batch_attendance_url %}
-            <a href="{{ batch_attendance_url }}" 
-               class="btn {% if request.path == batch_attendance_url %} btn-warning {% endif %}">
-                {{ batch }}
-            </a>
+        {% for batch in request.user.teachers.active_batches %}
+        {% url 'mark_attendance' batch.id as batch_attendance_url %}
+        <a href="{{ batch_attendance_url }}"
+            class="btn {% if request.path == batch_attendance_url %} btn-warning {% endif %}">
+            {{ batch }}
+        </a>
         {% endfor %}
     </div>
     <h3 class="heading m-2">Mark Attendance</h3>
     <form action="" method="post">
         {% csrf_token %}
-        
+
         <div class="students-list-container">
             <div class="col-md-3 my-2">
                 <label for="date" class="form-label">Attendance Date</label>
@@ -32,22 +32,26 @@
                 {% for student in students %}
                 <li class="student list-group-item">
                     <!-- <p class="student-name">{{ student.user.first_name }} {{ student.user.last_name }}</p> -->
-                    <div class="form-check form-switch" style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
-                        <label class="form-check-label" for="student_{{forloop.counter}}">{{ student.user.first_name }} {{ student.user.last_name }}</label>
-                        <input class="form-check-input" style="transform: scale(1.3);" type="checkbox" name="attendance[]" role="switch" id="student_{{ student.stu_id }}" value="{{ student.stu_id }}:present">
-                      </div>
+                    <div class="form-check form-switch"
+                        style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
+                        <label class="form-check-label" for="student_{{forloop.counter}}">{{forloop.counter}}. {{ student.user.first_name }}
+                            {{ student.user.last_name }}</label>
+                        <input class="form-check-input" style="transform: scale(1.3);" type="checkbox"
+                            name="attendance[]" role="switch" id="student_{{ student.stu_id }}"
+                            value="{{ student.stu_id }}:present">
+                    </div>
                 </li>
                 {% endfor %}
             </ul>
             <div class="wrapper">
                 <button class="submit-btn">Save Attendance</button>
             </div>
-        </div> 
+        </div>
     </form>
 
 
-    
-    
-</div>  
+
+
+</div>
 
 {% endblock dashboard %}

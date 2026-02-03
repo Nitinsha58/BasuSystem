@@ -15,6 +15,8 @@ from .forms import (
     StudentRegistrationForm, StudentUpdateForm, ParentDetailsForm, TransportDetailsForm,
     )
 
+from .forms import BatchForm
+
 from lesson.models import ChapterSequence, Lesson, Holiday
 from django.utils.timezone import now
 
@@ -29,6 +31,220 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.urls import reverse
 import time as clock_time
+
+
+def _get_selected_session(request):
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = None
+    if selected_session_id:
+        selected_session = AcademicSession.objects.filter(id=selected_session_id).first()
+    if not selected_session:
+        selected_session = active_session
+
+    return sessions, active_session, selected_session
+
+
+@login_required(login_url='login')
+def batch_list(request):
+    sessions, active_session, selected_session = _get_selected_session(request)
+    if not selected_session:
+        messages.error(request, 'No academic session selected and no active session found.')
+        return redirect('students_enrollment_list')
+
+    copy_source_sessions = (
+        AcademicSession.objects.filter(start_date__lt=selected_session.start_date)
+        .order_by('-start_date')
+    )
+
+    batches = (
+        Batch.objects.filter(session=selected_session)
+        .select_related('class_name', 'subject', 'section', 'session')
+        .prefetch_related('days')
+        .order_by('class_name__name', 'subject__name', 'section__name')
+    )
+
+    return render(request, 'registration/batch/batch_list.html', {
+        'batches': batches,
+        'academic_sessions': sessions,
+        'active_session': active_session,
+        'selected_session': selected_session,
+        'copy_source_sessions': copy_source_sessions,
+    })
+
+
+@login_required(login_url='login')
+def batch_copy_from_session(request):
+    if request.method != 'POST':
+        return redirect('batch_list')
+
+    sessions, active_session, selected_session = _get_selected_session(request)
+    if not selected_session:
+        messages.error(request, 'No academic session selected and no active session found.')
+        return redirect('batch_list')
+
+    from_session_id = request.POST.get('from_session')
+    from_session = AcademicSession.objects.filter(id=from_session_id).first() if from_session_id else None
+    if not from_session:
+        messages.error(request, 'Please select a session to copy from.')
+        return redirect(f"{reverse('batch_list')}?session={selected_session.id}")
+
+    if from_session.id == selected_session.id:
+        messages.error(request, 'Source and target sessions must be different.')
+        return redirect(f"{reverse('batch_list')}?session={selected_session.id}")
+
+    # Only allow copying from an older session into a newer one
+    if from_session.start_date >= selected_session.start_date:
+        messages.error(request, 'You can only copy batches from a previous session (older) into the selected session.')
+        return redirect(f"{reverse('batch_list')}?session={selected_session.id}")
+
+    source_batches = (
+        Batch.objects.filter(session=from_session)
+        .select_related('class_name', 'subject', 'section')
+        .prefetch_related('days')
+    )
+
+    created_count = 0
+    skipped_count = 0
+
+    with transaction.atomic():
+        for src in source_batches:
+            exists = Batch.objects.filter(
+                session=selected_session,
+                class_name_id=src.class_name_id,
+                subject_id=src.subject_id,
+                section_id=src.section_id,
+            ).exists()
+            if exists:
+                skipped_count += 1
+                continue
+
+            new_batch = Batch.objects.create(
+                session=selected_session,
+                class_name_id=src.class_name_id,
+                subject_id=src.subject_id,
+                section_id=src.section_id,
+                start_time=src.start_time,
+                end_time=src.end_time,
+                start_date=src.start_date,
+                end_date=src.end_date,
+            )
+            new_batch.days.set(src.days.all())
+            created_count += 1
+
+    messages.success(
+        request,
+        f"Copied {created_count} batch(es) from {from_session.name}. Skipped {skipped_count} existing batch(es)."
+    )
+    return redirect(f"{reverse('batch_list')}?session={selected_session.id}")
+
+
+@login_required(login_url='login')
+def batch_create(request):
+    sessions, active_session, selected_session = _get_selected_session(request)
+    if not selected_session:
+        messages.error(request, 'No academic session selected and no active session found.')
+        return redirect('batch_list')
+
+    if request.method == 'POST':
+        form = BatchForm(request.POST)
+        if form.is_valid():
+            batch = form.save(commit=False)
+            batch.session = selected_session
+            try:
+                batch.save()
+                form.save_m2m()
+            except Exception:
+                messages.error(request, 'Could not create batch. Please check for duplicates.')
+            else:
+                messages.success(request, 'Batch created.')
+                if request.POST.get('save_add_another'):
+                    return redirect(f"{reverse('batch_create')}?session={selected_session.id}")
+                return redirect(f"{reverse('batch_list')}?session={selected_session.id}")
+    else:
+        form = BatchForm()
+
+    return render(request, 'registration/batch/batch_form.html', {
+        'form': form,
+        'page_mode': 'create',
+        'academic_sessions': sessions,
+        'active_session': active_session,
+        'selected_session': selected_session,
+    })
+
+
+@login_required(login_url='login')
+def batch_update(request, batch_id):
+    batch = get_object_or_404(Batch, id=batch_id)
+
+    sessions, active_session, selected_session = _get_selected_session(request)
+    # Keep the edit form anchored to the batch's session
+    if batch.session_id:
+        selected_session = batch.session
+
+    if not selected_session:
+        messages.error(request, 'No academic session selected and no active session found.')
+        return redirect('batch_list')
+
+    if request.method == 'POST':
+        form = BatchForm(request.POST, instance=batch)
+        if form.is_valid():
+            updated = form.save(commit=False)
+            updated.session = selected_session
+            try:
+                updated.save()
+                form.save_m2m()
+            except Exception:
+                messages.error(request, 'Could not update batch. Please check for duplicates.')
+            else:
+                messages.success(request, 'Batch updated.')
+                return redirect(f"{reverse('batch_list')}?session={selected_session.id}")
+    else:
+        form = BatchForm(instance=batch)
+
+    return render(request, 'registration/batch/batch_form.html', {
+        'form': form,
+        'batch': batch,
+        'page_mode': 'update',
+        'academic_sessions': sessions,
+        'active_session': active_session,
+        'selected_session': selected_session,
+    })
+
+
+@login_required(login_url='login')
+def batch_delete(request, batch_id):
+    batch = get_object_or_404(Batch, id=batch_id)
+
+    sessions, active_session, selected_session = _get_selected_session(request)
+    if batch.session_id:
+        selected_session = batch.session
+
+    if request.method == 'POST':
+        try:
+            batch.delete()
+        except Exception:
+            messages.error(request, 'Unable to delete batch (it may be in use).')
+        else:
+            messages.success(request, 'Batch deleted.')
+
+        if selected_session:
+            return redirect(f"{reverse('batch_list')}?session={selected_session.id}")
+        return redirect('batch_list')
+
+    return render(request, 'registration/batch/batch_confirm_delete.html', {
+        'batch': batch,
+        'academic_sessions': sessions,
+        'active_session': active_session,
+        'selected_session': selected_session,
+    })
 
 @login_required(login_url='login')
 def student_enrollment_update(request, stu_id):
@@ -753,7 +969,7 @@ def mark_attendance(request, class_id=None, batch_id=None):
         messages.error(request, "Invalid Class")
         return redirect('attendance')
 
-    if batch_id and not Batch.objects.filter(id=batch_id).exists():
+    if batch_id and not Batch.objects.filter(id=batch_id, session__is_active=True).exists():
         messages.error(request, "Invalid Batch")
         return redirect('attendance_class', class_id=class_id)
 
@@ -772,7 +988,7 @@ def mark_attendance(request, class_id=None, batch_id=None):
         batches = None
 
     if batch_id:
-        batch = Batch.objects.filter(id=batch_id).select_related('session').first()
+        batch = Batch.objects.filter(id=batch_id, session__is_active=True).select_related('session').first()
         if batch and getattr(batch, 'session_id', None):
             selected_session = batch.session
     
@@ -1001,7 +1217,7 @@ def mark_homework(request, class_id=None, batch_id=None):
         messages.error(request, "Invalid Class")
         return redirect('homework')
 
-    if batch_id and not Batch.objects.filter(id=batch_id).exists():
+    if batch_id and not Batch.objects.filter(id=batch_id, session__is_active=True).exists():
         messages.error(request, "Invalid Batch")
         return redirect('homework_class', class_id=class_id)
 
@@ -1021,7 +1237,7 @@ def mark_homework(request, class_id=None, batch_id=None):
 
 
     if batch_id:
-        batch = Batch.objects.filter(id=batch_id).select_related('session').first()
+        batch = Batch.objects.filter(id=batch_id, session__is_active=True).select_related('session').first()
         if batch and getattr(batch, 'session_id', None):
             selected_session = batch.session
 
@@ -1141,7 +1357,7 @@ def update_homework(request, class_id, batch_id):
         messages.error(request, "Invalid Class")
         return redirect('homework')
 
-    if batch_id and not Batch.objects.filter(id=batch_id).exists():
+    if batch_id and not Batch.objects.filter(id=batch_id, session__is_active=True).exists():
         messages.error(request, "Invalid Batch")
         return redirect('homework_class', class_id=class_id)
 
@@ -1161,7 +1377,7 @@ def update_homework(request, class_id, batch_id):
         selected_session = active_session
 
     if batch_id:
-        batch = Batch.objects.filter(id=batch_id).select_related('session').first()
+        batch = Batch.objects.filter(id=batch_id, session__is_active=True).select_related('session').first()
         if batch and getattr(batch, 'session_id', None):
             selected_session = batch.session
 
@@ -1221,7 +1437,10 @@ def mark_present(request, class_id, batch_id, attendance_id):
     selected_session_id = request.GET.get('session') or request.GET.get('academic-session')
     selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
 
-    batch = Batch.objects.filter(id=batch_id).select_related('session').first()
+    batch = Batch.objects.filter(id=batch_id, session__is_active=True).select_related('session').first()
+    if not batch:
+        messages.error(request, "Invalid Batch")
+        return redirect('attendance_class', class_id=class_id)
     if batch and getattr(batch, 'session_id', None):
         selected_session = batch.session
     if not selected_session:
@@ -1257,7 +1476,10 @@ def mark_absent(request, class_id, batch_id, attendance_id):
     selected_session_id = request.GET.get('session') or request.GET.get('academic-session')
     selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
 
-    batch = Batch.objects.filter(id=batch_id).select_related('session').first()
+    batch = Batch.objects.filter(id=batch_id, session__is_active=True).select_related('session').first()
+    if not batch:
+        messages.error(request, "Invalid Batch")
+        return redirect('attendance_class', class_id=class_id)
     if batch and getattr(batch, 'session_id', None):
         selected_session = batch.session
     if not selected_session:
@@ -1283,7 +1505,7 @@ def mark_absent(request, class_id, batch_id, attendance_id):
 
 @login_required(login_url='login')
 def get_attendance(request, batch_id):
-    if batch_id and not Batch.objects.filter(id=batch_id):
+    if batch_id and not Batch.objects.filter(id=batch_id, session__is_active=True):
         messages.error(request, "Invalid Batch")
         return redirect('students_list')
 
@@ -1311,7 +1533,10 @@ def get_attendance(request, batch_id):
     attendance_type_choices = Attendance.ATTENDANCE_TYPE
     selected_type = attendance_type if attendance_type in dict(attendance_type_choices) else 'Regular'
 
-    batch = Batch.objects.filter(id=batch_id).select_related('session').first()
+    batch = Batch.objects.filter(id=batch_id, session__is_active=True).select_related('session').first()
+    if not batch:
+        messages.error(request, "Invalid Batch")
+        return redirect('students_list')
     if batch and getattr(batch, 'session_id', None):
         selected_session = batch.session
 
@@ -1378,7 +1603,7 @@ def get_attendance(request, batch_id):
 
 @login_required(login_url='login')
 def get_homework(request, batch_id):
-    if batch_id and not Batch.objects.filter(id=batch_id):
+    if batch_id and not Batch.objects.filter(id=batch_id, session__is_active=True):
         messages.error(request, "Invalid Batch")
         return redirect('students_list')
 
@@ -1401,7 +1626,10 @@ def get_homework(request, batch_id):
     if not selected_session:
         selected_session = active_session
 
-    batch = Batch.objects.filter(id=batch_id).select_related('session').first()
+    batch = Batch.objects.filter(id=batch_id, session__is_active=True).select_related('session').first()
+    if not batch:
+        messages.error(request, "Invalid Batch")
+        return redirect('students_list')
     if batch and getattr(batch, 'session_id', None):
         selected_session = batch.session
 
@@ -1476,7 +1704,10 @@ def delete_attendance(request, class_id, batch_id, attendance_id):
     selected_session_id = request.GET.get('session') or request.GET.get('academic-session')
     selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
 
-    batch = Batch.objects.filter(id=batch_id).select_related('session').first()
+    batch = Batch.objects.filter(id=batch_id, session__is_active=True).select_related('session').first()
+    if not batch:
+        messages.error(request, "Invalid Batch")
+        return redirect('attendance_class', class_id=class_id)
     if batch and getattr(batch, 'session_id', None):
         selected_session = batch.session
     if not selected_session:
@@ -1504,7 +1735,10 @@ def delete_homework(request, class_id, batch_id, homework_id):
     selected_session_id = request.GET.get('session') or request.GET.get('academic-session')
     selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
 
-    batch = Batch.objects.filter(id=batch_id).select_related('session').first()
+    batch = Batch.objects.filter(id=batch_id, session__is_active=True).select_related('session').first()
+    if not batch:
+        messages.error(request, "Invalid Batch")
+        return redirect('homework_class', class_id=class_id)
     if batch and getattr(batch, 'session_id', None):
         selected_session = batch.session
     if not selected_session:

@@ -11,18 +11,18 @@
 <h3 class="heading m-2">Select Batch</h3>
 <div class="content-container m-2">
     <div class="batch-buttons m-2">
-        {% for batch in user.teachers.batches.all %}
-            {% url 'mark_homework' batch.id as batch_homework_url %}
-            <a href="{{ batch_homework_url }}" 
-               class="btn {% if request.path == batch_homework_url %} btn-warning {% endif %}">
-                {{ batch }}
-            </a>
+        {% for batch in request.user.teachers.active_batches %}
+        {% url 'mark_homework' batch.id as batch_homework_url %}
+        <a href="{{ batch_homework_url }}"
+            class="btn {% if request.path == batch_homework_url %} btn-warning {% endif %}">
+            {{ batch }}
+        </a>
         {% endfor %}
     </div>
     <h3 class="heading m-2">Update Homework</h3>
     <form action="" method="post">
         {% csrf_token %}
-        
+
         <div class="students-list-container">
             <div class="col-md-3 my-2">
                 <label for="date" class="form-label">Homework Date</label>
@@ -31,10 +31,12 @@
             <ul class="students-list list-group">
                 {% for student in students %}
                 <li class="student list-group-item">
-                    
-                    <div class="form-check form-switch" style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
+
+                    <div class="form-check form-switch"
+                        style="display: flex; flex-direction: row; justify-content: space-between; padding: 7px;">
                         <label class="form-check-label" for="student_{{forloop.counter}}">{{forloop.counter}}. {{ student.user.first_name }} {{ student.user.last_name }}</label>
-                        <select class="form-select" style="width: fit-content;" name="homework[]" id="student_{{ student.stu_id }}">
+                        <select class="form-select" style="width: fit-content;" name="homework[]"
+                            id="student_{{ student.stu_id }}">
                             {% for status in homework_status %}
                             <option value="{{ student.stu_id }}:{{ status.0 }}">{{ status.1 }}</option>
                             {% endfor %}
@@ -47,9 +49,9 @@
             <div class="wrapper">
                 <button class="submit-btn">Save Homework</button>
             </div>
-        </div> 
+        </div>
     </form>
-    
-</div>  
+
+</div>
 
 {% endblock dashboard %}

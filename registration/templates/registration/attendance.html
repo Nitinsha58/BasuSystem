@@ -53,7 +53,7 @@
     <h2 class="heading m-2">Select Batch</h2>
     <div class="row g-2">
         {% if request.user.teachers %}
-        {% for b in request.user.teachers.batches.all %}
+        {% for b in request.user.teachers.active_batches %}
         {% if b.class_name == cls %}
         {% if not selected_session or b.session_id == selected_session.id %}
         <div class="col-6 col-md-3 flex justify-content-center align-items-center">

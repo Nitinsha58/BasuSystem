@@ -95,10 +95,13 @@ class Teacher(models.Model):
     def __str__(self):
         full_name = f"{self.user.first_name} {self.user.last_name}".strip()
         return f"{full_name  or self.user.phone}"
+
+    def active_batches(self):
+        return self.batches.filter(session__is_active=True).distinct()
     
     def get_classes(self):
         classes = set()
-        for batch in self.batches.all():
+        for batch in self.active_batches():
             classes.add(batch.class_name)
         return classes
 
