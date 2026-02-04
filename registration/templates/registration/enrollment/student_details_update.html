@@ -27,7 +27,7 @@
     transition: 0.2s;
   }
 
-  .checkbox-btn input[type="checkbox"]:checked + span {
+  .checkbox-btn input[type="checkbox"]:checked+span {
     border-color: #007bff;
     background: #e0f0ff;
     color: #007bff;
@@ -39,76 +39,84 @@
 
 {% block dashboard %}
 <div class="container-sm p-4 ">
-    <div class="bg-success-subtle mx-auto p-1 d-flex rounded" style="width: fit-content;">
-        <a href="{% url 'student_enrollment_details_update' student.stu_id %}" class="text-decoration-none text-dark bg-light p-1 px-2 rounded mx-2 my-1">Student</a>
-        <a href="{% url 'student_enrollment_parent_details' student.stu_id %}" class="text-decoration-none text-dark  p-1 px-2 rounded mx-2 my-1">Parent Details</a>
-        <a href="{% url 'student_enrollment_update' student.stu_id %}" class="text-decoration-none text-dark  p-1 px-2 rounded mx-2 my-1">Enrollments</a>
-    </div>
+  <div class="bg-success-subtle mx-auto p-1 d-flex rounded" style="width: fit-content;">
+    <a href="{% url 'student_enrollment_details_update' student.stu_id %}"
+      class="text-decoration-none text-dark bg-light p-1 px-2 rounded mx-2 my-1">Student</a>
+    <a href="{% url 'student_enrollment_parent_details' student.stu_id %}"
+      class="text-decoration-none text-dark  p-1 px-2 rounded mx-2 my-1">Parent Details</a>
+    <a href="{% url 'student_enrollment_update' student.stu_id %}"
+      class="text-decoration-none text-dark  p-1 px-2 rounded mx-2 my-1">Enrollments</a>
+  </div>
 
-    <div class="my-4 mt-2">
-        <h2 class="fw-normal text-dark">Student Details </h2>
-    </div>
-
+  <div class="my-4 mt-2">
+    <h2 class="fw-normal text-dark">Student Details </h2>
+  </div>
+  <div class="position-relative">
     <form class="g-3 bg-light rounded p-2 pb-3" name="enrollment_update_form" method="post">
       {% csrf_token %}
       <div class="row justify-content-evenly mt-3">
         <div class="col-md-3">
           <label for="first_name" class="form-label">First name*</label>
-          <input type="text" class="form-control" value="{{student.user.first_name}}" name="first_name" id="first_name" required>
+          <input type="text" class="form-control" value="{{student.user.first_name}}" name="first_name" id="first_name"
+            required>
         </div>
         <div class="col-md-3">
           <label for="last_name" class="form-label">Last name</label>
           <input type="text" class="form-control" {% if student.user.last_name %} value="{{student.user.last_name}}" {% endif %} name="last_name" id="last_name">
         </div>
-    
+
         <div class="col-md-3">
           <label for="phone" class="form-label">Phone*</label>
           <input type="text" minlength="10" maxlength="10" {% if student.user.phone %} value="{{student.user.phone}}" {% endif %} class="form-control" name="phone" id="phone" required>
         </div>
       </div>
-  
+
       <div class="row justify-content-evenly mt-3">
         <div class="col-md-3">
-            <label for="email" class="form-label">Email*</label>
-            <input type="email" {% if student.email %} value="{{student.email}}" {% endif %} class="form-control" name="email" id="email">
+          <label for="email" class="form-label">Email*</label>
+          <input type="email" {% if student.email %} value="{{student.email}}" {% endif %} class="form-control"
+            name="email" id="email">
         </div>
-    
+
         <div class="col-md-3">
           <label for="dob" class="form-label">Date of Birth*</label>
           <input type="date" class="form-control" value="{{student.dob|date:'Y-m-d'}}" name="dob" id="dob" required>
         </div>
-    
+
         <div class="col-md-3">
           <label for="doj" class="form-label">Date of Joining*</label>
           <input type="date" class="form-control" value="{{student.doj|date:'Y-m-d'}}" name="doj" id="doj" required>
         </div>
       </div>
-  
+
       <div class="row justify-content-evenly mt-3">
         <div class="col-md-3">
           <label for="address" class="form-label">Address*</label>
-          <textarea class="form-control" name="address" id="address">{% if student.address %} {{student.address}} {% endif %}</textarea>
+          <textarea class="form-control" name="address"
+            id="address">{% if student.address %} {{student.address}} {% endif %}</textarea>
         </div>
 
         <div class="col-md-3">
           <label for="school_name" class="form-label">School Name*</label>
-          <input type="text" class="form-control" value="{{student.school_name}}" name="school_name" id="school_name" required>
+          <input type="text" class="form-control" value="{{student.school_name}}" name="school_name" id="school_name"
+            required>
         </div>
-    
+
         <div class="col-md-3">
           <label for="aadhar_card_number" class="form-label">Aadhar Card Number</label>
-          <input type="text" class="form-control" {% if student.aadhar_card_number %} value="{{student.aadhar_card_number}}" {% endif %} name="aadhar_card_number" id="aadhar_card_number">
+          <input type="text" class="form-control" {% if student.aadhar_card_number %}
+            value="{{student.aadhar_card_number}}" {% endif %} name="aadhar_card_number" id="aadhar_card_number">
         </div>
-    
+
       </div>
-  
+
       <div class="row justify-content-evenly mt-3">
         <div class="col-md-3">
           <label for="gender" class="form-label">Gender</label>
           <select class="form-select" name="gender" id="gender">
-            <option value="Male" {% if student.gender == 'Male' %} selected {% endif %} >Male</option>
-            <option value="Female" {% if student.gender == 'Female' %} selected {% endif %} >Female</option>
-            <option value="Other" {% if student.gender == 'Other' %} selected {% endif %} >Other</option>
+            <option value="Male" {% if student.gender == 'Male' %} selected {% endif %}>Male</option>
+            <option value="Female" {% if student.gender == 'Female' %} selected {% endif %}>Female</option>
+            <option value="Other" {% if student.gender == 'Other' %} selected {% endif %}>Other</option>
           </select>
         </div>
 
@@ -133,9 +141,58 @@
         <div class="col-md-3">
         </div>
       </div>
-
-
     </form>
+
+    <div class="m-2" style="max-width: fit-content;" id="student-enrollments-panel">
+      <div class="card shadow-sm" style="min-width: 340px;">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <div class="fw-semibold">Enrollments</div>
+          <span class="badge text-bg-dark">{{ enrollments_count|default:0 }}</span>
+        </div>
+        <div class="card-body" style="max-height: 520px; overflow:auto;">
+
+          {% if enrollments %}
+          <div class="list-group">
+            {% for e in enrollments %}
+            <a class="list-group-item list-group-item-action rounded-3 border mb-2 shadow-sm text-decoration-none"
+              href="{% url 'student_enrollment_update' student.stu_id %}?session={{ e.session.id }}">
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="me-2">
+                  <div class="fw-semibold">{{ e.session.name }}</div>
+                  <div class="text-muted small">Class: {{ e.class_name.name }}</div>
+                  <div class="text-muted small">
+                    Subjects:
+                    {% for sub in e.subjects.all %}
+                    {{ sub.name }}{% if not forloop.last %}, {% endif %}
+                    {% empty %}
+                    None
+                    {% endfor %}
+                  </div>
+                </div>
+                <div>
+                  {% if e.session.is_active and e.active %}
+                  <span class="badge text-bg-success">Current</span>
+                  {% elif e.active %}
+                  <span class="badge text-bg-primary">Active</span>
+                  {% else %}
+                  <span class="badge text-bg-secondary">Inactive</span>
+                  {% endif %}
+                </div>
+              </div>
+            </a>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="text-muted">No enrollments found for this student.</div>
+          <div class="mt-2">
+            <a class="btn btn-sm btn-outline-dark" href="{% url 'student_enrollment_update' student.stu_id %}">Create /
+              View enrollment</a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 </div>
 
@@ -145,10 +202,10 @@
   const aadhar = document.getElementById('aadhar_card_number');
 
   input.addEventListener("input", function () {
-      this.value = this.value.replace(/\D/g, "").slice(0, 10); // Remove non-digits and limit to 10
+    this.value = this.value.replace(/\D/g, "").slice(0, 10); // Remove non-digits and limit to 10
   });
   aadhar.addEventListener("input", function () {
-      this.value = this.value.replace(/\D/g, "").slice(0, 12); // Remove non-digits and limit to 10
+    this.value = this.value.replace(/\D/g, "").slice(0, 12); // Remove non-digits and limit to 10
   });
 </script>
 

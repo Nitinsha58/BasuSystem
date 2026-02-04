@@ -112,7 +112,29 @@
                 <p class="fw-semibold">Registered No.</p>
                 {% if student.user.phone %}
                 <p class="">
-                    {{ student.user.phone }}
+                    {% with phone=student.user.phone|stringformat:"s" %}
+                    {% if phone|length > 5 %}
+                    {{ phone|slice:":3" }}* * * *{{ phone|slice:"-3:" }}
+                    {% else %}
+                    {{ phone }}
+                    {% endif %}
+                    {% endwith %}
+                </p>
+                {% else %}
+                <p class="">N/A</p>
+                {% endif %}
+            </div>
+            <div class="d-flex justify-content-between">
+                <p class="fw-semibold">Registered Email.</p>
+                {% if student.email %}
+                <p class="">
+                    {% with email=student.email|stringformat:"s" %}
+                    {% if email|length > 15 %}
+                    {{ email|slice:":3" }}****{{ email|slice:"-12:" }}
+                    {% else %}
+                    {{ email }}
+                    {% endif %}
+                    {% endwith %}
                 </p>
                 {% else %}
                 <p class="">N/A</p>
@@ -259,7 +281,15 @@
                 <p class="fw-semibold">Father's Contact</p>
                 {% if student.parent_details %}
                 {% if student.parent_details.father_contact %}
-                <p class="">+91 {{ student.parent_details.father_contact }}</p>
+                <p class="">
+                    +91 {% with phone=student.parent_details.father_contact|stringformat:"s" %}
+                    {% if phone|length > 5 %}
+                    {{ phone|slice:":3" }}* * * *{{ phone|slice:"-3:" }}
+                    {% else %}
+                    {{ phone }}
+                    {% endif %}
+                    {% endwith %}
+                </p>
                 {% else %}
                 <p class="">N/A</p>
                 {% endif %}
@@ -272,7 +302,15 @@
                 <p class="fw-semibold">Mother's Contact</p>
                 {% if student.parent_details %}
                 {% if student.parent_details.mother_contact %}
-                <p class="">+91 {{ student.parent_details.mother_contact }}</p>
+                <p class="">
+                    +91 {% with phone=student.parent_details.mother_contact|stringformat:"s" %}
+                    {% if phone|length > 5 %}
+                    {{ phone|slice:":3" }}* * * *{{ phone|slice:"-3:" }}
+                    {% else %}
+                    {{ phone }}
+                    {% endif %}
+                    {% endwith %}
+                </p>
                 {% else %}
                 <p class="">N/A</p>
                 {% endif %}

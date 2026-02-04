@@ -626,8 +626,21 @@ def student_enrollment_details_update(request, stu_id):
         return redirect("student_update", stu_id=student.stu_id)
     
 
+    enrollments_qs = (
+        StudentEnrollment.objects
+        .filter(student=student)
+        .select_related('session', 'class_name')
+        .prefetch_related('subjects')
+        .order_by('-session__start_date', '-created_at')
+    )
+    enrollments = list(enrollments_qs)
+    current_enrollment = next((e for e in enrollments if e.session.is_active and e.active), None)
+
     return render(request, "registration/enrollment/student_details_update.html", {
         'student': student,
+        'enrollments': enrollments,
+        'enrollments_count': len(enrollments),
+        'current_enrollment': current_enrollment,
     })
 
 
