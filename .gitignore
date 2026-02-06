@@ -30,3 +30,9 @@ Thumbs.db
 #dump files
 *.dump
 *.txt
+
+# Secrets / certificates (never commit)
+*.pem
+*.key
+secret_for_jwt*
+.secrets/

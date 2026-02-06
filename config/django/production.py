@@ -6,6 +6,16 @@ DEBUG = env.bool("DJANGO_DEBUG", default=False)
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 
 
+XPSOLV_CLIENT_ID = os.environ.get("XPSOLV_CLIENT_ID", "1345")
+
+XPSOLV_CERT_PATH = env("XPSOLV_CERT_PATH")
+XPSOLV_KEY_PATH = env("XPSOLV_KEY_PATH")
+XPSOLV_JWT_SECRET_B64_PATH = env("XPSOLV_JWT_SECRET_B64_PATH")
+
+XPSOLV_AUD = env("XPSOLV_AUD")
+XPSOLV_LOGIN_URL = env("XPSOLV_LOGIN_URL")
+
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',

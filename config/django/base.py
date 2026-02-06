@@ -1,6 +1,7 @@
 
 
 import os
+from django.core.exceptions import ImproperlyConfigured
 from config.env import BASE_DIR, env
 
 env.read_env(os.path.join(BASE_DIR, '.env'))
@@ -128,3 +129,45 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240
+
+
+def _read_text_file(path: str) -> str:
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return f.read().strip()
+    except FileNotFoundError as e:
+        raise ImproperlyConfigured(f"Missing required file: {path}") from e
+
+
+# ---- XPSolv Partner Login (mTLS + HS256 JWT) ----
+# Store secrets/certs OUTSIDE the repo and load via env/.env.
+# Recommended: XPSOLV_JWT_SECRET_FILE points to a file that contains the base64 secret.
+
+XPSOLV_CLIENT_ID = env('XPSOLV_CLIENT_ID', default=None)
+XPSOLV_SURFACE = env('XPSOLV_SURFACE', default='A')
+XPSOLV_LOGIN_URL = env('XPSOLV_LOGIN_URL', default='https://partner-api.xpsolv.ai/partner/login/init')
+
+_xpsolv_hosts = env('XPSOLV_REDIRECT_HOST_ALLOWLIST', default=None)
+if _xpsolv_hosts:
+    XPSOLV_REDIRECT_HOST_ALLOWLIST = [h.strip() for h in _xpsolv_hosts.split(',') if h.strip()]
+else:
+    XPSOLV_REDIRECT_HOST_ALLOWLIST = None
+
+XPSOLV_CERT_PATH = env('XPSOLV_CERT_PATH', default=None)
+XPSOLV_KEY_PATH = env('XPSOLV_KEY_PATH', default=None)
+
+XPSOLV_JWT_SECRET_FILE = env('XPSOLV_JWT_SECRET_FILE', default=None)
+XPSOLV_JWT_SECRET_B64 = env('XPSOLV_JWT_SECRET_B64', default=None)
+if not XPSOLV_JWT_SECRET_B64 and XPSOLV_JWT_SECRET_FILE:
+    XPSOLV_JWT_SECRET_B64 = _read_text_file(XPSOLV_JWT_SECRET_FILE)
+
+# Fail fast in non-debug if partially configured.
+if not DEBUG:
+    any_xpsolv = any([
+        XPSOLV_CLIENT_ID,
+        XPSOLV_CERT_PATH,
+        XPSOLV_KEY_PATH,
+        XPSOLV_JWT_SECRET_B64,
+    ])
+    if any_xpsolv and not all([XPSOLV_CLIENT_ID, XPSOLV_CERT_PATH, XPSOLV_KEY_PATH, XPSOLV_JWT_SECRET_B64]):
+        raise ImproperlyConfigured('XPSolv partner login is partially configured; set all required XPSOLV_* settings.')

@@ -112,7 +112,8 @@
                         <li><a class="dropdown-item" href="{% url 'drivers_list' %}">Drivers List</a></li>
                         <li><a class="dropdown-item" href="{% url 'admin_report' %}">Admin Report</a></li>
                         <li><a class="dropdown-item" href="{% url 'batch_list' %}">Batches</a></li>
-                        <li><a class="dropdown-item" target="_blank" href="{% url 'batch_updated_list' %}">Batch Updated List</a></li>
+                        <li><a class="dropdown-item" target="_blank" href="{% url 'batch_updated_list' %}">Batch Updated
+                                List</a></li>
                     </ul>
                 </li>
                 <li class="nav-item">
@@ -143,13 +144,23 @@
                         Profile
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
+                        {% if request.user.is_superuser and request.user.phone %}
+                        <li>
+                            <form method="post" action="{% url 'xpsolv_login_init' %}" class="m-0">
+                                {% csrf_token %}
+                                <button type="submit" class="dropdown-item">XPSolv Login</button>
+                            </form>
+                        </li>
+                        {% endif %}
                         <li><a href="{% url 'logout' %}" class="dropdown-item">Logout</a></li>
                         <li><a href="{% url 'change_password' %}" class="dropdown-item">Change Password</a></li>
                         <li>
                             {% if request.user.registered_student %}
-                            <p class="m-0 dropdown-item">Stu - {{ request.user.first_name }} {{ request.user.last_name }}</p>
+                            <p class="m-0 dropdown-item">Stu - {{ request.user.first_name }} {{ request.user.last_name
+                                }}</p>
                             {% elif request.user.teacher %}
-                            <p class="m-0 dropdown-item">Teach - {{ request.user.first_name }} {{ request.user.last_name }}</p>
+                            <p class="m-0 dropdown-item">Teach - {{ request.user.first_name }} {{ request.user.last_name
+                                }}</p>
                             {% elif request.user.is_superuser %}
                             <a href="/admin" class="dropdown-item"> {{ request.user.first_name }} Admin</a>
                             {% else %}
