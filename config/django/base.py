@@ -161,13 +161,13 @@ XPSOLV_JWT_SECRET_B64 = env('XPSOLV_JWT_SECRET_B64', default=None)
 if not XPSOLV_JWT_SECRET_B64 and XPSOLV_JWT_SECRET_FILE:
     XPSOLV_JWT_SECRET_B64 = _read_text_file(XPSOLV_JWT_SECRET_FILE)
 
-# Fail fast in non-debug if partially configured.
-if not DEBUG:
-    any_xpsolv = any([
-        XPSOLV_CLIENT_ID,
-        XPSOLV_CERT_PATH,
-        XPSOLV_KEY_PATH,
-        XPSOLV_JWT_SECRET_B64,
-    ])
-    if any_xpsolv and not all([XPSOLV_CLIENT_ID, XPSOLV_CERT_PATH, XPSOLV_KEY_PATH, XPSOLV_JWT_SECRET_B64]):
-        raise ImproperlyConfigured('XPSolv partner login is partially configured; set all required XPSOLV_* settings.')
+# Avoid crashing the entire site if the integration is not configured.
+# Only enforce completeness when explicitly enabled.
+XPSOLV_ENABLED = env.bool('XPSOLV_ENABLED', default=False)
+
+if XPSOLV_ENABLED:
+    if not all([XPSOLV_CLIENT_ID, XPSOLV_CERT_PATH, XPSOLV_KEY_PATH, XPSOLV_JWT_SECRET_B64]):
+        raise ImproperlyConfigured(
+            'XPSolv partner login is enabled but not fully configured; set XPSOLV_CLIENT_ID, '
+            'XPSOLV_CERT_PATH, XPSOLV_KEY_PATH, and XPSOLV_JWT_SECRET_FILE (recommended) or XPSOLV_JWT_SECRET_B64.'
+        )
