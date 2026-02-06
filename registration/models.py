@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 import uuid
 from django.db.models import Max
 from colorfield.fields import ColorField
@@ -771,4 +772,63 @@ class TransportAttendance(models.Model):
 
     def __str__(self):
         return f"{self.student.user.first_name} - {self.date}: {'Present' if self.is_present else 'Absent'}"
+
+
+class XPSolvLoginInitLog(models.Model):
+    """Audit log for XPSolv partner login-init calls.
+
+    Stores request metadata and sanitized upstream responses.
+    Never stores the JWT, certificate, or private key.
+    """
+
+    request_id = models.UUIDField(default=uuid.uuid4, editable=False, db_index=True)
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="xpsolv_login_init_logs",
+    )
+
+    phone = models.CharField(max_length=15, blank=True, default="")
+    client_id = models.CharField(max_length=128, blank=True, default="")
+    surface = models.CharField(max_length=16, blank=True, default="")
+
+    attempts = models.PositiveSmallIntegerField(default=1)
+    status_code = models.PositiveSmallIntegerField(null=True, blank=True)
+    success = models.BooleanField(null=True, blank=True)
+    error_code = models.CharField(max_length=64, blank=True, default="")
+
+    duration_ms = models.PositiveIntegerField(null=True, blank=True)
+
+    redirect_host = models.CharField(max_length=255, blank=True, default="")
+    redirect_path = models.CharField(max_length=512, blank=True, default="")
+
+    upstream_response = models.JSONField(null=True, blank=True)
+
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True, default="")
+    is_hx = models.BooleanField(default=False)
+    session_key = models.CharField(max_length=40, blank=True, default="")
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["-created_at"]),
+            models.Index(fields=["phone"]),
+        ]
+
+    def __str__(self):
+        return f"XPSolvLoginInitLog({self.created_at:%Y-%m-%d %H:%M:%S}, {self.masked_phone}, {self.status_code})"
+
+    @property
+    def masked_phone(self) -> str:
+        phone = (self.phone or "").strip()
+        if len(phone) <= 4:
+            return phone
+        return f"******{phone[-4:]}"
     

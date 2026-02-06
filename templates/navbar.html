@@ -144,14 +144,6 @@
                         Profile
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        {% if request.user.is_superuser and request.user.phone %}
-                        <li>
-                            <form method="post" action="{% url 'xpsolv_login_init' %}" class="m-0">
-                                {% csrf_token %}
-                                <button type="submit" class="dropdown-item">XPSolv Login</button>
-                            </form>
-                        </li>
-                        {% endif %}
                         <li><a href="{% url 'logout' %}" class="dropdown-item">Logout</a></li>
                         <li><a href="{% url 'change_password' %}" class="dropdown-item">Change Password</a></li>
                         <li>

@@ -35,6 +35,7 @@ from .models import (
     StudentRemark,
     AcademicSession,
     StudentEnrollment,
+    XPSolvLoginInitLog,
     )
 from .forms import TeacherForm, MentorForm
 import csv
@@ -389,9 +390,42 @@ class EnrollmentBatchAdmin(admin.ModelAdmin):
     autocomplete_fields = ("enrollment", "batch")
 
 
+class XPSolvLoginInitLogAdmin(admin.ModelAdmin):
+    list_display = (
+        "created_at",
+        "user",
+        "masked_phone",
+        "request_id",
+        "surface",
+        "attempts",
+        "status_code",
+        "success",
+        "error_code",
+        "duration_ms",
+        "redirect_host",
+    )
+    list_filter = ("success", "status_code", "surface", "is_hx", "created_at")
+    search_fields = (
+        "phone",
+        "request_id",
+        "user__first_name",
+        "user__last_name",
+        "user__phone",
+        "redirect_host",
+    )
+    readonly_fields = ("created_at", "updated_at")
+    ordering = ("-created_at",)
+
+    def masked_phone(self, obj):
+        return obj.masked_phone
+
+    masked_phone.short_description = "Phone"
+
+
 admin.site.register(EnrollmentBatch, EnrollmentBatchAdmin)
 admin.site.register(StudentEnrollment, StudentEnrollmentAdmin)
 admin.site.register(AcademicSession, AcademicSessionAdmin)
+admin.site.register(XPSolvLoginInitLog, XPSolvLoginInitLogAdmin)
 admin.site.register(StudentTestRemark)
 admin.site.register(Recommendation)
 admin.site.register(TransportAttendance, TransportAttendanceAdmin)

@@ -49,7 +49,14 @@
   </div>
 
   <div class="my-4 mt-2">
-    <h2 class="fw-normal text-dark">Student Details </h2>
+    <h2 class="fw-normal text-dark">Student Details  </h2>
+    {% if request.user.is_superuser %}
+      <form method="post" action="{% url 'xpsolv_login_init' %}" class="m-0">
+          {% csrf_token %}
+          <input type="text" name="phone" value="{{ student.user.phone }}" hidden>
+          <button type="submit" class="btn btn-primary">XPSolv Login</button>
+      </form>
+    {% endif %}
   </div>
   <div class="position-relative">
     <form class="g-3 bg-light rounded p-2 pb-3" name="enrollment_update_form" method="post">
