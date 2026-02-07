@@ -137,6 +137,8 @@ def _read_text_file(path: str) -> str:
             return f.read().strip()
     except FileNotFoundError as e:
         raise ImproperlyConfigured(f"Missing required file: {path}") from e
+    except PermissionError as e:
+        raise ImproperlyConfigured(f"Permission denied reading required file: {path}") from e
 
 
 # ---- XPSolv Partner Login (mTLS + HS256 JWT) ----
@@ -156,14 +158,14 @@ else:
 XPSOLV_CERT_PATH = env('XPSOLV_CERT_PATH', default=None)
 XPSOLV_KEY_PATH = env('XPSOLV_KEY_PATH', default=None)
 
+# Avoid crashing the entire site if the integration is not configured.
+# Only enforce completeness (and read secret files) when explicitly enabled.
+XPSOLV_ENABLED = env.bool('XPSOLV_ENABLED', default=False)
+
 XPSOLV_JWT_SECRET_FILE = env('XPSOLV_JWT_SECRET_FILE', default=None)
 XPSOLV_JWT_SECRET_B64 = env('XPSOLV_JWT_SECRET_B64', default=None)
-if not XPSOLV_JWT_SECRET_B64 and XPSOLV_JWT_SECRET_FILE:
+if not XPSOLV_JWT_SECRET_B64 and XPSOLV_JWT_SECRET_FILE and XPSOLV_ENABLED:
     XPSOLV_JWT_SECRET_B64 = _read_text_file(XPSOLV_JWT_SECRET_FILE)
-
-# Avoid crashing the entire site if the integration is not configured.
-# Only enforce completeness when explicitly enabled.
-XPSOLV_ENABLED = env.bool('XPSOLV_ENABLED', default=False)
 
 if XPSOLV_ENABLED:
     if not all([XPSOLV_CLIENT_ID, XPSOLV_CERT_PATH, XPSOLV_KEY_PATH, XPSOLV_JWT_SECRET_B64]):
