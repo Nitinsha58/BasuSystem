@@ -8,6 +8,7 @@ then redirect the browser to the returned handoff URL.
 import uuid
 import re
 import time
+import os
 from urllib.parse import urlparse
 from django.conf import settings
 from django.http import JsonResponse
@@ -109,6 +110,15 @@ def xpsolv_login_init(request):
         _finalize(status_code=500, success=False, error_code="MISCONFIGURED_MTLS")
         return JsonResponse({"error": "MISCONFIGURED_MTLS"}, status=500)
 
+    cert_path = settings.XPSOLV_CERT_PATH
+    key_path = settings.XPSOLV_KEY_PATH
+    if not (os.path.isfile(cert_path) and os.path.isfile(key_path)):
+        _finalize(status_code=500, success=False, error_code="MISCONFIGURED_MTLS_PATH")
+        return JsonResponse({"error": "MISCONFIGURED_MTLS_PATH"}, status=500)
+    if not (os.access(cert_path, os.R_OK) and os.access(key_path, os.R_OK)):
+        _finalize(status_code=500, success=False, error_code="MISCONFIGURED_MTLS_PERMISSIONS")
+        return JsonResponse({"error": "MISCONFIGURED_MTLS_PERMISSIONS"}, status=500)
+
     def _make_token() -> str:
         return generate_login_jwt(
             client_id=settings.XPSOLV_CLIENT_ID,
@@ -161,6 +171,15 @@ def xpsolv_login_init(request):
                 duration_ms=int((time.monotonic() - t0) * 1000),
             )
             return JsonResponse({"error": "UPSTREAM_UNREACHABLE"}, status=502)
+        except OSError:
+            _finalize(
+                status_code=500,
+                success=False,
+                error_code="MISCONFIGURED_MTLS_PATH",
+                attempts=attempts,
+                duration_ms=int((time.monotonic() - t0) * 1000),
+            )
+            return JsonResponse({"error": "MISCONFIGURED_MTLS_PATH"}, status=500)
     except requests.RequestException:
         _finalize(
             status_code=502,
@@ -170,6 +189,15 @@ def xpsolv_login_init(request):
             duration_ms=int((time.monotonic() - t0) * 1000),
         )
         return JsonResponse({"error": "UPSTREAM_UNREACHABLE"}, status=502)
+    except OSError:
+        _finalize(
+            status_code=500,
+            success=False,
+            error_code="MISCONFIGURED_MTLS_PATH",
+            attempts=attempts,
+            duration_ms=int((time.monotonic() - t0) * 1000),
+        )
+        return JsonResponse({"error": "MISCONFIGURED_MTLS_PATH"}, status=500)
 
     duration_ms = int((time.monotonic() - t0) * 1000)
 
