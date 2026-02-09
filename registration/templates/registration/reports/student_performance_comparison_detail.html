@@ -1,0 +1,506 @@
+{% extends 'base.html' %}
+{% load mathfilters %}
+{% load static %}
+
+
+{% block style %}
+<style>
+    .student_reg_doc {
+        position: relative;
+    }
+
+    .photo-frame {
+        position: absolute;
+        right: 0;
+        width: 100px;
+        height: 120px;
+        border: 1px solid #000;
+        margin: 0 auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+
+    p {
+        white-space: wrap;
+    }
+
+    @media print {
+        #toggle-btn {
+            display: none;
+        }
+
+        .navbar {
+            display: none;
+        }
+    }
+
+    .divider {
+        height: 100%;
+        width: 2px;
+        background-color: #000;
+        margin: 0 auto;
+    }
+
+    .attendance,
+    .homework,
+    .test {
+        display: flex;
+        flex-wrap: wrap;
+        /* justify-content: space-around; */
+        align-items: center;
+        gap: 20px;
+        justify-content: center;
+        width: fit-content;
+    }
+
+    .chart-box {
+        display: flex;
+        width: 100%;
+        min-width: 250px;
+        min-height: 50px;
+        max-width: 250px;
+        background-color: aqua;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .graph-box {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .graph-title {
+        font-size: 12px;
+        font-weight: 500;
+        margin-bottom: 5px;
+    }
+
+    h2 {
+        font-weight: 600;
+        margin-bottom: 10px;
+        margin-top: 2rem;
+    }
+
+
+    .ratios {
+        flex: 1;
+        color: white;
+        text-align: center;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 12px;
+        color: white;
+        overflow: visible;
+        z-index: 1;
+    }
+
+    .red {
+        background-color: #dc3545;
+    }
+
+    .green {
+        background-color: #28a745;
+    }
+
+    .blue {
+        background-color: #17a2b8;
+    }
+
+    .stats-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .stats-text {
+        width: 100%;
+        font-size: 14px;
+    }
+
+    .green-text {
+        color: #28a745;
+    }
+
+    .blue-text {
+        color: #17a2b8;
+    }
+
+    .red-text {
+        color: #dc3545;
+    }
+
+    @media screen and (max-width: 520px) {
+        .graph-box {
+            width: 100%;
+            max-width: 100%;
+            min-width: 100%;
+        }
+
+        .graph-container {
+            width: calc(100% - 30px);
+        }
+
+        .chart-box {
+            width: 100%;
+            min-width: 100%;
+            max-width: 100%;
+        }
+
+        .row {
+            justify-content: space-around;
+        }
+
+        .calendar_container {
+            width: 100%;
+            max-width: 300px;
+
+            margin: 15px;
+        }
+    }
+</style>
+
+{% endblock style %}
+
+{% block dashboard %}
+
+<div class="">
+
+    <div class="g-3 bg-light rounded pb-3" id="student_reg_doc">
+
+        <div class=" mt-4 donut_graph d-flex flex-column gap-2">
+            {% if request.user.is_superuser or request.user.teachers %}
+            <div class="bg-success-subtle p-1 d-flex rounded gap-2" style="width: fit-content;">
+                <a href="{{ back_url }}" class="btn btn-primary">Go Back</a>
+            </div>
+            {% endif %}
+            <div class="bg-success-subtle p-4 d-flex flex-column flex-md-row align-items-start">
+                <div class="">
+                    <p style="text-decoration: none;" class="border-0 h2">{{student.user.first_name}}
+                        {{student.user.last_name}}</p>
+                    <p class="m-0 mb-1">{{student.active_enrollment.class_name}} - {{ student.active_enrollment.subjects.all|join:", " }}</p>
+                    <p class="m-0 mb-1">Joined On: {{student.doj|date:'d M Y'}}</p>
+                </div>
+                <div class="ms-md-4 w-100">
+                    <form method="get"
+                        class="rounded p-md-2 pb-3 d-flex flex-md-row flex-md-row gap-2 align-items-end w-100"
+                        style="flex-wrap: wrap;">
+                        <input type="hidden" name="session_id" value="{{ persist_params.session_id }}">
+                        <input type="hidden" name="class_id" value="{{ persist_params.class_id }}">
+                        <input type="hidden" name="subject_id" value="{{ persist_params.subject_id }}">
+                        <input type="hidden" name="section_id" value="{{ persist_params.section_id }}">
+                        <input type="hidden" name="batch_id" value="{{ persist_params.batch_id }}">
+                        <div class="">
+                            <label for="start_date" class="form-label text-nowrap m-0 text-align-center">Start Date: {{ start_date|date:'d M' }}</label>
+                            <input type="date" name="start_date" id="start_date" value="{{start_date|date:'Y-m-d'}}"
+                                class="form-control" style="max-width: 150px" required>
+                        </div>
+
+                        <div class="">
+                            <label for="end_date" class="form-label text-nowrap m-0 text-align-center">End Date: {{ end_date|date:'d M' }}</label>
+                            <input type="date" name="end_date" id="end_date" value="{{end_date|date:'Y-m-d'}}"
+                                class="form-control" style="max-width: 150px" required>
+                        </div>
+                        <button style="height: fit-content;" class="px-2 btn btn-warning" type="submit">Filter</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="calendars d-flex flex-column gap-4 justify-content-center align-items-center mt-4">
+            <p class="h2">{{subject_test_reports.subject.name|title}} Test Summary</p>
+            <div class="w-100 d-flex flex-column gap-4 justify-content-center align-items-center">
+                {% if subject_test_reports.scored or subject_test_reports.deducted %}
+                <div class="graph-container">
+                    <div class="graph-box">
+                        <h2> {{subject_test_reports.subject.name}} - {{subject_test_reports.scored}}% </h2>
+                        <div class="chart-box">
+                            {% if subject_test_reports.scored %}
+                            <div class="ratios green"
+                                style="max-width: {{subject_test_reports.scored}}%; min-width: {{subject_test_reports.scored}}%;">
+                                {{subject_test_reports.scored}} % </div>
+                            {% endif %}
+                            {% if 100|sub:subject_test_reports.scored %}
+                            <div class="ratios red"
+                                style="max-width: calc(100 - {{subject_test_reports.scored}}%); min-width: calc(100 - {{subject_test_reports.scored}}%);">
+                                {{100|sub:subject_test_reports.scored|floatformat:2}}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="graph-box">
+                        <p class="graph-title"> {{subject_test_reports.subject.name}} Test Attendance </p>
+                        <div class="chart-box" style="height: 25px; min-height: 25px;">
+                            {% if subject_test_reports.present %}
+                            <div class="ratios green"
+                                style="max-width: {{subject_test_reports.present_percentage}}%; min-width: {{subject_test_reports.present_percentage}}%;">
+                                {{subject_test_reports.present}} </div>
+                            {% endif %}
+                            {% if subject_test_reports.absent %}
+                            <div class="ratios red"
+                                style="max-width: {{subject_test_reports.absent_percentage}}%; min-width: {{subject_test_reports.absent_percentage}}%;">
+                                {{subject_test_reports.absent}} </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <p class="h2 mt-4">Test Attendance Calendar</p>
+                <div class="d-flex gap-4 mb-4 justify-content-center" style="flex-wrap: wrap; width: 100%;">
+                    {% for month_data in subject_test_reports.subject_calendar %}
+                    <div class="calendar_container ">
+                        <div class="d-flex justify-content-center align-items-center">
+                            <p class="m-0" style="font-weight: 500; font-size: 20px;">
+                                {{ month_data.month_name }} {{ month_data.year }}
+                            </p>
+                        </div>
+                        <div class="row text-center font-weight-bold mx-1 mb-1"
+                            style="font-size: 12px; font-weight: 500;">
+                            <div class="col" style="max-width: 30px;">S</div>
+                            <div class="col" style="max-width: 30px;">M</div>
+                            <div class="col" style="max-width: 30px;">T</div>
+                            <div class="col" style="max-width: 30px;">W</div>
+                            <div class="col" style="max-width: 30px;">T</div>
+                            <div class="col" style="max-width: 30px;">F</div>
+                            <div class="col" style="max-width: 30px;">S</div>
+                        </div>
+
+                        <div class="bg-white rounded py-1">
+                            {% for week in month_data.calendar %}
+                            <div class="row text-center mx-1">
+                                {% for day in week %}
+                                <div class="col"
+                                    style="height: 30px; max-width: 30px; display: flex; justify-content: center; align-items: center;">
+                                    {% if day %}
+                                    <p class="text-small m-0 
+                                            {% if day.attendance == 'Present' %}
+                                                bg-success-subtle
+                                            {% elif day.attendance == 'Absent' %}
+                                                bg-danger-subtle
+                                            {% else %}
+                                                bg-light
+                                            {% endif %}
+                                        p-0 rounded-circle text-dark"
+                                        style="height: 20px; min-width: 20px; font-size: 10px; display: flex; justify-content: center; align-items: center;">
+                                        {{ day.date.day }}</p>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="mt-2 d-flex justify-content-center align-items-center">
+                            <p class="m-0">Overall ({{ month_data.present_count }}/{{ month_data.present_count|add:month_data.absent_count }}) {{ month_data.percentage }}%
+                            </p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <p class="h2 mt-4">Subject Remarks Summary </p>
+                <div class="graph-container w-100">
+                    <div class="container-md my-4 w-100 d-flex flex-column justify-content-center align-items-center">
+                        <div class="g-3 relative w-100" style="overflow-x: auto;">
+                            <canvas id="remarkProgress_{{ subject_test_reports.subject_summary.subject.id }}"
+                                class="w-100 h-auto" style="min-width: 700px;"></canvas>
+                        </div>
+                        <div class="m-sm-2 p-sm-2 absolute w-100 remarks-container" style="max-width: 500px;">
+                            <ul class="list-group">
+                                <li class="list-group-item bg-dark text-white border-dark">Batch Remarks</li>
+                                {% for remark, count in subject_test_reports.subject_summary.remarks_count.items %}
+                                <li class="list-group-item d-flex justify-content-between" style="font-size: 14px;"
+                                    style="font-size: 12px;">
+                                    <span class="">{{remark}}</span> <span class="fw-normal">{{count}}%</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+
+
+        <div class="d-flex flex-column gap-4 justify-content-center align-items-center mt-4">
+            <p class="h2 mt-4">Individual Test Summary</p>
+        </div>
+        {% for test in subject_test_reports.test_reports %}
+
+        <div class="container-md my-4 w-100">
+            <div class="mt-4">
+                <p class="h4 fw-normal">{{test.test.name}}</p>
+                <p class="text-muted fw-normal m-0" style="font-size: 14px;">{{test.test.date|date:'d M Y'}}</p>
+                <p class="text-muted fw-normal m-0" style="font-size: 14px;">{{test.test.batch}}</p>
+            </div>
+
+            <div class="container my-4 p-0 w-100 d-lg-flex justify-content-around">
+                <div class="w-100 h-auto" style="overflow-x: auto;">
+                    <canvas id="sub_test_{{forloop.counter}}" class="w-100 h-auto" style="min-width: 700px;"></canvas>
+                </div>
+                <div class="m-sm-2 p-sm-2 remarks-container">
+                    <ul class="list-group">
+                        {% if test.is_absent %}
+                        <li class="list-group-item bg-dark text-white border-dark">Absent</li>
+                        {% else %}
+                        <li class="list-group-item bg-dark text-white border-dark">Mock Remarks -
+                            {{test.marks_data.percentage|floatformat:2}}% <br>
+                            ({{test.marks_data.obtained|floatformat:1}}/{{test.marks_data.total|floatformat:1}})</li>
+                        {% endif %}
+                        {% for remark, count in test.remarks.remarks_count.items %}
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span class="">{{remark}}</span> <span class="fw-normal">{{count}}%</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js failed to load');
+        return;
+    }
+
+    {% for report in subject_test_reports.test_reports %}
+        {% if report.test.is_data_complete_for_graph %}
+        (function () {
+            const canvas = document.getElementById('sub_test_{{ forloop.counter }}');
+            if (!canvas) return;
+
+            new Chart(canvas, {
+                type: 'bar',
+                data: {
+                    labels: [
+                        {% for ch_no, ch_name in report.remarks.chapters.items %}
+                            "{{ ch_name }} {{ ch_no }}"{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    ].map(label => label.split(' ')),
+                    datasets: [
+                        {% for remark, counts in report.remarks.chapter_wise_remarks.items %}
+                        {
+                            label: "{{ remark }}",
+                            data: {{ counts|safe }},
+                            borderWidth: 1,
+                            maxBarThickness: 60
+                        }{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    ]
+                },
+                options: {
+                    responsive: false,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                font: { size: 12 }
+                            }
+                        },
+                        tooltip: { enabled: true }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            ticks: {
+                                autoSkip: false,
+                                maxRotation: 0,
+                                minRotation: 0,
+                                font: { size: 10 }
+                            }
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true,
+                            ticks: {
+                                font: { size: 10 }
+                            }
+                        }
+                    }
+                }
+            });
+        })();
+        {% endif %}
+    {% endfor %}
+
+    /* =========================
+       Subject Summary Chart
+    ========================== */
+    (function () {
+        const canvas = document.getElementById(
+            "remarkProgress_{{ subject_test_reports.subject_summary.subject.id }}"
+        );
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [
+                    {% for ch_no, ch_name in subject_test_reports.subject_summary.chapters.items %}
+                        "{{ ch_name }} {{ ch_no }}"{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                ].map(label => label.split(' ')),
+                datasets: [
+                    {% for remark, counts in subject_test_reports.subject_summary.chapter_wise_remarks.items %}
+                    {
+                        label: "{{ remark }}",
+                        data: {{ counts|safe }},
+                        borderWidth: 1
+                    }{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                ]
+            },
+            options: {
+                responsive: false,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: { size: 12 }
+                        }
+                    },
+                    tooltip: { enabled: true }
+                },
+                scales: {
+                    x: {
+                        stacked: true,
+                        ticks: {
+                            autoSkip: false,
+                            maxRotation: 0,
+                            minRotation: 0,
+                            font: { size: 10 }
+                        }
+                    },
+                    y: {
+                        stacked: true,
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 2,
+                            font: { size: 10 }
+                        }
+                    }
+                }
+            }
+        });
+    })();
+});
+</script>
+
+
+
+    {% endblock dashboard %}

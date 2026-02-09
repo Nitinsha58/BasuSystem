@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block dashboard %}
+<div class="p-1 p-sm-2 p-xl-4">
+    <div class="bg-light rounded p-3">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-2">
+            <div>
+                <p class="h3 fw-normal m-0">Student Performance Comparison</p>
+                <p class="text-muted m-0" style="font-size: 14px;">Compare students by combined test score within a
+                    selected period.</p>
+            </div>
+        </div>
+
+        <form method="get" class="mt-3 d-flex flex-wrap gap-2 align-items-end">
+            <div>
+                <label class="form-label m-0">Session</label>
+                <select name="session_id" id="session_id" class="form-select" style="min-width: 180px;" required>
+                    {% for s in session_options %}
+                    <option value="{{ s.id }}" {% if s.id|stringformat:"s" == selected_filters.session_id %}selected{% endif %}>{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="form-label m-0">Class</label>
+                <select name="class_id" id="class_id" class="form-select" style="min-width: 180px;">
+                    <option value="">All</option>
+                    {% for opt in class_options %}
+                    <option value="{{ opt.class_name_id }}" {% if opt.class_name_id|stringformat:"s" == selected_filters.class_id %}selected{% endif %}>{{ opt.class_name__name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="form-label m-0">Subject</label>
+                <select name="subject_id" id="subject_id" class="form-select" style="min-width: 180px;">
+                    <option value="">All</option>
+                    {% for opt in subject_options %}
+                    <option value="{{ opt.subject_id }}" {% if opt.subject_id|stringformat:"s"  == selected_filters.subject_id %}selected{% endif %}>{{ opt.subject__name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="form-label m-0">Section</label>
+                <select name="section_id" id="section_id" class="form-select" style="min-width: 180px;">
+                    <option value="">All</option>
+                    {% for opt in section_options %}
+                    <option value="{{ opt.section_id }}" {% if opt.section_id|stringformat:"s" == selected_filters.section_id %}selected{% endif %}>{{ opt.section__name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <input type="hidden" name="batch_id" id="batch_id" value="{{ selected_filters.batch_id }}">
+
+            <div>
+                <label class="form-label m-0">Start Date ({{ start_date|date:'d M' }})</label>
+                <input type="date" name="start_date" value="{{ start_date|date:'Y-m-d' }}" class="form-control"
+                    style="max-width: 160px" required>
+            </div>
+
+            <div>
+                <label class="form-label m-0">End Date ({{ end_date|date:'d M' }})</label>
+                <input type="date" name="end_date" value="{{ end_date|date:'Y-m-d' }}" class="form-control"
+                    style="max-width: 160px" required>
+            </div>
+
+            <button class="btn btn-warning" type="submit">Filter</button>
+        </form>
+
+        {{ batch_catalog|json_script:"batch_catalog_data" }}
+        <script>
+            (function () {
+                const sessionEl = document.getElementById('session_id');
+                const classEl = document.getElementById('class_id');
+                const subjectEl = document.getElementById('subject_id');
+                const sectionEl = document.getElementById('section_id');
+                const batchIdEl = document.getElementById('batch_id');
+                const catalogNode = document.getElementById('batch_catalog_data');
+
+                if (!sessionEl || !classEl || !subjectEl || !sectionEl || !batchIdEl || !catalogNode) return;
+
+                let catalog = [];
+                try {
+                    catalog = JSON.parse(catalogNode.textContent || '[]');
+                } catch (e) {
+                    console.error('Invalid batch catalog JSON', e);
+                }
+
+                function resetSelectToAll(selectEl) {
+                    if (!selectEl) return;
+                    selectEl.value = '';
+                }
+
+                function setOptions(selectEl, options) {
+                    // Keep first option as "All"
+                    const currentValue = selectEl.value;
+                    selectEl.innerHTML = '<option value="">All</option>';
+                    for (const opt of options) {
+                        const o = document.createElement('option');
+                        o.value = String(opt.id);
+                        o.textContent = opt.label;
+                        selectEl.appendChild(o);
+                    }
+                    // Restore selection if still present
+                    if ([...selectEl.options].some(o => o.value === currentValue)) {
+                        selectEl.value = currentValue;
+                    } else {
+                        selectEl.value = '';
+                    }
+                }
+
+                function uniqueOptions(rows, idKey, labelKey) {
+                    const seen = new Map();
+                    for (const r of rows) {
+                        const id = r[idKey];
+                        const label = r[labelKey];
+                        if (id == null || label == null) continue;
+                        const k = String(id);
+                        if (!seen.has(k)) seen.set(k, String(label));
+                    }
+                    return [...seen.entries()]
+                        .map(([id, label]) => ({ id, label }))
+                        .sort((a, b) => a.label.localeCompare(b.label));
+                }
+
+                function filterBySession() {
+                    const sessionId = sessionEl.value;
+                    if (!sessionId) return catalog;
+                    return catalog.filter(r => String(r.session_id || '') === String(sessionId));
+                }
+
+                function rebuildClassOptions() {
+                    const rows = filterBySession();
+                    setOptions(classEl, uniqueOptions(rows, 'class_name_id', 'class_name__name'));
+                }
+
+                function rebuildSubjectOptions() {
+                    const sessionRows = filterBySession();
+                    const classId = classEl.value;
+                    const rows = classId
+                        ? sessionRows.filter(r => String(r.class_name_id || '') === String(classId))
+                        : sessionRows;
+                    setOptions(subjectEl, uniqueOptions(rows, 'subject_id', 'subject__name'));
+                }
+
+                function rebuildSectionOptions() {
+                    const sessionRows = filterBySession();
+                    const classId = classEl.value;
+                    const subjectId = subjectEl.value;
+
+                    let rows = sessionRows;
+                    if (classId) rows = rows.filter(r => String(r.class_name_id || '') === String(classId));
+                    if (subjectId) rows = rows.filter(r => String(r.subject_id || '') === String(subjectId));
+
+                    setOptions(sectionEl, uniqueOptions(rows, 'section_id', 'section__name'));
+                }
+
+                function computeBatchId() {
+                    const sessionId = sessionEl.value;
+                    const classId = classEl.value;
+                    const subjectId = subjectEl.value;
+                    const sectionId = sectionEl.value;
+
+                    if (!sessionId || !classId || !subjectId || !sectionId) {
+                        batchIdEl.value = '';
+                        return;
+                    }
+
+                    const match = catalog.find(r =>
+                        String(r.session_id || '') === String(sessionId) &&
+                        String(r.class_name_id || '') === String(classId) &&
+                        String(r.subject_id || '') === String(subjectId) &&
+                        String(r.section_id || '') === String(sectionId)
+                    );
+
+                    batchIdEl.value = match ? String(match.id) : '';
+                }
+
+                // Reset-forward behavior (session -> class -> subject -> section)
+                sessionEl.addEventListener('change', function () {
+                    resetSelectToAll(classEl);
+                    resetSelectToAll(subjectEl);
+                    resetSelectToAll(sectionEl);
+                    batchIdEl.value = '';
+                    rebuildClassOptions();
+                    rebuildSubjectOptions();
+                    rebuildSectionOptions();
+                });
+
+                classEl.addEventListener('change', function () {
+                    resetSelectToAll(subjectEl);
+                    resetSelectToAll(sectionEl);
+                    batchIdEl.value = '';
+                    rebuildSubjectOptions();
+                    rebuildSectionOptions();
+                });
+
+                subjectEl.addEventListener('change', function () {
+                    resetSelectToAll(sectionEl);
+                    batchIdEl.value = '';
+                    rebuildSectionOptions();
+                });
+
+                sectionEl.addEventListener('change', function () {
+                    computeBatchId();
+                });
+
+                // Initial load: rebuild options for selected session, then compute batch.
+                rebuildClassOptions();
+                rebuildSubjectOptions();
+                rebuildSectionOptions();
+                computeBatchId();
+
+                const form = sessionEl.closest('form');
+                if (form) {
+                    form.addEventListener('submit', function () {
+                        computeBatchId();
+                    });
+                }
+            })();
+        </script>
+    </div>
+
+    {% if selected_batch %}
+    <div class="mt-3 bg-light rounded p-3">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start">
+            <div>
+                <p class="h5 fw-normal m-0">{{ selected_batch }}</p>
+                <p class="text-muted m-0" style="font-size: 14px;">Period: {{ start_date|date:'d M Y' }} - {{ end_date|date:'d M Y' }} | Tests with activity: {{ tests_with_activity_count }}</p>
+            </div>
+        </div>
+
+        <div class="mt-3" style="overflow-x: auto;">
+            <table class="table table-sm table-striped align-middle" style="min-width: 700px;">
+                <thead class="table-dark">
+                    <tr>
+                        <th style="width: 50px;">#</th>
+                        <th>Student</th>
+                        <th style="width: 160px;">Combined Score</th>
+                        <th style="width: 140px;">Present Tests</th>
+                        <th style="width: 140px;">Absent Tests</th>
+                        <th style="width: 140px;">Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in student_rows %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>
+                            <a target="_blank" href="{{ row.detail_url }}" class="text-decoration-none">
+                                {{ row.student.user.first_name }} {{ row.student.user.last_name }}
+                            </a>
+                        </td>
+                        <td>{{ row.avg_score|floatformat:2 }}%</td>
+                        <td>{{ row.present_tests }}</td>
+                        <td>
+                            {% if row.absent_tests > 0 %}
+                            <span class="badge text-bg-danger">{{ row.absent_tests }}</span>
+                            {% else %}
+                            <span class="badge text-bg-success">0</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ row.detail_url }}" class="btn btn-sm btn-primary">Open</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted">No students found for this batch.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock dashboard %}

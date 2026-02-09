@@ -1,5 +1,9 @@
 from django.urls import path
 from .services.views import xpsolv_login_init
+from .performance_comparison_views import (
+    student_performance_comparison,
+    student_performance_comparison_detail,
+)
 from .views import (
     
     student_registration,
@@ -159,4 +163,12 @@ urlpatterns = [
     path('delete_transport_attendance/', delete_transport_attendance, name="delete_transport_attendance"),
     path('drivers_list/', drivers_list, name='drivers_list'),
     path('transport_attendance/<int:driver_id>/', transport_attendance, name='transport_attendance'),
+
+    # Reports (registration)
+    path('performance-comparison/', student_performance_comparison, name='student_performance_comparison'),
+    path(
+        'performance-comparison/<int:batch_id>/<int:student_id>/',
+        student_performance_comparison_detail,
+        name='student_performance_comparison_detail'
+    ),
 ]
