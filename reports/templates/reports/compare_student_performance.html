@@ -5,48 +5,47 @@
 
 {% block dashboard %}
 <style>
-  .parent {
-    position: relative;
-    width: auto;
-    height: 24px;
-    background-color: whitesmoke;
-    margin: 15px 2rem;
-    border-radius: 7px;
-    overflow: hidden;
+    .parent {
+        position: relative;
+        width: auto;
+        height: 24px;
+        background-color: whitesmoke;
+        margin: 15px 2rem;
+        border-radius: 7px;
+        overflow: hidden;
 
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
 
-  .child {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 50%;
-    background-color: rgba(74, 212, 231, 0.161);
-    justify-content: center;
-    align-items: center;
-    border-radius: 0 5px 5px 0;
-  }
+    .child {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 50%;
+        background-color: rgba(74, 212, 231, 0.161);
+        justify-content: center;
+        align-items: center;
+        border-radius: 0 5px 5px 0;
+    }
 
-  .progress_text {
-    position: absolute;
-    color: #000000e7;
-    font-size: 14px;
-    margin: 0;
-  }
-  canvas {
+    .progress_text {
+        position: absolute;
+        color: #000000e7;
+        font-size: 14px;
+        margin: 0;
+    }
 
-  }
+    canvas {}
 
-  li {
-    list-style: none;
-    height: 2.5rem;
-    display: flex;
-    justify-content: center;
-  }
+    li {
+        list-style: none;
+        height: 2.5rem;
+        display: flex;
+        justify-content: center;
+    }
 </style>
 
 <div class="mx-5 px-5">
@@ -56,25 +55,25 @@
         {% if classes and not cls %}
         <div class="row g-2">
             {% if request.user.teachers %}
-                {% for c in request.user.teachers.get_classes %}
-                <div class="col-6 col-md-3 flex justify-content-center align-items-center">
-                    <a href="{% url 'compare_class' c.id %}" class="nav-link">
-                        <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
-                    </a>
-                </div>
-                {% endfor %}
-            {% else %}    
-                {% for c in classes %}
-                <div class="col-6 col-md-3 flex justify-content-center align-items-center">
-                    <a href="{% url 'compare_class' c.id %}" class="nav-link">
-                        <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
-                    </a>
-                </div>
-                {% endfor %}
+            {% for c in request.user.teachers.get_classes %}
+            <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+                <a href="{% url 'compare_class' c.id %}" class="nav-link">
+                    <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
+                </a>
+            </div>
+            {% endfor %}
+            {% else %}
+            {% for c in classes %}
+            <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+                <a href="{% url 'compare_class' c.id %}" class="nav-link">
+                    <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{c.name}}</div>
+                </a>
+            </div>
+            {% endfor %}
             {% endif %}
         </div>
         {% endif %}
-        
+
         {% if cls %}
         <div class="row g-2">
             <div class="col-6 col-md-3 flex justify-content-center align-items-center">
@@ -89,23 +88,25 @@
         <h2 class="heading m-2">Select Batch</h2>
         <div class="row g-2">
             {% if request.user.teachers %}
-                {% for b in request.user.teachers.batches.all %}
-                    {% if b.class_name == cls %}
-                    <div class="col-6 col-md-3 flex justify-content-center align-items-center">
-                        <a href="{% url 'compare_batch' cls.id b.id %}" class="nav-link">
-                            <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{b.section.name}} {{b.subject.name}}</div>
-                        </a>
+            {% for b in request.user.teachers.batches.all %}
+            {% if b.class_name == cls %}
+            <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+                <a href="{% url 'compare_batch' cls.id b.id %}" class="nav-link">
+                    <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{b.section.name}} {{b.subject.name}}
                     </div>
-                    {% endif %}
-                {% endfor %}
+                </a>
+            </div>
+            {% endif %}
+            {% endfor %}
             {% else %}
-                {% for b in batches %}
-                    <div class="col-6 col-md-3 flex justify-content-center align-items-center">
-                        <a href="{% url 'compare_batch' cls.id b.id %}" class="nav-link">
-                            <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{b.section.name}} {{b.subject.name}}</div>
-                        </a>
+            {% for b in batches %}
+            <div class="col-6 col-md-3 flex justify-content-center align-items-center">
+                <a href="{% url 'compare_batch' cls.id b.id %}" class="nav-link">
+                    <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{b.section.name}} {{b.subject.name}}
                     </div>
-                {% endfor %}
+                </a>
+            </div>
+            {% endfor %}
             {% endif %}
         </div>
         {% endif %}
@@ -114,7 +115,8 @@
         <div class="row g-2 mt-1">
             <div class="col-6 col-md-3 flex justify-content-center align-items-center">
                 <a href="{% url 'compare_class' cls.id %}" class="nav-link">
-                    <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{batch.section.name}} {{batch.subject.name}}</div>
+                    <div class="cls bg-warning p-4 rounded min-h-100 min-w-100">{{batch.section.name}}
+                        {{batch.subject.name}}</div>
                 </a>
             </div>
         </div>
@@ -130,135 +132,152 @@
 
 
             <div class="container-md my-2 mx-0 p-0 w-100">
-                <form method="get" class="rounded p-md-2 pb-3 d-flex flex-md-row flex-md-row gap-2 align-items-end w-100" style="flex-wrap: wrap;">
-                        <div class="">
-                            <label for="start_date" class="form-label text-nowrap m-0 text-align-center">Start Date: {{ start_date|date:'d M' }}</label>
-                            <input type="date" name="start_date" id="start_date" value="{{start_date|date:'Y-m-d'}}" class="form-control" style="max-width: 150px" required>
-                        </div>
-                        
-                        <div class="">
-                            <label for="end_date" class="form-label text-nowrap m-0 text-align-center">End Date: {{ end_date|date:'d M' }}</label>
-                            <input type="date" name="end_date" id="end_date" value="{{end_date|date:'Y-m-d'}}" class="form-control" style="max-width: 150px" required>
-                        </div>
-                        <button style="height: fit-content;" class="px-2 btn btn-warning" type="submit">Filter</button>
-                        <button onclick="window.close()" style="height: fit-content;" class="px-2 btn btn-primary" type="submit">Go Back</button>
-                        <button onclick="copyToClipboard()" style="height: fit-content;" class="px-2 btn btn-primary" type="submit">Copy List</button>
+                <form method="get"
+                    class="rounded p-md-2 pb-3 d-flex flex-md-row flex-md-row gap-2 align-items-end w-100"
+                    style="flex-wrap: wrap;">
+                    <div class="">
+                        <label for="start_date" class="form-label text-nowrap m-0 text-align-center">Start Date: {{ start_date|date:'d M' }}</label>
+                        <input type="date" name="start_date" id="start_date" value="{{start_date|date:'Y-m-d'}}"
+                            class="form-control" style="max-width: 150px" required>
+                    </div>
+
+                    <div class="">
+                        <label for="end_date" class="form-label text-nowrap m-0 text-align-center">End Date: {{ end_date|date:'d M' }}</label>
+                        <input type="date" name="end_date" id="end_date" value="{{end_date|date:'Y-m-d'}}"
+                            class="form-control" style="max-width: 150px" required>
+                    </div>
+                    <button style="height: fit-content;" class="px-2 btn btn-warning" type="submit">Filter</button>
+                    <button onclick="window.close()" style="height: fit-content;" class="px-2 btn btn-primary"
+                        type="button">Go Back</button>
+                    <button onclick="copyToClipboard()" style="height: fit-content;" class="px-2 btn btn-primary"
+                        type="button">Copy List</button>
+                    <button onclick="copyDataToClipboard()" style="height: fit-content;" class="px-2 btn btn-primary"
+                        type="button">Copy Data</button>
                 </form>
 
-                <div  class="g-3 d-flex justify-content-between overflow-auto">
+                <div class="g-3 d-flex justify-content-between overflow-auto">
                     <div class="h-auto d-flex flex-1">
                         {% if students_list %}
-                            <div id="copyData" style="display:none; white-space:pre;"></div>
+                        <div id="copyData" style="display:none; white-space:pre;"></div>
                         {% endif %}
 
 
                         {% if students_list %}
-                        <ul class="list-group me-3" style="min-width: fit-content;">
+                        <ul class="list-group me-3" style="min-width: fit-content;" data-col="student">
                             <li class="list-group-item bg-dark text-white border-dark">Students</li>
                             {% for stu in students_list %}
-                                
-                                <li class="list-group-item d-flex justify-content-between" style="font-size: 14px;"
-                                    data-batch="{{batch}}"
-                                    data-name="{{stu.student.stu.user.first_name}} {{stu.student.stu.user.last_name}}"
-                                    data-phone="{{stu.student.stu.user.phone}}"
-                                    data-percentage="{% if stu.student.percentage == 0 %}0{% else %}{{stu.student.percentage}}{% endif %}"
-                                >
-                                    <span class="">{{stu.student.stu.user.first_name}} {{stu.student.stu.user.last_name}}</span> 
-                                    {% if not tests %}
-                                    <!-- <span class="fw-normal btn bg-danger-subtle px-2 py-0" style="font-size: 12px;" ></span>  -->
-                                    {% elif stu.student.percentage == 0 %}
-                                    <span class="fw-normal btn bg-danger-subtle px-2 py-0" style="font-size: 12px;" >Absent</span> 
-                                    {% else %}
-                                    <span class="fw-normal
+
+                            <li class="list-group-item d-flex justify-content-between" style="font-size: 14px;"
+                                data-batch="{{batch}}"
+                                data-name="{{stu.student.stu.user.first_name}} {{stu.student.stu.user.last_name}}"
+                                data-phone="{{stu.student.stu.user.phone}}"
+                                data-percentage="{% if stu.student.percentage == 0 %}0{% else %}{{stu.student.percentage}}{% endif %}">
+                                <span class="">{{stu.student.stu.user.first_name}}
+                                    {{stu.student.stu.user.last_name}}</span>
+                                {% if not tests %}
+                                <!-- <span class="fw-normal btn bg-danger-subtle px-2 py-0" style="font-size: 12px;" ></span>  -->
+                                {% elif stu.student.percentage == 0 %}
+                                <span class="fw-normal btn bg-danger-subtle px-2 py-0"
+                                    style="font-size: 12px;">Absent</span>
+                                {% else %}
+                                <span class="fw-normal
                                     {% if stu.student.percentage > 75 %} text-success
                                     {% elif stu.student.percentage <= 50 and stu.student.percentage > 25 %} text-warning
                                     {% elif stu.student.percentage <= 75 and stu.student.percentage > 50 %} text-primary
                                     {% elif stu.student.percentage <= 25 %} text-danger {% endif %}
-                                    " > {{stu.student.percentage}}%</span> 
-                                    {% endif %}
-                                </li>
-                            
+                                    "> {{stu.student.percentage}}%</span>
+                                {% endif %}
+                            </li>
+
                             {% endfor %}
                         </ul>
                         {% endif %}
 
-                        <div class="w-100 d-flex gap-3" style="overflow-x: scroll;">
-                            <ul class="list-group" style="min-width: fit-content;">
+                        <div id="performanceColumns" class="w-100 d-flex gap-3" style="overflow-x: scroll;">
+                            <ul class="list-group" style="min-width: fit-content;" data-col="recommend">
                                 <li class="list-group-item bg-dark text-white border-dark">Recommend</li>
                                 {% for data in students_list %}
-                                    <li class="list-group-item d-flex justify-content-center p-1" style="font-size: 14px;">
-                                        <form 
-                                            hx-post="{% url 'update-recommendation' %}" 
-                                            hx-target="this" 
-                                            hx-swap="outerHTML"
-                                            hx-trigger="change" 
-                                        >
-                                            {% csrf_token %}
+                                <li class="list-group-item d-flex justify-content-center p-1" style="font-size: 14px;">
+                                    <form hx-post="{% url 'update-recommendation' %}" hx-target="this"
+                                        hx-swap="outerHTML" hx-trigger="change">
+                                        {% csrf_token %}
 
-                                            {% if data.student.recommendation_label and data.student.remark.recommendation %}
-                                            <select class="form-select form-select-sm" name="action" style="font-size: 13px;" disabled>
-                                                <option value="{{data.student.stu.stu_id}}:{{data.student.remark.recommendation.action}}" selected>{{data.student.recommendation_label}}</option>
-                                                <option value="{{data.student.stu.stu_id}}:PTM" >PTM</option>
-                                                <option value="{{data.student.stu.stu_id}}:MENTOR" >Mentor Meeting</option>
-                                            </select>
-                                            {% else %}
+                                        {% if data.student.recommendation_label and data.student.remark.recommendation %}
+                                        <select class="form-select form-select-sm" name="action"
+                                            style="font-size: 13px;" disabled>
+                                            <option
+                                                value="{{data.student.stu.stu_id}}:{{data.student.remark.recommendation.action}}"
+                                                selected>{{data.student.recommendation_label}}</option>
+                                            <option value="{{data.student.stu.stu_id}}:PTM">PTM</option>
+                                            <option value="{{data.student.stu.stu_id}}:MENTOR">Mentor Meeting</option>
+                                        </select>
+                                        {% else %}
 
-                                            <select class="form-select form-select-sm" name="action" style="font-size: 13px;">
-                                                <option value="{{data.student.stu.stu_id}}:">------</option>
-                                                <option value="{{data.student.stu.stu_id}}:PTM" {% if data.student.recommendation == "PTM" %}selected{% endif %} >PTM</option>
-                                                <option value="{{data.student.stu.stu_id}}:MENTOR" {% if data.student.recommendation == "MENTOR" %}selected{% endif %} >Mentor Meeting</option>
-                                            </select>
-                                            {% endif %}
-                                        </form>
-                                    </li>
+                                        <select class="form-select form-select-sm" name="action"
+                                            style="font-size: 13px;">
+                                            <option value="{{data.student.stu.stu_id}}:">------</option>
+                                            <option value="{{data.student.stu.stu_id}}:PTM" {% if data.student.recommendation == "PTM" %}selected{% endif %}>PTM</option>
+                                            <option value="{{data.student.stu.stu_id}}:MENTOR" {% if data.student.recommendation == "MENTOR" %}selected{% endif %}>Mentor
+                                                Meeting</option>
+                                        </select>
+                                        {% endif %}
+                                    </form>
+                                </li>
                                 {% endfor %}
                             </ul>
 
-                            <ul class="list-group" style="min-width: fit-content;">
+                            <ul class="list-group" style="min-width: fit-content;" data-col="attendance">
                                 <li class="list-group-item bg-dark text-white border-dark">Attendance</li>
                                 {% for data in students_list %}
-                                    <li class="list-group-item d-flex justify-content-center 
+                                <li class="list-group-item d-flex justify-content-center 
                                         {% if data.student.attendance_present < data.student.attendance_total and data.student.attendance_percentage < 51 and data.student.attendance_percentage > 34 %} text-warning
                                         {% elif data.student.attendance_present == data.student.attendance_total and data.student.attendance_percentage == 100 %} text-success
                                         {% elif data.student.attendance_present < data.student.attendance_total and data.student.attendance_percentage <= 34 %} text-danger {% endif %}
                                         " style="font-size: 14px;">
-                                        <span class="fw-normal" > ({{data.student.attendance_present}}/{{data.student.attendance_total}}) {{data.student.attendance_percentage}}% </span> 
-                                    </li>
+                                    <span class="fw-normal">
+                                        ({{data.student.attendance_present}}/{{data.student.attendance_total}})
+                                        {{data.student.attendance_percentage}}% </span>
+                                </li>
                                 {% endfor %}
                             </ul>
-                           
-                            <ul class="list-group" style="min-width: fit-content;">
+
+                            <ul class="list-group" style="min-width: fit-content;" data-col="homework">
                                 <li class="list-group-item bg-dark text-white border-dark">Homework</li>
                                 {% for data in students_list %}
-                                    <li class="list-group-item d-flex justify-content-center 
+                                <li class="list-group-item d-flex justify-content-center 
                                     {% if data.student.homework_completed == data.student.homework_total and data.student.homework_percentage == 100 %} text-success 
                                     {% elif data.student.homework_completed < data.student.homework_total and data.student.homework_percentage < 51 %} text-danger {% endif %}
                                     " style="font-size: 14px;">
-                                        <span class="fw-normal" > ({{data.student.homework_completed}}/{{data.student.homework_total}}) {{data.student.homework_percentage}}% </span> 
-                                    </li>
+                                    <span class="fw-normal">
+                                        ({{data.student.homework_completed}}/{{data.student.homework_total}})
+                                        {{data.student.homework_percentage}}% </span>
+                                </li>
                                 {% endfor %}
                             </ul>
                             {% for test in tests %}
-                            <ul class="list-group" style="min-width: fit-content;">
+                            <ul class="list-group" style="min-width: fit-content;" data-col="test"
+                                data-test-id="{{test.id}}" data-test-name="{{test.name}} ({{test.date|date:'M d, Y'}})">
                                 <li class="list-group-item bg-dark text-white border-dark d-flex flex-column">
                                     <p class="m-0">{{test.name}}</p>
                                     <small>{{test.date|date:"M d, Y"}}</small>
                                 </li>
                                 {% for data in students_list %}
 
-                                    <li class="list-group-item d-flex justify-content-center " style="font-size: 14px;">
-                                        {% if data|get_item:test == 0 %}
-                                            {{data|get_item:test}}
-                                        {% elif data|get_item:test == -1 %}
-                                        <span class="fw-normal" style="opacity: 0;" >T</span> 
-                                        <span class="fw-normal btn bg-danger-subtle px-2 py-0" style="font-size: 12px;" >Absent</span> 
-                                        <span class="fw-normal" style="opacity: 0;" >T</span> 
-                                        {% elif data|get_item:test == -2 %}
-                                        <span class="fw-normal" style="opacity: 0;" >T</span> 
-                                        <span class="fw-normal btn bg-primary-subtle px-2 py-0" style="font-size: 12px;" >No Data</span> 
-                                        <span class="fw-normal" style="opacity: 0;" >T</span> 
-                                        {% else %}
-                                        <span class="fw-normal" style="
+                                <li class="list-group-item d-flex justify-content-center " style="font-size: 14px;">
+                                    {% if data|get_item:test == 0 %}
+                                    {{data|get_item:test}}
+                                    {% elif data|get_item:test == -1 %}
+                                    <span class="fw-normal" style="opacity: 0;">T</span>
+                                    <span class="fw-normal btn bg-danger-subtle px-2 py-0"
+                                        style="font-size: 12px;">Absent</span>
+                                    <span class="fw-normal" style="opacity: 0;">T</span>
+                                    {% elif data|get_item:test == -2 %}
+                                    <span class="fw-normal" style="opacity: 0;">T</span>
+                                    <span class="fw-normal btn bg-primary-subtle px-2 py-0" style="font-size: 12px;">No
+                                        Data</span>
+                                    <span class="fw-normal" style="opacity: 0;">T</span>
+                                    {% else %}
+                                    <span class="fw-normal" style="
                                         {% if data.test == None %} color: red;
                                         {% elif data.batch.code == 'JEE' or data.batch.code == 'NEET' %}
                                             {% if data.test >= 75 %} color: violet;
@@ -273,31 +292,32 @@
                                             {% elif data.test >= 50 %} color: darkorange;
                                             {% else %} color: red; {% endif %}
                                         {% endif %}
-                                        ">{{data|get_item:test}}%</span> 
-                                        {% endif %}
-                                    </li>
+                                        ">{{data|get_item:test}}%</span>
+                                    {% endif %}
+                                </li>
                                 {% endfor %}
                             </ul>
-                            <ul class="list-group" style="min-width: fit-content;">
+                            <ul class="list-group" style="min-width: fit-content;" data-col="remarks"
+                                data-test-id="{{test.id}}">
                                 <li class="list-group-item bg-dark text-white border-dark">Remarks</li>
                                 {% for data in students_list %}
-                                    <li class="list-group-item d-flex justify-content-center p-0" style="font-size: 14px;">
-                                        <form class=""
-                                            hx-post="{% url 'update-remark' test.id data.student.stu.stu_id %}" 
-                                            hx-target="this" 
-                                            hx-swap="outerHTML"
-                                            hx-trigger="keyup changed delay:1000ms"
-                                        >
-                                            {% csrf_token %}
+                                <li class="list-group-item d-flex justify-content-center p-0" style="font-size: 14px;">
+                                    <form class="" hx-post="{% url 'update-remark' test.id data.student.stu.stu_id %}"
+                                        hx-target="this" hx-swap="outerHTML" hx-trigger="keyup changed delay:1000ms">
+                                        {% csrf_token %}
 
-                                            {% if data.student.test_remarks and data.student.test_remarks|get_item:test %}
-                                            <textarea type="text" class="form-control p-1 border-0" style="font-size: 12px; resize: none;" id="update-remark" name="remark" rows="1" >{{data.student.test_remarks|get_item:test}}</textarea>
-                                            {% else %}
+                                        {% if data.student.test_remarks and data.student.test_remarks|get_item:test %}
+                                        <textarea type="text" class="form-control p-1 border-0"
+                                            style="font-size: 12px; resize: none;" id="update-remark" name="remark"
+                                            rows="1">{{data.student.test_remarks|get_item:test}}</textarea>
+                                        {% else %}
 
-                                            <textarea type="text" class="form-control p-1 border-0" style="font-size: 12px; resize: none;" id="update-remark" name="remark" rows="1" ></textarea>
-                                            {% endif %}
-                                        </form>
-                                    </li>
+                                        <textarea type="text" class="form-control p-1 border-0"
+                                            style="font-size: 12px; resize: none;" id="update-remark" name="remark"
+                                            rows="1"></textarea>
+                                        {% endif %}
+                                    </form>
+                                </li>
                                 {% endfor %}
                             </ul>
                             {% endfor %}
@@ -322,26 +342,104 @@
 {% endif %}
 
 <script>
-function copyToClipboard() {
+    function copyToClipboard() {
 
-    let items = document.querySelectorAll('.list-group-item[data-name]');
-    let output = "";
+        let items = document.querySelectorAll('.list-group-item[data-name]');
+        let output = "";
 
-    items.forEach((item, index) => {
-        let batch = item.dataset.batch.trim();
-        let name = item.dataset.name.trim();
-        let phone = item.dataset.phone.trim();
-        let perc = item.dataset.percentage.trim();
+        items.forEach((item, index) => {
+            let batch = item.dataset.batch.trim();
+            let name = item.dataset.name.trim();
+            let phone = item.dataset.phone.trim();
+            let perc = item.dataset.percentage.trim();
 
-        output += `${batch}\t${phone}\t${name}\t${perc}`;
+            output += `${batch}\t${phone}\t${name}\t${perc}`;
 
-        if (index !== items.length - 1) output += "\n";
-    });
+            if (index !== items.length - 1) output += "\n";
+        });
 
-    navigator.clipboard.writeText(output).then(() => {
-        // alert("Copied! Now paste directly into Google Sheets.");
-    });
-}
+        navigator.clipboard.writeText(output).then(() => {
+            // alert("Copied! Now paste directly into Google Sheets.");
+        });
+    }
+</script>
+
+<script>
+    async function copyDataToClipboard() {
+        const performanceContainer = document.getElementById('performanceColumns');
+        if (!performanceContainer) return;
+
+        // Students column is OUTSIDE #performanceColumns in this template
+        const studentsUl = document.querySelector('ul.list-group[data-col="student"]');
+        const attendanceUl = performanceContainer.querySelector('ul[data-col="attendance"]');
+        const homeworkUl = performanceContainer.querySelector('ul[data-col="homework"]');
+        const testUls = Array.from(performanceContainer.querySelectorAll('ul[data-col="test"]'));
+
+        if (!studentsUl || !attendanceUl || !homeworkUl) return;
+
+        const studentItems = Array.from(studentsUl.querySelectorAll('li.list-group-item[data-name]'));
+        if (studentItems.length === 0) return;
+
+        const getLiTextByRowIndex = (ul, rowIndex) => {
+            const lis = ul ? ul.querySelectorAll('li.list-group-item') : [];
+            const li = lis[rowIndex + 1]; // +1 skips header row
+            return li ? (li.innerText || '').trim() : '';
+        };
+
+        const extractPercentage = (text) => {
+            const match = (text || '').match(/(\d+(?:\.\d+)?)%/);
+            return match ? `${match[1]}%` : '';
+        };
+
+        const cleanMarkText = (text) => {
+            return (text || '')
+                .replace(/\bT\b/g, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+        };
+
+        const header = [
+            'Student',
+            'Attendance %',
+            'Homework %',
+            ...testUls.map((ul) => ul.dataset.testName || cleanMarkText(getLiTextByRowIndex(ul, -1)))
+        ];
+
+        const rows = [header.join('\t')];
+
+        studentItems.forEach((stuLi, idx) => {
+            const name = (stuLi.dataset.name || stuLi.innerText || '').trim();
+            const attendanceText = getLiTextByRowIndex(attendanceUl, idx);
+            const homeworkText = getLiTextByRowIndex(homeworkUl, idx);
+
+            const attendancePct = extractPercentage(attendanceText);
+            const homeworkPct = extractPercentage(homeworkText);
+
+            const marks = testUls.map((ul) => {
+                const cell = getLiTextByRowIndex(ul, idx);
+                return cleanMarkText(cell);
+            });
+
+            rows.push([name, attendancePct, homeworkPct, ...marks].join('\t'));
+        });
+
+        const textToCopy = rows.join('\n');
+
+        try {
+            await navigator.clipboard.writeText(textToCopy);
+        } catch (err) {
+            // Fallback for non-HTTPS / blocked clipboard permissions
+            const ta = document.createElement('textarea');
+            ta.value = textToCopy;
+            ta.setAttribute('readonly', '');
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+        }
+    }
 </script>
 
 
