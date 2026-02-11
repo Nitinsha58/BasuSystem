@@ -400,6 +400,7 @@
 
         const header = [
             'Student',
+            'Average',
             'Attendance %',
             'Homework %',
             ...testUls.map((ul) => ul.dataset.testName || cleanMarkText(getLiTextByRowIndex(ul, -1)))
@@ -409,6 +410,7 @@
 
         studentItems.forEach((stuLi, idx) => {
             const name = (stuLi.dataset.name || stuLi.innerText || '').trim();
+            const average = (stuLi.dataset.percentage || '').trim();
             const attendanceText = getLiTextByRowIndex(attendanceUl, idx);
             const homeworkText = getLiTextByRowIndex(homeworkUl, idx);
 
@@ -420,7 +422,7 @@
                 return cleanMarkText(cell);
             });
 
-            rows.push([name, attendancePct, homeworkPct, ...marks].join('\t'));
+            rows.push([name, average, attendancePct, homeworkPct, ...marks].join('\t'));
         });
 
         const textToCopy = rows.join('\n');
