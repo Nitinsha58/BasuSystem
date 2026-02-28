@@ -617,13 +617,13 @@ def student_enrollment_details_update(request, stu_id):
         if form.is_valid():
             form.save()
             messages.success(request, 'Student Updated.')
-            return redirect("student_update", stu_id=student.stu_id)
+            return redirect("student_enrollment_details_update", stu_id=student.stu_id)
         
         for field, error_list in form.errors.items():
             for error in error_list:
                 messages.error(request, f"{field}: {error}")
 
-        return redirect("student_update", stu_id=student.stu_id)
+        return redirect("student_enrollment_details_update", stu_id=student.stu_id)
     
 
     enrollments_qs = (
@@ -696,7 +696,7 @@ def student_enrollment_parent_details(request, stu_id):
         if form.is_valid():
             form.save(student)
             messages.success(request, "Parent details saved successfully.")
-            return redirect("student_parent_details", stu_id=student.stu_id)
+            return redirect("student_enrollment_parent_details", stu_id=student.stu_id)
         
         for field, error_list in form.errors.items():
             for error in error_list:
