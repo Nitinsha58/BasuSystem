@@ -741,18 +741,16 @@ def student_enrollment_fees_details(request, stu_id):
         messages.error(request, 'No enrollment found for the selected session. Please create/update enrollment first.')
         return redirect(f"{reverse('student_enrollment_update', args=[student.stu_id])}?session={selected_session.id}")
 
-    fees_details, _ = FeeDetails.objects.get_or_create(student=student)
-    if fees_details.enrollment_id != enrollment.id:
-        fees_details.enrollment = enrollment
-        fees_details.save(update_fields=['enrollment'])
+    fees_details = FeeDetails.objects.filter(student=student, enrollment=enrollment).first()
 
     if request.method == 'POST':
 
         try:
             with transaction.atomic():
-                fees_details, created = FeeDetails.objects.get_or_create(student=student)
-                if fees_details.enrollment_id != enrollment.id:
-                    fees_details.enrollment = enrollment
+                fees_details, created = FeeDetails.objects.get_or_create(
+                    student=student,
+                    enrollment=enrollment
+                )
 
                 fees_details.total_fees = request.POST.get("total_fees") or 0
                 fees_details.registration_fee = request.POST.get("registration_fee") or 0
@@ -762,6 +760,8 @@ def student_enrollment_fees_details(request, stu_id):
                 fees_details.book_fees = request.POST.get("book_fees") or 0
                 fees_details.book_discount = (request.POST.get("book_discount") == 'on')
                 fees_details.registration_discount = (request.POST.get("registration_discount") == 'on')
+                fees_details.paid_amount = request.POST.get("paid_amount") or 0
+                fees_details.remaining_balance = request.POST.get("remaining_balance") or 0
 
                 fees_details.save()
 
@@ -775,10 +775,10 @@ def student_enrollment_fees_details(request, stu_id):
                         enrollment=enrollment,
                         amount=request.POST.get(f'installment_amount_{ins}'),
                         due_date=request.POST.get(f'installment_due_date_{ins}'),
-                        paid=(request.POST.get(f'paid_{ins}') == 'on') ,
-                        label = request.POST.get(f'installment_label_{ins}'),
-                        payment_type = request.POST.get(f'payment_type_{ins}'),
-                        remark = request.POST.get(f'installment_remark_{ins}'),
+                        paid=(request.POST.get(f'paid_{ins}') == 'on'),
+                        label=request.POST.get(f'installment_label_{ins}'),
+                        payment_type=request.POST.get(f'payment_type_{ins}'),
+                        remark=request.POST.get(f'installment_remark_{ins}'),
                     )
                     installment.save()
         except Exception as e:
@@ -790,13 +790,14 @@ def student_enrollment_fees_details(request, stu_id):
 
     payment_options = Installment.PAYMENT_CHOICES
 
-    installments = Installment.objects.filter(fee_details=fees_details, enrollment=enrollment).order_by('due_date')
+    installments = Installment.objects.filter(fee_details=fees_details, enrollment=enrollment).order_by('due_date') if fees_details else Installment.objects.none()
 
     return render(request, "registration/enrollment/student_enrollment_fees_details.html", {
         'student': student,
+        'enrollment': enrollment,
         'fees_details': fees_details,
         'installments': installments,
-        'installments_count': installments.count(),
+        'installments_count': installments.count() if installments else 0,
         'payment_options': payment_options,
         'academic_sessions': sessions,
         'active_session': active_session,

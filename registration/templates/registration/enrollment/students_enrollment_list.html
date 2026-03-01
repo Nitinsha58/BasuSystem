@@ -42,7 +42,7 @@
             {{cls.students.count}} )</li>
           {% for enroll in cls.students %}
           <li style="position: relative;"
-            class="list-group-item d-flex justify-content-between align-items-center {% if not enroll.student.active %} bg-secondary {% elif not enroll.student.fees.installments.first.paid %} bg-warning {% endif %}">
+            class="list-group-item d-flex justify-content-between align-items-center {% if not enroll.student.active %} bg-secondary {% elif not enroll.fees.installments.first.paid %} bg-warning {% endif %}">
             <a class="text-decoration-none text-dark" style="display: flex; justify-content: space-between;"
               target="_blank" href="{% url 'student_enrollment_details_update' enroll.student.stu_id %}">
               <span class="">{{forloop.counter}}. {{enroll.student.user.first_name}} {{enroll.student.user.last_name}}</span>
