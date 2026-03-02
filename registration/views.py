@@ -754,7 +754,46 @@ def student_enrollment_fees_details(request, stu_id):
         messages.error(request, 'No enrollment found for the selected session. Please create/update enrollment first.')
         return redirect(f"{reverse('student_enrollment_update', args=[student.stu_id])}?session={selected_session.id}")
 
-    fees_details = FeeDetails.objects.filter(student=student, enrollment=enrollment).first()
+    fees_details, _ = FeeDetails.objects.get_or_create(
+        enrollment=enrollment,
+        defaults={"student": student},
+    )
+    if fees_details.student_id != student.id:
+        fees_details.student = student
+        fees_details.save(update_fields=["student"])
+
+    other_enrollments = (
+        StudentEnrollment.objects.filter(student=student)
+        .select_related('session')
+        .exclude(id=enrollment.id)
+        .order_by('-session__start_date')
+    )
+
+    other_fee_details = (
+        FeeDetails.objects.filter(enrollment__in=other_enrollments)
+        .select_related('enrollment__session')
+    )
+    other_fee_by_enrollment_id = {fd.enrollment_id: fd for fd in other_fee_details if fd.enrollment_id}
+
+    other_installments = (
+        Installment.objects.filter(enrollment__in=other_enrollments)
+        .select_related('enrollment__session', 'fee_details')
+        .order_by('due_date')
+    )
+    other_installments_by_fee_id = {}
+    for inst in other_installments:
+        other_installments_by_fee_id.setdefault(inst.fee_details_id, []).append(inst)
+
+    other_enrollment_fee_summaries = []
+    for other in other_enrollments:
+        fd = other_fee_by_enrollment_id.get(other.id)
+        inst_list = other_installments_by_fee_id.get(fd.id, []) if fd else []
+        other_enrollment_fee_summaries.append({
+            'enrollment': other,
+            'session': getattr(other, 'session', None),
+            'fee_details': fd,
+            'installments': inst_list,
+        })
 
     if request.method == 'POST':
 
@@ -815,6 +854,7 @@ def student_enrollment_fees_details(request, stu_id):
         'academic_sessions': sessions,
         'active_session': active_session,
         'selected_session': selected_session,
+        'other_enrollment_fee_summaries': other_enrollment_fee_summaries,
     })
 
 
