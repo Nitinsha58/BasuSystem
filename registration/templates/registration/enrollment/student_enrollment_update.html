@@ -18,6 +18,10 @@
         display: none;
     }
 
+    .checkbox-btn input[type="radio"] {
+        display: none;
+    }
+
     .checkbox-btn span {
         display: inline-flex;
         flex-direction: column;
@@ -41,6 +45,28 @@
         background: #e0f0ff;
         color: #007bff;
         /* font-weight: 600; */
+    }
+
+    .session-btn span {
+        border-color: var(--bs-border-color);
+        background: var(--bs-body-bg);
+        color: var(--bs-body-color);
+    }
+
+    .session-btn.enrolled span {
+        border-color: var(--bs-success-border-subtle);
+        background: var(--bs-success-bg-subtle);
+        color: var(--bs-success-text-emphasis);
+    }
+
+    .session-btn input[type="radio"]:checked+span {
+        border-width: 2px;
+        border-color: var(--bs-primary) !important;
+    }
+
+    .session-btn.enrolled input[type="radio"]:checked+span {
+        background: var(--bs-success-bg-subtle) !important;
+        color: var(--bs-success-text-emphasis) !important;
     }
 
     .checkbox-btn.mismatch span {
@@ -79,14 +105,22 @@
     </div>
 
     <div class="d-flex justify-content-between mb-2 rounded">
-        <form action="" method="get" class="">
-            <select name="session" id="academic-session"
-                class="form-select search-input fs-5 me-2 w-auto flex-grow-0 pe-5" onchange="this.form.submit()">
-                {% for session in academic_sessions %}
-                <option value="{{session.id}}" {% if session.id == selected_session.id %} selected {% endif %}>
-                    {{session.name}}</option>
+        <form action="" method="get" class="d-flex flex-wrap gap-2 align-items-center">
+            {% for session in display_sessions %}
+            <label class="checkbox-btn session-btn {% if session.id in enrolled_session_ids %}enrolled{% endif %}">
+                <input type="radio" name="session" value="{{ session.id }}" {% if session.id == selected_session.id %}checked{% endif %} onchange="this.form.submit()">
+                <span>{{ session.name }}</span>
+            </label>
+            {% endfor %}
+
+            {% if other_sessions %}
+            <select name="session" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+                <option value="" disabled selected>More sessions...</option>
+                {% for session in other_sessions %}
+                <option value="{{ session.id }}">{{ session.name }}</option>
                 {% endfor %}
             </select>
+            {% endif %}
         </form>
 
         <div class="p-1 d-flex bg-light rounded" style="width: fit-content;">
@@ -151,8 +185,7 @@
                 <label for="class_name" class="form-label">Class Enrolled*</label>
                 <select class="form-select" name="class_name" id="class_name" required>
                     {% for cls in classes %}
-                    <option value="{{cls.id}}" {% if enrollment and enrollment.class_name == cls %} selected {% elif not enrollment and student.active_enrollment and student.active_enrollment.class_name == cls %}
-                        selected {% endif %}>{{cls.name}}</option>
+                    <option value="{{cls.id}}" {% if enrollment and enrollment.class_name == cls %} selected {% elif not enrollment and student.active_enrollment and student.active_enrollment.class_name == cls %} selected {% endif %}>{{cls.name}}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -171,8 +204,7 @@
                 <label for="program_duration" class="form-label">Duration</label>
                 <select class="form-select" name="program_duration" id="program_duration">
                     {% for duration in student.DURATION_CHOICE %}
-                    <option value="{{duration.0}}" {% if enrollment and duration.0 == enrollment.program_duration %}
-                        selected {% endif %}>{{duration.1}}</option>
+                    <option value="{{duration.0}}" {% if enrollment and duration.0 == enrollment.program_duration %} selected {% endif %}>{{duration.1}}</option>
                     {% endfor %}
                 </select>
             </div>

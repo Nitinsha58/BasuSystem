@@ -275,6 +275,16 @@ def student_enrollment_update(request, stu_id):
         messages.error(request, 'No academic session selected and no active session found.')
         return redirect('students_enrollment_list')
 
+    enrolled_session_ids_set = set(
+        StudentEnrollment.objects.filter(student=student).values_list('session_id', flat=True)
+    )
+    enrolled_session_ids = list(enrolled_session_ids_set)
+
+    # Keep the session buttons in a stable order regardless of selection.
+    # Sessions are already ordered by '-start_date' above.
+    display_sessions = list(sessions[:4])
+    other_sessions = list(sessions[4:])
+
     enrollment = (
         StudentEnrollment.objects.filter(student=student, session=selected_session)
         .prefetch_related('subjects')
@@ -370,6 +380,9 @@ def student_enrollment_update(request, stu_id):
         'academic_sessions': sessions,
         'active_session': active_session,
         'selected_session': selected_session,
+        'enrolled_session_ids': enrolled_session_ids,
+        'display_sessions': display_sessions,
+        'other_sessions': other_sessions,
     })
 
 
