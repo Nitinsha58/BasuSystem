@@ -1,303 +1,539 @@
-<style>
-    body {
-        font-size: 16px;
-    }
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
 
-    table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    table tr td {
-        padding: 0;
-    }
-
-    table tr td:last-child {
-        text-align: right;
-    }
-
-    .bold {
-        font-weight: bold;
-    }
-
-    .right {
-        text-align: right;
-    }
-
-    .large {
-        font-size: 1.75em;
-    }
-
-    .total {
-        font-weight: bold;
-        color: #fb7578;
-    }
-
-    .logo-container {
-        margin: 20px 0 70px 0;
-    }
-
-    .invoice-info-container {
-        font-size: 0.875em;
-    }
-
-    .invoice-info-container td {
-        padding: 4px 0;
-    }
-
-    .client-name {
-        font-size: 1.5em;
-        vertical-align: top;
-    }
-
-    .line-items-container {
-        margin: 70px 0;
-        font-size: 0.875em;
-    }
-
-    .line-items-container th {
-        text-align: left;
-        color: #999;
-        border-bottom: 2px solid #ddd;
-        padding: 10px 0 15px 0;
-        font-size: 0.75em;
-    }
-
-    .line-items-container th:last-child {
-        text-align: right;
-    }
-
-    .line-items-container td {
-        padding: 15px 0;
-    }
-
-    .line-items-container tbody tr:first-child td {
-        padding-top: 25px;
-    }
-
-    .line-items-container.has-bottom-border tbody tr:last-child td {
-        padding-bottom: 25px;
-        border-bottom: 2px solid #ddd;
-    }
-
-    .line-items-container.has-bottom-border {
-        margin-bottom: 0;
-    }
-
-    .line-items-container th.heading-quantity {
-        width: 50px;
-    }
-
-    .line-items-container th.heading-price {
-        text-align: right;
-        width: 100px;
-    }
-
-    .line-items-container th.heading-subtotal {
-        width: 100px;
-    }
-
-    .payment-info {
-        width: 38%;
-        font-size: 0.75em;
-        line-height: 1.5;
-    }
-
-    .footer {
-        margin-top: 100px;
-    }
-
-    .footer-thanks {
-        font-size: 1.125em;
-    }
-
-    .footer-thanks img {
-        display: inline-block;
-        position: relative;
-        top: 1px;
-        width: 16px;
-        margin-right: 4px;
-    }
-
-    .footer-info {
-        float: right;
-        margin-top: 5px;
-        font-size: 0.75em;
-        color: #ccc;
-    }
-
-    .footer-info span {
-        padding: 0 5px;
-        color: black;
-    }
-
-    .footer-info span:last-child {
-        padding-right: 0;
-    }
-
-    .page-container {
-        display: none;
-    }
-
-
-
-
-    /*
-  The styles here for use when generating a PDF invoice with the HTML code.
-
-  * Set up a repeating page counter
-  * Place the .footer-info in the last page's footer
-*/
-
-    .footer {
-        margin-top: 30px;
-    }
-
-    .footer-info {
-        float: none;
-        position: running(footer);
-        margin-top: -25px;
-    }
-
-    .page-container {
-        display: block;
-        position: running(pageContainer);
-        margin-top: -25px;
-        font-size: 12px;
-        text-align: right;
-        color: #999;
-    }
-
-    .page-container .page::after {
-        content: counter(page);
-    }
-
-    .page-container .pages::after {
-        content: counter(pages);
-    }
-
-
-    @page {
-        @bottom-right {
-            content: element(pageContainer);
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Enrollment Receipt &mdash; {{ student.user.first_name }} {{ student.user.last_name }}</title>
+    <style>
+        /* ── Variables ── */
+        :root {
+            --rcpt-primary: #1a2744;
+            --rcpt-accent: #2c5282;
+            --rcpt-border: #cbd5e0;
+            --rcpt-bg: #ffffff;
+            --rcpt-section-bg: #f7fafc;
+            --rcpt-row-alt: #edf2f7;
+            --rcpt-text: #2d3748;
+            --rcpt-label: #4a5568;
+            --rcpt-muted: #718096;
+            --rcpt-success: #276749;
+            --rcpt-danger: #c53030;
         }
 
-        @bottom-left {
-            content: element(footer);
+        /* ── Reset & Base ── */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
-    }
-</style>
 
-<div class="page-container">
-    Page
-    <span class="page"></span>
-    of
-    <span class="pages"></span>
-</div>
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            color: var(--rcpt-text);
+            background: #f0f2f5;
+            line-height: 1.6;
+            font-size: 14px;
+            padding: 32px 16px;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+        }
 
-<div class="logo-container">
-    <img style="height: 48px" src="https://basueducation.com/static/images/BASU%20LOGO.5e3cc85845b7.svg">
-</div>
+        /* ── Receipt Shell ── */
+        .receipt {
+            width: 100%;
+            max-width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            background: var(--rcpt-bg);
+            border: 1px solid var(--rcpt-border);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+            display: flex;
+            flex-direction: column;
+        }
 
-<table class="invoice-info-container">
-    <tr>
-        <td rowspan="1" class="client-name">
-            {{ student.user.first_name|default:"Student" }} {{ student.user.last_name|default:"Name" }}
-        </td>
-        <td>
-            BASU Classes
-        </td>
-    </tr>
-    <tr>
-        <td>
-            Student ID: {{ student.stu_id|default:"N/A" }}
-        </td>
-        <td>
-            Mahavir Enclave
-        </td>
-    </tr>
-    <tr>
-        <td>
-            Invoice Date: <strong>{{today|date:"d M Y" }}</strong>
-        </td>
-        <td>
-            Noida, 201301
-        </td>
-    </tr>
-    <tr>
-        <td>
-            Academic Session: <strong>{{ selected_session.name }}</strong>
-            {% if selected_session.start_date and selected_session.end_date %}
-            ({{ selected_session.start_date|date:"d M Y" }} - {{ selected_session.end_date|date:"d M Y" }})
+        .rcpt-body {
+            flex: 1;
+        }
+
+        /* ── Header / Letterhead ── */
+        .rcpt-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            padding: 32px 40px 24px;
+            border-bottom: 3px solid var(--rcpt-primary);
+        }
+
+        .rcpt-header-left {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+
+        .rcpt-header-left img {
+            height: 52px;
+        }
+
+        .rcpt-brand-info h1 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--rcpt-primary);
+            letter-spacing: 0.3px;
+            margin: 0 0 2px;
+        }
+
+        .rcpt-brand-info p {
+            font-size: 12px;
+            color: var(--rcpt-muted);
+            margin: 0;
+        }
+
+        .rcpt-header-right {
+            text-align: right;
+            font-size: 12px;
+            color: var(--rcpt-label);
+            line-height: 1.8;
+        }
+
+        .rcpt-header-right strong {
+            color: var(--rcpt-primary);
+        }
+
+        /* ── Receipt Title Badge ── */
+        .rcpt-title-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 40px;
+            background: var(--rcpt-primary);
+            color: #fff;
+        }
+
+        .rcpt-title-bar h2 {
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 0;
+        }
+
+        .rcpt-title-bar .rcpt-date {
+            font-size: 12px;
+            opacity: 0.85;
+        }
+
+        /* ── Info Grid ── */
+        .rcpt-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            border-bottom: 1px solid var(--rcpt-border);
+        }
+
+        .rcpt-info-block {
+            padding: 20px 40px;
+        }
+
+        .rcpt-info-block:first-child {
+            border-right: 1px solid var(--rcpt-border);
+        }
+
+        .rcpt-info-block .info-heading {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--rcpt-muted);
+            margin-bottom: 10px;
+        }
+
+        .rcpt-info-block .info-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--rcpt-primary);
+            margin-bottom: 4px;
+        }
+
+        .rcpt-info-block .info-row {
+            font-size: 12.5px;
+            color: var(--rcpt-label);
+            line-height: 1.9;
+        }
+
+        .rcpt-info-block .info-row strong {
+            color: var(--rcpt-text);
+        }
+
+        /* ── Payments Table ── */
+        .rcpt-body {
+            padding: 28px 40px;
+        }
+
+        .rcpt-section-heading {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 0 0 16px;
+        }
+
+        .rcpt-section-heading h3 {
+            margin: 0;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--rcpt-primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        .rcpt-section-heading::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--rcpt-border);
+        }
+
+        .rcpt-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 0;
+        }
+
+        .rcpt-table thead th {
+            background: var(--rcpt-primary);
+            color: #fff;
+            padding: 10px 14px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            font-weight: 600;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .rcpt-table thead th:last-child {
+            text-align: right;
+        }
+
+        .rcpt-table thead th.col-center {
+            text-align: center;
+        }
+
+        .rcpt-table tbody td {
+            padding: 11px 14px;
+            font-size: 13px;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: middle;
+        }
+
+        .rcpt-table tbody td:last-child {
+            text-align: right;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .rcpt-table tbody tr:nth-child(even) {
+            background: var(--rcpt-row-alt);
+        }
+
+        /* Status badges */
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+        }
+
+        .badge-paid {
+            background: #c6f6d5;
+            color: var(--rcpt-success);
+        }
+
+        .badge-due {
+            background: #fed7d7;
+            color: var(--rcpt-danger);
+        }
+
+        .text-center {
+            text-align: center !important;
+        }
+
+        .text-right {
+            text-align: right !important;
+        }
+
+        .text-muted {
+            color: var(--rcpt-muted);
+            font-size: 12px;
+        }
+
+        /* ── Total Row ── */
+        .rcpt-table .row-total td {
+            font-weight: 700;
+            font-size: 14px;
+            border-top: 2px solid var(--rcpt-primary);
+            border-bottom: none;
+            padding-top: 14px;
+            background: transparent;
+        }
+
+        /* ── Summary Cards ── */
+        .rcpt-summary {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .summary-card {
+            border: 1px solid var(--rcpt-border);
+            border-radius: 8px;
+            padding: 16px 18px;
+            background: var(--rcpt-section-bg);
+            text-align: center;
+        }
+
+        .summary-card .sc-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--rcpt-muted);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .summary-card .sc-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--rcpt-primary);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .summary-card.card-highlight {
+            background: var(--rcpt-primary);
+        }
+
+        .summary-card.card-highlight .sc-label {
+            color: rgba(255, 255, 255, 0.65);
+        }
+
+        .summary-card.card-highlight .sc-value {
+            color: #fff;
+        }
+
+        /* ── Footer ── */
+        .rcpt-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 24px 40px;
+            border-top: 1px solid var(--rcpt-border);
+            background: var(--rcpt-section-bg);
+        }
+
+        .rcpt-footer-left p {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--rcpt-primary);
+            margin: 0 0 4px;
+        }
+
+        .rcpt-footer-left span {
+            font-size: 11px;
+            color: var(--rcpt-muted);
+        }
+
+        .rcpt-footer-right {
+            font-size: 11px;
+            color: var(--rcpt-muted);
+            text-align: right;
+            line-height: 1.8;
+        }
+
+        .rcpt-footer-right a {
+            color: var(--rcpt-accent);
+            text-decoration: none;
+        }
+
+        /* ── Watermark for Print ── */
+        @media print {
+            body {
+                background: #fff;
+                padding: 0;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .receipt {
+                box-shadow: none;
+                border: none;
+                width: 100%;
+                max-width: 100%;
+                min-height: auto;
+            }
+
+            body::after {
+                content: "BASU EDUCATION";
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) rotate(45deg);
+                font-size: 100px;
+                font-weight: bold;
+                color: rgba(0, 0, 0, 0.06);
+                z-index: -1;
+                white-space: nowrap;
+                pointer-events: none;
+            }
+        }
+
+        @page {
+            size: A4;
+            margin: 10mm;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="receipt">
+
+        <!-- ── HEADER ── -->
+        <div class="rcpt-header">
+            <div class="rcpt-header-left">
+                <img src="{% static 'images/BASU.svg' %}" alt="Basu Education">
+                <div class="rcpt-brand-info">
+                    <h1>BASU Education</h1>
+                    <p>Mahavir Enclave, Noida &mdash; 201301</p>
+                </div>
+            </div>
+            <div class="rcpt-header-right">
+                <strong>basueducation.com</strong><br>
+                8447760430
+            </div>
+        </div>
+
+        <!-- ── TITLE BAR ── -->
+        <div class="rcpt-title-bar">
+            <h2>Enrollment Receipt</h2>
+            <span class="rcpt-date">Date: {{ today|date:"d M Y" }}</span>
+        </div>
+
+        <!-- ── STUDENT & SESSION INFO ── -->
+        <div class="rcpt-info">
+            <div class="rcpt-info-block">
+                <div class="info-heading">Student</div>
+                <div class="info-name">{{ student.user.first_name|default:"Student" }} {{ student.user.last_name|default:"Name" }}</div>
+                <div class="info-row">Student ID: <strong>{{ student.stu_id|default:"N/A" }}</strong></div>
+                {% if student.user.phone %}
+                <div class="info-row">Phone: <strong>
+                        {% with phone=student.user.phone|stringformat:"s" %}
+                        {% if phone|length > 5 %}{{ phone|slice:":3" }}****{{ phone|slice:"-3:" }}{% else %}{{ phone }}{% endif %}
+                        {% endwith %}
+                    </strong></div>
+                {% endif %}
+            </div>
+            <div class="rcpt-info-block">
+                <div class="info-heading">Academic Session</div>
+                <div class="info-name">{{ selected_session.name }}</div>
+                {% if selected_session.start_date and selected_session.end_date %}
+                <div class="info-row">{{ selected_session.start_date|date:"d M Y" }} &ndash; {{ selected_session.end_date|date:"d M Y" }}</div>
+                {% endif %}
+                {% if enrollment.class_name %}
+                <div class="info-row">Class: <strong>{{ enrollment.class_name }}</strong></div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ── PAYMENTS TABLE ── -->
+        <div class="rcpt-body">
+            <div class="rcpt-section-heading">
+                <h3>Payment Schedule</h3>
+            </div>
+
+            <table class="rcpt-table">
+                <thead>
+                    <tr>
+                        <th style="width:45px;">S.No</th>
+                        <th>Description</th>
+                        <th class="col-center" style="width:90px;">Status</th>
+                        <th style="width:110px;">Due Date</th>
+                        <th style="width:110px;">Payment Mode</th>
+                        <th style="width:100px;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for installment in installments %}
+                    <tr>
+                        <td>{{ forloop.counter }}.</td>
+                        <td>{{ installment.label|default:"Installment" }}</td>
+                        <td class="text-center">
+                            {% if installment.paid|default:False %}
+                            <span class="badge badge-paid">Paid</span>
+                            {% else %}
+                            <span class="badge badge-due">Due</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ installment.due_date|date:"d M Y"|default:"No Date" }}</td>
+                        <td>{{ installment.payment_type|default:"Not Specified" }}</td>
+                        <td>₹{{ installment.amount|default:"0" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted" style="padding:24px;">No payments available</td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="row-total">
+                        <td></td>
+                        <td>Total Fees</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td>₹{{ fees_details.total_fees|default:"0" }}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- ── Summary Cards ── -->
+            {% if fees_details %}
+            <div class="rcpt-summary">
+                <div class="summary-card">
+                    <div class="sc-label">Total Fee</div>
+                    <div class="sc-value">₹{{ fees_details.total_fees|default:"0" }}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="sc-label">Installments</div>
+                    <div class="sc-value">{{ installments|length }}</div>
+                </div>
+                <div class="summary-card card-highlight">
+                    <div class="sc-label">Net Payable</div>
+                    <div class="sc-value">₹{{ fees_details.total_fees|default:"0" }}</div>
+                </div>
+            </div>
             {% endif %}
-        </td>
-        <td>
+        </div>
 
-        </td>
-    </tr>
-    <tr>
-        <td>
-        </td>
-        <td>
-            basueducation.com
-        </td>
-    </tr>
-</table>
-
-
-<table class="line-items-container">
-    <thead>
-        <tr>
-            <th class="heading-quantity">SNo.</th>
-            <th class="heading-description">Payments</th>
-            <th class="heading-price">Status</th>
-            <th class="heading-price">Payment Date</th>
-            <th class="heading-price">Payment Mode</th>
-            <th class="heading-subtotal">Fees</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for installment in installments %}
-        <tr>
-            <td>{{ forloop.counter|default:"-" }}.</td>
-            <td>{{ installment.label|default:"Installment" }}</td>
-            <td class="right">
-                <strong>
-                    {% if installment.paid|default:False %}
-                    Paid
-                    {% else %}
-                    Due
-                    {% endif %}
-                </strong>
-            </td>
-            <td class="right">{{ installment.due_date|date:"d M Y"|default:"No Date" }}</td>
-            <td class="right">{{ installment.payment_type|default:"Not Specified" }}</td>
-            <td class="bold">₹{{ installment.amount|default:"0" }}</td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="6" class="right">No payments available</td>
-        </tr>
-        {% endfor %}
-        <tr>
-            <td></td>
-            <td><b>Total</b></td>
-            <td class="right">
-            </td>
-            <td class="right"></td>
-            <td class="right"></td>
-            <td class="bold">₹{{ fees_details.total_fees|default:"0" }}</td>
-        </tr>
-    </tbody>
-</table>
-
-
-<div class="footer">
-    <div class="footer-info">
-        <span>8447760430</span> |
-        <span>basueducation.com</span>
+        <!-- ── FOOTER ── -->
+        <div class="rcpt-footer">
+            <div class="rcpt-footer-left">
+                <p>Thank you!</p>
+                <span>This is a system-generated receipt. &copy; Basu Education</span>
+            </div>
+            <div class="rcpt-footer-right">
+                8447760430<br>
+                <a href="https://basueducation.com">basueducation.com</a>
+            </div>
+        </div>
     </div>
-    <div class="footer-thanks" style="padding-top: 15px;">
-        <span>Thank you!</span>
-    </div>
-</div>
+
+</body>
+
+</html>
