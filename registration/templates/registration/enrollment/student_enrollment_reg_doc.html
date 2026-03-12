@@ -656,7 +656,13 @@
                 <div class="installment-card">
                     <div class="inst-num">Installment {{ forloop.counter }}</div>
                     <div class="inst-amount">₹ {{ installment.amount }}</div>
-                    <div class="inst-date">Due: {{ installment.due_date|date:"d M Y" }}</div>
+                    <div class="inst-date">
+                        {% if installment.paid %}
+                            <span class="badge bg-success">Paid</span>
+                        {% else %}
+                            Due: {{ installment.due_date|date:"d M Y" }}
+                        {% endif %}
+                    </div>
                 </div>
                 {% endfor %}
             </div>
