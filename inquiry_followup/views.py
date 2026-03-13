@@ -6,6 +6,7 @@ from django.db.models import Max, Q
 from django.contrib import messages
 from django.utils.timezone import localtime, now
 from registration.models import AcademicSession
+from .session_selection import select_session_for_date
 
 
 from django.utils import timezone
@@ -94,12 +95,29 @@ def inquiry(request, inquiry_id):
         lead_type = request.POST.get("lead_type")
         session_id = request.POST.get("session_id")
 
+        inquiry_created_date = localtime(inquiry_obj.created_at).date()
+
+        selected_session = None
+        if session_id:
+            selected_session = AcademicSession.objects.filter(id=session_id).first()
+
         # update inquiry accordingly 
         inquiry_obj.student_name = student_name
         inquiry_obj.school = school_name
         inquiry_obj.address = address
         inquiry_obj.lead_type = lead_type
-        inquiry_obj.session_id = session_id if session_id else None
+
+        # Enforce: only associate a session if inquiry year matches session start year.
+        # Never leave session NULL if any sessions exist (fallbacks handled by helper).
+        if selected_session and selected_session.start_date and selected_session.start_date.year == inquiry_created_date.year:
+            inquiry_obj.session = selected_session
+        else:
+            if session_id:
+                messages.warning(
+                    request,
+                    "Selected session year doesn't match inquiry year; assigning best matching session instead.",
+                )
+            inquiry_obj.session = select_session_for_date(inquiry_created_date)
 
         # Update many-to-many relationships
         inquiry_obj.classes.set(selected_classes)
@@ -235,7 +253,7 @@ def create_inquiry(request):
             referral_id=referral_source,
             existing_member=existing_member,
             lead_type='Verified',
-            session=AcademicSession.get_active(),
+            session=select_session_for_date(localtime(now()).date()),
         )
 
         # Add many-to-many relationships (if applicable)
@@ -300,7 +318,7 @@ def create_referral_inquiry(request):
             phone=phone,
             stationary_partner=partner,
             existing_member=existing_member,
-            session=AcademicSession.get_active(),
+            session=select_session_for_date(localtime(now()).date()),
         )
 
         # Add many-to-many relationships (if applicable)
