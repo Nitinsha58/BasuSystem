@@ -16,96 +16,112 @@
 </style>
 <div id="searchStuModal" class="start-0 d-flex flex-column flex-md-row items-center justify-content-between p-2">
     <div class="position-relative rounded-lg rounded my-2 w-100 bg-white shadow-md"
-      style="height: fit-content; max-width: 400px; z-index: 2355;">
-      <div class="search-form d-flex w-100 align-items-center ">
-        <input type="text" class="form-control search-input p-2 fs-5" id="search-stu-input" maxlength="60"
-          placeholder="Search Inquiry..." autocomplete="off" autofocus
-          name="search" 
-          hx-get="/search-inquiries?search={value}"
-          hx-trigger="keyup changed delay:500ms, search" hx-target="#search-inquiries-list">
-        <div class="row mx-2">
-            <p class="mb-1">{{ current_month|date:"F Y" }}</p>
-            <ul class="pagination">
-                <li class="page-item"><a class="page-link" href="?year={{ prev_month.year }}&month={{ prev_month.month }}">Previous</a></li>
-                <li class="page-item"><a class="page-link" href="?year={{ next_month.year }}&month={{ next_month.month }}">Next</a></li>
+        style="height: fit-content;  z-index: 2355;">
+        <div class="search-form d-flex w-100 flex-wrap align-items-center gap-2">
+            <input type="text" class="form-control search-input p-2 fs-5" id="search-stu-input" maxlength="60"
+                placeholder="Search Inquiry..." autocomplete="off" autofocus name="search"
+                hx-get="/search-inquiries?search={value}" hx-trigger="keyup changed delay:500ms, search"
+                hx-target="#search-inquiries-list" style="max-width: 400px;">
+            <div class="d-flex flex-wrap align-items-center gap-2 mx-2">
+                <p class="mb-0">{{ current_month|date:"F Y" }}</p>
+                <ul class="pagination mb-0">
+                    <li class="page-item"><a class="page-link"
+                            href="?year={{ prev_month.year }}&month={{ prev_month.month }}">Previous</a>
+                    </li>
+                    <li class="page-item"><a class="page-link"
+                            href="?year={{ next_month.year }}&month={{ next_month.month }}">Next</a>
+                    </li>
+                </ul>
+            </div>
+            <ul class="position-absolute p-2 mt-2 top-2 w-100 rounded" id="search-inquiries-list">
+
             </ul>
         </div>
-        <ul class="position-absolute p-2 mt-2 top-2 w-100 rounded" id="search-inquiries-list">
-  
-        </ul>
-      </div>
     </div>
 
     <div class="row g-4 mx-2">
         <div class="col">
-            <div class="card-body text-center me-2 rounded bg-dark p-1" >
+            <div class="card-body text-center me-2 rounded bg-dark p-1">
                 <p class="semibold card-title mb-0 text-white">{{total_inquiries}}</p>
                 <p class="card-text  mb-0 bg-dark text-light">Total</p>
             </div>
         </div>
         {% for sts, ct in status_counts.items %}
         <div class="col">
-            <div class="card-body text-center me-2 rounded bg-dark p-1" >
+            <div class="card-body text-center me-2 rounded bg-dark p-1">
                 <p class="semibold card-title mb-0 text-white">{{ct}}</p>
                 <p class="card-text  mb-0" style="color: {{sts.color}};">{{sts.name}}</p>
             </div>
         </div>
 
         {% endfor %}
-        
+
     </div>
 
-</div>  
+</div>
 
 <div class="mx-2 px-2">
     <div class="d-flex g-4 w-100 dates-group pb-3">
         {% for date, followups in dates.items %}
-        <div class="card date-card" style="min-width: 20rem; height: fit-content; border: none;" data-date="{{ date|date:'Y-m-d' }}">
+        <div class="card date-card" style="min-width: 20rem; height: fit-content; border: none;"
+            data-date="{{ date|date:'Y-m-d' }}">
             <ul class="list-group ">
                 <li class="list-group-item text-dark bg-light rounded">{{ date|date:'d b Y ( l )'|title }}</li>
 
                 {% for followup in followups %}
-                    <li class="list-group-item p-2 my-2 rounded bg-light-subtle" {% if followup.followup_date %} style="box-shadow: -3px -3px 12px #39299410, 6px 6px 12px #39299420;
-                        border: 2px solid #392994;" {% endif %}>
-                        <a href="{% url 'inquiry' followup.inquiry.id %}" class="text-decoration-none  text-dark">
-                            <p class="m-0 me-2 mb-2 position-absolute end-0 top-0" style="font-size: 14px;">
-                                {% if followup.inquiry.existing_member %}
-                                Existing Member
-                                {% else %}
-                                New Inquiry
-                                {% endif %}
-                            </p>
-                            <p class="fs-5 m-0 mb-1" >{{followup.inquiry.student_name|title}}</p>
-                            <div class="d-flex justify-content-between">
-                                <p class="m-0 " >
-                                    {% for cls in followup.inquiry.classes.all %}
-                                        {{cls.name|title}}
-                                    {% endfor %}
-                                </p>
-                                <p class="m-0">+91 {{followup.inquiry.phone}}</p>
-                            </div>
-                            <p class="m-0 mb-2">
-                                {% for subject in followup.inquiry.subjects.all %}
-                                    {{subject.name|title}}
+                <li class="list-group-item p-2 my-2 rounded bg-light-subtle" {% if followup.followup_date %}
+                    style="box-shadow: -3px -3px 12px #39299410, 6px 6px 12px #39299420; border: 2px solid #392994;" {% endif %}>
+                    <a href="{% url 'inquiry' followup.inquiry.id %}" class="text-decoration-none  text-dark">
+                        <p class="m-0 me-2 mb-2 position-absolute end-0 top-0" style="font-size: 14px;">
+                            {% if followup.inquiry.existing_member %}
+                            Existing Member
+                            {% else %}
+                            New Inquiry
+                            {% endif %}
+                        </p>
+                        <p class="fs-5 m-0 mb-1">{{followup.inquiry.student_name|title}}</p>
+                        <div class="d-flex justify-content-between">
+                            <p class="m-0 ">
+                                {% for cls in followup.inquiry.classes.all %}
+                                {{cls.name|title}}
                                 {% endfor %}
                             </p>
-                            <p class="m-0 mb-2 p-1 ps-2 d-inline-block text-dark rounded" style="width:100%; max-width: 100%; font-size: 12px; {% if followup.status.color %} background: {{followup.status.color}}; {% endif %} "  >
-                                {{followup.description|title}}
-                            </p>
-                            <p class="rounded px-2 py-1 m-0" id="status" name="status"  {% if followup.status.color %} style="background: {{followup.status.color}}; width: fit-content; " {% endif %} required>{{followup.status.name}}</p>
-                            {% if followup.inquiry.stationary_partner %}
-                            <p class="m-0 me-2 mb-2 position-absolute end-0 bottom-0 bg-warning-subtle rounded p-1" style="font-size: 14px;">{{followup.inquiry.stationary_partner.name}}</p>
-                            {% elif followup.admission_counsellor %}
-                            <div class="">
-                                <p class="m-0 me-2 mb-4 position-absolute end-0 bottom-0 text-bold" style="font-size: 14px;">{{followup.created_at|date:'h:i A'}}</p>
-                                <p class="m-0 me-2 mb-2 position-absolute end-0 bottom-0" style="font-size: 14px;">{{followup.admission_counsellor.user.first_name}} {{followup.admission_counsellor.user.last_name}}</p>
-                            </div>
-                            {% endif %}
-                        </a>
-                    </li>
+                            <p class="m-0">+91 {{followup.inquiry.phone}}</p>
+                        </div>
+                        <p class="m-0 mb-2">
+                            {% for subject in followup.inquiry.subjects.all %}
+                            {{subject.name|title}}
+                            {% endfor %}
+                        </p>
+                        {% if followup.status.color %}
+                        <p class="m-0 mb-2 p-1 ps-2 d-inline-block text-dark rounded"
+                            style="width:100%; max-width: 100%; font-size: 12px; background: {{followup.status.color}};">
+                            {{followup.description|title}}</p>
+                        {% else %}
+                        <p class="m-0 mb-2 p-1 ps-2 d-inline-block text-dark rounded"
+                            style="width:100%; max-width: 100%; font-size: 12px;">{{followup.description|title}}</p>
+                        {% endif %}
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <p class="rounded px-2 py-1 m-0" id="status" name="status" {% if followup.status.color %}
+                                style="background: {{followup.status.color}}; width: fit-content;" {% endif %} required>
+                                {{followup.status.name}}</p>
+                            <p class="m-0" style="font-size: 12px;">{% if followup.inquiry.session %} {{ followup.inquiry.session.name }} {% else %}—{% endif %}</p>
+                        </div>
+                        {% if followup.inquiry.stationary_partner %}
+                        <p class="m-0 me-2 mb-2 position-absolute end-0 bottom-0 bg-warning-subtle rounded p-1"
+                            style="font-size: 14px;">{{followup.inquiry.stationary_partner.name}}</p>
+                        {% elif followup.admission_counsellor %}
+                        <div class="">
+                            <p class="m-0 me-2 mb-4 position-absolute end-0 bottom-0 text-bold"
+                                style="font-size: 14px;">{{followup.created_at|date:'h:i A'}}</p>
+                            <p class="m-0 me-2 mb-2 position-absolute end-0 bottom-0" style="font-size: 14px;">
+                                {{followup.admission_counsellor.user.first_name}}
+                                {{followup.admission_counsellor.user.last_name}}</p>
+                        </div>
+                        {% endif %}
+                    </a>
+                </li>
                 {% endfor %}
-
-            </ul>
         </div>
         {% endfor %}
 
@@ -113,15 +129,15 @@
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function () {
         const searchInput = document.getElementById("search-stu-input");
         const searchList = document.getElementById("search-inquiries-list");
-    
-        searchInput.addEventListener("blur", function() {
+
+        searchInput.addEventListener("blur", function () {
             setTimeout(() => searchList.style.display = "none", 200);
         });
-    
-        searchInput.addEventListener("focus", function() {
+
+        searchInput.addEventListener("focus", function () {
             searchList.style.display = "block";
         });
     });
@@ -147,7 +163,7 @@
 
             sessionStorage.removeItem("inquiriesPosition");
         }
-            window.addEventListener("beforeunload", function () {
+        window.addEventListener("beforeunload", function () {
             sessionStorage.setItem("inquiriesPosition", container.scrollLeft);
         });
 
@@ -158,9 +174,9 @@
                 dateCards[i].querySelector('ul.list-group').children[0].classList.add("bg-dark", "text-white", "border-dark");
                 break;
             }
-            scrollOffset +=  gap + cardWidth;
+            scrollOffset += gap + cardWidth;
         }
-        scrollOffset -= gap*2 + cardWidth;
+        scrollOffset -= gap * 2 + cardWidth;
 
         if (!scrollPosition) {
             container.scrollTo({
@@ -170,6 +186,5 @@
         }
     });
 </script>
-
 
 {% endblock dashboard %}

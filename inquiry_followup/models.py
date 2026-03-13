@@ -96,6 +96,7 @@ class Inquiry(models.Model):
     stationary_partner = models.ForeignKey(StationaryPartner, on_delete=models.SET_NULL, null=True, blank=True, related_name='inquiries')
     lead_type = models.CharField(max_length=20, choices=LEAD_TYPE_CHOICES, default='Unverified')
     existing_member = models.BooleanField(default=False)
+    session = models.ForeignKey('registration.AcademicSession', on_delete=models.SET_NULL, null=True, blank=True, related_name='inquiries')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

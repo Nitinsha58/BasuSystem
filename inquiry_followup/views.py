@@ -5,6 +5,7 @@ from collections import defaultdict
 from django.db.models import Max, Q
 from django.contrib import messages
 from django.utils.timezone import localtime, now
+from registration.models import AcademicSession
 
 
 from django.utils import timezone
@@ -47,6 +48,8 @@ def inquiries(request):
 
     merged_dict = {date: inquiry_followup_dict[date] for date in dates}
 
+    total_inquiries = Inquiry.objects.count()
+
     return render(request, 'inquiry_followup/inquiries.html', {
         'dates': merged_dict,
         'followup_status': FollowUpStatus.objects.all(),
@@ -54,7 +57,7 @@ def inquiries(request):
         'current_month': first_day,
         'prev_month': (first_day - timedelta(days=1)),
         'next_month': (last_day + timedelta(days=1)),
-        'total_inquiries': Inquiry.objects.count(),
+        'total_inquiries': total_inquiries,
     })
 
 def inquiry(request, inquiry_id):
@@ -62,6 +65,7 @@ def inquiry(request, inquiry_id):
     subjects = Subject.objects.all()
     referrals = Referral.objects.all()
     lead_types = Inquiry.LEAD_TYPE_CHOICES
+    academic_sessions = AcademicSession.objects.all().order_by('-start_date')
     inquiry_obj = Inquiry.objects.filter(id=inquiry_id).first()
     if not inquiry_obj:
         messages.error(request, 'Invalid Inquiry')
@@ -88,12 +92,14 @@ def inquiry(request, inquiry_id):
         school_name = request.POST.get("school")
         address = request.POST.get("address")
         lead_type = request.POST.get("lead_type")
+        session_id = request.POST.get("session_id")
 
         # update inquiry accordingly 
         inquiry_obj.student_name = student_name
         inquiry_obj.school = school_name
         inquiry_obj.address = address
         inquiry_obj.lead_type = lead_type
+        inquiry_obj.session_id = session_id if session_id else None
 
         # Update many-to-many relationships
         inquiry_obj.classes.set(selected_classes)
@@ -113,6 +119,7 @@ def inquiry(request, inquiry_id):
         'referrals': referrals,
         'lead_types': lead_types,
         'latest_followup': latest_followup,
+        'academic_sessions': academic_sessions,
     })
 
 def create_followup(request, inquiry_id):
@@ -227,7 +234,8 @@ def create_inquiry(request):
             phone=phone,
             referral_id=referral_source,
             existing_member=existing_member,
-            lead_type='Verified'
+            lead_type='Verified',
+            session=AcademicSession.get_active(),
         )
 
         # Add many-to-many relationships (if applicable)
@@ -291,7 +299,8 @@ def create_referral_inquiry(request):
             address=partner.address,
             phone=phone,
             stationary_partner=partner,
-            existing_member=existing_member
+            existing_member=existing_member,
+            session=AcademicSession.get_active(),
         )
 
         # Add many-to-many relationships (if applicable)

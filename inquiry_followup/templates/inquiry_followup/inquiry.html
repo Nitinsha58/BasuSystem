@@ -20,48 +20,58 @@
 
         <form action="" id="update-inquiry-form" method="post" class="d-none bg-light rounded my-2 mb-4 p-2">
             {% csrf_token %}
-            <p  class="border-0 h2 rounded">Update Inquiry</p>
+            <p class="border-0 h2 rounded">Update Inquiry</p>
             <div class="d-flex gap-4">
                 <div class="col-md-3">
                     <label for="student_name" class="form-label">Name</label>
-                    <input id="student_name" name="student_name" value="{{inquiry.student_name}}" class="rounded form-control">
+                    <input id="student_name" name="student_name" value="{{inquiry.student_name}}"
+                        class="rounded form-control">
                 </div>
                 <div class="col-md-3">
                     <label for="classes" class="form-label">Classes</label>
                     <select id="classes" multiple size="3" name="classes" class="form-select">
                         {% for cls in classes %}
-                        <option value="{{ cls.id }}" 
-                        {% if cls in inquiry.classes.all %} selected {% endif %}>
-                        {{ cls.name }}
+                        <option value="{{ cls.id }}" {% if cls in inquiry.classes.all %} selected {% endif %}>
+                            {{ cls.name }}
                         </option>
                         {% endfor %}
                     </select>
                 </div>
-        
+
                 <div class="col-md-3">
                     <label for="subjects" class="form-label">Subjects</label>
                     <select class="form-control" name="subjects" size="3" id="subjects" multiple>
-                      {% for subject in subjects %}
-                      <option value="{{ subject.id }}" 
-                        {% if subject in inquiry.subjects.all %} selected {% endif %}>
-                        {{ subject.name }}
-                      </option>
-                      {% endfor %}
+                        {% for subject in subjects %}
+                        <option value="{{ subject.id }}" {% if subject in inquiry.subjects.all %} selected {% endif %}>
+                            {{ subject.name }}
+                        </option>
+                        {% endfor %}
                     </select>
                 </div>
             </div>
-            
+
             <div class="row mt-3">
                 <div class="col-md-3">
                     <label for="school" class="form-label">School</label>
                     <input type="text" class="form-control" value="{{inquiry.school}}" name="school" id="school">
                 </div>
-                
+
                 <div class="col-md-3">
                     <label for="lead_type" class="form-label">Lead Type</label>
                     <select id="lead_type" name="lead_type" class="form-select">
                         {% for lead in lead_types %}
-                        <option value="{{ lead.0 }}" {% if inquiry.lead_type == lead.0 %} selected {% endif %}>{{ lead.1 }}</option>
+                        <option value="{{ lead.0 }}" {% if inquiry.lead_type == lead.0 %}selected{% endif %}>{{ lead.1 }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label for="session_id" class="form-label">Academic Session</label>
+                    <select id="session_id" name="session_id" class="form-select">
+                        <option value="">-- No Session --</option>
+                        {% for session in academic_sessions %}
+                        <option value="{{ session.id }}" {% if inquiry.session and inquiry.session.id == session.id %}selected{% endif %}>{{ session.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -73,20 +83,25 @@
             </div>
             <div class="col-md-3 mt-2">
                 <a id="cancel-inquiry-button" class="btn btn-primary px-4 py-2" style="height: fit-content;">Cancel</a>
-                <button type="submit" class="btn btn-warning px-4 py-2" style="height: fit-content;">Update Inquiry</button>
+                <button type="submit" class="btn btn-warning px-4 py-2" style="height: fit-content;">Update
+                    Inquiry</button>
             </div>
         </form>
         <div class="d-flex justify-content-between ">
-            <p  class="border-0 h2 rounded d-flex justify-content-center align-items-center">{{inquiry.student_name}} </p>
+            <p class="border-0 h2 rounded d-flex justify-content-center align-items-center">{{inquiry.student_name}} - {{inquiry.session}}</p>
+            </p>
             <div class="d-flex gap-2 position-relative pb-4">
-                <button id="update-inquiry-button" class="btn btn-warning px-4 py-2" style="height: fit-content;">Update Inquiry</button>
-                <a href="{% url 'delete_inquiry' inquiry.id %}" class="btn btn-danger px-4 py-2" style="height: fit-content;">Delete Inquiry</a>
-                <span class="m-0 me-2 mt-2 position-absolute end-0 bottom-0" style="font-size: 14px; translate: transformY(-12);">On <span class="fw-semibold" id="next-followup-date-{{forloop.counter}}">{{inquiry.created_at|date:'d M Y, h:i A'}}</span></span>
+                <button id="update-inquiry-button" class="btn btn-warning px-4 py-2" style="height: fit-content;">Update
+                    Inquiry</button>
+                <a href="{% url 'delete_inquiry' inquiry.id %}" class="btn btn-danger px-4 py-2"
+                    style="height: fit-content;">Delete Inquiry</a>
+                <span class="m-0 me-2 mt-2 position-absolute end-0 bottom-0"
+                    style="font-size: 14px; translate: transformY(-12);">On <span class="fw-semibold" id="next-followup-date-{{forloop.counter}}">{{inquiry.created_at|date:'d M Y, h:i A'}}</span></span>
             </div>
-        </div> 
+        </div>
         <p class="m-0 mb-1">
             {% with classes=inquiry.classes.all|join:", " subjects=inquiry.subjects.all|join:", " %}
-                {{ classes|title }} - {{ subjects|title }}
+            {{ classes|title }} - {{ subjects|title }}
             {% endwith %}
         </p>
 
@@ -95,81 +110,108 @@
 
             <p class="my-1"><span class="fw-semibold">School: </span> {{inquiry.school}}</p>
             <p class="my-1"><span class="fw-semibold">Address: </span> {{inquiry.address}}</p>
-            <p class="my-1"><span class="fw-semibold">Referral: </span> {% if inquiry.stationary_partner %} {{inquiry.stationary_partner.name}}-{{inquiry.stationary_partner.address}} {% else  %} {{inquiry.referral}}  {% endif%}</p>
-            
+            <p class="my-1"><span class="fw-semibold">Referral: </span> {% if inquiry.stationary_partner %}
+                {{inquiry.stationary_partner.name}}-{{inquiry.stationary_partner.address}} {% else %}
+                {{inquiry.referral}} {% endif%}</p>
+
             <p class="my-1"><span class="fw-semibold">Lead Type: </span> {{inquiry.lead_type}}</p>
-            <p class="my-1"><span class="fw-semibold">Existing Parnet: </span> 
+            <p class="my-1"><span class="fw-semibold">Session: </span> {% if inquiry.session %}{{inquiry.session.name}}{% else %}—{% endif %}</p>
+            <p class="my-1"><span class="fw-semibold">Existing Parnet: </span>
                 {% if inquiry.existing_member %}
-                    Yes
+                Yes
                 {% else %}
-                    No
+                No
                 {% endif %}
             </p>
         </div>
-        <p class="m-0" style="font-size: 14px;">Last Followup On <span class="fw-semibold" id="next-followup-date-{{forloop.counter}}">{{latest_followup.created_at|date:'d M Y, h:i A'}}</span></span>
+        <p class="m-0" style="font-size: 14px;">Last Followup On <span class="fw-semibold"
+                id="next-followup-date-{{forloop.counter}}">{{latest_followup.created_at|date:'d M Y, h:i A'}}</span></span>
     </div>
 
     <div class="d-flex g-4 w-100 dates-group pb-3">
         {% for status, followup_list in followups.items %}
-        <div class="card date-card" style="min-width: 20rem; height: fit-content; border: none;" data-date="{{ date|date:'Y-m-d' }}">
+        <div class="card date-card" style="min-width: 20rem; height: fit-content; border: none;"
+            data-date="{{ date|date:'Y-m-d' }}">
             <ul class="list-group" style="border: none;">
-                <li class="list-group-item text-dark rounded"  style="background: {{status.color}};">{{ status.name |title }}</li>
+                <li class="list-group-item text-dark rounded" style="background: {{status.color}};">{{ status.name|title }}</li>
 
-                    <li class="list-group-item p-2 bg-light rounded my-2 border-1">
-                        <form class="d-flex flex-column gap-2 mb-2 input-form" method="post" action="{% url 'create_followup' inquiry.id %}">
-                            {% csrf_token %}
-                            <select hidden class="form-select" id="status" name="status" aria-label="select status" required>
-                                {% for sts in followup_status %}
-                                <option value="{{sts.id}}" {% if sts == status %} selected {% endif %} >{{sts.name}}</option>
-                                {% endfor %}
-                            </select>
-                            <textarea type="text" class="form-control" id="description-{{forloop.counter}}" name="description" placeholder="Followup details..." rows="2" required></textarea>
-                            <div class="d-flex justify-content-between align-items-center" id="followup-gap-group-{{forloop.counter}}">
-                                <p id="next-followup-label-{{forloop.counter}}" class="m-0">Next followup on<br> <span class="" id="next-followup-date-{{forloop.counter}}">20 Feb 25</span></p>
-                                <div class="d-flex ms-auto p-1 px-2 rounded m-0" style="width: fit-content; background-color: white;">
-                                    <button id="decrement-btn-{{forloop.counter}}" class="btn bg-danger-subtle m-0 " type="button">-</button>
-                                    <input id="count-input-{{forloop.counter}}" name="followup_days_gap" readonly class="m-0 border-0 rounded d-flex justify-content-center align-items-center" style="width: 40px; height: 40px; padding: 7px; text-align: center;" value="0">
-                                    <button id="increment-btn-{{forloop.counter}}" class="btn bg-success-subtle m-0 " type="button">+</button>
-                                </div>
+                <li class="list-group-item p-2 bg-light rounded my-2 border-1">
+                    <form class="d-flex flex-column gap-2 mb-2 input-form" method="post"
+                        action="{% url 'create_followup' inquiry.id %}">
+                        {% csrf_token %}
+                        <select hidden class="form-select" id="status" name="status" aria-label="select status"
+                            required>
+                            {% for sts in followup_status %}
+                            <option value="{{sts.id}}" {% if sts == status %} selected {% endif %}>{{sts.name}}</option>
+                            {% endfor %}
+                        </select>
+                        <textarea type="text" class="form-control" id="description-{{forloop.counter}}"
+                            name="description" placeholder="Followup details..." rows="2" required></textarea>
+                        <div class="d-flex justify-content-between align-items-center"
+                            id="followup-gap-group-{{forloop.counter}}">
+                            <p id="next-followup-label-{{forloop.counter}}" class="m-0">Next followup on<br> <span
+                                    class="" id="next-followup-date-{{forloop.counter}}">20 Feb 25</span></p>
+                            <div class="d-flex ms-auto p-1 px-2 rounded m-0"
+                                style="width: fit-content; background-color: white;">
+                                <button id="decrement-btn-{{forloop.counter}}" class="btn bg-danger-subtle m-0 "
+                                    type="button">-</button>
+                                <input id="count-input-{{forloop.counter}}" name="followup_days_gap" readonly
+                                    class="m-0 border-0 rounded d-flex justify-content-center align-items-center"
+                                    style="width: 40px; height: 40px; padding: 7px; text-align: center;" value="0">
+                                <button id="increment-btn-{{forloop.counter}}" class="btn bg-success-subtle m-0 "
+                                    type="button">+</button>
                             </div>
+                        </div>
 
-                            <div id="btn-group-{{forloop.counter}}" style="display: none;" class="btn-container w-100 justify-content-between">
-                                <button type="submit" class="btn btn-success px-4">Submit</button>
-                                <a href="" class="btn btn-primary px-4">Cancel</a>
-                            </div>
-                        </form>
-                    </li>
+                        <div id="btn-group-{{forloop.counter}}" style="display: none;"
+                            class="btn-container w-100 justify-content-between">
+                            <button type="submit" class="btn btn-success px-4">Submit</button>
+                            <a href="" class="btn btn-primary px-4">Cancel</a>
+                        </div>
+                    </form>
+                </li>
 
-                    {% for followup in followup_list %}
-                        <li class="list-group-item p-2 my-2 border-1 rounded bg-light-subtle ">
-                            <form class=" d-flex flex-column gap-2 mb-2 update-form" method="post" action="{% url 'update_followup' followup.inquiry.id followup.id %}">
-                                {% csrf_token %}
-                                <select class="form-select" id="status" name="status"  {% if followup.status.color %} style="background: {{followup.status.color}}; width: fit-content;" {% endif %} required>
-                                    {% for status in followup_status %}
-                                    <option value="{{status.id}}" {% if followup.status == status %} selected {% endif %}  >{{status.name}}</option>
-                                    {% endfor %}
-                                </select>
-                                {% if followup.description %}
-                                    <textarea type="text" class="form-control" id="update-description" name="description" placeholder="Followup details..." rows="2">{{followup.description|title}}</textarea>
-                                {% else %}
-                                    <textarea style="display: none;" type="text" class="form-control" id="update-description" name="description" placeholder="Followup details..." rows="2"></textarea>
-                                {% endif %}
-                                
-                                <p class="m-0" style="font-size: 12px;">On <span class="fw-semibold" id="next-followup-date-{{forloop.counter}}">{{followup.created_at|date:'d M Y, h:i A'}}</span></p>
-                                {% if followup.followup_date %}
-                                <p class="m-0">Next followup on <span class="fw-semibold" id="next-followup-date-{{forloop.counter}}">{{followup.followup_date|date:'d M Y'}}</span></p>
-                                {% endif %}
-                                <div id="update-btn-group" style="display: none;" class="btn-container w-100 justify-content-between">
-                                    <button type="submit" class="btn btn-warning px-4">Update</button>
-                                    <a href="{% url 'delete_followup' followup.inquiry.id followup.id %}" class="btn btn-danger px-4">Delete</a>
-                                </div>
-                            </form>
-                            {% if followup.admission_counsellor %}
-                                <p class="m-0 me-2 mt-2 position-absolute end-0 top-0" style="font-size: 14px;">{{followup.admission_counsellor.user.first_name}} {{followup.admission_counsellor.user.last_name}}</p>
-                            {% endif %}
-                        </li>
+                {% for followup in followup_list %}
+                <li class="list-group-item p-2 my-2 border-1 rounded bg-light-subtle ">
+                    <form class=" d-flex flex-column gap-2 mb-2 update-form" method="post"
+                        action="{% url 'update_followup' followup.inquiry.id followup.id %}">
+                        {% csrf_token %}
+                        <select class="form-select" id="status" name="status" {% if followup.status.color %}
+                            style="background: {{followup.status.color}}; width: fit-content;" {% endif %} required>
+                            {% for status in followup_status %}
+                            <option value="{{status.id}}" {% if followup.status == status %} selected {% endif %}>
+                                {{status.name}}</option>
+                            {% endfor %}
+                        </select>
+                        {% if followup.description %}
+                        <textarea type="text" class="form-control" id="update-description" name="description"
+                            placeholder="Followup details..." rows="2">{{followup.description|title}}</textarea>
+                        {% else %}
+                        <textarea style="display: none;" type="text" class="form-control" id="update-description"
+                            name="description" placeholder="Followup details..." rows="2"></textarea>
+                        {% endif %}
 
-                    {% endfor %}
+                        <p class="m-0" style="font-size: 12px;">On <span class="fw-semibold"
+                                id="next-followup-date-{{forloop.counter}}">{{followup.created_at|date:'d M Y, h:i A'}}</span></p>
+                        {% if followup.followup_date %}
+                        <p class="m-0">Next followup on <span class="fw-semibold"
+                                id="next-followup-date-{{forloop.counter}}">{{followup.followup_date|date:'d M Y'}}</span></p>
+                        {% endif %}
+                        <div id="update-btn-group" style="display: none;"
+                            class="btn-container w-100 justify-content-between">
+                            <button type="submit" class="btn btn-warning px-4">Update</button>
+                            <a href="{% url 'delete_followup' followup.inquiry.id followup.id %}"
+                                class="btn btn-danger px-4">Delete</a>
+                        </div>
+                    </form>
+                    {% if followup.admission_counsellor %}
+                    <p class="m-0 me-2 mt-2 position-absolute end-0 top-0" style="font-size: 14px;">
+                        {{followup.admission_counsellor.user.first_name}}
+                        {{followup.admission_counsellor.user.last_name}}</p>
+                    {% endif %}
+                </li>
+
+                {% endfor %}
 
             </ul>
         </div>
@@ -183,7 +225,7 @@
     forms.forEach((form, index) => {
         const inputs = form.querySelectorAll("input, select, textarea");
         const btnContainer = document.getElementById(`btn-group-${index + 1}`);
-        const description = form.querySelector(`#description-${index+1}`);
+        const description = form.querySelector(`#description-${index + 1}`);
 
         const countInput = form.querySelector(`#count-input-${index + 1}`);
         const nextFollowupDate = form.querySelector(`#next-followup-date-${index + 1}`);
@@ -300,27 +342,27 @@
 </script>
 
 <script>
-function estimateRowsSimple(textarea) {
-  const avgCharWidth = 7.2; // average for ~16px font
-  const textLength = textarea.value.length;
-  const textareaWidth = textarea.clientWidth;
+    function estimateRowsSimple(textarea) {
+        const avgCharWidth = 7.2; // average for ~16px font
+        const textLength = textarea.value.length;
+        const textareaWidth = textarea.clientWidth;
 
-  // Add line breaks (\n) as full rows
-  const newlines = textarea.value.split('\n').length - 1;
+        // Add line breaks (\n) as full rows
+        const newlines = textarea.value.split('\n').length - 1;
 
-  const estimatedWrappedRows = Math.ceil((textLength * avgCharWidth) / textareaWidth);
-  const estimatedTotalRows = Math.max(2, estimatedWrappedRows + newlines);
-  textarea.rows = estimatedTotalRows;
-}
+        const estimatedWrappedRows = Math.ceil((textLength * avgCharWidth) / textareaWidth);
+        const estimatedTotalRows = Math.max(2, estimatedWrappedRows + newlines);
+        textarea.rows = estimatedTotalRows;
+    }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const textareas = document.querySelectorAll('textarea.form-control');
-    textareas.forEach(textarea => {
-        estimateRowsSimple(textarea);
-        textarea.addEventListener('input', () => estimateRowsSimple(textarea));
-        window.addEventListener('resize', () => estimateRowsSimple(textarea)); // Optional
+    document.addEventListener('DOMContentLoaded', () => {
+        const textareas = document.querySelectorAll('textarea.form-control');
+        textareas.forEach(textarea => {
+            estimateRowsSimple(textarea);
+            textarea.addEventListener('input', () => estimateRowsSimple(textarea));
+            window.addEventListener('resize', () => estimateRowsSimple(textarea)); // Optional
+        });
     });
-});
 </script>
 
 
