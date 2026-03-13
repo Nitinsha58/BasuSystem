@@ -29,6 +29,7 @@ from user.models import BaseUser
 from django.contrib.auth.decorators import login_required
 from django.forms import inlineformset_factory
 from django.core.exceptions import ValidationError
+from django.http import JsonResponse
 
 from django.db.models import Q
 from django.urls import reverse
@@ -46,6 +47,131 @@ from .forms import (
 )
 
 from .models import CourseOfferingSubject, CourseOfferingSurchargeRule
+
+
+@login_required(login_url='login')
+def api_course_offering_options(request):
+    """Return active course offerings for a given session (+ optional class).
+
+    Query params:
+    - session: AcademicSession.id (required)
+    - class_id: ClassName.id (optional)
+    """
+
+    session_id = (request.GET.get('session') or '').strip()
+    class_id = (request.GET.get('class_id') or '').strip()
+
+    if not session_id or not str(session_id).isdigit():
+        return JsonResponse({"ok": False, "error": "Missing/invalid session."}, status=400)
+
+    qs = (
+        CourseOffering.objects.filter(session_id=int(session_id), active=True)
+        .select_related('class_name')
+        .order_by('name')
+    )
+    if class_id and str(class_id).isdigit():
+        qs = qs.filter(class_name_id=int(class_id))
+
+    items = []
+    for co in qs:
+        class_label = getattr(co.class_name, 'name', '')
+        items.append({
+            "id": co.id,
+            "name": co.name,
+            "class_id": co.class_name_id,
+            "class_name": class_label,
+            "label": f"{co.name} ({class_label})" if class_label else co.name,
+        })
+
+    return JsonResponse({"ok": True, "items": items})
+
+
+@login_required(login_url='login')
+def api_course_offering_breakdown(request, offering_id: int):
+    """Return course details + fee breakdown for the selected subject IDs.
+
+    Query params:
+    - session: AcademicSession.id (optional but recommended)
+    - class_id: ClassName.id (optional but recommended)
+    - subjects / subjects[]: repeated subject IDs (optional)
+    """
+
+    offering = get_object_or_404(
+        CourseOffering.objects.select_related('session', 'class_name'),
+        id=offering_id,
+        active=True,
+    )
+
+    session_id = (request.GET.get('session') or '').strip()
+    class_id = (request.GET.get('class_id') or '').strip()
+    if session_id and str(session_id).isdigit() and offering.session_id != int(session_id):
+        return JsonResponse({"ok": False, "error": "Course does not belong to this session."}, status=400)
+    if class_id and str(class_id).isdigit() and offering.class_name_id != int(class_id):
+        return JsonResponse({"ok": False, "error": "Course does not belong to this class."}, status=400)
+
+    raw_subject_ids = (
+        request.GET.getlist('subjects[]')
+        or request.GET.getlist('subjects')
+        or request.GET.getlist('subject_ids[]')
+        or request.GET.getlist('subject_ids')
+    )
+    selected_subject_ids = [int(s) for s in raw_subject_ids if str(s).isdigit()]
+
+    subject_rows = list(
+        CourseOfferingSubject.objects.filter(course_offering=offering)
+        .select_related('subject')
+        .order_by('subject__name')
+        .values('subject_id', 'subject__name', 'percentage')
+    )
+
+    allowed_ids = {int(r['subject_id']) for r in subject_rows}
+    selected_ids_set = {int(s) for s in selected_subject_ids if int(s) in allowed_ids}
+
+    try:
+        breakdown = offering.calculate_fee_for_subject_ids(list(selected_ids_set))
+    except ValidationError as e:
+        return JsonResponse({"ok": False, "error": str(e)}, status=400)
+
+    total_subjects = len(subject_rows)
+    selected_count = len(selected_ids_set)
+    opted_out = max(total_subjects - selected_count, 0)
+
+    subjects_payload = []
+    for r in subject_rows:
+        sid = int(r['subject_id'])
+        subjects_payload.append({
+            "id": sid,
+            "name": r['subject__name'],
+            "percentage": str(Decimal(r['percentage'] or 0).quantize(Decimal('0.01'))),
+            "selected": sid in selected_ids_set,
+        })
+
+    return JsonResponse({
+        "ok": True,
+        "course": {
+            "id": offering.id,
+            "name": offering.name,
+            "target_focus": offering.target_focus or "",
+            "session_id": offering.session_id,
+            "session_name": getattr(offering.session, 'name', ''),
+            "class_id": offering.class_name_id,
+            "class_name": getattr(offering.class_name, 'name', ''),
+            "annual_fee": str(Decimal(breakdown.get('annual_fee') or 0).quantize(Decimal('0.01'))),
+        },
+        "selection": {
+            "total_subjects": total_subjects,
+            "selected_count": selected_count,
+            "opted_out": opted_out,
+        },
+        "subjects": subjects_payload,
+        "summary": {
+            "selected_subject_pct": str(Decimal(breakdown.get('selected_subject_pct') or 0).quantize(Decimal('0.01'))),
+            "surcharge_pct": str(Decimal(breakdown.get('surcharge_pct') or 0).quantize(Decimal('0.01'))),
+            "subject_component_fee": str(Decimal(breakdown.get('subject_component_fee') or 0).quantize(Decimal('0.01'))),
+            "surcharge_fee": str(Decimal(breakdown.get('surcharge_fee') or 0).quantize(Decimal('0.01'))),
+            "total_fee": str(Decimal(breakdown.get('total_fee') or 0).quantize(Decimal('0.01'))),
+        },
+    })
 
 
 def _get_selected_session(request):

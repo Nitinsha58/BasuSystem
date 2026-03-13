@@ -79,6 +79,10 @@ from .views import (
     course_offering_create,
     course_offering_update,
     course_offering_delete,
+
+    # Course Offerings APIs
+    api_course_offering_options,
+    api_course_offering_breakdown,
     )
 
 
@@ -108,6 +112,9 @@ urlpatterns = [
     path('courses/create/', course_offering_create, name='course_offering_create'),
     path('courses/<int:offering_id>/edit/', course_offering_update, name='course_offering_update'),
     path('courses/<int:offering_id>/delete/', course_offering_delete, name='course_offering_delete'),
+
+    path('api/course-offerings/', api_course_offering_options, name='api_course_offering_options'),
+    path('api/course-offerings/<int:offering_id>/breakdown/', api_course_offering_breakdown, name='api_course_offering_breakdown'),
 
     path('delete_installment/<uuid:stu_id>/<int:ins_id>', delete_installment, name='delete_installment'),
 

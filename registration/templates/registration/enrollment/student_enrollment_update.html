@@ -220,10 +220,9 @@
                     id="remarks">{% if enrollment and enrollment.remarks %}{{enrollment.remarks}}{% endif %}</textarea>
             </div>
 
-            <div class="col-md-3">
-            </div>
-
-            <div class="col-md-3">
+            <div class="col-md-7">
+                <label for="course-details" class="form-label">Course Details</label>
+                <div class="form-control bg-white" name="course-details" id="course-details"></div>
             </div>
         </div>
 
@@ -477,6 +476,192 @@
                 updateMismatchWarning();
             });
         }
+    })();
+</script>
+
+<script>
+    (function () {
+        const sessionId = String("{{ selected_session.id }}");
+        const initialCourseId = String("{% if enrollment and enrollment.course_offering_id %}{{ enrollment.course_offering_id }}{% endif %}");
+
+        const classSelect = document.getElementById('class_name');
+        const courseSelect = document.getElementById('course_offering');
+        const courseDetailsEl = document.getElementById('course-details');
+        const subjectInputs = Array.from(document.querySelectorAll('input[name="subjects[]"]'));
+
+        if (!courseSelect || !courseDetailsEl) return;
+
+        function fmtMoney(value) {
+            const num = Number(value || 0);
+            if (Number.isNaN(num)) return String(value ?? '0');
+            return num.toFixed(2);
+        }
+
+        function getSelectedSubjectIds() {
+            return subjectInputs.filter((el) => el.checked).map((el) => String(el.value));
+        }
+
+        function clearCourseDetails(message) {
+            courseDetailsEl.innerHTML = '';
+            const p = document.createElement('div');
+            p.className = 'text-muted';
+            p.textContent = message;
+            courseDetailsEl.appendChild(p);
+        }
+
+        function setLoadingCourseDetails() {
+            clearCourseDetails('Loading course details...');
+        }
+
+        function buildCourseDetails(data) {
+            courseDetailsEl.innerHTML = '';
+
+            const heading = document.createElement('div');
+            heading.className = 'fw-semibold';
+            heading.textContent = data?.course?.name || 'Course';
+            courseDetailsEl.appendChild(heading);
+
+            if (data?.course?.target_focus) {
+                const tf = document.createElement('div');
+                tf.className = 'text-muted small mb-2';
+                tf.textContent = `Target focus: ${data.course.target_focus}`;
+                courseDetailsEl.appendChild(tf);
+            } else {
+                const spacer = document.createElement('div');
+                spacer.className = 'mb-2';
+                courseDetailsEl.appendChild(spacer);
+            }
+
+            const summary = data?.summary || {};
+            const selection = data?.selection || {};
+
+            const summaryGrid = document.createElement('div');
+            summaryGrid.className = 'row g-2 mb-2';
+
+            function addSummaryCol(label, value) {
+                const col = document.createElement('div');
+                col.className = 'col-12 col-md-4';
+                const box = document.createElement('div');
+                box.className = 'border rounded p-2';
+                const l = document.createElement('div');
+                l.className = 'text-muted small';
+                l.textContent = label;
+                const v = document.createElement('div');
+                v.className = 'fw-semibold';
+                v.textContent = value;
+                box.appendChild(l);
+                box.appendChild(v);
+                col.appendChild(box);
+                summaryGrid.appendChild(col);
+            }
+
+            addSummaryCol('Complete course fee', fmtMoney(data?.course?.annual_fee));
+            addSummaryCol('Selected subjects', `${selection.selected_count || 0} / ${selection.total_subjects || 0}`);
+            addSummaryCol('Surcharge', `${summary.surcharge_pct || '0.00'}% (${fmtMoney(summary.surcharge_fee)})`);
+
+            courseDetailsEl.appendChild(summaryGrid);
+
+            const totals = document.createElement('div');
+            totals.className = 'd-flex flex-wrap gap-3';
+
+            const t1 = document.createElement('div');
+            t1.innerHTML = `<span class="text-muted">Tuition (% subjects):</span> <strong>${fmtMoney(summary.subject_component_fee)}</strong> (${summary.selected_subject_pct || '0.00'}%)`;
+            const t2 = document.createElement('div');
+            t2.innerHTML = `<span class="text-muted">Final fees:</span> <strong>${fmtMoney(summary.total_fee)}</strong>`;
+            totals.appendChild(t1);
+            totals.appendChild(t2);
+            courseDetailsEl.appendChild(totals);
+        }
+
+        async function loadCourseOptions() {
+            const classId = classSelect ? String(classSelect.value || '') : '';
+            const url = new URL("{% url 'api_course_offering_options' %}", window.location.origin);
+            url.searchParams.set('session', sessionId);
+            if (classId) url.searchParams.set('class_id', classId);
+
+            const res = await fetch(url.toString(), { headers: { 'Accept': 'application/json' } });
+            const data = await res.json();
+            if (!res.ok || !data?.ok) throw new Error(data?.error || 'Unable to load courses');
+
+            const current = String(courseSelect.value || '') || initialCourseId;
+
+            // Keep the blank option
+            const blank = document.createElement('option');
+            blank.value = '';
+            blank.textContent = '---------';
+
+            courseSelect.innerHTML = '';
+            courseSelect.appendChild(blank);
+
+            let hasCurrent = false;
+            (data.items || []).forEach((item) => {
+                const opt = document.createElement('option');
+                opt.value = String(item.id);
+                opt.textContent = item.label || item.name;
+                if (String(item.id) === current) {
+                    opt.selected = true;
+                    hasCurrent = true;
+                }
+                courseSelect.appendChild(opt);
+            });
+
+            if (!hasCurrent) {
+                courseSelect.value = '';
+            }
+        }
+
+        async function loadCourseBreakdown() {
+            const courseId = String(courseSelect.value || '').trim();
+            if (!courseId) {
+                clearCourseDetails('Select a course to see details.');
+                return;
+            }
+
+            setLoadingCourseDetails();
+
+            const url = new URL(
+                "{% url 'api_course_offering_breakdown' 0 %}".replace('/0/', `/${courseId}/`),
+                window.location.origin
+            );
+            url.searchParams.set('session', sessionId);
+            if (classSelect && classSelect.value) url.searchParams.set('class_id', String(classSelect.value));
+            getSelectedSubjectIds().forEach((sid) => url.searchParams.append('subjects', sid));
+
+            const res = await fetch(url.toString(), { headers: { 'Accept': 'application/json' } });
+            const data = await res.json();
+            if (!res.ok || !data?.ok) {
+                clearCourseDetails(data?.error || 'Unable to load course details.');
+                return;
+            }
+            buildCourseDetails(data);
+        }
+
+        // Initial
+        clearCourseDetails('Select a course to see details.');
+        loadCourseOptions()
+            .then(loadCourseBreakdown)
+            .catch(() => {
+                // Fallback to server-rendered options if API fails
+                loadCourseBreakdown();
+            });
+
+        if (classSelect) {
+            classSelect.addEventListener('change', function () {
+                loadCourseOptions()
+                    .then(loadCourseBreakdown)
+                    .catch(() => clearCourseDetails('Unable to load courses for this class.'));
+            });
+        }
+
+        courseSelect.addEventListener('change', function () {
+            loadCourseBreakdown();
+        });
+
+        subjectInputs.forEach((s) => {
+            s.addEventListener('change', function () {
+                loadCourseBreakdown();
+            });
+        });
     })();
 </script>
 
