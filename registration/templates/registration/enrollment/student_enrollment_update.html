@@ -233,7 +233,10 @@
                 {% if subject.id in selected_subject_ids %}
                 <label class="checkbox-btn">
                     <input type="checkbox" name="subjects[]" checked value="{{subject.id}}">
-                    <span>{{subject.name}}</span>
+                    <span>
+                        {{subject.name}}
+                        <small class="m-0 subject-class-hint" style="display: none;"></small>
+                    </span>
                 </label>
                 {% endif %}
                 {% endfor %}
@@ -241,7 +244,10 @@
                 {% if subject.id not in selected_subject_ids %}
                 <label class="checkbox-btn">
                     <input type="checkbox" name="subjects[]" value="{{subject.id}}">
-                    <span>{{subject.name}}</span>
+                    <span>
+                        {{subject.name}}
+                        <small class="m-0 subject-class-hint" style="display: none;"></small>
+                    </span>
                 </label>
                 {% endif %}
                 {% endfor %}
@@ -320,6 +326,19 @@
             batchesBySubjectId.get(subjectId).push(b);
         });
 
+        function getEligibleSubjectIdSetForClassId(classId) {
+            const set = new Set();
+            const normalized = String(classId || '');
+            if (!normalized) return set;
+            batchInputs.forEach((b) => {
+                const batchClassId = String(b.dataset.classId || '');
+                const batchSubjectId = String(b.dataset.subjectId || '');
+                if (!batchClassId || !batchSubjectId) return;
+                if (batchClassId === normalized) set.add(batchSubjectId);
+            });
+            return set;
+        }
+
         const mismatchWarning = document.getElementById('mismatch-warning');
 
         function updateMismatchWarning() {
@@ -334,6 +353,63 @@
                 if (s.checked) set.add(String(s.value));
             });
             return set;
+        }
+
+        function updateSubjectVisibility() {
+            const selectedClassId = classSelect ? String(classSelect.value || '') : '';
+            const eligibleSubjectIds = getEligibleSubjectIdSetForClassId(selectedClassId);
+            const hasClass = !!selectedClassId;
+            const selectedClassName = (classSelect && classSelect.selectedOptions && classSelect.selectedOptions[0])
+                ? String(classSelect.selectedOptions[0].textContent || '').trim()
+                : '';
+
+            subjectInputs.forEach((s) => {
+                const label = s.closest('label.checkbox-btn');
+                if (!label) return;
+
+                const hint = label.querySelector('.subject-class-hint');
+                if (hint) {
+                    hint.textContent = selectedClassName;
+                    hint.style.display = hasClass && selectedClassName ? '' : 'none';
+                }
+
+                // Always keep selected subjects visible (prevents "losing" selection when toggling class)
+                if (s.checked) {
+                    label.style.display = '';
+                    return;
+                }
+
+                if (!hasClass) {
+                    label.style.display = 'none';
+                    return;
+                }
+
+                const subjectId = String(s.value || '');
+                label.style.display = eligibleSubjectIds.has(subjectId) ? '' : 'none';
+            });
+        }
+
+        function pruneSelectionsForClass() {
+            const selectedClassId = classSelect ? String(classSelect.value || '') : '';
+            if (!selectedClassId) return;
+
+            // Uncheck batches that don't belong to the selected class
+            batchInputs.forEach((b) => {
+                const batchClassId = String(b.dataset.classId || '');
+                if (b.checked && batchClassId && batchClassId !== selectedClassId) {
+                    b.checked = false;
+                }
+            });
+
+            const eligibleSubjectIds = getEligibleSubjectIdSetForClassId(selectedClassId);
+
+            // Uncheck subjects that have no eligible batch in the selected class
+            subjectInputs.forEach((s) => {
+                const subjectId = String(s.value || '');
+                if (s.checked && !eligibleSubjectIds.has(subjectId)) {
+                    s.checked = false;
+                }
+            });
         }
 
         function updateBatchVisibility() {
@@ -449,6 +525,7 @@
         // Initial pass: DO NOT auto-fix mismatches; just highlight them.
         subjectInputs.forEach((s) => recomputeMismatchForSubject(String(s.value)));
         updateMismatchWarning();
+        updateSubjectVisibility();
         updateBatchVisibility();
 
         batchInputs.forEach((b) => {
@@ -457,6 +534,7 @@
                 const subjectId = b.dataset.subjectId;
                 if (subjectId) recomputeMismatchForSubject(String(subjectId));
                 updateMismatchWarning();
+                updateSubjectVisibility();
                 updateBatchVisibility();
             });
         });
@@ -465,12 +543,16 @@
             s.addEventListener('change', function () {
                 recomputeMismatchForSubject(String(s.value));
                 updateMismatchWarning();
+                updateSubjectVisibility();
                 updateBatchVisibility();
             });
         });
 
         if (classSelect) {
             classSelect.addEventListener('change', function () {
+                // When class changes, drop invalid selections so we don't submit subjects/batches from another class.
+                pruneSelectionsForClass();
+                updateSubjectVisibility();
                 updateBatchVisibility();
                 subjectInputs.forEach((s) => recomputeMismatchForSubject(String(s.value)));
                 updateMismatchWarning();
