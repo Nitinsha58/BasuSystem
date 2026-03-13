@@ -120,6 +120,17 @@
                         </li>
                     </ul>
                 </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        SAT Tests
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{% url 'sat:paper_list' %}">Test Papers</a></li>
+                        <li><a class="dropdown-item" href="{% url 'sat:assignment_list' %}">Assignments</a></li>
+                        <li><a class="dropdown-item" href="{% url 'sat:result_list' %}">Results</a></li>
+                    </ul>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'inquiries' %}">Inquiries</a>
                 </li>

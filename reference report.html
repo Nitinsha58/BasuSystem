@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Report · BASU Nextgen Education</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --navy: #0d1b3e;
+  --navy2: #1e3163;
+  --gold: #c9921a;
+  --gold-lt: #fef3dc;
+  --green: #1a7a4a;
+  --green-lt: #e6f5ed;
+  --red: #c0392b;
+  --red-lt: #fdecea;
+  --amber: #c07a10;
+  --amber-lt: #fef0d8;
+  --blue: #1a6fa8;
+  --blue-lt: #e6f0fb;
+  --border: #e2e4e9;
+  --text: #1c1f2e;
+  --muted: #6b7280;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'IBM Plex Sans', sans-serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:var(--sans); background:var(--bg); color:var(--text); font-size:13px; }
+
+/* ── PAGE WRAPPER ── */
+.page { max-width:960px; margin:0 auto; padding:20px; }
+.page + .page { padding-top:0; }
+
+/* ── TOP HEADER BAR ── */
+.topbar {
+  background:var(--navy);
+  padding:0 24px;
+  display:flex; align-items:center; justify-content:space-between;
+  height:52px;
+  position:sticky; top:0; z-index:100;
+}
+.topbar-brand { font-size:13px; font-weight:700; color:#fff; letter-spacing:.03em; }
+.topbar-brand span { color:var(--gold); margin-left:6px; font-weight:400; font-size:11px; letter-spacing:.1em; text-transform:uppercase; }
+.topbar-meta { font-size:11px; color:rgba(255,255,255,.4); font-family:var(--mono); }
+
+/* ══════════════════════════════════════
+   PAGE 1 — HERO DASHBOARD
+══════════════════════════════════════ */
+
+/* ── STUDENT IDENTITY ROW ── */
+.identity-row {
+  display:grid;
+  grid-template-columns: 1fr auto;
+  gap:16px;
+  margin:16px 0;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-top:3px solid var(--navy);
+  border-radius:6px;
+  padding:16px 20px;
+  align-items:center;
+}
+.id-left { display:flex; align-items:center; gap:20px; }
+.id-avatar {
+  width:48px; height:48px; border-radius:50%;
+  background:var(--navy2);
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px; font-weight:700; color:#fff;
+  flex-shrink:0;
+}
+.id-name { font-size:20px; font-weight:700; color:var(--navy); }
+.id-meta { display:flex; gap:16px; margin-top:4px; }
+.id-chip {
+  font-size:11px; color:var(--muted); display:flex; align-items:center; gap:4px;
+}
+.id-chips-right { display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end; }
+.chip {
+  font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+  padding:4px 10px; border-radius:3px; white-space:nowrap;
+}
+.chip-navy { background:var(--navy); color:#fff; }
+.chip-gold { background:var(--gold-lt); color:var(--gold); border:1px solid #e8c87a; }
+.chip-green { background:var(--green-lt); color:var(--green); }
+.chip-red { background:var(--red-lt); color:var(--red); }
+.chip-amber { background:var(--amber-lt); color:var(--amber); }
+
+/* ── SCORE HERO ROW ── */
+.score-hero {
+  display:grid;
+  grid-template-columns: 200px 1fr;
+  gap:16px;
+  margin-bottom:16px;
+}
+
+.score-main {
+  background:var(--navy);
+  border-radius:6px;
+  padding:20px;
+  display:flex; flex-direction:column; justify-content:center; align-items:center;
+  text-align:center;
+  position:relative; overflow:hidden;
+}
+.score-main::before {
+  content:'';
+  position:absolute; top:-30px; right:-30px;
+  width:100px; height:100px; border-radius:50%;
+  background:rgba(201,168,76,.12);
+}
+.score-big { font-size:52px; font-weight:700; color:#fff; line-height:1; font-family:var(--mono); }
+.score-denom { font-size:20px; color:rgba(255,255,255,.35); }
+.score-pct { font-size:22px; font-weight:700; color:var(--gold); margin-top:2px; }
+.score-label { font-size:10px; letter-spacing:.15em; text-transform:uppercase; color:rgba(255,255,255,.4); margin-top:6px; }
+.score-grid { display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-top:12px; width:100%; }
+.sg-item { background:rgba(255,255,255,.06); border-radius:3px; padding:8px; text-align:center; }
+.sg-val { font-size:18px; font-weight:700; font-family:var(--mono); }
+.sg-val.c { color:#4ade80; }
+.sg-val.w { color:#f87171; }
+.sg-sub { font-size:9px; color:rgba(255,255,255,.35); letter-spacing:.1em; text-transform:uppercase; margin-top:2px; }
+
+.score-panels { display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr; gap:16px; }
+.sp { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:16px 18px; display:flex; flex-direction:column; justify-content:space-between; }
+.sp-label { font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); font-weight:600; margin-bottom:4px; }
+.sp-val { font-size:26px; font-weight:700; font-family:var(--mono); }
+.sp-sub { font-size:11px; color:var(--muted); margin-top:2px; }
+.sp.green-top { border-top:3px solid var(--green); }
+.sp.amber-top { border-top:3px solid var(--amber); }
+.sp.gold-top { border-top:3px solid var(--gold); }
+.sp.red-top { border-top:3px solid var(--red); }
+
+/* ── MAIN GRID ── */
+.main-grid {
+  display:grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap:16px;
+  margin-bottom:16px;
+}
+.main-grid-2 {
+  display:grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap:16px;
+  margin-bottom:16px;
+}
+.main-grid-4 {
+  display:grid;
+  grid-template-columns: repeat(4,1fr);
+  gap:16px;
+  margin-bottom:16px;
+}
+
+/* ── CARD ── */
+.card {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:6px;
+  padding:16px;
+  overflow:hidden;
+}
+.card-title {
+  font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+  color:var(--muted); margin-bottom:12px; display:flex; align-items:center; gap:6px;
+}
+.card-title .dot {
+  width:6px; height:6px; border-radius:50%; flex-shrink:0;
+}
+.dot-navy { background:var(--navy); }
+.dot-gold { background:var(--gold); }
+.dot-green { background:var(--green); }
+.dot-red { background:var(--red); }
+.dot-amber { background:var(--amber); }
+
+.chart-h160 { height:160px; position:relative; }
+.chart-h180 { height:180px; position:relative; }
+.chart-h200 { height:200px; position:relative; }
+
+/* ── CATEGORY MINI METERS ── */
+.cat-rows { display:flex; flex-direction:column; gap:10px; }
+.cat-row { display:flex; align-items:center; gap:8px; }
+.cat-name { font-size:11px; font-weight:500; color:var(--text); width:110px; flex-shrink:0; }
+.cat-track { flex:1; background:var(--bg); border-radius:3px; height:8px; overflow:hidden; }
+.cat-fill { height:100%; border-radius:3px; }
+.cat-pct { font-size:11px; font-family:var(--mono); color:var(--muted); width:32px; text-align:right; flex-shrink:0; }
+.cat-score { font-size:10px; font-family:var(--mono); color:var(--muted); width:28px; text-align:right; flex-shrink:0; }
+
+/* ── SUBJECT TILES ── */
+.subj-tiles { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.subj-tile {
+  border:1px solid var(--border); border-radius:5px; padding:12px;
+  display:flex; flex-direction:column; gap:6px;
+}
+.st-name { font-size:10px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+.st-val { font-size:22px; font-weight:700; font-family:var(--mono); }
+.st-bar-track { background:var(--bg); border-radius:2px; height:4px; margin-top:2px; }
+.st-bar-fill { height:100%; border-radius:2px; }
+
+/* ── SCHOLARSHIP STRIP ── */
+.schol-strip {
+  background:var(--navy);
+  border-radius:6px;
+  padding:16px 20px;
+  display:flex; align-items:center; gap:20px;
+  margin-bottom:16px;
+}
+.schol-pct { font-size:40px; font-weight:700; color:var(--gold); font-family:var(--mono); line-height:1; white-space:nowrap; }
+.schol-divider { width:1px; height:40px; background:rgba(255,255,255,.15); }
+.schol-label { font-size:10px; letter-spacing:.15em; text-transform:uppercase; color:rgba(255,255,255,.5); margin-bottom:4px; }
+.schol-tier { font-size:15px; font-weight:700; color:#fff; }
+.schol-desc { font-size:12px; color:rgba(255,255,255,.5); margin-top:4px; }
+.schol-badge-col { margin-left:auto; text-align:right; }
+.schol-badge {
+  background:rgba(201,168,76,.15); border:1px solid rgba(201,168,76,.5);
+  color:var(--gold); font-size:10px; font-weight:700; letter-spacing:.1em;
+  text-transform:uppercase; padding:5px 14px; border-radius:3px; display:inline-block;
+}
+.schol-basis { font-size:11px; color:rgba(255,255,255,.3); margin-top:6px; }
+
+/* ── STRENGTH / GAP COLUMNS ── */
+.sg-col { display:flex; flex-direction:column; gap:6px; }
+.sg-item2 {
+  display:flex; align-items:flex-start; gap:8px;
+  padding:8px 10px; border-radius:4px;
+}
+.sg-item2.s { background:var(--green-lt); }
+.sg-item2.g { background:var(--red-lt); }
+.sg-icon { font-size:12px; line-height:1.6; flex-shrink:0; }
+.sg-text { font-size:11px; line-height:1.5; }
+.sg-item2.s .sg-text { color:var(--green); }
+.sg-item2.g .sg-text { color:var(--red); }
+
+/* ── ARCHETYPE CARD ── */
+.archetype {
+  background:linear-gradient(135deg, var(--navy) 0%, var(--navy2) 100%);
+  border-radius:6px;
+  padding:16px 18px;
+}
+.arc-tag { font-size:9px; letter-spacing:.15em; text-transform:uppercase; color:rgba(255,255,255,.4); margin-bottom:6px; }
+.arc-title { font-size:15px; font-weight:700; color:#fff; margin-bottom:4px; }
+.arc-sub { font-size:11px; color:rgba(255,255,255,.45); line-height:1.5; margin-bottom:12px; }
+.arc-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+.arc-stat { background:rgba(255,255,255,.07); border-radius:4px; padding:8px; text-align:center; }
+.arc-stat-val { font-size:16px; font-weight:700; color:var(--gold); font-family:var(--mono); }
+.arc-stat-lbl { font-size:9px; color:rgba(255,255,255,.35); letter-spacing:.08em; text-transform:uppercase; margin-top:2px; }
+
+/* ══════════════════════════════════════
+   PAGE 2 — QUESTION HEATMAP
+══════════════════════════════════════ */
+.page-label {
+  font-size:10px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--muted); font-weight:700; margin:20px 0 12px;
+  display:flex; align-items:center; gap:8px;
+}
+.page-label::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* ── Q GRID ── */
+.q-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin-bottom:16px; }
+.q-cell {
+  border-radius:5px; padding:10px 10px 8px;
+  border:1px solid transparent; position:relative; cursor:default;
+}
+.q-cell.correct { background:#edfaf4; border-color:#b5e8ce; }
+.q-cell.wrong { background:#fef1f1; border-color:#f5bfbf; }
+.q-num2 { font-size:9px; font-family:var(--mono); color:var(--muted); margin-bottom:4px; font-weight:500; }
+.q-topic { font-size:10px; font-weight:600; color:var(--text); line-height:1.3; margin-bottom:6px; }
+.q-bottom { display:flex; align-items:center; justify-content:space-between; margin-top:4px; }
+.q-ans-row { display:flex; gap:4px; align-items:center; }
+.q-ans {
+  font-size:10px; font-family:var(--mono); font-weight:700;
+  width:18px; height:18px; border-radius:3px; display:flex; align-items:center; justify-content:center;
+}
+.qa-given { background:rgba(0,0,0,.06); color:var(--text); }
+.qa-right { background:#bbf7d0; color:#166534; }
+.qa-wrong { background:#fecaca; color:#991b1b; }
+.q-arrow { font-size:9px; color:var(--muted); }
+.q-lvl { font-size:8px; font-weight:700; padding:2px 5px; border-radius:2px; letter-spacing:.06em; text-transform:uppercase; }
+.lvl1 { background:#dcfce7; color:#166534; }
+.lvl2 { background:#fef9c3; color:#854d0e; }
+.lvl3 { background:#fee2e2; color:#991b1b; }
+.q-result { font-size:12px; }
+
+/* Section header within q-grid */
+.q-section-header {
+  grid-column: 1/-1;
+  font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+  color:#fff; background:var(--navy); padding:7px 12px; border-radius:4px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.qsh-score { font-family:var(--mono); font-size:12px; color:var(--gold); }
+
+/* ── HEATMAP LEGEND ── */
+.hmap-legend {
+  display:flex; gap:16px; align-items:center;
+  font-size:11px; color:var(--muted); margin-bottom:12px;
+}
+.hl-dot { width:10px; height:10px; border-radius:2px; }
+.hl-correct { background:#bbf7d0; border:1px solid #86efac; }
+.hl-wrong { background:#fecaca; border:1px solid #fca5a5; }
+
+/* ══════════════════════════════════════
+   PAGE 3 — SKILLS + RECOMMENDATIONS
+══════════════════════════════════════ */
+
+/* ── SKILL MATRIX ── */
+.skill-matrix { display:flex; flex-direction:column; gap:6px; }
+.sm-row { display:flex; align-items:center; gap:10px; }
+.sm-label { font-size:11px; color:var(--text); width:200px; flex-shrink:0; font-weight:500; }
+.sm-track { flex:1; background:var(--bg); border-radius:3px; height:10px; overflow:hidden; position:relative; }
+.sm-fill { height:100%; border-radius:3px; }
+.sm-val { font-family:var(--mono); font-size:11px; color:var(--muted); width:36px; text-align:right; flex-shrink:0; }
+.sm-band { font-size:9px; font-weight:700; padding:2px 6px; border-radius:2px; letter-spacing:.06em; text-transform:uppercase; width:64px; text-align:center; flex-shrink:0; }
+
+/* ── NEXT STEPS ── */
+.steps-row { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+.step-card {
+  background:var(--surface); border:1px solid var(--border); border-radius:6px;
+  padding:14px; border-top:3px solid var(--navy);
+}
+.step-n { font-size:28px; font-weight:700; color:var(--navy); font-family:var(--mono); line-height:1; margin-bottom:6px; }
+.step-title { font-size:12px; font-weight:700; color:var(--navy); margin-bottom:6px; }
+.step-pills { display:flex; flex-wrap:wrap; gap:4px; }
+.step-pill {
+  font-size:10px; background:var(--bg); border:1px solid var(--border);
+  color:var(--muted); padding:3px 8px; border-radius:20px;
+}
+
+/* ── PARENT NOTE ── */
+.parent-note {
+  background:var(--navy); border-radius:6px; padding:20px 24px;
+  display:flex; gap:20px; align-items:flex-start; margin-bottom:16px;
+}
+.pn-icon { font-size:24px; flex-shrink:0; margin-top:2px; }
+.pn-content {}
+.pn-title { font-size:13px; font-weight:700; color:#fff; margin-bottom:8px; }
+.pn-text { font-size:12px; color:rgba(255,255,255,.5); line-height:1.7; }
+.pn-text strong { color:rgba(255,255,255,.8); }
+
+/* ── FOOTER ── */
+.footer {
+  background:var(--navy); padding:14px 24px;
+  display:flex; justify-content:space-between; align-items:center;
+  border-radius:0 0 6px 6px; margin-top:20px;
+}
+.footer-l { font-size:12px; font-weight:600; color:#fff; }
+.footer-r { font-size:10px; color:rgba(255,255,255,.3); font-family:var(--mono); text-align:right; line-height:1.6; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-brand">BASU Nextgen Education <span>Academic Performance Report</span></div>
+  <div class="topbar-meta">BNE-ENT-11-2025-047 · 22 Mar 2025</div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     PAGE 1
+══════════════════════════════════════ -->
+<div class="page">
+
+  <!-- IDENTITY ROW -->
+  <div class="identity-row">
+    <div class="id-left">
+      <div class="id-avatar">AS</div>
+      <div>
+        <div class="id-name">Aryan Sharma</div>
+        <div class="id-meta">
+          <span class="id-chip">🏫 Delhi Public School, Noida</span>
+          <span class="id-chip">📚 Class 10 → 11</span>
+          <span class="id-chip">📅 22 March 2025</span>
+        </div>
+      </div>
+    </div>
+    <div class="id-chips-right">
+      <span class="chip chip-navy">Class 11 Entrance</span>
+      <span class="chip chip-gold">🎓 40% Scholarship · Merit II</span>
+      <span class="chip chip-green">Logical Thinker</span>
+    </div>
+  </div>
+
+  <!-- SCHOLARSHIP STRIP -->
+  <div class="schol-strip">
+    <div class="schol-pct">40%</div>
+    <div class="schol-divider"></div>
+    <div>
+      <div class="schol-label">Scholarship Awarded</div>
+      <div class="schol-tier">Merit Tier II · Fee Waiver</div>
+      <div class="schol-desc">Logical reasoning in top 15% of applicants</div>
+    </div>
+    <div style="flex:1;"></div>
+    <div class="schol-badge-col">
+      <div class="schol-badge">✓ Eligible · Confirm on Enrollment</div>
+      <div class="schol-basis">Based on: Score 60% + Section D 87%</div>
+    </div>
+  </div>
+
+  <!-- SCORE HERO + 4 PANELS -->
+  <div class="score-hero" style="margin-bottom:16px;">
+    <div class="score-main">
+      <div class="score-label">Total Score</div>
+      <div class="score-big">18<span class="score-denom">/30</span></div>
+      <div class="score-pct">60%</div>
+      <div class="score-grid">
+        <div class="sg-item"><div class="sg-val c">18</div><div class="sg-sub">Correct</div></div>
+        <div class="sg-item"><div class="sg-val w">12</div><div class="sg-sub">Wrong</div></div>
+      </div>
+      <div style="margin-top:10px;width:100%;text-align:left;">
+        <div style="font-size:9px;color:rgba(255,255,255,.3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px;">Accuracy</div>
+        <div style="background:rgba(255,255,255,.1);border-radius:3px;height:6px;overflow:hidden;">
+          <div style="width:60%;height:100%;background:var(--gold);border-radius:3px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="score-panels">
+      <div class="sp green-top">
+        <div>
+          <div class="sp-label">Best Section</div>
+          <div class="sp-val" style="color:var(--green);">87%</div>
+          <div class="sp-sub">Logical · Analytical</div>
+        </div>
+        <div style="margin-top:8px;">
+          <div style="background:var(--bg);border-radius:3px;height:5px;overflow:hidden;">
+            <div style="width:87%;height:100%;background:var(--green);border-radius:3px;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sp amber-top">
+        <div>
+          <div class="sp-label">Weakest Section</div>
+          <div class="sp-val" style="color:var(--red);">40%</div>
+          <div class="sp-sub">Concept Based</div>
+        </div>
+        <div style="margin-top:8px;">
+          <div style="background:var(--bg);border-radius:3px;height:5px;overflow:hidden;">
+            <div style="width:40%;height:100%;background:var(--red);border-radius:3px;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sp gold-top">
+        <div>
+          <div class="sp-label">Best Subject</div>
+          <div class="sp-val" style="color:var(--gold);">67%</div>
+          <div class="sp-sub">Mathematics</div>
+        </div>
+        <div style="margin-top:8px;">
+          <div style="background:var(--bg);border-radius:3px;height:5px;overflow:hidden;">
+            <div style="width:67%;height:100%;background:var(--gold);border-radius:3px;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sp red-top">
+        <div>
+          <div class="sp-label">Needs Focus</div>
+          <div class="sp-val" style="color:var(--red);">40%</div>
+          <div class="sp-sub">Physics</div>
+        </div>
+        <div style="margin-top:8px;">
+          <div style="background:var(--bg);border-radius:3px;height:5px;overflow:hidden;">
+            <div style="width:40%;height:100%;background:var(--red);border-radius:3px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3-COLUMN GRID -->
+  <div class="main-grid">
+
+    <!-- Section Breakdown -->
+    <div class="card">
+      <div class="card-title"><span class="dot dot-navy"></span>Section Breakdown</div>
+      <div class="chart-h160"><canvas id="secBar"></canvas></div>
+    </div>
+
+    <!-- Subject Radar -->
+    <div class="card">
+      <div class="card-title"><span class="dot dot-gold"></span>Subject Accuracy</div>
+      <div class="chart-h160"><canvas id="subjRadar"></canvas></div>
+    </div>
+
+    <!-- Difficulty Split -->
+    <div class="card">
+      <div class="card-title"><span class="dot dot-green"></span>By Difficulty Level</div>
+      <div class="chart-h160"><canvas id="diffBar"></canvas></div>
+    </div>
+
+  </div>
+
+  <!-- 2-COLUMN GRID -->
+  <div class="main-grid-2">
+
+    <!-- Category + Subject Meters -->
+    <div class="card">
+      <div class="card-title"><span class="dot dot-navy"></span>Score at a Glance</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <!-- Category -->
+        <div>
+          <div style="font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;font-weight:700;">By Section</div>
+          <div class="cat-rows">
+            <div class="cat-row">
+              <div class="cat-name">Logical</div>
+              <div class="cat-track"><div class="cat-fill" style="width:87%;background:var(--green);"></div></div>
+              <div class="cat-score">7/8</div>
+            </div>
+            <div class="cat-row">
+              <div class="cat-name">Numerical</div>
+              <div class="cat-track"><div class="cat-fill" style="width:80%;background:#40c080;"></div></div>
+              <div class="cat-score">4/5</div>
+            </div>
+            <div class="cat-row">
+              <div class="cat-name">Application</div>
+              <div class="cat-track"><div class="cat-fill" style="width:43%;background:var(--amber);"></div></div>
+              <div class="cat-score">3/7</div>
+            </div>
+            <div class="cat-row">
+              <div class="cat-name">Concept</div>
+              <div class="cat-track"><div class="cat-fill" style="width:40%;background:var(--red);"></div></div>
+              <div class="cat-score">4/10</div>
+            </div>
+          </div>
+        </div>
+        <!-- Subject -->
+        <div>
+          <div style="font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;font-weight:700;">By Subject</div>
+          <div class="subj-tiles">
+            <div class="subj-tile">
+              <div class="st-name">Math</div>
+              <div class="st-val" style="color:var(--gold);">67%</div>
+              <div class="st-bar-track"><div class="st-bar-fill" style="width:67%;background:var(--gold);"></div></div>
+            </div>
+            <div class="subj-tile">
+              <div class="st-name">Chem</div>
+              <div class="st-val" style="color:var(--amber);">60%</div>
+              <div class="st-bar-track"><div class="st-bar-fill" style="width:60%;background:var(--amber);"></div></div>
+            </div>
+            <div class="subj-tile">
+              <div class="st-name">Gen.Sci</div>
+              <div class="st-val" style="color:var(--amber);">50%</div>
+              <div class="st-bar-track"><div class="st-bar-fill" style="width:50%;background:var(--amber);"></div></div>
+            </div>
+            <div class="subj-tile">
+              <div class="st-name">Physics</div>
+              <div class="st-val" style="color:var(--red);">40%</div>
+              <div class="st-bar-track"><div class="st-bar-fill" style="width:40%;background:var(--red);"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Strengths / Gaps + Archetype -->
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="card" style="flex:1;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <div style="font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--green);font-weight:700;margin-bottom:8px;">✓ Strengths</div>
+            <div class="sg-col">
+              <div class="sg-item2 s"><span class="sg-icon">🧠</span><span class="sg-text">Abstract reasoning — top 15%</span></div>
+              <div class="sg-item2 s"><span class="sg-icon">🔢</span><span class="sg-text">BODMAS, algebra & fractions</span></div>
+              <div class="sg-item2 s"><span class="sg-icon">📐</span><span class="sg-text">Geometry & mensuration</span></div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--red);font-weight:700;margin-bottom:8px;">✗ Gaps</div>
+            <div class="sg-col">
+              <div class="sg-item2 g"><span class="sg-icon">⚡</span><span class="sg-text">Physics circuits & vectors</span></div>
+              <div class="sg-item2 g"><span class="sg-icon">🧪</span><span class="sg-text">Organic chemistry basics</span></div>
+              <div class="sg-item2 g"><span class="sg-icon">⚖️</span><span class="sg-text">Mass vs weight distinction</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="archetype">
+        <div class="arc-tag">Learner Archetype</div>
+        <div class="arc-title">The Intuitive Reasoner</div>
+        <div class="arc-sub">Strong native ability. Gaps are structural — not capability.</div>
+        <div class="arc-stats">
+          <div class="arc-stat"><div class="arc-stat-val">Top 15%</div><div class="arc-stat-lbl">Logic Score</div></div>
+          <div class="arc-stat"><div class="arc-stat-val">~35%</div><div class="arc-stat-lbl">Score Uplift Possible</div></div>
+          <div class="arc-stat"><div class="arc-stat-val">8–10</div><div class="arc-stat-lbl">Sessions to Fill Gaps</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div><!-- end page 1 -->
+
+
+<!-- ══════════════════════════════════════
+     PAGE 2 — QUESTION MAP
+══════════════════════════════════════ -->
+<div class="page">
+  <div class="page-label">Question Response Map</div>
+
+  <div class="hmap-legend">
+    <div style="display:flex;align-items:center;gap:5px;"><div class="hl-dot hl-correct"></div> Correct</div>
+    <div style="display:flex;align-items:center;gap:5px;"><div class="hl-dot hl-wrong"></div> Incorrect</div>
+    <div style="font-size:10px;color:var(--muted);margin-left:8px;">Given → Correct answer shown for each question</div>
+    <div style="margin-left:auto;display:flex;gap:8px;">
+      <span style="font-size:10px;background:#dcfce7;color:#166534;padding:2px 7px;border-radius:2px;font-weight:700;">L1 Easy</span>
+      <span style="font-size:10px;background:#fef9c3;color:#854d0e;padding:2px 7px;border-radius:2px;font-weight:700;">L2 Moderate</span>
+      <span style="font-size:10px;background:#fee2e2;color:#991b1b;padding:2px 7px;border-radius:2px;font-weight:700;">L3 Hard</span>
+    </div>
+  </div>
+
+  <div class="q-grid">
+    <!-- Section A -->
+    <div class="q-section-header">
+      <span>Section A · Application Based</span>
+      <span class="qsh-score">3 / 7 · 43%</span>
+    </div>
+    <!-- Q1 -->
+    <div class="q-cell wrong">
+      <div class="q-num2">Q01</div>
+      <div class="q-topic">Ratio & Share Transfer</div>
+      <div class="q-bottom">
+        <div class="q-ans-row">
+          <div class="q-ans qa-wrong">B</div>
+          <div class="q-arrow">→</div>
+          <div class="q-ans qa-right">C</div>
+        </div>
+        <span class="q-lvl lvl2">L2</span>
+      </div>
+    </div>
+    <!-- Q2 -->
+    <div class="q-cell correct">
+      <div class="q-num2">Q02</div>
+      <div class="q-topic">Fractions → Survey Count</div>
+      <div class="q-bottom">
+        <div class="q-ans-row">
+          <div class="q-ans qa-right">A</div>
+        </div>
+        <span class="q-lvl lvl3">L3</span>
+      </div>
+    </div>
+    <!-- Q3 -->
+    <div class="q-cell wrong">
+      <div class="q-num2">Q03</div>
+      <div class="q-topic">% Discount Revenue</div>
+      <div class="q-bottom">
+        <div class="q-ans-row">
+          <div class="q-ans qa-wrong">A</div>
+          <div class="q-arrow">→</div>
+          <div class="q-ans qa-right">B</div>
+        </div>
+        <span class="q-lvl lvl2">L2</span>
+      </div>
+    </div>
+    <!-- Q4 -->
+    <div class="q-cell wrong">
+      <div class="q-num2">Q04</div>
+      <div class="q-topic">Speed · Tunnel Length</div>
+      <div class="q-bottom">
+        <div class="q-ans-row">
+          <div class="q-ans qa-wrong">D</div>
+          <div class="q-arrow">→</div>
+          <div class="q-ans qa-right">E</div>
+        </div>
+        <span class="q-lvl lvl3">L3</span>
+      </div>
+    </div>
+    <!-- Q5 -->
+    <div class="q-cell correct">
+      <div class="q-num2">Q05</div>
+      <div class="q-topic">Atmospheric Pressure</div>
+      <div class="q-bottom">
+        <div class="q-ans-row">
+          <div class="q-ans qa-right">A</div>
+        </div>
+        <span class="q-lvl lvl2">L2</span>
+      </div>
+    </div>
+    <!-- Q6 -->
+    <div class="q-cell correct">
+      <div class="q-num2">Q06</div>
+      <div class="q-topic">Density & Buoyancy</div>
+      <div class="q-bottom">
+        <div class="q-ans-row">
+          <div class="q-ans qa-right">B</div>
+        </div>
+        <span class="q-lvl lvl2">L2</span>
+      </div>
+    </div>
+    <!-- Q7 -->
+    <div class="q-cell wrong">
+      <div class="q-num2">Q07</div>
+      <div class="q-topic">Molecular Polarity</div>
+      <div class="q-bottom">
+        <div class="q-ans-row">
+          <div class="q-ans qa-wrong">A</div>
+          <div class="q-arrow">→</div>
+          <div class="q-ans qa-right">C</div>
+        </div>
+        <span class="q-lvl lvl2">L2</span>
+      </div>
+    </div>
+
+    <!-- Section B -->
+    <div class="q-section-header">
+      <span>Section B · Concept Based</span>
+      <span class="qsh-score">4 / 10 · 40%</span>
+    </div>
+    <div class="q-cell wrong">
+      <div class="q-num2">Q08</div><div class="q-topic">HCF · Euclid's Algo</div>
+      <div class="q-bottom"><div class="q-ans-row"><div class="q-ans qa-wrong">b</div><div class="q-arrow">→</div><div class="q-ans qa-right">c</div></div><span class="q-lvl lvl2">L2</span></div>
+    </div>
+    <div class="q-cell correct">
+      <div class="q-num2">Q09</div><div class="q-topic">Probability · Basic</div>
+      <div class="q-bottom"><div class="q-ans-row"><div class="q-ans qa-right">c</div></div><span class="q-lvl lvl1">L1</span></div>
+    </div>
+    <div class="q-cell wrong">
+      <div class="q-num2">Q10</div><div class="q-topic">Mean/Median/Mode Relation</div>
+      <div class="q-bottom"><div class="q-ans-row"><div class="q-ans qa-wrong">a</div><div class="q-arrow">→</div><div class="q-ans qa-right">b</div></div><span class="q-lvl lvl2">L2</span></div>
+    </div>
+    <div class="q-cell correct">
+      <div class="q-num2">Q11</div><div class="q-topic">Sphere SA = Volume</div>
+      <div class="q-bottom"><div class="q-ans-row"><div class="q-ans qa-right">d</div></div><span class="q-lvl lvl1">L1</span></div>
+    </div>
+    <div class="q-cell correct">
+      <div class="q-num2">Q12</div><div class="q-topic">Rhombus Diagonal→Side</div>
+      <div class="q-bottom"><div class="q-ans-row"><div class="q-ans qa-right">c</div></div><span class="q-lvl lvl2">L2</span></div>
+    </div>
+    <div class="q-cell wrong">
+      <div class="q-num2">Q13</div><div class="q-topic">Organic · Saturation</div>
+      <div class="q-bottom"><div class="q-ans-row"><div class="q-ans qa-wrong">a</div><div class="q-arrow">→</div><div class="q-ans qa-right">d</div></div><span class="q-lvl lvl2">L2</span></div>
+    </div>
+    <div class="q-cell correct">
+      <div class="q-num2">Q14</div><div class="q-topic">Chemical Formulae</div>
+      <div class="q-bottom"><div class="q-ans-row"><div class="q-ans qa-right">b</div></div><span class="q-lvl lvl2">L2</span></div>
+    </div>
+    <div class="q-cell wrong">
+      <div class="q-num2">Q15</div><div class="q-topic">Ionic Electrons</div>
+      <div class="q-bottom"><div class="q-ans-row"><div class="q-ans qa-wrong">a</div><div class="q-arrow">→</div><div class="q-ans qa-right">b</div></div><span class="q-lvl lvl2">L2</span></div>
+    </div>
+    <div class="q-cell wrong">
+      <div class="q-num2">Q16</div><div class="q-topic">Series vs Parallel Heat</div>
+      <div class="q-bottom"><div class="q-ans-row"><div class="q-ans qa-wrong">b</div><div class="q-arrow">→</div><div class="q-ans qa-right">c</div></div><span class="q-lvl lvl2">L2</span></div>
+    </div>
+    <div class="q-cell wrong">
+      <div class="q-num2">Q17</div><div class="q-topic">Fleming's Left-Hand Rule</div>
+      <div class="q-bottom"><div class="q-ans-row"><div class="q-ans qa-wrong">c</div><div class="q-arrow">→</div><div class="q-ans qa-right">d</div></div><span class="q-lvl lvl2">L2</span></div>
+    </div>
+
+    <!-- Section C -->
+    <div class="q-section-header">
+      <span>Section C · Numerical Type</span>
+      <span class="qsh-score">4 / 5 · 80%</span>
+    </div>
+    <div class="q-cell correct">
+      <div class="q-num2">Q18</div><div class="q-topic">Decimal Division</div>
+      <div class="q-bottom"><div class="q-ans-row"><div class="q-ans qa-right">B</div></div><span class="q-lvl lvl1">L1</span></div>
+    </div>
+    <div class="q-cell wrong">
+      <div class="q-num2">Q19</div><div class="q-topic">Mixed Fractions</div>
+      <div class="q-bottom"><div class="q-ans-row"><div class="q-ans qa-wrong">A</div><div class="q-arrow">→</div><div class="q-ans" style="background:#e0e7ff;color:#3730a3;font-size:9px;">—</div></div><span class="q-lvl lvl1">L1</span></div>
+    </div>
+    <div class="q-cell correct">
+      <div class="q-num2">Q20</div><div class="q-topic">Arithmetic Average</div>
+      <div class="q-bottom"><div class="q-ans-row"><div class="q-ans qa-right">B</div></div><span class="q-lvl lvl2">L2</span></div>
+    </div>
+    <div class="q-cell correct">
+      <div class="q-num2">Q21</div><div class="q-topic">BODMAS · Negatives</div>
+      <div class="q-bottom"><div class="q-ans-row"><div class="q-ans qa-right">B</div></div><span class="q-lvl lvl2">L2</span></div>
+    </div>
+    <div class="q-cell correct">
+      <div class="q-num2">Q22</div><div class="q-topic">Algebraic Rearrangement</div>
+      <div class="q-bottom"><div class="q-ans-row"><div class="q-ans qa-right">B</div></div><span class="q-lvl lvl2">L2</span></div>
+    </div>
+
+    <!-- Section D -->
+    <div class="q-section-header">
+      <span>Section D · Logical / Analytical</span>
+      <span class="qsh-score">7 / 8 · 87%</span>
+    </div>
+    <div class="q-cell correct">
+      <div class="q-num2">Q23</div><div class="q-topic">Number Series</div>
+      <div class="q-bottom"><div class="q-ans-row"><div class="q-ans qa-right">B</div></div><span class="q-lvl lvl1">L1</span></div>
+    </div>
+    <div class="q-cell correct">
+      <div class="q-num2">Q24</div><div class="q-topic">Work Hours Calc</div>
+      <div class="q-bottom"><div class="q-ans-row"><div class="q-ans qa-right">C</div></div><span class="q-lvl lvl2">L2</span></div>
+    </div>
+    <div class="q-cell correct">
+      <div class="q-num2">Q25</div><div class="q-topic">Abstract Units (Fligs)</div>
+      <div class="q-bottom"><div class="q-ans-row"><div class="q-ans qa-right">A</div></div><span class="q-lvl lvl3">L3</span></div>
+    </div>
+    <div class="q-cell correct">
+      <div class="q-num2">Q26</div><div class="q-topic">Syllogism Logic</div>
+      <div class="q-bottom"><div class="q-ans-row"><div class="q-ans qa-right">A</div></div><span class="q-lvl lvl2">L2</span></div>
+    </div>
+    <div class="q-cell correct">
+      <div class="q-num2">Q27</div><div class="q-topic">Free Fall · Vacuum</div>
+      <div class="q-bottom"><div class="q-ans-row"><div class="q-ans qa-right">C</div></div><span class="q-lvl lvl1">L1</span></div>
+    </div>
+    <div class="q-cell wrong">
+      <div class="q-num2">Q28</div><div class="q-topic">Mass vs Weight</div>
+      <div class="q-bottom"><div class="q-ans-row"><div class="q-ans qa-wrong">A</div><div class="q-arrow">→</div><div class="q-ans qa-right">B</div></div><span class="q-lvl lvl2">L2</span></div>
+    </div>
+    <div class="q-cell correct">
+      <div class="q-num2">Q29</div><div class="q-topic">Gas Pressure · Reaction</div>
+      <div class="q-bottom"><div class="q-ans-row"><div class="q-ans qa-right">B</div></div><span class="q-lvl lvl2">L2</span></div>
+    </div>
+    <div class="q-cell correct">
+      <div class="q-num2">Q30</div><div class="q-topic">Pressure Cooker</div>
+      <div class="q-bottom"><div class="q-ans-row"><div class="q-ans qa-right">B</div></div><span class="q-lvl lvl2">L2</span></div>
+    </div>
+
+  </div><!-- end q-grid -->
+
+</div><!-- end page 2 -->
+
+
+<!-- ══════════════════════════════════════
+     PAGE 3 — SKILLS + NEXT STEPS
+══════════════════════════════════════ -->
+<div class="page">
+  <div class="page-label">Skill Matrix & Recommendations</div>
+
+  <div class="main-grid-2" style="margin-bottom:16px;">
+
+    <!-- Skill matrix -->
+    <div class="card">
+      <div class="card-title"><span class="dot dot-navy"></span>Cognitive Skill Breakdown</div>
+      <div class="skill-matrix">
+        <div class="sm-row">
+          <div class="sm-label">Pattern Recognition</div>
+          <div class="sm-track"><div class="sm-fill" style="width:92%;background:var(--green);"></div></div>
+          <div class="sm-val">92%</div>
+          <div class="sm-band" style="background:var(--green-lt);color:var(--green);">Strong</div>
+        </div>
+        <div class="sm-row">
+          <div class="sm-label">Abstract Reasoning</div>
+          <div class="sm-track"><div class="sm-fill" style="width:88%;background:var(--green);"></div></div>
+          <div class="sm-val">88%</div>
+          <div class="sm-band" style="background:var(--green-lt);color:var(--green);">Strong</div>
+        </div>
+        <div class="sm-row">
+          <div class="sm-label">Numerical Computation</div>
+          <div class="sm-track"><div class="sm-fill" style="width:80%;background:#40c080;"></div></div>
+          <div class="sm-val">80%</div>
+          <div class="sm-band" style="background:var(--green-lt);color:var(--green);">Good</div>
+        </div>
+        <div class="sm-row">
+          <div class="sm-label">Algebraic Manipulation</div>
+          <div class="sm-track"><div class="sm-fill" style="width:75%;background:#80c860;"></div></div>
+          <div class="sm-val">75%</div>
+          <div class="sm-band" style="background:var(--green-lt);color:var(--green);">Good</div>
+        </div>
+        <div class="sm-row">
+          <div class="sm-label">Geometry & Mensuration</div>
+          <div class="sm-track"><div class="sm-fill" style="width:67%;background:var(--amber);"></div></div>
+          <div class="sm-val">67%</div>
+          <div class="sm-band" style="background:var(--amber-lt);color:var(--amber);">Average</div>
+        </div>
+        <div class="sm-row">
+          <div class="sm-label">Applied Maths (Word Probs)</div>
+          <div class="sm-track"><div class="sm-fill" style="width:55%;background:var(--amber);"></div></div>
+          <div class="sm-val">55%</div>
+          <div class="sm-band" style="background:var(--amber-lt);color:var(--amber);">Average</div>
+        </div>
+        <div class="sm-row">
+          <div class="sm-label">Chemistry · Molecular</div>
+          <div class="sm-track"><div class="sm-fill" style="width:45%;background:#e07a30;"></div></div>
+          <div class="sm-val">45%</div>
+          <div class="sm-band" style="background:var(--red-lt);color:var(--red);">Weak</div>
+        </div>
+        <div class="sm-row">
+          <div class="sm-label">Physics · Formula Use</div>
+          <div class="sm-track"><div class="sm-fill" style="width:38%;background:var(--red);"></div></div>
+          <div class="sm-val">38%</div>
+          <div class="sm-band" style="background:var(--red-lt);color:var(--red);">Weak</div>
+        </div>
+        <div class="sm-row">
+          <div class="sm-label">Mass / Weight / Force</div>
+          <div class="sm-track"><div class="sm-fill" style="width:35%;background:var(--red);"></div></div>
+          <div class="sm-val">35%</div>
+          <div class="sm-band" style="background:var(--red-lt);color:var(--red);">Weak</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column: Doughnut + Scatter context -->
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="card" style="flex:1;">
+        <div class="card-title"><span class="dot dot-gold"></span>Score Distribution</div>
+        <div class="chart-h180"><canvas id="scoreDonut"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot dot-green"></span>Difficulty Accuracy</div>
+        <div class="chart-h160"><canvas id="diffAccBar"></canvas></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- NEXT STEPS -->
+  <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Recommended Path Forward</div>
+  <div class="steps-row" style="margin-bottom:16px;">
+    <div class="step-card">
+      <div class="step-n">01</div>
+      <div class="step-title">Concept Gap Sprint</div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:10px;">Targeted remediation on the 6 missed concept areas — Physics circuits, organic chem, ionic electrons.</div>
+      <div class="step-pills">
+        <span class="step-pill">⏱ 6–8 weeks</span>
+        <span class="step-pill">Physics</span>
+        <span class="step-pill">Chemistry</span>
+      </div>
+    </div>
+    <div class="step-card" style="border-top-color:var(--gold);">
+      <div class="step-n" style="color:var(--gold);">02</div>
+      <div class="step-title">Monthly Progress Tracking</div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:10px;">This report, every month — across all classroom tests, quizzes, and unit assessments. Parents stay informed in real time.</div>
+      <div class="step-pills">
+        <span class="step-pill">📊 Monthly reports</span>
+        <span class="step-pill">Trend graphs</span>
+      </div>
+    </div>
+    <div class="step-card" style="border-top-color:var(--green);">
+      <div class="step-n" style="color:var(--green);">03</div>
+      <div class="step-title">Exam Readiness (JEE/NEET)</div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:10px;">Aryan's reasoning profile is ideal for competitive exams. We begin exam-pattern integration from Class 11 — no last-minute rush.</div>
+      <div class="step-pills">
+        <span class="step-pill">🎯 JEE / NEET</span>
+        <span class="step-pill">From Cl. 11</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PARENT NOTE -->
+  <div class="parent-note">
+    <div class="pn-icon">📌</div>
+    <div class="pn-content">
+      <div class="pn-title">For Parents — What This Report Tells Us</div>
+      <div class="pn-text">
+        This analysis is from <strong>just one paper — 30 questions</strong>. Yet it already reveals Aryan's learning archetype, where his knowledge gaps are, and precisely what he needs to close them. <strong>Enrolled students receive this level of analysis every month</strong>, built from multiple tests — allowing us to track growth, shift strategy, and ensure no gap goes unaddressed. The data you're looking at today is just the starting point.
+      </div>
+    </div>
+  </div>
+
+</div><!-- end page 3 -->
+
+<!-- FOOTER -->
+<div style="max-width:960px;margin:0 auto;padding:0 20px 20px;">
+  <div class="footer">
+    <div class="footer-l">BASU Nextgen Education Pvt. Ltd.</div>
+    <div class="footer-r">Report: BNE-ENT-11-2025-047 · Aryan Sharma · 22 Mar 2025<br>Scholarship: 40% Merit Tier II · Sector 62, Noida</div>
+  </div>
+</div>
+
+
+<!-- CHARTS -->
+<script>
+Chart.defaults.font.family = "'IBM Plex Sans', sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.color = '#6b7280';
+
+const navy='#0d1b3e', gold='#c9921a', green='#1a7a4a', amber='#c07a10', red='#c0392b';
+const blue='#1a6fa8';
+
+// 1. Section Bar (compact)
+new Chart(document.getElementById('secBar'), {
+  type:'bar',
+  data:{
+    labels:['Application','Concept','Numerical','Logical'],
+    datasets:[{
+      label:'Score',
+      data:[3,4,4,7],
+      backgroundColor:[amber+'bb',red+'bb',green+'99',green+'cc'],
+      borderColor:[amber,red,green,green],
+      borderWidth:1.5,
+      borderRadius:3,
+    },{
+      label:'Max',
+      data:[7,10,5,8],
+      backgroundColor:'rgba(0,0,0,.05)',
+      borderColor:'rgba(0,0,0,.1)',
+      borderWidth:1,
+      borderRadius:3,
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{
+      y:{beginAtZero:true,max:11,grid:{color:'rgba(0,0,0,.05)'},ticks:{stepSize:2}},
+      x:{grid:{display:false}}
+    }
+  }
+});
+
+// 2. Subject Radar
+new Chart(document.getElementById('subjRadar'), {
+  type:'radar',
+  data:{
+    labels:['Math','Chemistry','Gen.Sci','Physics','Logic'],
+    datasets:[{
+      data:[67,60,50,40,87],
+      backgroundColor:navy+'1a',
+      borderColor:gold,
+      borderWidth:2,
+      pointBackgroundColor:gold,
+      pointRadius:3,
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{r:{beginAtZero:true,max:100,ticks:{display:false},grid:{color:'rgba(0,0,0,.08)'},pointLabels:{font:{size:10}}}}
+  }
+});
+
+// 3. Difficulty bar
+new Chart(document.getElementById('diffBar'), {
+  type:'bar',
+  data:{
+    labels:['Easy (L1)','Moderate (L2)','Hard (L3)'],
+    datasets:[{
+      data:[83,57,67],
+      backgroundColor:[green+'bb',amber+'bb',red+'bb'],
+      borderColor:[green,amber,red],
+      borderWidth:1.5,
+      borderRadius:3,
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{
+      y:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%'},grid:{color:'rgba(0,0,0,.05)'}},
+      x:{grid:{display:false}}
+    }
+  }
+});
+
+// 4. Score Donut (page 3)
+new Chart(document.getElementById('scoreDonut'), {
+  type:'doughnut',
+  data:{
+    labels:['Application (3)','Concept (4)','Numerical (4)','Logical (7)'],
+    datasets:[{
+      data:[3,4,4,7],
+      backgroundColor:[amber+'cc',red+'cc',green+'99',green+'ee'],
+      borderColor:'#fff',
+      borderWidth:3,
+      hoverOffset:4,
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    cutout:'60%',
+    plugins:{
+      legend:{position:'bottom',labels:{boxWidth:10,padding:12,font:{size:10}}}
+    }
+  }
+});
+
+// 5. Difficulty accuracy (page 3)
+new Chart(document.getElementById('diffAccBar'), {
+  type:'bar',
+  data:{
+    labels:['L1 Easy\n(6 Qs)','L2 Moderate\n(21 Qs)','L3 Hard\n(3 Qs)'],
+    datasets:[{
+      label:'Correct',
+      data:[5,12,2],
+      backgroundColor:[green+'99',amber+'99',red+'99'],
+      borderColor:[green,amber,red],
+      borderWidth:1.5,
+      borderRadius:3,
+    },{
+      label:'Wrong',
+      data:[1,9,1],
+      backgroundColor:['rgba(0,0,0,.06)'],
+      borderColor:['rgba(0,0,0,.1)'],
+      borderWidth:1,
+      borderRadius:3,
+    }]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:8,font:{size:10}}}},
+    scales:{
+      y:{beginAtZero:true,grid:{color:'rgba(0,0,0,.05)'},stacked:false},
+      x:{grid:{display:false}}
+    }
+  }
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,324 @@
+{% extends 'base.html' %}
+{% block dashboard %}
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  --navy:     #0d1b3e;
+  --navy2:    #1e3163;
+  --gold:     #c9921a;
+  --gold-lt:  #fef3dc;
+  --green:    #1a7a4a;
+  --green-lt: #e6f5ed;
+  --red:      #c0392b;
+  --red-lt:   #fdecea;
+  --amber:    #c07a10;
+  --amber-lt: #fef0d8;
+  --bg:       #f4f5f7;
+  --surface:  #ffffff;
+  --border:   #e2e4e9;
+  --text:     #1c1f2e;
+  --muted:    #6b7280;
+  --mono:     'IBM Plex Mono', monospace;
+  --sans:     'IBM Plex Sans', sans-serif;
+}
+
+.rl-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+  font-family: var(--sans);
+  color: var(--text);
+  font-size: 13px;
+}
+
+/* ── PAGE HEADER ── */
+.rl-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 20px;
+}
+.rl-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1;
+}
+.rl-subtitle {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.rl-count {
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+/* ── TABLE CARD ── */
+.rl-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* ── TABLE ── */
+.rl-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.rl-table thead tr {
+  background: var(--navy);
+}
+.rl-table th {
+  padding: 10px 14px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.5);
+  text-align: left;
+  white-space: nowrap;
+  border: none;
+}
+.rl-table th.c { text-align: center; }
+
+.rl-table tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background .1s;
+}
+.rl-table tbody tr:last-child { border-bottom: none; }
+.rl-table tbody tr:hover { background: #f8f9fb; }
+
+.rl-table td {
+  padding: 12px 14px;
+  vertical-align: middle;
+}
+.rl-table td.c { text-align: center; }
+
+/* ── STUDENT CELL ── */
+.td-student { display: flex; align-items: center; gap: 10px; }
+.std-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--navy2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0;
+  font-family: var(--sans);
+}
+.std-name  { font-weight: 600; color: var(--text); font-size: 12px; }
+.std-school { font-size: 10px; color: var(--muted); margin-top: 1px; }
+
+/* ── PAPER CELL ── */
+.td-paper { max-width: 180px; }
+.paper-title { font-weight: 500; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.paper-class { font-size: 10px; color: var(--muted); margin-top: 1px; }
+
+/* ── SCORE CELL ── */
+.score-cell { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.score-frac {
+  font-family: var(--mono); font-weight: 700; font-size: 13px; color: var(--navy);
+}
+.score-bar-track { width: 56px; background: var(--bg); border-radius: 3px; height: 4px; overflow: hidden; }
+.score-bar-fill  { height: 100%; border-radius: 3px; }
+
+/* ── PCT CELL ── */
+.pct-badge {
+  font-family: var(--mono); font-size: 12px; font-weight: 700;
+  padding: 3px 8px; border-radius: 4px; display: inline-block;
+}
+.pct-high   { background: var(--green-lt); color: var(--green); }
+.pct-mid    { background: var(--amber-lt); color: var(--amber); }
+.pct-low    { background: var(--red-lt);   color: var(--red);   }
+
+/* ── GRADE CELL ── */
+.grade-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 50%;
+  font-weight: 700; font-size: 12px; border: 2px solid;
+}
+.grade-a { border-color: var(--green); color: var(--green); background: var(--green-lt); }
+.grade-b { border-color: var(--navy);  color: var(--navy);  background: #e8ecf5; }
+.grade-c { border-color: var(--amber); color: var(--amber); background: var(--amber-lt); }
+.grade-d { border-color: var(--red);   color: var(--red);   background: var(--red-lt); }
+
+/* ── SCHOLARSHIP CELL ── */
+.schol-cell { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.schol-waiver {
+  font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--gold);
+}
+.schol-label { font-size: 9px; color: var(--muted); letter-spacing: .04em; }
+
+/* ── VISIBILITY PILL ── */
+.vis-pill {
+  font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 20px; display: inline-block; white-space: nowrap;
+}
+.vis-shared { background: var(--green-lt); color: var(--green); border: 1px solid #a7d9bc; }
+.vis-hold   { background: var(--bg);       color: var(--muted); border: 1px solid var(--border); }
+
+/* ── DATE CELL ── */
+.date-cell { font-size: 11px; color: var(--muted); font-family: var(--mono); white-space: nowrap; }
+
+/* ── ACTION BUTTON ── */
+.btn-view {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 600; padding: 6px 14px;
+  border: 1px solid var(--border); border-radius: 4px;
+  color: var(--navy); background: var(--surface);
+  text-decoration: none; transition: background .12s, border-color .12s;
+  white-space: nowrap;
+}
+.btn-view:hover {
+  background: var(--navy); color: #fff; border-color: var(--navy);
+}
+.btn-view svg { width: 12px; height: 12px; }
+
+/* ── EMPTY STATE ── */
+.rl-empty {
+  padding: 64px 20px;
+  text-align: center;
+}
+.rl-empty-icon { font-size: 36px; margin-bottom: 12px; }
+.rl-empty-title { font-size: 15px; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
+.rl-empty-sub   { font-size: 12px; color: var(--muted); }
+</style>
+
+{% include 'sat/_subnav.html' %}
+
+<div class="rl-wrap">
+
+  <!-- PAGE HEADER -->
+  <div class="rl-header">
+    <div>
+      <div class="rl-title">Test Results</div>
+      <div class="rl-subtitle">Scholarship Aptitude Test · All submissions</div>
+    </div>
+    {% if results %}
+    <div class="rl-count">{{ results|length }} result{{ results|length|pluralize }}</div>
+    {% endif %}
+  </div>
+
+  {% if results %}
+  <div class="rl-card">
+    <table class="rl-table">
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Paper</th>
+          <th class="c">Score</th>
+          <th class="c">Percentage</th>
+          <th class="c">Grade</th>
+          <th class="c">Scholarship</th>
+          <th class="c">Visibility</th>
+          <th>Date</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in results %}
+        <tr>
+
+          <!-- STUDENT -->
+          <td>
+            <div class="td-student">
+              <div class="std-avatar">{{ r.attempt.assignment.inquiry.student_name|slice:":2"|upper }}</div>
+              <div>
+                <div class="std-name">{{ r.attempt.assignment.inquiry.student_name }}</div>
+                <div class="std-school">{{ r.attempt.assignment.inquiry.school|default:"—" }}</div>
+              </div>
+            </div>
+          </td>
+
+          <!-- PAPER -->
+          <td class="td-paper">
+            <div class="paper-title" title="{{ r.attempt.assignment.paper.title }}">{{ r.attempt.assignment.paper.title }}</div>
+            <div class="paper-class">Class {{ r.attempt.assignment.paper.class_name }}</div>
+          </td>
+
+          <!-- SCORE -->
+          <td class="c">
+            <div class="score-cell">
+              <div class="score-frac">{{ r.total_marks }}<span style="color:var(--muted);font-weight:400;">/{{ r.max_marks }}</span></div>
+              <div class="score-bar-track">
+                <div class="score-bar-fill" style="width:{{ r.percentage }}%;background:{% if r.percentage >= 75 %}var(--green){% elif r.percentage >= 50 %}var(--amber){% else %}var(--red){% endif %};"></div>
+              </div>
+            </div>
+          </td>
+
+          <!-- PERCENTAGE -->
+          <td class="c">
+            <span class="pct-badge {% if r.percentage >= 75 %}pct-high{% elif r.percentage >= 50 %}pct-mid{% else %}pct-low{% endif %}">
+              {{ r.percentage }}%
+            </span>
+          </td>
+
+          <!-- GRADE -->
+          <td class="c">
+            <span class="grade-badge {% if r.grade_band == 'A' or r.grade_band == 'A+' %}grade-a{% elif r.grade_band == 'B' or r.grade_band == 'B+' %}grade-b{% elif r.grade_band == 'C' %}grade-c{% else %}grade-d{% endif %}">
+              {{ r.grade_band }}
+            </span>
+          </td>
+
+          <!-- SCHOLARSHIP -->
+          <td class="c">
+            <div class="schol-cell">
+              <div class="schol-waiver">{{ r.scholarship_tier.waiver }}</div>
+              <div class="schol-label">{{ r.scholarship_tier.label }}</div>
+            </div>
+          </td>
+
+          <!-- VISIBILITY -->
+          <td class="c">
+            {% if r.visibility == 'shared' %}
+              <span class="vis-pill vis-shared">🔓 Released</span>
+            {% else %}
+              <span class="vis-pill vis-hold">🔒 On Hold</span>
+            {% endif %}
+          </td>
+
+          <!-- DATE -->
+          <td>
+            <div class="date-cell">{{ r.created_at|date:"d M Y" }}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:1px;font-family:var(--mono);">{{ r.created_at|date:"H:i" }}</div>
+          </td>
+
+          <!-- ACTION -->
+          <td>
+            <a href="{% url 'sat:result_detail' r.pk %}" class="btn-view">
+              View
+              <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M2 6h8M6 2l4 4-4 4"/>
+              </svg>
+            </a>
+          </td>
+
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% else %}
+
+  <!-- EMPTY STATE -->
+  <div class="rl-card">
+    <div class="rl-empty">
+      <div class="rl-empty-icon">📋</div>
+      <div class="rl-empty-title">No results yet</div>
+      <div class="rl-empty-sub">Results will appear here once students complete their assigned tests.</div>
+    </div>
+  </div>
+
+  {% endif %}
+
+</div>
+
+{% endblock %}

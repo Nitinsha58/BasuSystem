@@ -35,6 +35,8 @@ INSTALLED_APPS = [
     'accounts.apps.AccountsConfig',
     'reports.apps.ReportsConfig',
     'lesson.apps.LessonConfig',
+    'rest_framework',
+    'sat.apps.SatConfig',
 ]
 
 MIDDLEWARE = [

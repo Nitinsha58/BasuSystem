@@ -1,0 +1,350 @@
+{% extends 'base.html' %}
+{% block dashboard %}
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  --navy:     #0d1b3e;
+  --navy2:    #1e3163;
+  --gold:     #c9921a;
+  --gold-lt:  #fef3dc;
+  --green:    #1a7a4a;
+  --green-lt: #e6f5ed;
+  --red:      #c0392b;
+  --red-lt:   #fdecea;
+  --amber:    #c07a10;
+  --amber-lt: #fef0d8;
+  --bg:       #f4f5f7;
+  --surface:  #ffffff;
+  --border:   #e2e4e9;
+  --text:     #1c1f2e;
+  --muted:    #6b7280;
+  --mono:     'IBM Plex Mono', monospace;
+  --sans:     'IBM Plex Sans', sans-serif;
+}
+
+.ac-wrap {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+  font-family: var(--sans);
+  color: var(--text);
+  font-size: 13px;
+}
+
+/* ── BREADCRUMB ── */
+.ac-breadcrumb {
+  font-size: 12px; color: var(--muted);
+  display: flex; align-items: center; gap: 6px; margin-bottom: 20px;
+}
+.ac-breadcrumb a { color: var(--muted); text-decoration: none; }
+.ac-breadcrumb a:hover { color: var(--navy); }
+.ac-breadcrumb .sep { color: var(--border); }
+
+/* ── PAGE HEADER ── */
+.ac-header { margin-bottom: 20px; }
+.ac-title    { font-size: 20px; font-weight: 700; color: var(--navy); line-height: 1; }
+.ac-subtitle { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+/* ── ALERTS ── */
+.ac-alert {
+  padding: 10px 14px; border-radius: 5px; font-size: 12px;
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.ac-alert.success { background: var(--green-lt); color: var(--green); border: 1px solid #a7d9bc; }
+.ac-alert.error   { background: var(--red-lt);   color: var(--red);   border: 1px solid #f5bfbf; }
+.ac-alert.warning { background: var(--amber-lt); color: var(--amber); border: 1px solid #e8c87a; }
+.ac-alert .acl-close { margin-left:auto; cursor:pointer; opacity:.5; font-size:14px; background:none; border:none; color:inherit; }
+
+/* ── FORM CARD ── */
+.ac-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* ── FIELD GROUP ── */
+.field-group {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.field-group:last-child { border-bottom: none; }
+
+.field-label {
+  font-size: 11px; font-weight: 700; color: var(--text);
+  letter-spacing: .04em; margin-bottom: 6px;
+  display: flex; align-items: center; gap: 6px;
+}
+.field-required { color: var(--red); font-size: 12px; }
+.field-optional {
+  font-size: 10px; font-weight: 400; color: var(--muted);
+  letter-spacing: 0;
+}
+.field-hint {
+  font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.5;
+}
+
+/* ── SELECT ── */
+.ac-select {
+  width: 100%; padding: 9px 12px;
+  border: 1px solid var(--border); border-radius: 5px;
+  background: var(--bg); color: var(--text);
+  font-family: var(--sans); font-size: 12px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+  cursor: pointer;
+  transition: border-color .15s, box-shadow .15s;
+}
+.ac-select:focus {
+  outline: none;
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(13,27,62,.08);
+}
+.ac-select option { color: var(--text); }
+.ac-select option[value=""] { color: var(--muted); }
+
+/* ── OPTION META (shown via JS) ── */
+.select-meta {
+  margin-top: 8px; padding: 8px 12px;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+  font-size: 11px; color: var(--muted); font-family: var(--mono);
+  display: none;
+}
+.select-meta.visible { display: block; }
+.meta-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.meta-chip {
+  font-size: 10px; font-weight: 600; padding: 2px 8px;
+  border-radius: 3px; letter-spacing: .04em;
+}
+.mc-navy  { background: var(--navy);     color: #fff; }
+.mc-green { background: var(--green-lt); color: var(--green); }
+.mc-gold  { background: var(--gold-lt);  color: var(--gold); }
+
+/* ── DATETIME INPUT ── */
+.ac-input {
+  width: 100%; padding: 9px 12px;
+  border: 1px solid var(--border); border-radius: 5px;
+  background: var(--bg); color: var(--text);
+  font-family: var(--mono); font-size: 12px;
+  transition: border-color .15s, box-shadow .15s;
+}
+.ac-input:focus {
+  outline: none;
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(13,27,62,.08);
+}
+
+/* ── TOGGLE SWITCH ── */
+.toggle-row {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+}
+.toggle-text {}
+.toggle-title { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+.toggle-desc  { font-size: 11px; color: var(--muted); line-height: 1.5; }
+
+.toggle-switch { position: relative; flex-shrink: 0; margin-top: 2px; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-track {
+  display: block; width: 40px; height: 22px; border-radius: 11px;
+  background: var(--border); cursor: pointer;
+  transition: background .2s;
+  position: relative;
+}
+.toggle-track::after {
+  content: ''; position: absolute;
+  top: 3px; left: 3px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  transition: transform .2s;
+}
+.toggle-switch input:checked + .toggle-track { background: var(--green); }
+.toggle-switch input:checked + .toggle-track::after { transform: translateX(18px); }
+
+/* ── FORM ACTIONS ── */
+.ac-actions {
+  display: flex; gap: 10px; align-items: center;
+  padding: 16px 20px; background: var(--bg);
+  border-top: 1px solid var(--border); border-radius: 0 0 8px 8px;
+}
+.btn-submit {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 20px; border-radius: 5px; border: none;
+  background: var(--navy); color: #fff;
+  font-family: var(--sans); font-size: 12px; font-weight: 700;
+  letter-spacing: .03em; cursor: pointer; transition: background .12s;
+}
+.btn-submit:hover { background: var(--navy2); }
+.btn-cancel {
+  display: inline-flex; align-items: center;
+  padding: 9px 16px; border-radius: 5px;
+  border: 1px solid var(--border); background: var(--surface);
+  color: var(--muted); font-family: var(--sans); font-size: 12px; font-weight: 600;
+  text-decoration: none; cursor: pointer; transition: border-color .12s, color .12s;
+}
+.btn-cancel:hover { border-color: var(--text); color: var(--text); }
+</style>
+
+{% include 'sat/_subnav.html' %}
+
+<div class="ac-wrap">
+
+  <!-- BREADCRUMB -->
+  <div class="ac-breadcrumb">
+    <a href="{% url 'sat:assignment_list' %}">← Assignments</a>
+    <span class="sep">/</span>
+    <span>New Assignment</span>
+  </div>
+
+  <!-- HEADER -->
+  <div class="ac-header">
+    <div class="ac-title">Assign Test</div>
+    <div class="ac-subtitle">Assign a test paper to a student and configure delivery settings</div>
+  </div>
+
+  <!-- ALERTS -->
+  {% if messages %}
+  {% for msg in messages %}
+  <div class="ac-alert {% if 'success' in msg.tags %}success{% elif 'error' in msg.tags %}error{% else %}warning{% endif %}">
+    <span>{{ msg }}</span>
+    <button class="acl-close" onclick="this.parentElement.remove()">✕</button>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="ac-card">
+
+      <!-- STUDENT -->
+      <div class="field-group">
+        <div class="field-label">
+          Student <span class="field-required">*</span>
+        </div>
+        <select name="inquiry_id" id="inquiry-select" class="ac-select" required
+                onchange="showStudentMeta(this)">
+          <option value="">— Select student —</option>
+          {% for inq in inquiries %}
+          <option value="{{ inq.pk }}"
+            data-phone="{{ inq.phone }}"
+            data-school="{{ inq.school|default:'' }}"
+            {% if preselected_inquiry and preselected_inquiry.pk == inq.pk %}selected{% endif %}>
+            {{ inq.student_name }} · {{ inq.phone }}
+          </option>
+          {% endfor %}
+        </select>
+        <div class="select-meta" id="student-meta">
+          <div class="meta-chips" id="student-chips"></div>
+        </div>
+      </div>
+
+      <!-- PAPER -->
+      <div class="field-group">
+        <div class="field-label">
+          Test Paper <span class="field-required">*</span>
+        </div>
+        <select name="paper_id" id="paper-select" class="ac-select" required
+                onchange="showPaperMeta(this)">
+          <option value="">— Select paper —</option>
+          {% for paper in papers %}
+          <option value="{{ paper.pk }}"
+            data-class="{{ paper.class_name }}"
+            data-questions="{{ paper.questions.count }}"
+            data-time="{{ paper.time_limit }}"
+            data-marks="{{ paper.max_marks }}">
+            {{ paper.title }}
+          </option>
+          {% endfor %}
+        </select>
+        <div class="select-meta" id="paper-meta">
+          <div class="meta-chips" id="paper-chips"></div>
+        </div>
+      </div>
+
+      <!-- DEADLINE -->
+      <div class="field-group">
+        <div class="field-label">
+          Deadline <span class="field-optional">— optional</span>
+        </div>
+        <input type="datetime-local" name="deadline" class="ac-input">
+        <div class="field-hint">If set, the test link will block new starts after this time.</div>
+      </div>
+
+      <!-- AUTO-RELEASE TOGGLE -->
+      <div class="field-group">
+        <div class="toggle-row">
+          <div class="toggle-text">
+            <div class="toggle-title">Auto-release report to parent</div>
+            <div class="toggle-desc">When enabled, the report is shared with the parent immediately after submission. When off, you control when the parent sees the result.</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" name="auto_release" id="auto_release">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="ac-actions">
+        <button type="submit" class="btn-submit">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M2 6l3 3 5-5"/>
+          </svg>
+          Create Assignment
+        </button>
+        <a href="{% url 'sat:assignment_list' %}" class="btn-cancel">Cancel</a>
+      </div>
+
+    </div>
+  </form>
+
+</div>
+
+<script>
+function showStudentMeta(sel) {
+  const opt = sel.options[sel.selectedIndex];
+  const meta = document.getElementById('student-meta');
+  const chips = document.getElementById('student-chips');
+  if (!opt.value) { meta.classList.remove('visible'); return; }
+  const phone  = opt.dataset.phone  || '—';
+  const school = opt.dataset.school || '—';
+  chips.innerHTML = `
+    <span class="meta-chip mc-navy">${opt.text.split('·')[0].trim()}</span>
+    <span class="meta-chip mc-green">📞 ${phone}</span>
+    ${school !== '—' ? `<span class="meta-chip mc-gold">🏫 ${school}</span>` : ''}
+  `;
+  meta.classList.add('visible');
+}
+
+function showPaperMeta(sel) {
+  const opt = sel.options[sel.selectedIndex];
+  const meta = document.getElementById('paper-meta');
+  const chips = document.getElementById('paper-chips');
+  if (!opt.value) { meta.classList.remove('visible'); return; }
+  const cls   = opt.dataset.class     || '—';
+  const qs    = opt.dataset.questions || '—';
+  const time  = opt.dataset.time      || '—';
+  const marks = opt.dataset.marks     || '—';
+  chips.innerHTML = `
+    <span class="meta-chip mc-navy">Class ${cls}</span>
+    <span class="meta-chip mc-green">${qs} Questions</span>
+    <span class="meta-chip mc-gold">⏱ ${time} min</span>
+    <span class="meta-chip mc-green">Max ${marks} marks</span>
+  `;
+  meta.classList.add('visible');
+}
+
+// Restore meta if preselected
+document.addEventListener('DOMContentLoaded', () => {
+  const inqSel = document.getElementById('inquiry-select');
+  const papSel = document.getElementById('paper-select');
+  if (inqSel.value) showStudentMeta(inqSel);
+  if (papSel.value) showPaperMeta(papSel);
+});
+</script>
+
+{% endblock %}

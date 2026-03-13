@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block dashboard %}
+<div class="container py-4" style="max-width:640px">
+    <div class="mb-3">
+        <a href="{% url 'sat:paper_list' %}" class="text-decoration-none text-muted small">← Back to Papers</a>
+    </div>
+    <h5 class="fw-semibold mb-4">{% if paper %}Edit Paper{% else %}New Paper{% endif %}</h5>
+
+    {% if messages %}
+    {% for msg in messages %}
+    <div class="alert alert-{{ msg.tags }} alert-dismissible fade show">
+        {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="card shadow-sm border-0 p-4">
+            <div class="mb-3">
+                <label class="form-label fw-medium">Paper Title <span class="text-danger">*</span></label>
+                <input type="text" name="title" class="form-control" required value="{{ paper.title|default:'' }}"
+                    placeholder="e.g. Scholarship Test 2026 – Class 10">
+            </div>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-medium">Class</label>
+                    <select name="class_name" class="form-select">
+                        <option value="">— Any —</option>
+                        {% for cls in classes %}
+                        <option value="{{ cls.pk }}" {% if paper.class_name_id == cls.pk %}selected{% endif %}>{{ cls.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-medium">Time Limit (minutes)</label>
+                    <input type="number" name="time_limit" class="form-control" min="5" max="300"
+                        value="{{ paper.time_limit|default:60 }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-medium">Marks per Correct Answer</label>
+                    <input type="number" name="marks_per_correct" class="form-control" min="1" max="10"
+                        value="{{ paper.marks_per_correct|default:1 }}">
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+                {% if paper %}Save Changes{% else %}Create Paper{% endif %}
+            </button>
+            <a href="{% url 'sat:paper_list' %}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

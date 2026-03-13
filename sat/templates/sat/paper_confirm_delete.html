@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block dashboard %}
+<div class="container py-5" style="max-width:480px">
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-4 text-center">
+            <div class="text-danger mb-3" style="font-size:2.5rem">🗑</div>
+            <h5 class="fw-semibold mb-2">Delete Paper?</h5>
+            <p class="text-muted mb-1">This will permanently delete <strong>{{ paper.title }}</strong> and all {{ paper.questions.count }} question(s).</p>
+            <p class="text-danger small mb-4">This action cannot be undone.</p>
+            <form method="post" class="d-flex gap-2 justify-content-center">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                <a href="{% url 'sat:paper_detail' paper.pk %}" class="btn btn-outline-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

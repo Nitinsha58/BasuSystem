@@ -1,0 +1,499 @@
+{% extends 'base.html' %}
+{% block dashboard %}
+
+<style>
+:root {
+  --navy:     #0d1b3e;
+  --navy2:    #1e3163;
+  --gold:     #c9921a;
+  --gold-lt:  #fef3dc;
+  --green:    #1a7a4a;
+  --green-lt: #e6f5ed;
+  --red:      #c0392b;
+  --red-lt:   #fdecea;
+  --amber:    #c07a10;
+  --amber-lt: #fef0d8;
+  --bg:       #f4f5f7;
+  --surface:  #ffffff;
+  --border:   #e2e4e9;
+  --text:     #1c1f2e;
+  --muted:    #6b7280;
+  --mono:     'IBM Plex Mono', monospace;
+  --sans:     'IBM Plex Sans', sans-serif;
+}
+
+/* Font import — only loads if not already in base.html */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+.rd-wrap {
+  max-width: 940px;
+  margin: 0 auto;
+  padding: 0 20px 40px;
+  font-family: var(--sans);
+  color: var(--text);
+  font-size: 13px;
+}
+
+/* ── BREADCRUMB ── */
+.rd-breadcrumb {
+  padding: 16px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.rd-breadcrumb a { color: var(--muted); text-decoration: none; }
+.rd-breadcrumb a:hover { color: var(--navy); }
+.rd-breadcrumb .sep { color: var(--border); }
+
+/* ── HERO HEADER ── */
+.rd-hero {
+  background: var(--navy);
+  border-radius: 8px;
+  padding: 20px 24px;
+  margin: 12px 0 16px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+.rd-hero::before {
+  content: '';
+  position: absolute; top: -40px; right: -40px;
+  width: 160px; height: 160px; border-radius: 50%;
+  background: rgba(201,168,76,.08);
+}
+.rd-hero-name {
+  font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 4px;
+}
+.rd-hero-meta {
+  font-size: 11px; color: rgba(255,255,255,.45);
+  display: flex; gap: 14px; flex-wrap: wrap;
+}
+.rd-hero-meta span { display: flex; align-items: center; gap: 4px; }
+.rd-status-pill {
+  font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  padding: 5px 14px; border-radius: 3px; white-space: nowrap;
+}
+.pill-shared { background: var(--green-lt); color: var(--green); border: 1px solid #a7d9bc; }
+.pill-hold   { background: rgba(255,255,255,.08); color: rgba(255,255,255,.5); border: 1px solid rgba(255,255,255,.15); }
+
+/* ── ALERTS ── */
+.rd-alert {
+  padding: 10px 14px; border-radius: 5px; font-size: 12px;
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.rd-alert.success { background: var(--green-lt); color: var(--green); border: 1px solid #a7d9bc; }
+.rd-alert.error   { background: var(--red-lt);   color: var(--red);   border: 1px solid #f5bfbf; }
+.rd-alert .rd-close { margin-left:auto; cursor:pointer; opacity:.5; font-size:14px; background:none; border:none; color:inherit; }
+
+/* ── KPI ROW ── */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.kpi {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; padding: 14px 16px;
+  border-top: 3px solid var(--border);
+}
+.kpi.k-score  { border-top-color: var(--green); }
+.kpi.k-pct    { border-top-color: var(--navy); }
+.kpi.k-grade  { border-top-color: var(--gold); }
+.kpi.k-schol  { border-top-color: var(--amber); }
+.kpi-lbl { font-size: 9px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.kpi-val { font-size: 24px; font-weight: 700; font-family: var(--mono); line-height: 1; }
+.kpi-sub { font-size: 10px; color: var(--muted); margin-top: 3px; }
+.kpi.k-score .kpi-val { color: var(--green); }
+.kpi.k-pct   .kpi-val { color: var(--navy);  }
+.kpi.k-grade .kpi-val { color: var(--gold);  }
+.kpi.k-schol .kpi-val { color: var(--amber); font-size: 16px; line-height: 1.3; }
+
+/* ── VISIBILITY CONTROL CARD ── */
+.vis-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; padding: 14px 16px;
+  border-top: 3px solid var(--navy);
+  display: flex; flex-direction: column; gap: 8px;
+}
+.vis-card .vc-lbl { font-size: 9px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.btn-release {
+  display: block; width: 100%; padding: 8px; border-radius: 4px; border: none;
+  background: var(--green); color: #fff; font-size: 11px; font-weight: 700;
+  letter-spacing: .06em; cursor: pointer; text-align: center;
+  transition: background .15s;
+}
+.btn-release:hover { background: #156b40; }
+.btn-hold {
+  display: block; width: 100%; padding: 8px; border-radius: 4px;
+  background: none; border: 1px solid var(--border); color: var(--muted);
+  font-size: 11px; font-weight: 600; cursor: pointer; text-align: center;
+  transition: border-color .15s, color .15s;
+}
+.btn-hold:hover { border-color: var(--red); color: var(--red); }
+.url-row {
+  display: flex; gap: 6px; align-items: center;
+}
+.url-input {
+  flex: 1; font-family: var(--mono); font-size: 10px; padding: 6px 10px;
+  border: 1px solid var(--border); border-radius: 4px; background: var(--bg);
+  color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.btn-copy {
+  padding: 6px 12px; border: 1px solid var(--border); border-radius: 4px;
+  background: var(--surface); font-size: 11px; font-weight: 600; color: var(--navy);
+  cursor: pointer; white-space: nowrap; transition: background .15s;
+}
+.btn-copy:hover { background: var(--bg); }
+.vis-preview-link {
+  font-size: 10px; color: var(--navy); text-decoration: none;
+  display: flex; align-items: center; gap: 4px;
+}
+.vis-preview-link:hover { text-decoration: underline; }
+
+/* ── SECTION CARD ── */
+.sec-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; overflow: hidden; margin-bottom: 12px;
+}
+.sec-header {
+  padding: 10px 16px; background: var(--bg); border-bottom: 1px solid var(--border);
+  font-size: 9px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase;
+  color: var(--muted); display: flex; justify-content: space-between; align-items: center;
+}
+.sec-header-badge {
+  font-family: var(--mono); font-size: 11px; color: var(--text); font-weight: 600;
+  letter-spacing: 0; text-transform: none;
+}
+
+/* ── DATA TABLE ── */
+.rd-table {
+  width: 100%; border-collapse: collapse; font-size: 12px;
+}
+.rd-table th {
+  padding: 9px 14px; text-align: left; font-size: 10px;
+  letter-spacing: .08em; text-transform: uppercase; color: var(--muted);
+  font-weight: 700; border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.rd-table th.num { text-align: right; }
+.rd-table td {
+  padding: 10px 14px; border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.rd-table tr:last-child td { border-bottom: none; }
+.rd-table tr.row-correct td { background: #f0faf5; }
+.rd-table tr.row-wrong   td { background: #fef5f5; }
+.rd-table tr.row-skip    td { background: #fafbfc; }
+.td-num { text-align: right; font-family: var(--mono); font-weight: 600; }
+
+/* progress bar in table */
+.tbl-bar-wrap { display: flex; align-items: center; gap: 8px; min-width: 120px; }
+.tbl-bar-track { flex: 1; background: var(--bg); border-radius: 3px; height: 6px; overflow: hidden; }
+.tbl-bar-fill  { height: 100%; border-radius: 3px; }
+.tbl-bar-pct   { font-family: var(--mono); font-size: 11px; color: var(--muted); width: 36px; text-align: right; flex-shrink: 0; }
+
+/* diff badge */
+.diff-badge {
+  font-size: 9px; font-weight: 700; padding: 3px 7px; border-radius: 3px;
+  letter-spacing: .06em; text-transform: uppercase;
+}
+.diff-l1 { background: #dcfce7; color: #166534; }
+.diff-l2 { background: #fef9c3; color: #854d0e; }
+.diff-l3 { background: #fee2e2; color: #991b1b; }
+
+/* answer boxes */
+.ans-box {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px; border-radius: 4px;
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+}
+.ans-given   { background: rgba(0,0,0,.06); color: var(--text); }
+.ans-correct { background: #bbf7d0; color: #166534; }
+.ans-wrong   { background: #fecaca; color: #991b1b; }
+.ans-skip    { background: #e0e7ff; color: #3730a3; font-size: 9px; }
+.ans-arrow   { font-size: 10px; color: var(--muted); margin: 0 2px; }
+
+/* result icon */
+.res-icon { font-size: 14px; }
+
+/* ── Q-BY-Q SUBJECT GROUPER ── */
+.q-group-header {
+  padding: 8px 14px; background: var(--navy);
+  font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  color: rgba(255,255,255,.6); display: flex; justify-content: space-between; align-items: center;
+}
+.q-group-score { font-family: var(--mono); font-size: 11px; color: var(--gold); }
+
+/* ── MARKS CHIP ── */
+.marks-chip {
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  padding: 2px 7px; border-radius: 3px;
+}
+.mc-pos  { background: var(--green-lt); color: var(--green); }
+.mc-neg  { background: var(--red-lt);   color: var(--red); }
+.mc-zero { background: var(--bg);       color: var(--muted); }
+</style>
+
+{% include 'sat/_subnav.html' %}
+
+<div class="rd-wrap">
+
+  <!-- BREADCRUMB -->
+  <div class="rd-breadcrumb">
+    <a href="{% url 'sat:result_list' %}">← Results</a>
+    <span class="sep">/</span>
+    <span>{{ result.attempt.assignment.inquiry.student_name }}</span>
+  </div>
+
+  <!-- HERO -->
+  <div class="rd-hero">
+    <div>
+      <div class="rd-hero-name">{{ result.attempt.assignment.inquiry.student_name }}</div>
+      <div class="rd-hero-meta">
+        <span>📄 {{ result.attempt.assignment.paper.title }}</span>
+        <span>📅 {{ result.created_at|date:"d M Y, H:i" }}</span>
+        <span>🏫 {{ result.attempt.assignment.inquiry.school }}</span>
+      </div>
+    </div>
+    <div>
+      {% if result.visibility == 'shared' %}
+        <span class="rd-status-pill pill-shared">🔓 Released to Parent</span>
+      {% else %}
+        <span class="rd-status-pill pill-hold">🔒 On Hold</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ALERTS -->
+  {% if messages %}
+  {% for msg in messages %}
+  <div class="rd-alert {% if 'success' in msg.tags %}success{% else %}error{% endif %}">
+    <span>{{ msg }}</span>
+    <button class="rd-close" onclick="this.parentElement.remove()">✕</button>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  <!-- KPI ROW -->
+  <div class="kpi-row">
+    <div class="kpi k-score">
+      <div class="kpi-lbl">Score</div>
+      <div class="kpi-val">{{ result.total_marks }}<span style="font-size:14px;color:var(--muted);font-weight:400;">/{{ result.max_marks }}</span></div>
+      <div style="margin-top:8px;background:var(--bg);border-radius:3px;height:4px;overflow:hidden;">
+        <div style="width:{{ result.percentage }}%;height:100%;background:var(--green);border-radius:3px;"></div>
+      </div>
+    </div>
+    <div class="kpi k-pct">
+      <div class="kpi-lbl">Percentage</div>
+      <div class="kpi-val">{{ result.percentage }}<span style="font-size:14px;color:var(--muted);font-weight:400;">%</span></div>
+      <div class="kpi-sub">{{ result.grade_band }} band</div>
+    </div>
+    <div class="kpi k-grade">
+      <div class="kpi-lbl">Grade</div>
+      <div class="kpi-val">{{ result.grade_band }}</div>
+      <div class="kpi-sub">{{ result.percentage }}% overall</div>
+    </div>
+    <div class="kpi k-schol">
+      <div class="kpi-lbl">Scholarship</div>
+      <div class="kpi-val">{{ result.scholarship_tier.label }}</div>
+      <div class="kpi-sub">{{ result.scholarship_tier.waiver }} fee waiver</div>
+    </div>
+
+    <!-- VISIBILITY CONTROL (5th cell) -->
+    <div class="vis-card">
+      <div class="vc-lbl">Visibility</div>
+      <form method="post">
+        {% csrf_token %}
+        {% if result.visibility == 'hold' %}
+          <input type="hidden" name="visibility" value="shared">
+          <button type="submit" class="btn-release">🔓 Release to Parent</button>
+        {% else %}
+          <div class="url-row">
+            <input type="text" class="url-input" id="rurl" value="{{ report_url }}" readonly>
+            <button type="button" class="btn-copy" onclick="copyText('rurl', this)">Copy</button>
+          </div>
+          <a href="{{ report_url }}" target="_blank" class="vis-preview-link">↗ Preview report</a>
+          <input type="hidden" name="visibility" value="hold">
+          <button type="submit" class="btn-hold">🔒 Hold Report</button>
+        {% endif %}
+      </form>
+    </div>
+  </div>
+
+  <!-- SUBJECT BREAKDOWN -->
+  {% if result.subject_scores %}
+  <div class="sec-card">
+    <div class="sec-header">
+      By Subject
+      <span class="sec-header-badge">{{ result.subject_scores|length }} subject{{ result.subject_scores|length|pluralize }}</span>
+    </div>
+    <table class="rd-table">
+      <thead>
+        <tr>
+          <th>Subject</th>
+          <th class="num">Correct</th>
+          <th class="num">Attempted</th>
+          <th class="num">Total Q</th>
+          <th class="num">Obtained</th>
+          <th class="num">Max</th>
+          <th style="min-width:160px;">Accuracy</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for subj, v in result.subject_scores.items %}
+        {% if v.max > 0 %}
+        <tr>
+          <td style="font-weight:600;">{{ subj }}</td>
+          <td class="td-num" style="color:var(--green);">{{ v.correct }}</td>
+          <td class="td-num">{{ v.attempted }}</td>
+          <td class="td-num" style="color:var(--muted);">{{ v.max }}</td>
+          <td class="td-num" style="font-weight:700;">{{ v.obtained }}</td>
+          <td class="td-num" style="color:var(--muted);">{{ v.max }}</td>
+          <td>
+            {% widthratio v.obtained v.max 100 as subj_pct %}
+            <div class="tbl-bar-wrap">
+              <div class="tbl-bar-track">
+                <div class="tbl-bar-fill" style="width:{{ subj_pct }}%;background:{% if subj_pct >= 75 %}var(--green){% elif subj_pct >= 50 %}var(--amber){% else %}var(--red){% endif %};"></div>
+              </div>
+              <div class="tbl-bar-pct">{{ subj_pct }}%</div>
+            </div>
+          </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <!-- DIFFICULTY BREAKDOWN -->
+  {% if result.difficulty_scores %}
+  <div class="sec-card">
+    <div class="sec-header">By Difficulty</div>
+    <table class="rd-table">
+      <thead>
+        <tr>
+          <th>Level</th>
+          <th class="num">Correct</th>
+          <th class="num">Attempted</th>
+          <th class="num">Obtained</th>
+          <th class="num">Max</th>
+          <th style="min-width:160px;">Accuracy</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for diff, v in result.difficulty_scores.items %}
+        <tr>
+          <td>
+            <span class="diff-badge {% if diff == 'L1' %}diff-l1{% elif diff == 'L2' %}diff-l2{% else %}diff-l3{% endif %}">{{ diff }}</span>
+          </td>
+          <td class="td-num" style="color:var(--green);">{{ v.correct }}</td>
+          <td class="td-num">{{ v.attempted }}</td>
+          <td class="td-num" style="font-weight:700;">{{ v.obtained }}</td>
+          <td class="td-num" style="color:var(--muted);">{{ v.max }}</td>
+          <td>
+            {% if v.max > 0 %}
+            {% widthratio v.obtained v.max 100 as diff_pct %}
+            <div class="tbl-bar-wrap">
+              <div class="tbl-bar-track">
+                <div class="tbl-bar-fill" style="width:{{ diff_pct }}%;background:{% if diff == 'L1' %}var(--green){% elif diff == 'L2' %}var(--amber){% else %}var(--red){% endif %};"></div>
+              </div>
+              <div class="tbl-bar-pct">{{ diff_pct }}%</div>
+            </div>
+            {% else %}—{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+
+  <!-- Q-BY-Q BREAKDOWN -->
+  <div class="sec-card">
+    <div class="sec-header">
+      Question-by-Question
+      <span class="sec-header-badge">{{ responses|length }} question{{ responses|length|pluralize }}</span>
+    </div>
+    <table class="rd-table">
+      <thead>
+        <tr>
+          <th style="width:40px;">#</th>
+          <th>Subject / Tag</th>
+          <th>Difficulty</th>
+          <th>Answer</th>
+          <th class="num">Marks</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in responses %}
+        <tr class="{% if r.is_correct %}row-correct{% elif r.selected_option %}row-wrong{% else %}row-skip{% endif %}">
+
+          <td style="font-family:var(--mono);font-size:11px;color:var(--muted);font-weight:600;">
+            {{ r.question.order|stringformat:"02d" }}
+          </td>
+
+          <td>
+            <div style="font-weight:600;font-size:12px;">{{ r.question.get_subject_tag_display }}</div>
+          </td>
+
+          <td>
+            <span class="diff-badge {% if r.question.difficulty == 'L1' %}diff-l1{% elif r.question.difficulty == 'L2' %}diff-l2{% else %}diff-l3{% endif %}">
+              {{ r.question.difficulty }}
+            </span>
+          </td>
+
+          <td>
+            {% if r.is_correct %}
+              <span class="ans-box ans-correct">{{ r.selected_option }}</span>
+              <span style="font-size:12px;color:var(--green);margin-left:4px;">✓</span>
+            {% elif r.selected_option %}
+              <span class="ans-box ans-wrong">{{ r.selected_option }}</span>
+              <span class="ans-arrow">→</span>
+              <span class="ans-box ans-correct">{{ r.question.correct_answer }}</span>
+            {% else %}
+              <span class="ans-box ans-skip">—</span>
+              <span class="ans-arrow">→</span>
+              <span class="ans-box ans-correct">{{ r.question.correct_answer }}</span>
+              <span style="font-size:10px;color:var(--muted);margin-left:4px;">skipped</span>
+            {% endif %}
+          </td>
+
+          <td class="td-num">
+            <span class="marks-chip {% if r.marks_obtained > 0 %}mc-pos{% elif r.marks_obtained < 0 %}mc-neg{% else %}mc-zero{% endif %}">
+              {% if r.marks_obtained > 0 %}+{% endif %}{{ r.marks_obtained }}
+            </span>
+          </td>
+
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- end rd-wrap -->
+
+<script>
+function copyText(id, btn) {
+    const el = document.getElementById(id);
+    navigator.clipboard.writeText(el.value).then(() => {
+        const orig = btn.textContent;
+        btn.textContent = '✓ Copied';
+        btn.style.background = 'var(--green-lt)';
+        btn.style.color = 'var(--green)';
+        setTimeout(() => {
+            btn.textContent = orig;
+            btn.style.background = '';
+            btn.style.color = '';
+        }, 1500);
+    });
+}
+</script>
+
+{% endblock %}

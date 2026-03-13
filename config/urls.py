@@ -3,6 +3,7 @@ from django.urls import path, include
 from django.conf.urls.static import static
 from django.conf import settings
 import os
+from sat.views import test_shell
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -14,6 +15,9 @@ urlpatterns = [
     path("accounts/", include("accounts.urls")),
     path("reports/", include("reports.urls")),
     path("lesson/", include("lesson.urls")),
+    path('sat/', include('sat.urls', namespace='sat')),
+    path('api/sat/', include('sat.api_urls')),
+    path('test/<str:token>/', test_shell, name='test_shell'),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 # Load Debug Toolbar ONLY when running local settings

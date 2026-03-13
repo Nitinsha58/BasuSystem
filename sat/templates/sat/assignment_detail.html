@@ -1,0 +1,416 @@
+{% extends 'base.html' %}
+{% block dashboard %}
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  --navy:     #0d1b3e;
+  --navy2:    #1e3163;
+  --gold:     #c9921a;
+  --gold-lt:  #fef3dc;
+  --green:    #1a7a4a;
+  --green-lt: #e6f5ed;
+  --red:      #c0392b;
+  --red-lt:   #fdecea;
+  --amber:    #c07a10;
+  --amber-lt: #fef0d8;
+  --bg:       #f4f5f7;
+  --surface:  #ffffff;
+  --border:   #e2e4e9;
+  --text:     #1c1f2e;
+  --muted:    #6b7280;
+  --mono:     'IBM Plex Mono', monospace;
+  --sans:     'IBM Plex Sans', sans-serif;
+}
+
+.ad-wrap {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+  font-family: var(--sans);
+  color: var(--text);
+  font-size: 13px;
+}
+
+/* ── BREADCRUMB ── */
+.ad-breadcrumb {
+  padding: 0 0 0;
+  font-size: 12px; color: var(--muted);
+  display: flex; align-items: center; gap: 6px; margin-bottom: 12px;
+}
+.ad-breadcrumb a { color: var(--muted); text-decoration: none; }
+.ad-breadcrumb a:hover { color: var(--navy); }
+.ad-breadcrumb .sep { color: var(--border); }
+
+/* ── HERO ── */
+.ad-hero {
+  background: var(--navy); border-radius: 8px; padding: 20px 24px;
+  margin-bottom: 16px; display: grid; grid-template-columns: 1fr auto;
+  gap: 16px; align-items: center; position: relative; overflow: hidden;
+}
+.ad-hero::before {
+  content: ''; position: absolute; top: -40px; right: -40px;
+  width: 160px; height: 160px; border-radius: 50%;
+  background: rgba(201,168,76,.08);
+}
+.ad-hero-name { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+.ad-hero-meta {
+  font-size: 11px; color: rgba(255,255,255,.45);
+  display: flex; gap: 14px; flex-wrap: wrap;
+}
+.ad-hero-meta span { display: flex; align-items: center; gap: 4px; }
+
+/* ── STATUS BADGE ── */
+.status-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  padding: 5px 12px; border-radius: 20px; white-space: nowrap;
+}
+.s-completed { background: var(--green-lt); color: var(--green); border: 1px solid #a7d9bc; }
+.s-started   { background: var(--amber-lt); color: var(--amber); border: 1px solid #e8c87a; }
+.s-pending   { background: rgba(255,255,255,.08); color: rgba(255,255,255,.5); border: 1px solid rgba(255,255,255,.15); }
+.status-dot  { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.s-completed .status-dot { background: var(--green); }
+.s-started   .status-dot { background: var(--amber); animation: pulse 1.5s infinite; }
+.s-pending   .status-dot { background: rgba(255,255,255,.4); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+/* ── ALERTS ── */
+.ad-alert {
+  padding: 10px 14px; border-radius: 5px; font-size: 12px;
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.ad-alert.success { background: var(--green-lt); color: var(--green); border: 1px solid #a7d9bc; }
+.ad-alert.error   { background: var(--red-lt);   color: var(--red);   border: 1px solid #f5bfbf; }
+.ad-alert.warning { background: var(--amber-lt); color: var(--amber); border: 1px solid #e8c87a; }
+.ad-alert .ac { margin-left:auto; cursor:pointer; opacity:.5; font-size:14px; background:none; border:none; color:inherit; }
+
+/* ── 2-COL GRID ── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+
+/* ── CARD ── */
+.ad-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; overflow: hidden;
+}
+.ad-card-header {
+  padding: 10px 16px; background: var(--bg); border-bottom: 1px solid var(--border);
+  font-size: 9px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; color: var(--muted);
+}
+.ad-card-body { padding: 16px; }
+
+/* ── TEST LINK CARD ── */
+.url-row { display: flex; gap: 6px; margin-bottom: 10px; }
+.url-input {
+  flex: 1; font-family: var(--mono); font-size: 11px; padding: 7px 10px;
+  border: 1px solid var(--border); border-radius: 4px;
+  background: var(--bg); color: var(--muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.btn-copy {
+  padding: 7px 14px; border: 1px solid var(--border); border-radius: 4px;
+  background: var(--surface); font-size: 11px; font-weight: 600; color: var(--navy);
+  cursor: pointer; white-space: nowrap; transition: background .12s;
+}
+.btn-copy:hover { background: var(--bg); }
+.btn-wa {
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  width: 100%; padding: 9px; border-radius: 4px; border: none;
+  background: #25d366; color: #fff; font-size: 12px; font-weight: 700;
+  text-decoration: none; cursor: pointer; transition: background .12s;
+  letter-spacing: .02em;
+}
+.btn-wa:hover { background: #1da851; color: #fff; }
+
+/* ── DETAIL TABLE ── */
+.detail-table { width: 100%; border-collapse: collapse; }
+.detail-table tr { border-bottom: 1px solid var(--border); }
+.detail-table tr:last-child { border-bottom: none; }
+.detail-table td { padding: 9px 0; vertical-align: middle; }
+.detail-table .dt-label {
+  font-size: 10px; color: var(--muted); font-weight: 600;
+  letter-spacing: .06em; text-transform: uppercase; width: 110px; padding-right: 12px;
+}
+.detail-table .dt-val { font-size: 12px; color: var(--text); font-weight: 500; }
+.dt-mono { font-family: var(--mono); }
+
+/* ── RESULT SECTION ── */
+.result-kpi-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 16px; }
+.rkpi {
+  padding: 14px; border-radius: 5px; border: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.rkpi-label { font-size: 9px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.rkpi-val   { font-size: 22px; font-weight: 700; font-family: var(--mono); line-height: 1; }
+.rkpi.score  { background: var(--green-lt); border-color: #a7d9bc; }
+.rkpi.pct    { background: #eff6ff;         border-color: #bfdbfe; }
+.rkpi.grade  { background: var(--gold-lt);  border-color: #e8c87a; }
+.rkpi.schol  { background: var(--amber-lt); border-color: #e8c87a; }
+.rkpi.score .rkpi-val { color: var(--green); }
+.rkpi.pct   .rkpi-val { color: #1d4ed8; }
+.rkpi.grade .rkpi-val { color: var(--navy); }
+.rkpi.schol .rkpi-val { color: var(--amber); font-size:16px; line-height:1.3; }
+
+/* ── VISIBILITY ROW ── */
+.vis-row {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 14px 16px; border-top: 1px solid var(--border); background: var(--bg);
+}
+.vis-lbl { font-size: 10px; font-weight: 700; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+.vis-pill {
+  font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 20px;
+}
+.vp-shared { background: var(--green-lt); color: var(--green); border: 1px solid #a7d9bc; }
+.vp-hold   { background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
+.btn-release {
+  padding: 7px 14px; border-radius: 4px; border: none;
+  background: var(--green); color: #fff; font-size: 11px; font-weight: 700;
+  cursor: pointer; transition: background .12s; white-space: nowrap;
+}
+.btn-release:hover { background: #156b40; }
+.btn-hold {
+  padding: 7px 14px; border-radius: 4px;
+  background: none; border: 1px solid var(--border); color: var(--muted);
+  font-size: 11px; font-weight: 600; cursor: pointer;
+  transition: border-color .12s, color .12s; white-space: nowrap;
+}
+.btn-hold:hover { border-color: var(--red); color: var(--red); }
+.btn-view-result {
+  display: inline-flex; align-items: center; gap: 5px; margin-left: auto;
+  font-size: 11px; font-weight: 600; padding: 7px 14px;
+  border: 1px solid var(--navy); border-radius: 4px;
+  color: var(--navy); background: var(--surface);
+  text-decoration: none; transition: background .12s;
+}
+.btn-view-result:hover { background: var(--navy); color: #fff; }
+
+/* ── ATTEMPT ROW ── */
+.attempt-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; gap: 12px; flex-wrap: wrap;
+}
+.attempt-times { display: flex; gap: 20px; flex-wrap: wrap; }
+.at-item { display: flex; flex-direction: column; gap: 2px; }
+.at-lbl { font-size: 9px; font-weight: 700; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; }
+.at-val { font-size: 12px; font-family: var(--mono); color: var(--text); font-weight: 500; }
+.btn-reset {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 600; padding: 7px 14px;
+  background: none; border: 1px solid var(--border); border-radius: 4px;
+  color: var(--muted); cursor: pointer; transition: all .12s; white-space: nowrap;
+}
+.btn-reset:hover { background: var(--red-lt); color: var(--red); border-color: #f5bfbf; }
+</style>
+
+{% include 'sat/_subnav.html' %}
+
+<div class="ad-wrap">
+
+  <!-- BREADCRUMB -->
+  <div class="ad-breadcrumb">
+    <a href="{% url 'sat:assignment_list' %}">← Assignments</a>
+    <span class="sep">/</span>
+    <span>{{ assignment.inquiry.student_name }}</span>
+  </div>
+
+  <!-- HERO -->
+  <div class="ad-hero">
+    <div>
+      <div class="ad-hero-name">{{ assignment.inquiry.student_name }}</div>
+      <div class="ad-hero-meta">
+        <span> {{ assignment.paper.title }}</span>
+        <span> {{ assignment.paper.time_limit }} min</span>
+        <span> +{{ assignment.paper.marks_per_correct }} per correct</span>
+        <span> {{ assignment.inquiry.school|default:"—" }}</span>
+      </div>
+    </div>
+    {% with s=assignment.status %}
+    <span class="status-badge {% if s == 'completed' %}s-completed{% elif s == 'started' %}s-started{% else %}s-pending{% endif %}">
+      <span class="status-dot"></span>{{ s|capfirst }}
+    </span>
+    {% endwith %}
+  </div>
+
+  <!-- ALERTS -->
+  {% if messages %}
+  {% for msg in messages %}
+  <div class="ad-alert {% if 'success' in msg.tags %}success{% elif 'error' in msg.tags %}error{% else %}warning{% endif %}">
+    <span>{{ msg }}</span>
+    <button class="ac" onclick="this.parentElement.remove()">✕</button>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  <!-- TOP 2-COL -->
+  <div class="two-col">
+
+    <!-- TEST LINK CARD -->
+    <div class="ad-card">
+      <div class="ad-card-header">Test Link</div>
+      <div class="ad-card-body">
+        <div class="url-row">
+          <input type="text" class="url-input" id="test-url" value="{{ test_url }}" readonly>
+          <button class="btn-copy" onclick="copyText('test-url', this)">Copy</button>
+        </div>
+        <a href="{{ wa_link }}" target="_blank" class="btn-wa">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+          </svg>
+          Send via WhatsApp
+        </a>
+      </div>
+    </div>
+
+    <!-- DETAILS CARD -->
+    <div class="ad-card">
+      <div class="ad-card-header">Details</div>
+      <div class="ad-card-body" style="padding:12px 16px;">
+        <table class="detail-table">
+          <tr>
+            <td class="dt-label">Phone</td>
+            <td class="dt-val dt-mono">{{ assignment.inquiry.phone }}</td>
+          </tr>
+          <tr>
+            <td class="dt-label">Paper</td>
+            <td class="dt-val">{{ assignment.paper.title }}</td>
+          </tr>
+          <tr>
+            <td class="dt-label">Questions</td>
+            <td class="dt-val dt-mono">{{ assignment.paper.questions.count }}</td>
+          </tr>
+          <tr>
+            <td class="dt-label">Max Marks</td>
+            <td class="dt-val dt-mono">{{ assignment.paper.max_marks }}</td>
+          </tr>
+          <tr>
+            <td class="dt-label">Deadline</td>
+            <td class="dt-val dt-mono">{{ assignment.deadline|date:"d M Y, H:i"|default:"—" }}</td>
+          </tr>
+          <tr>
+            <td class="dt-label">Auto-release</td>
+            <td class="dt-val">
+              {% if assignment.auto_release %}
+                <span style="color:var(--green);font-weight:700;">✓ Yes</span>
+              {% else %}
+                <span style="color:var(--muted);">—</span>
+              {% endif %}
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RESULT SECTION -->
+  {% if result %}
+  <div class="ad-card" style="margin-bottom:12px;">
+    <div class="ad-card-header" style="display:flex;justify-content:space-between;align-items:center;">
+      <span>Result</span>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--text);font-weight:600;letter-spacing:0;text-transform:none;">
+        {{ result.attempt.submitted_at|date:"d M Y, H:i" }}
+      </span>
+    </div>
+    <div class="ad-card-body">
+
+      <!-- KPI Row -->
+      <div class="result-kpi-row">
+        <div class="rkpi score">
+          <div class="rkpi-label">Score</div>
+          <div class="rkpi-val">{{ result.total_marks }}<span style="font-size:13px;font-weight:400;color:var(--muted);">/{{ result.max_marks }}</span></div>
+        </div>
+        <div class="rkpi pct">
+          <div class="rkpi-label">Percentage</div>
+          <div class="rkpi-val">{{ result.percentage }}<span style="font-size:13px;font-weight:400;">%</span></div>
+        </div>
+        <div class="rkpi grade">
+          <div class="rkpi-label">Grade</div>
+          <div class="rkpi-val">{{ result.grade_band }}</div>
+        </div>
+        <div class="rkpi schol">
+          <div class="rkpi-label">Scholarship</div>
+          <div class="rkpi-val">{{ result.scholarship_tier.waiver }}</div>
+          <div style="font-size:10px;color:var(--amber);margin-top:2px;">{{ result.scholarship_tier.label }}</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Visibility + Report URL row -->
+    <div class="vis-row">
+      <div class="vis-lbl">Visibility</div>
+      {% if result.visibility == 'shared' %}
+        <span class="vis-pill vp-shared">🔓 Released</span>
+        <div class="url-row" style="margin:0;flex:1;max-width:340px;">
+          <input type="text" class="url-input" id="report-url" value="{{ report_url }}" readonly>
+          <button class="btn-copy" onclick="copyText('report-url', this)">Copy</button>
+        </div>
+        <form method="post" action="{% url 'sat:result_detail' result.pk %}">
+          {% csrf_token %}
+          <input type="hidden" name="visibility" value="hold">
+          <button type="submit" class="btn-hold">🔒 Hold</button>
+        </form>
+      {% else %}
+        <span class="vis-pill vp-hold">🔒 On Hold</span>
+        <form method="post" action="{% url 'sat:result_detail' result.pk %}">
+          {% csrf_token %}
+          <input type="hidden" name="visibility" value="shared">
+          <button type="submit" class="btn-release">🔓 Release to Parent</button>
+        </form>
+      {% endif %}
+      <a href="{% url 'sat:result_detail' result.pk %}" class="btn-view-result">
+        Full Result →
+      </a>
+    </div>
+
+  </div>
+  {% endif %}
+
+  <!-- ATTEMPT INFO + RESET -->
+  {% if attempt %}
+  <div class="ad-card">
+    <div class="attempt-row">
+      <div class="attempt-times">
+        <div class="at-item">
+          <div class="at-lbl">Started</div>
+          <div class="at-val">{{ attempt.started_at|date:"d M Y, H:i" }}</div>
+        </div>
+        {% if attempt.submitted_at %}
+        <div class="at-item">
+          <div class="at-lbl">Submitted</div>
+          <div class="at-val">{{ attempt.submitted_at|date:"d M Y, H:i" }}</div>
+        </div>
+        {% endif %}
+      </div>
+      {% if not result %}
+      <form method="post" action="{% url 'sat:assignment_reset' assignment.pk %}"
+        onsubmit="return confirm('Reset this attempt? The student can restart from scratch.')">
+        {% csrf_token %}
+        <button type="submit" class="btn-reset">↺ Reset Attempt</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+function copyText(id, btn) {
+    navigator.clipboard.writeText(document.getElementById(id).value).then(() => {
+        const orig = btn.textContent;
+        btn.textContent = '✓ Copied';
+        btn.style.background = 'var(--green-lt)';
+        btn.style.color = 'var(--green)';
+        setTimeout(() => {
+            btn.textContent = orig;
+            btn.style.background = '';
+            btn.style.color = '';
+        }, 1500);
+    });
+}
+</script>
+
+{% endblock %}

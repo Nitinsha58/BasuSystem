@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+{% block dashboard %}
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  --navy:     #0d1b3e;
+  --navy2:    #1e3163;
+  --gold:     #c9921a;
+  --gold-lt:  #fef3dc;
+  --green:    #1a7a4a;
+  --green-lt: #e6f5ed;
+  --red:      #c0392b;
+  --red-lt:   #fdecea;
+  --amber:    #c07a10;
+  --amber-lt: #fef0d8;
+  --bg:       #f4f5f7;
+  --surface:  #ffffff;
+  --border:   #e2e4e9;
+  --text:     #1c1f2e;
+  --muted:    #6b7280;
+  --mono:     'IBM Plex Mono', monospace;
+  --sans:     'IBM Plex Sans', sans-serif;
+}
+
+.al-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+  font-family: var(--sans);
+  color: var(--text);
+  font-size: 13px;
+}
+
+/* ── HEADER ── */
+.al-header {
+  display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;
+}
+.al-title    { font-size: 20px; font-weight: 700; color: var(--navy); line-height: 1; }
+.al-subtitle { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.al-header-right { display: flex; align-items: center; gap: 10px; }
+.al-count {
+  font-size: 11px; font-family: var(--mono); color: var(--muted);
+  background: var(--bg); border: 1px solid var(--border); padding: 4px 12px; border-radius: 20px;
+}
+.btn-new {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 700; padding: 8px 16px; border-radius: 5px;
+  background: var(--navy); color: #fff; text-decoration: none; border: none;
+  letter-spacing: .03em; transition: background .12s;
+}
+.btn-new:hover { background: var(--navy2); color: #fff; }
+
+/* ── ALERTS ── */
+.al-alert {
+  padding: 10px 14px; border-radius: 5px; font-size: 12px;
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.al-alert.success { background: var(--green-lt); color: var(--green); border: 1px solid #a7d9bc; }
+.al-alert.error   { background: var(--red-lt);   color: var(--red);   border: 1px solid #f5bfbf; }
+.al-alert.warning { background: var(--amber-lt); color: var(--amber); border: 1px solid #e8c87a; }
+.al-alert .al-close { margin-left:auto; cursor:pointer; opacity:.5; font-size:14px; background:none; border:none; color:inherit; }
+
+/* ── TABLE CARD ── */
+.al-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+
+/* ── TABLE ── */
+.al-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.al-table thead tr { background: var(--navy); }
+.al-table th {
+  padding: 10px 14px; font-size: 9px; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: rgba(255,255,255,.5); text-align: left;
+  white-space: nowrap; border: none;
+}
+.al-table th.c { text-align: center; }
+.al-table tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+.al-table tbody tr:last-child { border-bottom: none; }
+.al-table tbody tr:hover { background: #f8f9fb; }
+.al-table td { padding: 12px 14px; vertical-align: middle; }
+.al-table td.c { text-align: center; }
+
+/* ── STUDENT CELL ── */
+.td-student { display: flex; align-items: center; gap: 10px; }
+.std-avatar {
+  width: 32px; height: 32px; border-radius: 50%; background: var(--navy2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0;
+}
+.std-name   { font-weight: 600; color: var(--text); font-size: 12px; }
+.std-school { font-size: 10px; color: var(--muted); margin-top: 1px; }
+
+/* ── PAPER CELL ── */
+.paper-name  { font-weight: 500; color: var(--text); font-size: 12px; }
+.paper-class { font-size: 10px; color: var(--muted); margin-top: 1px; }
+
+/* ── STATUS BADGE ── */
+.status-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 20px; white-space: nowrap;
+}
+.s-completed { background: var(--green-lt); color: var(--green); border: 1px solid #a7d9bc; }
+.s-started   { background: var(--amber-lt); color: var(--amber); border: 1px solid #e8c87a; }
+.s-pending   { background: var(--bg);       color: var(--muted); border: 1px solid var(--border); }
+.status-dot  { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.s-completed .status-dot { background: var(--green); }
+.s-started   .status-dot { background: var(--amber); animation: pulse 1.5s infinite; }
+.s-pending   .status-dot { background: var(--muted); }
+@keyframes pulse {
+  0%,100% { opacity:1; } 50% { opacity:.3; }
+}
+
+/* ── DEADLINE CELL ── */
+.deadline-val   { font-size: 11px; font-family: var(--mono); color: var(--text); }
+.deadline-time  { font-size: 10px; color: var(--muted); margin-top: 1px; font-family: var(--mono); }
+.deadline-over  { color: var(--red); }
+.deadline-soon  { color: var(--amber); }
+.deadline-none  { font-size: 11px; color: var(--muted); font-family: var(--mono); }
+
+/* ── AUTO-RELEASE ── */
+.auto-yes { font-size: 11px; font-weight: 700; color: var(--green); }
+.auto-no  { font-size: 11px; color: var(--muted); }
+
+/* ── DATE CELL ── */
+.date-cell { font-size: 11px; color: var(--muted); font-family: var(--mono); white-space: nowrap; }
+
+/* ── ACTION BUTTON ── */
+.btn-view {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 600; padding: 6px 14px;
+  border: 1px solid var(--border); border-radius: 4px;
+  color: var(--navy); background: var(--surface);
+  text-decoration: none; transition: background .12s, border-color .12s; white-space: nowrap;
+}
+.btn-view:hover { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+/* ── EMPTY STATE ── */
+.al-empty { padding: 64px 20px; text-align: center; }
+.al-empty-icon  { font-size: 36px; margin-bottom: 12px; }
+.al-empty-title { font-size: 15px; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
+.al-empty-sub   { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+</style>
+
+{% include 'sat/_subnav.html' %}
+
+<div class="al-wrap">
+
+  <!-- HEADER -->
+  <div class="al-header">
+    <div>
+      <div class="al-title">Test Assignments</div>
+      <div class="al-subtitle">Scholarship Aptitude Test · All assignments</div>
+    </div>
+    <div class="al-header-right">
+      {% if assignments %}
+      <span class="al-count">{{ assignments|length }} assignment{{ assignments|length|pluralize }}</span>
+      {% endif %}
+      <a href="{% url 'sat:assignment_create' %}" class="btn-new">
+        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 1v10M1 6h10"/>
+        </svg>
+        New Assignment
+      </a>
+    </div>
+  </div>
+
+  <!-- ALERTS -->
+  {% if messages %}
+  {% for msg in messages %}
+  <div class="al-alert {% if 'success' in msg.tags %}success{% elif 'error' in msg.tags %}error{% else %}warning{% endif %}">
+    <span>{{ msg }}</span>
+    <button class="al-close" onclick="this.parentElement.remove()">✕</button>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  {% if assignments %}
+  <div class="al-card">
+    <table class="al-table">
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Paper</th>
+          <th class="c">Status</th>
+          <th>Deadline</th>
+          <th class="c">Auto-release</th>
+          <th>Assigned</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in assignments %}
+        <tr>
+
+          <!-- STUDENT -->
+          <td>
+            <div class="td-student">
+              <div class="std-avatar">{{ a.inquiry.student_name|slice:":2"|upper }}</div>
+              <div>
+                <div class="std-name">{{ a.inquiry.student_name }}</div>
+                <div class="std-school">{{ a.inquiry.school|default:"—" }}</div>
+              </div>
+            </div>
+          </td>
+
+          <!-- PAPER -->
+          <td>
+            <div class="paper-name">{{ a.paper.title }}</div>
+            <div class="paper-class">Class {{ a.paper.class_name }}</div>
+          </td>
+
+          <!-- STATUS -->
+          <td class="c">
+            {% with s=a.status %}
+            <span class="status-badge {% if s == 'completed' %}s-completed{% elif s == 'started' %}s-started{% else %}s-pending{% endif %}">
+              <span class="status-dot"></span>
+              {{ s|capfirst }}
+            </span>
+            {% endwith %}
+          </td>
+
+          <!-- DEADLINE -->
+          <td>
+            {% if a.deadline %}
+              <div class="deadline-val">{{ a.deadline|date:"d M Y" }}</div>
+              <div class="deadline-time">{{ a.deadline|date:"H:i" }}</div>
+            {% else %}
+              <span class="deadline-none">—</span>
+            {% endif %}
+          </td>
+
+          <!-- AUTO-RELEASE -->
+          <td class="c">
+            {% if a.auto_release %}
+              <span class="auto-yes">✓ On</span>
+            {% else %}
+              <span class="auto-no">—</span>
+            {% endif %}
+          </td>
+
+          <!-- ASSIGNED DATE -->
+          <td>
+            <div class="date-cell">{{ a.created_at|date:"d M Y" }}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:1px;font-family:var(--mono);">{{ a.created_at|date:"H:i" }}</div>
+          </td>
+
+          <!-- ACTION -->
+          <td>
+            <a href="{% url 'sat:assignment_detail' a.pk %}" class="btn-view">
+              View
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M2 6h8M6 2l4 4-4 4"/>
+              </svg>
+            </a>
+          </td>
+
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% else %}
+
+  <div class="al-card">
+    <div class="al-empty">
+      <div class="al-empty-icon">📋</div>
+      <div class="al-empty-title">No assignments yet</div>
+      <div class="al-empty-sub">Assign a test paper to a student to get started.</div>
+      <a href="{% url 'sat:assignment_create' %}" class="btn-new" style="display:inline-flex;">
+        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 1v10M1 6h10"/>
+        </svg>
+        Create First Assignment
+      </a>
+    </div>
+  </div>
+
+  {% endif %}
+
+</div>
+
+{% endblock %}

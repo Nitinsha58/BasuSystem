@@ -1,0 +1,308 @@
+{% extends 'base.html' %}
+{% block dashboard %}
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  --navy:     #0d1b3e;
+  --navy2:    #1e3163;
+  --gold:     #c9921a;
+  --gold-lt:  #fef3dc;
+  --green:    #1a7a4a;
+  --green-lt: #e6f5ed;
+  --red:      #c0392b;
+  --red-lt:   #fdecea;
+  --amber:    #c07a10;
+  --amber-lt: #fef0d8;
+  --bg:       #f4f5f7;
+  --surface:  #ffffff;
+  --border:   #e2e4e9;
+  --text:     #1c1f2e;
+  --muted:    #6b7280;
+  --mono:     'IBM Plex Mono', monospace;
+  --sans:     'IBM Plex Sans', sans-serif;
+}
+
+.pl-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+  font-family: var(--sans);
+  color: var(--text);
+  font-size: 13px;
+}
+
+/* ── PAGE HEADER ── */
+.pl-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 20px;
+}
+.pl-title    { font-size: 20px; font-weight: 700; color: var(--navy); line-height: 1; }
+.pl-subtitle { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+.pl-header-right { display: flex; align-items: center; gap: 10px; }
+.pl-count {
+  font-size: 11px; font-family: var(--mono); color: var(--muted);
+  background: var(--bg); border: 1px solid var(--border);
+  padding: 4px 12px; border-radius: 20px;
+}
+.btn-new {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 700; padding: 8px 16px;
+  border-radius: 5px; background: var(--navy); color: #fff;
+  text-decoration: none; border: none; cursor: pointer;
+  letter-spacing: .03em; transition: background .12s;
+}
+.btn-new:hover { background: var(--navy2); color: #fff; }
+
+/* ── ALERTS ── */
+.pl-alert {
+  padding: 10px 14px; border-radius: 5px; font-size: 12px;
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.pl-alert.success { background: var(--green-lt); color: var(--green); border: 1px solid #a7d9bc; }
+.pl-alert.error   { background: var(--red-lt);   color: var(--red);   border: 1px solid #f5bfbf; }
+.pl-alert.warning { background: var(--amber-lt); color: var(--amber); border: 1px solid #e8c87a; }
+.pl-alert .al-close { margin-left:auto; cursor:pointer; opacity:.5; font-size:14px; background:none; border:none; color:inherit; }
+
+/* ── TABLE CARD ── */
+.pl-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* ── TABLE ── */
+.pl-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.pl-table thead tr { background: var(--navy); }
+.pl-table th {
+  padding: 10px 14px;
+  font-size: 9px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: rgba(255,255,255,.5); text-align: left; white-space: nowrap; border: none;
+}
+.pl-table th.c { text-align: center; }
+.pl-table tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+.pl-table tbody tr:last-child { border-bottom: none; }
+.pl-table tbody tr:hover { background: #f8f9fb; }
+.pl-table td { padding: 13px 14px; vertical-align: middle; }
+.pl-table td.c { text-align: center; }
+
+/* ── TITLE CELL ── */
+.paper-link {
+  font-weight: 600; color: var(--navy); text-decoration: none; font-size: 13px;
+  display: flex; align-items: center; gap: 7px;
+}
+.paper-link:hover { color: var(--gold); }
+.paper-icon {
+  width: 28px; height: 28px; border-radius: 5px;
+  background: var(--bg); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; flex-shrink: 0;
+}
+
+/* ── CLASS CHIP ── */
+.class-chip {
+  display: inline-block; font-size: 10px; font-weight: 700;
+  padding: 3px 9px; border-radius: 3px; letter-spacing: .04em;
+  background: var(--navy); color: #fff;
+}
+
+/* ── Q COUNT BADGE ── */
+.q-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 36px; padding: 4px 8px; border-radius: 4px;
+  font-family: var(--mono); font-size: 12px; font-weight: 700;
+}
+.q-full     { background: var(--green-lt); color: var(--green); border: 1px solid #a7d9bc; }
+.q-partial  { background: var(--amber-lt); color: var(--amber); border: 1px solid #e8c87a; }
+.q-empty    { background: var(--bg);       color: var(--muted); border: 1px solid var(--border); }
+
+/* ── STAT CELLS ── */
+.stat-mono {
+  font-family: var(--mono); font-size: 12px; font-weight: 600; color: var(--text);
+}
+.stat-label { font-size: 9px; color: var(--muted); margin-top: 1px; letter-spacing: .04em; }
+
+/* ── MAX MARKS BADGE ── */
+.maxmarks {
+  font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--navy);
+}
+
+/* ── DATE CELL ── */
+.date-cell {
+  font-size: 11px; color: var(--muted); font-family: var(--mono); white-space: nowrap;
+}
+
+/* ── ACTION BUTTONS ── */
+.action-group { display: flex; gap: 6px; justify-content: flex-end; }
+.btn-edit {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 600; padding: 5px 12px;
+  border: 1px solid var(--border); border-radius: 4px;
+  color: var(--navy); background: var(--surface);
+  text-decoration: none; transition: background .12s, border-color .12s;
+  white-space: nowrap;
+}
+.btn-edit:hover { background: var(--navy); color: #fff; border-color: var(--navy); }
+.btn-del {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 600; padding: 5px 12px;
+  border: 1px solid transparent; border-radius: 4px;
+  color: var(--muted); background: none;
+  text-decoration: none; transition: background .12s, color .12s, border-color .12s;
+  white-space: nowrap;
+}
+.btn-del:hover { background: var(--red-lt); color: var(--red); border-color: #f5bfbf; }
+
+/* ── EMPTY STATE ── */
+.pl-empty { padding: 64px 20px; text-align: center; }
+.pl-empty-icon  { font-size: 36px; margin-bottom: 12px; }
+.pl-empty-title { font-size: 15px; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
+.pl-empty-sub   { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+</style>
+
+{% include 'sat/_subnav.html' %}
+
+<div class="pl-wrap">
+
+  <!-- PAGE HEADER -->
+  <div class="pl-header">
+    <div>
+      <div class="pl-title">Test Papers</div>
+      <div class="pl-subtitle">Scholarship Aptitude Test · All papers</div>
+    </div>
+    <div class="pl-header-right">
+      {% if papers %}
+      <span class="pl-count">{{ papers|length }} paper{{ papers|length|pluralize }}</span>
+      {% endif %}
+      <a href="{% url 'sat:paper_create' %}" class="btn-new">
+        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 1v10M1 6h10"/>
+        </svg>
+        New Paper
+      </a>
+    </div>
+  </div>
+
+  <!-- ALERTS -->
+  {% if messages %}
+  {% for msg in messages %}
+  <div class="pl-alert {% if 'success' in msg.tags %}success{% elif 'error' in msg.tags %}error{% else %}warning{% endif %}">
+    <span>{{ msg }}</span>
+    <button class="al-close" onclick="this.parentElement.remove()">✕</button>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  {% if papers %}
+  <div class="pl-card">
+    <table class="pl-table">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Class</th>
+          <th class="c">Questions</th>
+          <th class="c">Time</th>
+          <th class="c">+Marks</th>
+          <th class="c">Max Marks</th>
+          <th>Created</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for paper in papers %}
+        <tr>
+
+          <!-- TITLE -->
+          <td>
+            <a href="{% url 'sat:paper_detail' paper.pk %}" class="paper-link">
+              {{ paper.title }}
+            </a>
+          </td>
+
+          <!-- CLASS -->
+          <td>
+            <span class="class-chip">{{ paper.class_name.name|default:"—" }}</span>
+          </td>
+
+          <!-- QUESTIONS -->
+          <td class="c">
+            {% with q_count=paper.questions.count %}
+            <span class="q-badge {% if q_count == 30 %}q-full{% elif q_count > 0 %}q-partial{% else %}q-empty{% endif %}">
+              {{ q_count }}
+            </span>
+            {% if q_count > 0 and q_count < 30 %}
+            <div style="font-size:9px;color:var(--amber);margin-top:3px;">{{ q_count }}/30</div>
+            {% elif q_count == 30 %}
+            <div style="font-size:9px;color:var(--green);margin-top:3px;">Complete</div>
+            {% endif %}
+            {% endwith %}
+          </td>
+
+          <!-- TIME -->
+          <td class="c">
+            <div class="stat-mono">{{ paper.time_limit }}</div>
+            <div class="stat-label">min</div>
+          </td>
+
+          <!-- MARKS PER Q -->
+          <td class="c">
+            <div class="stat-mono" style="color:var(--green);">+{{ paper.marks_per_correct }}</div>
+          </td>
+
+          <!-- MAX MARKS -->
+          <td class="c">
+            <div class="maxmarks">{{ paper.max_marks }}</div>
+          </td>
+
+          <!-- DATE -->
+          <td>
+            <div class="date-cell">{{ paper.created_at|date:"d M Y" }}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:1px;font-family:var(--mono);">{{ paper.created_at|date:"H:i" }}</div>
+          </td>
+
+          <!-- ACTIONS -->
+          <td>
+            <div class="action-group">
+              <a href="{% url 'sat:paper_detail' paper.pk %}" class="btn-edit">
+                Edit
+              </a>
+              <a href="{% url 'sat:paper_delete' paper.pk %}" class="btn-del"
+                 onclick="return confirm('Delete {{ paper.title }}? This cannot be undone.')">
+                Delete
+              </a>
+            </div>
+          </td>
+
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% else %}
+
+  <!-- EMPTY STATE -->
+  <div class="pl-card">
+    <div class="pl-empty">
+      <div class="pl-empty-icon">📝</div>
+      <div class="pl-empty-title">No test papers yet</div>
+      <div class="pl-empty-sub">Create your first paper to start assigning tests to students.</div>
+      <a href="{% url 'sat:paper_create' %}" class="btn-new" style="display:inline-flex;">
+        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 1v10M1 6h10"/>
+        </svg>
+        Create First Paper
+      </a>
+    </div>
+  </div>
+
+  {% endif %}
+
+</div>
+
+{% endblock %}

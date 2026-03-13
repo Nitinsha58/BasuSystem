@@ -124,9 +124,261 @@
                 {% endif %}
             </p>
         </div>
-        <p class="m-0" style="font-size: 14px;">Last Followup On <span class="fw-semibold"
+            <p class="m-0" style="font-size: 14px;">Last Followup On <span class="fw-semibold"
                 id="next-followup-date-{{forloop.counter}}">{{latest_followup.created_at|date:'d M Y, h:i A'}}</span></span>
-    </div>
+
+            {% with sat_assignment=inquiry.sat_assignments.first %}
+
+            <style>
+            /* Scoped to .sat-card — safe to drop anywhere in the inquiry page */
+            .sat-card {
+            background: var(--surface, #fff);
+            border: 1px solid var(--border, #e2e4e9);
+            border-top: 3px solid var(--navy, #0d1b3e);
+            border-radius: 6px;
+            margin-top: 12px;
+            overflow: hidden;
+            font-family: 'IBM Plex Sans', var(--sans, sans-serif);
+            font-size: 13px;
+            color: var(--text, #1c1f2e);
+            }
+
+            .sat-card-header {
+            padding: 10px 16px;
+            background: var(--bg, #f4f5f7);
+            border-bottom: 1px solid var(--border, #e2e4e9);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            }
+
+            .sat-card-label {
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: .15em;
+            text-transform: uppercase;
+            color: var(--muted, #6b7280);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            }
+
+            /* Status badge */
+            .sat-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            padding: 3px 10px;
+            border-radius: 20px;
+            white-space: nowrap;
+            }
+            .sat-status .s-dot {
+            width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
+            }
+            .ss-completed { background: #e6f5ed; color: #1a7a4a; border: 1px solid #a7d9bc; }
+            .ss-started   { background: #fef0d8; color: #c07a10; border: 1px solid #e8c87a; }
+            .ss-pending   { background: var(--bg, #f4f5f7); color: var(--muted, #6b7280); border: 1px solid var(--border, #e2e4e9); }
+            .ss-completed .s-dot { background: #1a7a4a; }
+            .ss-started   .s-dot { background: #c07a10; animation: sat-pulse 1.5s infinite; }
+            .ss-pending   .s-dot { background: var(--muted, #6b7280); }
+            @keyframes sat-pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+            /* Body */
+            .sat-card-body { padding: 12px 16px; }
+
+            /* Assigned state */
+            .sat-paper-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            }
+            .sat-paper-name {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--navy, #0d1b3e);
+            }
+            .sat-paper-meta {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            align-items: center;
+            }
+            .sat-meta-chip {
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-family: 'IBM Plex Mono', monospace;
+            }
+            .smc-navy  { background: #0d1b3e;  color: #fff; }
+            .smc-green { background: #e6f5ed;  color: #1a7a4a; }
+            .smc-gold  { background: #fef3dc;  color: #c9921a; }
+            .smc-amber { background: #fef0d8;  color: #c07a10; }
+
+            /* Result strip */
+            .sat-result-strip {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 10px;
+            padding: 10px 12px;
+            background: var(--bg, #f4f5f7);
+            border: 1px solid var(--border, #e2e4e9);
+            border-radius: 4px;
+            flex-wrap: wrap;
+            }
+            .sat-score {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a7a4a;
+            line-height: 1;
+            }
+            .sat-score-denom { font-size: 12px; color: var(--muted, #6b7280); font-weight: 400; }
+            .sat-pct {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 3px;
+            }
+            .sat-schol {
+            font-size: 11px;
+            color: #c07a10;
+            font-weight: 600;
+            }
+
+            /* Actions */
+            .sat-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+            .sat-btn-view {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 11px; font-weight: 600; padding: 6px 12px;
+            border: 1px solid var(--border, #e2e4e9); border-radius: 4px;
+            color: var(--navy, #0d1b3e); background: #fff;
+            text-decoration: none; transition: background .12s, border-color .12s;
+            white-space: nowrap;
+            }
+            .sat-btn-view:hover { background: var(--navy, #0d1b3e); color: #fff; border-color: var(--navy, #0d1b3e); }
+            .sat-btn-view svg { width: 10px; height: 10px; }
+
+            /* Unassigned state */
+            .sat-unassigned {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            }
+            .sat-unassigned-msg {
+            font-size: 12px;
+            color: var(--muted, #6b7280);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            }
+            .sat-btn-assign {
+            display: inline-flex; align-items: center; gap: 5px;
+            font-size: 11px; font-weight: 700; padding: 7px 14px;
+            border-radius: 4px; border: none;
+            background: var(--navy, #0d1b3e); color: #fff;
+            text-decoration: none; transition: background .12s;
+            white-space: nowrap;
+            }
+            .sat-btn-assign:hover { background: #1e3163; color: #fff; }
+            </style>
+
+            <div class="sat-card">
+
+            <!-- HEADER -->
+            <div class="sat-card-header">
+                <div class="sat-card-label">
+                Scholarship Test
+                </div>
+                {% if sat_assignment %}
+                {% with s=sat_assignment.status %}
+                <span class="sat-status {% if s == 'completed' %}ss-completed{% elif s == 'started' %}ss-started{% else %}ss-pending{% endif %}">
+                    <span class="s-dot"></span>{{ s|capfirst }}
+                </span>
+                {% endwith %}
+                {% endif %}
+            </div>
+
+            <!-- BODY -->
+            <div class="sat-card-body">
+
+                {% if sat_assignment %}
+
+                <!-- Paper info row -->
+                <div class="sat-paper-row">
+                    <div>
+                    <div class="sat-paper-name">{{ sat_assignment.paper.title }}</div>
+                    </div>
+                    <div class="sat-paper-meta">
+                    <span class="sat-meta-chip smc-navy">{{ sat_assignment.paper.class_name }}</span>
+                    <span class="sat-meta-chip smc-gold">{{ sat_assignment.paper.time_limit }} min</span>
+                    <span class="sat-meta-chip smc-green">+{{ sat_assignment.paper.marks_per_correct }}/Q</span>
+                    </div>
+                    <div class="sat-actions">
+                    <a href="{% url 'sat:assignment_detail' sat_assignment.pk %}" class="sat-btn-view">
+                        View
+                        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M2 6h8M6 2l4 4-4 4"/>
+                        </svg>
+                    </a>
+                    </div>
+                </div>
+
+                <!-- Result strip (only if completed) -->
+                {% with result=sat_assignment.attempt.result %}
+                {% if result %}
+                <div class="sat-result-strip">
+                    <div class="sat-score">
+                    {{ result.total_marks }}<span class="sat-score-denom">/{{ result.max_marks }}</span>
+                    </div>
+                    <span class="sat-pct {% if result.percentage >= 75 %}smc-green{% elif result.percentage >= 50 %}smc-amber{% else %}" style="background:#fdecea;color:#c0392b;"{% endif %}">
+                    {{ result.percentage }}%
+                    </span>
+                    <span class="sat-schol">{{ result.scholarship_tier.label }} · {{ result.scholarship_tier.waiver }}</span>
+                    {% if result.visibility == 'shared' %}
+                    <span style="font-size:10px;color:#1a7a4a;font-weight:600;margin-left:4px;">Released</span>
+                    {% else %}
+                    <span style="font-size:10px;color:var(--muted,#6b7280);margin-left:4px;">On Hold</span>
+                    {% endif %}
+                    <div style="margin-left:auto;">
+                    <a href="{% url 'sat:result_detail' result.pk %}" class="sat-btn-view">
+                        Full Report →
+                    </a>
+                    </div>
+                </div>
+                {% endif %}
+                {% endwith %}
+
+                {% else %}
+
+                <!-- Unassigned state -->
+                <div class="sat-unassigned">
+                    <div class="sat-unassigned-msg">
+                    No test assigned yet
+                    </div>
+                    <a href="{% url 'sat:assignment_create' %}?inquiry={{ inquiry.pk }}" class="sat-btn-assign">
+                    <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 1v10M1 6h10"/>
+                    </svg>
+                    Assign Test
+                    </a>
+                </div>
+
+                {% endif %}
+
+            </div>
+            </div>
+
+            {% endwith %}
+        </div>
 
     <div class="d-flex g-4 w-100 dates-group pb-3">
         {% for status, followup_list in followups.items %}
@@ -364,6 +616,5 @@
         });
     });
 </script>
-
 
 {% endblock dashboard %}

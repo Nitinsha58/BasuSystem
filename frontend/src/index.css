@@ -1,0 +1,63 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono&display=swap");
+
+:root {
+	--navy: #0d1b3e;
+	--gold: #c9921a;
+	--green: #1a7a4a;
+	--red: #c0392b;
+	--bg: #f5f6fa;
+	--card: #ffffff;
+	--border: #dde1ea;
+	--text: #1a1d27;
+	--muted: #6b7280;
+	font-family: "IBM Plex Sans", system-ui, sans-serif;
+	color: var(--text);
+	background: var(--bg);
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+body {
+	min-height: 100svh;
+}
+#root {
+	min-height: 100svh;
+	display: flex;
+	flex-direction: column;
+}
+
+button {
+	cursor: pointer;
+	font-family: inherit;
+	border: none;
+	border-radius: 8px;
+	font-size: 15px;
+	font-weight: 500;
+	padding: 10px 20px;
+	transition: opacity 0.15s;
+}
+button:hover {
+	opacity: 0.85;
+}
+button:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+.btn-primary {
+	background: var(--navy);
+	color: #fff;
+}
+.btn-danger {
+	background: var(--red);
+	color: #fff;
+}
+.btn-outline {
+	background: transparent;
+	border: 1.5px solid var(--navy);
+	color: var(--navy);
+}

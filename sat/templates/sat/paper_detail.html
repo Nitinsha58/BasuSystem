@@ -1,0 +1,511 @@
+{% extends 'base.html' %}
+{% block style %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  --navy:     #0d1b3e;
+  --navy2:    #1e3163;
+  --gold:     #c9921a;
+  --gold-lt:  #fef3dc;
+  --green:    #1a7a4a;
+  --green-lt: #e6f5ed;
+  --red:      #c0392b;
+  --red-lt:   #fdecea;
+  --amber:    #c07a10;
+  --amber-lt: #fef0d8;
+  --bg:       #f4f5f7;
+  --surface:  #ffffff;
+  --border:   #e2e4e9;
+  --text:     #1c1f2e;
+  --muted:    #6b7280;
+  --mono:     'IBM Plex Mono', monospace;
+  --sans:     'IBM Plex Sans', sans-serif;
+}
+
+.pd-wrap {
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+  font-family: var(--sans);
+  color: var(--text);
+  font-size: 13px;
+}
+
+/* ── BREADCRUMB ── */
+.pd-breadcrumb {
+  font-size: 12px; color: var(--muted);
+  display: flex; align-items: center; gap: 6px; margin-bottom: 12px;
+}
+.pd-breadcrumb a { color: var(--muted); text-decoration: none; }
+.pd-breadcrumb a:hover { color: var(--navy); }
+.pd-breadcrumb .sep { color: var(--border); }
+
+/* ── PAPER META BAR ── */
+.meta-bar {
+  background: var(--navy); border-radius: 8px; padding: 0;
+  margin-bottom: 12px; overflow: hidden;
+}
+.meta-bar-inner {
+  padding: 14px 20px;
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+.meta-bar form { display: contents; }
+
+.meta-input {
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
+  border-radius: 4px; color: #fff; font-family: var(--sans); font-size: 13px;
+  padding: 6px 10px; transition: border-color .15s, background .15s;
+}
+.meta-input:focus {
+  outline: none; background: rgba(255,255,255,.12);
+  border-color: rgba(201,168,76,.6);
+}
+.meta-input::placeholder { color: rgba(255,255,255,.3); }
+.meta-input.title  { flex: 1; min-width: 200px; font-weight: 600; }
+.meta-input.narrow { width: 80px; font-family: var(--mono); text-align: center; }
+
+.meta-select {
+  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
+  border-radius: 4px; color: #fff; font-family: var(--sans); font-size: 12px;
+  padding: 6px 28px 6px 10px; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='7' viewBox='0 0 10 7' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='rgba(255,255,255,0.4)' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 9px center;
+  cursor: pointer; transition: border-color .15s;
+}
+.meta-select:focus { outline: none; border-color: rgba(201,168,76,.6); }
+.meta-select option { background: var(--navy); color: #fff; }
+
+.meta-label {
+  font-size: 9px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: rgba(255,255,255,.35); white-space: nowrap;
+}
+.meta-group { display: flex; flex-direction: column; gap: 4px; }
+
+.btn-meta-save {
+  padding: 7px 16px; border-radius: 4px; border: 1px solid rgba(201,168,76,.5);
+  background: rgba(201,168,76,.15); color: var(--gold);
+  font-family: var(--sans); font-size: 11px; font-weight: 700;
+  cursor: pointer; white-space: nowrap; transition: background .12s;
+  letter-spacing: .04em;
+}
+.btn-meta-save:hover { background: rgba(201,168,76,.25); }
+
+.btn-delete-paper {
+  margin-left: auto; padding: 7px 14px; border-radius: 4px;
+  background: rgba(192,57,43,.15); border: 1px solid rgba(192,57,43,.4);
+  color: #f87171; font-size: 11px; font-weight: 600; cursor: pointer;
+  text-decoration: none; white-space: nowrap; transition: background .12s;
+}
+.btn-delete-paper:hover { background: rgba(192,57,43,.25); color: #fca5a5; }
+
+/* ── ALERTS ── */
+.pd-alert {
+  padding: 10px 14px; border-radius: 5px; font-size: 12px;
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.pd-alert.success { background: var(--green-lt); color: var(--green); border: 1px solid #a7d9bc; }
+.pd-alert.error   { background: var(--red-lt);   color: var(--red);   border: 1px solid #f5bfbf; }
+.pd-alert.warning { background: var(--amber-lt); color: var(--amber); border: 1px solid #e8c87a; }
+.pd-alert .pda-close { margin-left:auto; cursor:pointer; opacity:.5; font-size:14px; background:none; border:none; color:inherit; }
+
+/* ── QUESTIONS HEADER ── */
+.q-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 10px;
+}
+.q-header-left { display: flex; align-items: center; gap: 10px; }
+.q-header-title { font-size: 13px; font-weight: 700; color: var(--navy); }
+.q-count-badge {
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  padding: 3px 10px; border-radius: 20px;
+}
+.qcb-full    { background: var(--green-lt); color: var(--green); border: 1px solid #a7d9bc; }
+.qcb-partial { background: var(--amber-lt); color: var(--amber); border: 1px solid #e8c87a; }
+.qcb-empty   { background: var(--bg);       color: var(--muted); border: 1px solid var(--border); }
+
+.btn-add-q {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: 4px; border: none;
+  background: var(--green); color: #fff;
+  font-family: var(--sans); font-size: 11px; font-weight: 700;
+  cursor: pointer; transition: background .12s;
+}
+.btn-add-q:hover { background: #156b40; }
+
+/* ── ADD Q CARD ── */
+.add-q-card {
+  background: var(--surface); border: 2px solid var(--green);
+  border-radius: 8px; margin-bottom: 10px; overflow: hidden; display: none;
+}
+.add-q-card.visible { display: block; }
+.add-q-header {
+  padding: 10px 16px; background: var(--green-lt);
+  border-bottom: 1px solid #a7d9bc;
+  font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--green); display: flex; justify-content: space-between; align-items: center;
+}
+
+/* ── QUESTION ROW ── */
+.q-row {
+  background: var(--surface); border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: 6px; margin-bottom: 8px; overflow: hidden;
+  transition: border-left-color .2s;
+}
+.q-row:hover          { border-left-color: var(--navy2); }
+.q-row.editing        { border-left-color: var(--gold); background: #fffdf7; }
+.q-row.editing .q-collapsed { display: none !important; }
+
+.q-collapsed { padding: 12px 16px; display: flex; align-items: flex-start; gap: 12px; }
+
+.q-num {
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  color: var(--muted); min-width: 28px; margin-top: 2px;
+}
+.q-body { flex: 1; min-width: 0; }
+.q-text-preview {
+  font-size: 13px; color: var(--text); line-height: 1.5; margin-bottom: 6px;
+}
+.q-text-preview strong { font-weight: 700; }
+.q-text-preview em     { font-style: italic; }
+.q-text-preview code   { background: var(--bg); padding: 1px 5px; border-radius: 3px; font-family: var(--mono); font-size: 12px; }
+
+.q-options { display: flex; gap: 6px; flex-wrap: wrap; }
+.opt-chip {
+  font-size: 10px; padding: 2px 8px; border-radius: 3px;
+  background: var(--bg); border: 1px solid var(--border); color: var(--text);
+  font-family: var(--mono);
+}
+.opt-chip.correct { background: var(--green-lt); border-color: #a7d9bc; color: var(--green); font-weight: 700; }
+
+.q-meta { display: flex; align-items: center; gap: 6px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+.diff-badge {
+  font-size: 9px; font-weight: 700; padding: 3px 7px; border-radius: 3px;
+  letter-spacing: .06em; text-transform: uppercase;
+}
+.diff-L1 { background: #dcfce7; color: #166534; }
+.diff-L2 { background: #fef9c3; color: #854d0e; }
+.diff-L3 { background: #fee2e2; color: #991b1b; }
+
+.tag-chip {
+  font-size: 9px; font-weight: 600; padding: 3px 7px; border-radius: 3px;
+  background: var(--bg); border: 1px solid var(--border); color: var(--muted);
+  white-space: nowrap;
+}
+
+.btn-q-edit {
+  padding: 5px 12px; border-radius: 4px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--navy); font-size: 11px; font-weight: 600;
+  cursor: pointer; transition: background .12s, border-color .12s; white-space: nowrap;
+}
+.btn-q-edit:hover { background: var(--navy); color: #fff; border-color: var(--navy); }
+.btn-q-del {
+  padding: 5px 10px; border-radius: 4px; border: 1px solid transparent;
+  background: none; color: var(--muted); font-size: 11px; cursor: pointer;
+  transition: all .12s; white-space: nowrap;
+}
+.btn-q-del:hover { background: var(--red-lt); color: var(--red); border-color: #f5bfbf; }
+
+/* ── EDIT FORM INSIDE ROW ── */
+.q-edit-form { padding: 16px; border-top: 1px solid var(--border); }
+
+/* ── SHARED FORM FIELDS ── */
+.qf-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.qf-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.qf-grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.qf-grid-5 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+.qf-full   { margin-bottom: 10px; }
+
+.qf-label {
+  font-size: 10px; font-weight: 700; color: var(--muted);
+  letter-spacing: .08em; text-transform: uppercase; margin-bottom: 5px;
+}
+.qf-required { color: var(--red); }
+
+.qf-input, .qf-select, .qf-textarea {
+  width: 100%; padding: 8px 10px;
+  border: 1px solid var(--border); border-radius: 4px;
+  background: var(--bg); color: var(--text);
+  font-family: var(--sans); font-size: 12px;
+  transition: border-color .15s, box-shadow .15s;
+}
+.qf-input:focus, .qf-select:focus, .qf-textarea:focus {
+  outline: none; border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(13,27,62,.07);
+  background: var(--surface);
+}
+.qf-textarea { resize: vertical; min-height: 90px; font-family: var(--mono); font-size: 12px; }
+.qf-input.mono { font-family: var(--mono); }
+
+.qf-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='7' viewBox='0 0 10 7' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 9px center; padding-right: 28px;
+}
+
+/* ── MARKDOWN PREVIEW ── */
+.preview-pane {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+  padding: 10px 12px; min-height: 44px;
+  font-size: 13px; line-height: 1.6; color: var(--text);
+}
+.preview-pane strong { font-weight: 700; }
+.preview-pane em     { font-style: italic; }
+.preview-pane code   { background: #e9ecef; padding: 1px 5px; border-radius: 3px; font-family: var(--mono); font-size: 12px; }
+.preview-label { font-size: 9px; font-weight: 700; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 5px; }
+
+/* ── FORM ACTION STRIP ── */
+.qf-actions {
+  display: flex; gap: 8px; align-items: center;
+  padding-top: 12px; border-top: 1px solid var(--border); margin-top: 4px;
+}
+.btn-qf-save {
+  padding: 7px 16px; border-radius: 4px; border: none;
+  background: var(--navy); color: #fff;
+  font-family: var(--sans); font-size: 11px; font-weight: 700;
+  cursor: pointer; transition: background .12s;
+}
+.btn-qf-save:hover { background: var(--navy2); }
+.btn-qf-cancel {
+  padding: 7px 12px; border-radius: 4px;
+  border: 1px solid var(--border); background: none;
+  color: var(--muted); font-family: var(--sans); font-size: 11px; font-weight: 600;
+  cursor: pointer; transition: border-color .12s, color .12s;
+}
+.btn-qf-cancel:hover { border-color: var(--text); color: var(--text); }
+
+/* ── EMPTY STATE ── */
+.q-empty {
+  padding: 40px 20px; text-align: center;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--muted); font-size: 12px;
+}
+
+/* ── ORDER INPUT ── */
+.order-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.order-input {
+  width: 64px; padding: 6px 8px;
+  border: 1px solid var(--border); border-radius: 4px;
+  background: var(--bg); color: var(--text);
+  font-family: var(--mono); font-size: 12px; text-align: center;
+}
+.order-input:focus { outline: none; border-color: var(--navy); }
+</style>
+{% endblock %}
+
+{% block dashboard %}
+<div class="pd-wrap">
+
+  <!-- BREADCRUMB -->
+  <div class="pd-breadcrumb">
+    <a href="{% url 'sat:paper_list' %}">← Papers</a>
+    <span class="sep">/</span>
+    <span>{{ paper.title }}</span>
+  </div>
+
+  <!-- PAPER META BAR -->
+  <div class="meta-bar">
+    <div class="meta-bar-inner">
+      <form method="post" style="display:contents;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update_paper">
+
+        <div class="meta-group" style="flex:1;min-width:200px;">
+          <div class="meta-label">Paper Title</div>
+          <input type="text" name="title" class="meta-input title" required value="{{ paper.title }}" placeholder="Paper title">
+        </div>
+
+        <div class="meta-group">
+          <div class="meta-label">Class</div>
+          <select name="class_name" class="meta-select">
+            <option value="">— Any —</option>
+            {% for cls in classes %}
+            <option value="{{ cls.pk }}" {% if paper.class_name_id == cls.pk %}selected{% endif %}>{{ cls.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="meta-group">
+          <div class="meta-label">Time (min)</div>
+          <input type="number" name="time_limit" class="meta-input narrow" min="5" max="300" value="{{ paper.time_limit }}">
+        </div>
+
+        <div class="meta-group">
+          <div class="meta-label">Marks / Q</div>
+          <input type="number" name="marks_per_correct" class="meta-input narrow" min="1" max="10" value="{{ paper.marks_per_correct }}">
+        </div>
+
+        <button type="submit" class="btn-meta-save">
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;"><path d="M2 6l3 3 5-5"/></svg>
+          Save
+        </button>
+      </form>
+
+      <a href="{% url 'sat:paper_delete' paper.pk %}" class="btn-delete-paper"
+         onclick="return confirm('Delete {{ paper.title }}? This cannot be undone.')">
+        Delete Paper
+      </a>
+    </div>
+  </div>
+
+  <!-- ALERTS -->
+  {% if messages %}
+  {% for msg in messages %}
+  <div class="pd-alert {% if 'success' in msg.tags %}success{% elif 'error' in msg.tags %}error{% else %}warning{% endif %}">
+    <span>{{ msg }}</span>
+    <button class="pda-close" onclick="this.parentElement.remove()">✕</button>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  <!-- QUESTIONS HEADER -->
+  <div class="q-header">
+    <div class="q-header-left">
+      <span class="q-header-title">Questions</span>
+      {% with qc=questions.count %}
+      <span class="q-count-badge {% if qc == 30 %}qcb-full{% elif qc > 0 %}qcb-partial{% else %}qcb-empty{% endif %}">
+        {{ qc }} / 30
+        {% if qc == 30 %} · Complete{% endif %}
+      </span>
+      {% endwith %}
+    </div>
+    <button class="btn-add-q" id="btn-add-q">
+      <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 1v10M1 6h10"/></svg>
+      Add Question
+    </button>
+  </div>
+
+  <!-- ADD QUESTION CARD -->
+  <div class="add-q-card" id="add-q-card">
+    <div class="add-q-header">
+      <span>New Question</span>
+      <button type="button" style="background:none;border:none;color:var(--green);font-size:14px;cursor:pointer;opacity:.6;" id="btn-cancel-add">✕</button>
+    </div>
+    <div style="padding:16px;">
+      <form method="post" id="add-q-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_question">
+        {% include 'sat/_question_fields.html' with prefix="" %}
+        <div class="qf-actions">
+          <button type="submit" class="btn-qf-save">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;"><path d="M6 1v10M1 6h10"/></svg>
+            Add Question
+          </button>
+          <button type="button" class="btn-qf-cancel" id="btn-cancel-add2">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- QUESTION LIST -->
+  {% for q in questions %}
+  <div class="q-row" id="q-{{ q.pk }}">
+
+    <!-- COLLAPSED VIEW -->
+    <div class="q-collapsed" id="collapsed-{{ q.pk }}">
+      <div class="q-num">Q{{ q.order }}</div>
+      <div class="q-body">
+        <div class="q-text-preview mb-1" data-md="{{ q.text|escapejs }}"></div>
+        <div class="q-options">
+          {% for letter, val in q.options_dict.items %}
+          <span class="opt-chip {% if val and letter == q.correct_answer %}correct{% endif %}">
+            {{ letter }}: {{ val|default:"—"|truncatechars:24 }}
+          </span>
+          {% empty %}
+          <span class="opt-chip">A: {{ q.option_a|truncatechars:20 }}</span>
+          <span class="opt-chip">B: {{ q.option_b|truncatechars:20 }}</span>
+          <span class="opt-chip">C: {{ q.option_c|truncatechars:20 }}</span>
+          <span class="opt-chip">D: {{ q.option_d|truncatechars:20 }}</span>
+          {% if q.option_e %}<span class="opt-chip">E: {{ q.option_e|truncatechars:20 }}</span>{% endif %}
+          <span class="opt-chip correct">✓ {{ q.correct_answer }}</span>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="q-meta">
+        <span class="diff-badge diff-{{ q.difficulty }}">{{ q.difficulty }}</span>
+        <span class="tag-chip">{{ q.get_subject_tag_display }}</span>
+        <span class="tag-chip">{{ q.get_question_type_display }}</span>
+        <button class="btn-q-edit" onclick="openEdit({{ q.pk }})">Edit</button>
+        <form method="post" onsubmit="return confirm('Delete Q{{ q.order }}?')" style="display:contents;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="delete_question">
+          <input type="hidden" name="question_id" value="{{ q.pk }}">
+          <button type="submit" class="btn-q-del">✕</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- EDIT FORM -->
+    <div class="q-edit-form d-none" id="edit-{{ q.pk }}">
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="edit_question">
+        <input type="hidden" name="question_id" value="{{ q.pk }}">
+        <div class="order-row">
+          <span style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;">Order</span>
+          <input type="number" name="order" class="order-input" value="{{ q.order }}" min="1">
+        </div>
+        {% include 'sat/_question_fields.html' with prefix="" q=q %}
+        <div class="qf-actions">
+          <button type="submit" class="btn-qf-save">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;"><path d="M2 6l3 3 5-5"/></svg>
+            Save Changes
+          </button>
+          <button type="button" class="btn-qf-cancel" onclick="closeEdit({{ q.pk }})">Cancel</button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+  {% empty %}
+  <div class="q-empty">
+    <div style="font-size:28px;margin-bottom:10px;">📝</div>
+    <div style="font-weight:600;color:var(--navy);margin-bottom:4px;">No questions yet</div>
+    <div>Click "Add Question" above to start building this paper.</div>
+  </div>
+  {% endfor %}
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
+<script>
+  // ── Render all collapsed previews on load ──
+  document.querySelectorAll('.q-text-preview').forEach(el => {
+    el.innerHTML = marked.parseInline(el.dataset.md || '');
+  });
+
+  // ── Add question card toggle ──
+  function showAddCard()  { document.getElementById('add-q-card').classList.add('visible'); initMdPreview(document.getElementById('add-q-card')); }
+  function hideAddCard()  { document.getElementById('add-q-card').classList.remove('visible'); }
+
+  document.getElementById('btn-add-q').addEventListener('click', showAddCard);
+  document.getElementById('btn-cancel-add').addEventListener('click', hideAddCard);
+  document.getElementById('btn-cancel-add2').addEventListener('click', hideAddCard);
+
+  // ── Edit open / close ──
+  function openEdit(pk) {
+    document.getElementById('collapsed-' + pk).style.display = 'none';
+    document.getElementById('edit-' + pk).classList.remove('d-none');
+    document.getElementById('q-' + pk).classList.add('editing');
+    initMdPreview(document.getElementById('edit-' + pk));
+    document.getElementById('q-' + pk).scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  function closeEdit(pk) {
+    document.getElementById('collapsed-' + pk).style.display = '';
+    document.getElementById('edit-' + pk).classList.add('d-none');
+    document.getElementById('q-' + pk).classList.remove('editing');
+  }
+
+  // ── Markdown live preview ──
+  function initMdPreview(container) {
+    const ta      = container.querySelector('textarea[name="text"]');
+    const preview = container.querySelector('.preview-pane');
+    if (!ta || !preview) return;
+    const update = () => { preview.innerHTML = marked.parse(ta.value || ''); };
+    update();
+    ta.removeEventListener('input', update); // avoid double-binding
+    ta.addEventListener('input', update);
+  }
+</script>
+{% endblock %}
