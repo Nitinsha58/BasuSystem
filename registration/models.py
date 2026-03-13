@@ -1,7 +1,9 @@
 from django.db import models
 from django.conf import settings
 import uuid
-from django.db.models import Max
+from decimal import Decimal, ROUND_HALF_UP
+from django.core.exceptions import ValidationError
+from django.db.models import Max, Sum
 from colorfield.fields import ColorField
 from .manager import AttendanceManager
 
@@ -194,11 +196,244 @@ class Student(models.Model):
         return [link.batch for link in enrollment.batch_links.all()]
 
 
+class CourseOffering(models.Model):
+    """Session-wise, class-specific course definition.
+
+    Stores the annual fee for the course and per-subject percentage weights.
+    Used to compute payable fees when a parent opts out of one or more subjects.
+    """
+
+    session = models.ForeignKey(
+        AcademicSession,
+        on_delete=models.CASCADE,
+        related_name="course_offerings",
+    )
+    class_name = models.ForeignKey(
+        ClassName,
+        on_delete=models.CASCADE,
+        related_name="course_offerings",
+    )
+
+    name = models.CharField(max_length=120)
+    target_focus = models.CharField(max_length=255, blank=True, null=True)
+
+    annual_fee = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+
+    # Surcharge policy is maintained via CourseOfferingSurchargeRule rows.
+
+    active = models.BooleanField(default=True)
+
+    subjects = models.ManyToManyField(
+        Subject,
+        through="CourseOfferingSubject",
+        related_name="course_offerings",
+        blank=True,
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("session", "class_name", "name")
+        ordering = ["session", "class_name", "name"]
+
+    def __str__(self):
+        return f"{self.name} ({self.class_name} | {self.session})"
+
+    @staticmethod
+    def _q2(value: Decimal) -> Decimal:
+        return (value or Decimal("0.00")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+    def clean(self):
+        super().clean()
+        if self.annual_fee is not None and self.annual_fee < 0:
+            raise ValidationError({"annual_fee": "Annual fee cannot be negative."})
+
+        # Best-effort validation: sum of subject percentages = 100.
+        # Note: this is enforced reliably only after the offering is saved and through rows exist.
+        if self.pk:
+            total_pct = (
+                CourseOfferingSubject.objects.filter(course_offering=self)
+                .aggregate(total=Sum("percentage"))
+                .get("total")
+                or Decimal("0.00")
+            )
+            # Tolerate minor rounding drift (e.g., 99.99/100.01)
+            if total_pct and abs(Decimal(total_pct) - Decimal("100.00")) > Decimal("0.05"):
+                raise ValidationError(
+                    {
+                        "subjects": f"Subject percentages must sum to 100. Currently: {total_pct}."
+                    }
+                )
+
+    def total_subject_count(self) -> int:
+        return CourseOfferingSubject.objects.filter(course_offering=self).count()
+
+    def surcharge_pct_for(self, selected_count: int, total_count: int) -> Decimal:
+        selected_count = int(selected_count or 0)
+        total_count = int(total_count or 0)
+
+        if selected_count <= 0 or total_count <= 0:
+            return Decimal("0.00")
+
+        # If selecting all available subjects, surcharge is always 0.
+        if selected_count >= total_count:
+            return Decimal("0.00")
+
+        opted_out = max(total_count - selected_count, 0)
+        if opted_out <= 0:
+            return Decimal("0.00")
+
+        # Threshold rules: pick the rule with the largest min_opted_out_subjects
+        # that is still <= opted_out.
+        rule_pct = (
+            CourseOfferingSurchargeRule.objects.filter(
+                course_offering=self,
+                min_opted_out_subjects__lte=opted_out,
+            )
+            .order_by("-min_opted_out_subjects")
+            .values_list("surcharge_pct", flat=True)
+            .first()
+        )
+        return Decimal(rule_pct or 0)
+
+    def calculate_fee_for_subject_ids(self, subject_ids):
+        """Return fee breakdown for selected subjects.
+
+        Formula (confirmed):
+        total = annual_fee * (sum(selected_subject_pct)/100) + annual_fee * (surcharge_pct/100)
+        Where surcharge_pct is based on selected subject count and is 0% if selecting all
+        subjects available in the offering.
+        """
+
+        subject_ids = [int(s) for s in (subject_ids or []) if str(s).isdigit()]
+        total_subjects = self.total_subject_count()
+        selected_count = len(set(subject_ids))
+
+        if selected_count == 0:
+            return {
+                "annual_fee": self._q2(Decimal(self.annual_fee or 0)),
+                "selected_subject_pct": Decimal("0.00"),
+                "surcharge_pct": Decimal("0.00"),
+                "subject_component_fee": Decimal("0.00"),
+                "surcharge_fee": Decimal("0.00"),
+                "total_fee": Decimal("0.00"),
+            }
+
+        allowed_ids = set(
+            CourseOfferingSubject.objects.filter(course_offering=self).values_list("subject_id", flat=True)
+        )
+        requested_ids = set(subject_ids)
+        invalid_ids = requested_ids - allowed_ids
+        if invalid_ids:
+            raise ValidationError(
+                f"Selected subjects are not part of the course offering: {sorted(invalid_ids)}"
+            )
+
+        selected_pct = (
+            CourseOfferingSubject.objects.filter(course_offering=self, subject_id__in=requested_ids)
+            .aggregate(total=Sum("percentage"))
+            .get("total")
+            or Decimal("0.00")
+        )
+
+        annual_fee = Decimal(self.annual_fee or 0)
+        surcharge_pct = self.surcharge_pct_for(selected_count=selected_count, total_count=total_subjects)
+
+        subject_component_fee = annual_fee * (Decimal(selected_pct) / Decimal("100.00"))
+        surcharge_fee = annual_fee * (Decimal(surcharge_pct) / Decimal("100.00"))
+        total_fee = subject_component_fee + surcharge_fee
+
+        return {
+            "annual_fee": self._q2(annual_fee),
+            "selected_subject_pct": Decimal(selected_pct).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
+            "surcharge_pct": Decimal(surcharge_pct).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
+            "subject_component_fee": self._q2(subject_component_fee),
+            "surcharge_fee": self._q2(surcharge_fee),
+            "total_fee": self._q2(total_fee),
+        }
+
+    def calculate_fee_for_subjects(self, subjects_qs):
+        return self.calculate_fee_for_subject_ids(list(subjects_qs.values_list("id", flat=True)))
+
+
+class CourseOfferingSubject(models.Model):
+    course_offering = models.ForeignKey(
+        CourseOffering,
+        on_delete=models.CASCADE,
+        related_name="course_subjects",
+    )
+    subject = models.ForeignKey(
+        Subject,
+        on_delete=models.CASCADE,
+        related_name="course_offering_subjects",
+    )
+    percentage = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("0.00"))
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("course_offering", "subject")
+        ordering = ["course_offering", "subject"]
+
+    def __str__(self):
+        return f"{self.course_offering} | {self.subject} ({self.percentage}%)"
+
+    def clean(self):
+        super().clean()
+        if self.percentage is None or self.percentage < 0:
+            raise ValidationError({"percentage": "Percentage cannot be negative."})
+
+
+class CourseOfferingSurchargeRule(models.Model):
+    course_offering = models.ForeignKey(
+        CourseOffering,
+        on_delete=models.CASCADE,
+        related_name="surcharge_rules",
+    )
+    min_opted_out_subjects = models.PositiveSmallIntegerField(
+        help_text="Applies when opted out subjects (total - selected) are >= this value."
+    )
+    surcharge_pct = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        help_text="Percentage of full annual fee."
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ("course_offering", "min_opted_out_subjects")
+        ordering = ["course_offering", "min_opted_out_subjects"]
+
+    def __str__(self):
+        return f"{self.course_offering} | Opted out >= {self.min_opted_out_subjects} => {self.surcharge_pct}%"
+
+    def clean(self):
+        super().clean()
+        if self.min_opted_out_subjects is None or int(self.min_opted_out_subjects) <= 0:
+            raise ValidationError({"min_opted_out_subjects": "Must be >= 1."})
+        if self.surcharge_pct is None or Decimal(self.surcharge_pct) < 0:
+            raise ValidationError({"surcharge_pct": "Surcharge percent cannot be negative."})
+
+
 class StudentEnrollment(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="enrollments")
     session = models.ForeignKey(AcademicSession, on_delete=models.CASCADE, related_name="enrollments")
     class_name = models.ForeignKey( ClassName, on_delete=models.CASCADE, related_name="enrollments")
     course = models.CharField(max_length=65, choices=Student.COURSE_CHOICE, blank=True, null=True)
+
+    # New session-wise course definition (source of truth going forward)
+    course_offering = models.ForeignKey(
+        CourseOffering,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="enrollments",
+    )
 
     program_duration = models.CharField(max_length=10, choices=Student.DURATION_CHOICE, default="1 Year" )
     subjects = models.ManyToManyField(Subject, blank=True, related_name="enrollments" )
@@ -216,6 +451,37 @@ class StudentEnrollment(models.Model):
 
     def __str__(self):
         return f"{self.student} | {self.session}"
+
+    def clean(self):
+        super().clean()
+        self._validate_course_offering_scope()
+
+        # Cannot reliably validate M2M subjects before save.
+        if self.pk:
+            self._validate_subjects_against_course(list(self.subjects.values_list("id", flat=True)))
+
+    def _validate_course_offering_scope(self):
+        if not self.course_offering_id:
+            return
+        if self.course_offering.session_id != self.session_id:
+            raise ValidationError({"course_offering": "Course offering must belong to the same session."})
+        if self.course_offering.class_name_id != self.class_name_id:
+            raise ValidationError({"course_offering": "Course offering must belong to the same class."})
+
+    def _validate_subjects_against_course(self, subject_ids):
+        if not self.course_offering_id:
+            return
+        allowed_ids = set(self.course_offering.subjects.values_list("id", flat=True))
+        selected_ids = set(int(s) for s in (subject_ids or []) if str(s).isdigit())
+        invalid = selected_ids - allowed_ids
+        if invalid:
+            raise ValidationError({"subjects": f"Invalid subjects for selected course: {sorted(invalid)}"})
+
+    def course_fee_breakdown(self):
+        """Convenience breakdown based on the enrollment's selected subjects."""
+        if not self.course_offering_id:
+            return None
+        return self.course_offering.calculate_fee_for_subjects(self.subjects.all())
     
     @property
     def is_current(self):

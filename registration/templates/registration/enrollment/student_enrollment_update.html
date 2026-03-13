@@ -191,11 +191,13 @@
             </div>
 
             <div class="col-md-3">
-                <label for="course" class="form-label">Course</label>
-                <select class="form-select" name="course" id="course">
-                    <option value="" {% if enrollment and not enrollment.course %}selected{% endif %}>---------</option>
-                    {% for course in student.COURSE_CHOICE %}
-                    <option value="{{course.0}}" {% if enrollment and course.0 == enrollment.course %} selected {% endif %}>{{course.1}}</option>
+                <label for="course_offering" class="form-label">Course</label>
+                <select class="form-select" name="course_offering" id="course_offering">
+                    <option value="" {% if enrollment and not enrollment.course_offering_id %}selected{% endif %}>
+                        ---------</option>
+                    {% for course in course_offerings %}
+                    <option value="{{course.id}}" {% if enrollment and course.id == enrollment.course_offering_id %}
+                        selected {% endif %}>{{course.name}}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -204,7 +206,8 @@
                 <label for="program_duration" class="form-label">Duration</label>
                 <select class="form-select" name="program_duration" id="program_duration">
                     {% for duration in student.DURATION_CHOICE %}
-                    <option value="{{duration.0}}" {% if enrollment and duration.0 == enrollment.program_duration %} selected {% endif %}>{{duration.1}}</option>
+                    <option value="{{duration.0}}" {% if enrollment and duration.0 == enrollment.program_duration %}
+                        selected {% endif %}>{{duration.1}}</option>
                     {% endfor %}
                 </select>
             </div>

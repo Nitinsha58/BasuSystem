@@ -73,6 +73,12 @@ from .views import (
     batch_update,
     batch_delete,
     batch_copy_from_session,
+
+    # Course Offerings CRUD
+    course_offering_list,
+    course_offering_create,
+    course_offering_update,
+    course_offering_delete,
     )
 
 
@@ -97,6 +103,11 @@ urlpatterns = [
     path('batches/<int:batch_id>/edit/', batch_update, name='batch_update'),
     path('batches/<int:batch_id>/delete/', batch_delete, name='batch_delete'),
     path('batches/copy/', batch_copy_from_session, name='batch_copy_from_session'),
+
+    path('courses/', course_offering_list, name='course_offering_list'),
+    path('courses/create/', course_offering_create, name='course_offering_create'),
+    path('courses/<int:offering_id>/edit/', course_offering_update, name='course_offering_update'),
+    path('courses/<int:offering_id>/delete/', course_offering_delete, name='course_offering_delete'),
 
     path('delete_installment/<uuid:stu_id>/<int:ins_id>', delete_installment, name='delete_installment'),
 

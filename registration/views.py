@@ -7,7 +7,7 @@ from .models import (
     Remark, RemarkCount,QuestionResponse, 
     TestResult, Day, Mentor,
     Mentorship, TransportPerson, TransportMode, TransportAttendance,
-    AcademicSession, StudentEnrollment, EnrollmentBatch,
+    AcademicSession, StudentEnrollment, EnrollmentBatch, CourseOffering,
     )
 from lesson.models import Lecture
 
@@ -27,11 +27,25 @@ from datetime import datetime, timedelta
 from collections import defaultdict, OrderedDict
 from user.models import BaseUser
 from django.contrib.auth.decorators import login_required
+from django.forms import inlineformset_factory
+from django.core.exceptions import ValidationError
 
 from django.db.models import Q
 from django.urls import reverse
+
+from decimal import Decimal, ROUND_HALF_UP
 import time as clock_time
 import re
+
+from .forms import (
+    CourseOfferingForm,
+    CourseOfferingSubjectForm,
+    CourseOfferingSurchargeRuleForm,
+    CourseOfferingSubjectInlineFormSet,
+    CourseOfferingSurchargeRuleInlineFormSet,
+)
+
+from .models import CourseOfferingSubject, CourseOfferingSurchargeRule
 
 
 def _get_selected_session(request):
@@ -51,6 +65,313 @@ def _get_selected_session(request):
         selected_session = active_session
 
     return sessions, active_session, selected_session
+
+
+@login_required(login_url='login')
+def course_offering_list(request):
+    sessions, active_session, selected_session = _get_selected_session(request)
+
+    classes = ClassName.objects.all().order_by('-name')
+    selected_class_id = (request.GET.get('class') or '').strip()
+    selected_class = None
+    if selected_class_id and str(selected_class_id).isdigit():
+        selected_class = ClassName.objects.filter(id=int(selected_class_id)).first()
+
+    offerings = (
+        CourseOffering.objects.all()
+        .select_related('session', 'class_name')
+        .order_by('-session__start_date', 'class_name__name', 'name')
+    )
+    if selected_session:
+        offerings = offerings.filter(session=selected_session)
+    if selected_class:
+        offerings = offerings.filter(class_name=selected_class)
+
+    return render(request, 'registration/course_offerings/course_offering_list.html', {
+        'academic_sessions': sessions,
+        'active_session': active_session,
+        'selected_session': selected_session,
+        'classes': classes,
+        'selected_class': selected_class,
+        'offerings': offerings,
+    })
+
+
+def _course_offering_formsets(offering, data=None):
+    CourseSubjectFormSet = inlineformset_factory(
+        CourseOffering,
+        CourseOfferingSubject,
+        form=CourseOfferingSubjectForm,
+        formset=CourseOfferingSubjectInlineFormSet,
+        extra=0,
+        can_delete=True,
+    )
+    SurchargeRuleFormSet = inlineformset_factory(
+        CourseOffering,
+        CourseOfferingSurchargeRule,
+        form=CourseOfferingSurchargeRuleForm,
+        formset=CourseOfferingSurchargeRuleInlineFormSet,
+        extra=0,
+        can_delete=True,
+    )
+
+    subject_formset = CourseSubjectFormSet(data=data, instance=offering, prefix='subjects')
+    rule_formset = SurchargeRuleFormSet(data=data, instance=offering, prefix='rules')
+    return subject_formset, rule_formset
+
+
+def _q2(value: Decimal) -> Decimal:
+    return (value or Decimal("0.00")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+
+def _q2pct(value: Decimal) -> Decimal:
+    return (value or Decimal("0.00")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+
+def _extract_course_offering_subject_pcts(offering, subject_formset):
+    if subject_formset is not None and getattr(subject_formset, "is_bound", False):
+        try:
+            if subject_formset.is_valid():
+                pcts = []
+                for f in subject_formset.forms:
+                    cd = getattr(f, "cleaned_data", None) or {}
+                    if cd.get("DELETE"):
+                        continue
+                    if not cd.get("subject"):
+                        continue
+                    pct = cd.get("percentage")
+                    if pct is None:
+                        continue
+                    pcts.append(Decimal(pct))
+                return pcts
+        except Exception:
+            pass
+
+    return list(
+        CourseOfferingSubject.objects.filter(course_offering=offering).values_list("percentage", flat=True)
+    )
+
+
+def _extract_course_offering_rules(offering, rule_formset):
+    if rule_formset is not None and getattr(rule_formset, "is_bound", False):
+        try:
+            if rule_formset.is_valid():
+                rules = []
+                for f in rule_formset.forms:
+                    cd = getattr(f, "cleaned_data", None) or {}
+                    if cd.get("DELETE"):
+                        continue
+                    min_opted_out = cd.get("min_opted_out_subjects")
+                    surcharge_pct = cd.get("surcharge_pct")
+                    if min_opted_out in (None, "") or surcharge_pct in (None, ""):
+                        continue
+                    rules.append({
+                        "min_opted_out_subjects": int(min_opted_out),
+                        "surcharge_pct": Decimal(surcharge_pct),
+                    })
+                rules.sort(key=lambda r: r["min_opted_out_subjects"])
+                return rules, "form"
+        except Exception:
+            pass
+
+    rules = list(
+        offering.surcharge_rules.all().values("min_opted_out_subjects", "surcharge_pct").order_by("min_opted_out_subjects")
+    )
+    # Ensure Decimals
+    for r in rules:
+        r["min_opted_out_subjects"] = int(r["min_opted_out_subjects"])
+        r["surcharge_pct"] = Decimal(r["surcharge_pct"])
+    return rules, "db"
+
+
+def _surcharge_pct_for_rules(rules, opted_out: int) -> Decimal:
+    opted_out = int(opted_out or 0)
+    if opted_out <= 0:
+        return Decimal("0.00")
+
+    best = None
+    for r in rules or []:
+        threshold = int(r.get("min_opted_out_subjects") or 0)
+        if threshold <= 0:
+            continue
+        if threshold <= opted_out and (best is None or threshold > int(best.get("min_opted_out_subjects") or 0)):
+            best = r
+
+    return Decimal(best.get("surcharge_pct") if best else 0)
+
+
+def _build_course_offering_fee_preview(offering, subject_formset=None, rule_formset=None, annual_fee_override=None):
+    annual_fee = Decimal(annual_fee_override) if annual_fee_override is not None else Decimal(getattr(offering, "annual_fee", None) or 0)
+    subject_pcts = [Decimal(p or 0) for p in (_extract_course_offering_subject_pcts(offering, subject_formset) or [])]
+    subject_pcts = [p for p in subject_pcts if p is not None]
+
+    total_subjects = len(subject_pcts)
+    if total_subjects <= 0:
+        return None
+
+    rules, rules_source = _extract_course_offering_rules(offering, rule_formset)
+
+    asc = sorted(subject_pcts)
+    desc = list(reversed(asc))
+
+    rows = []
+    for selected_count in range(total_subjects, 0, -1):
+        opted_out = total_subjects - selected_count
+        surcharge_pct = _surcharge_pct_for_rules(rules, opted_out=opted_out)
+        surcharge_fee = annual_fee * (Decimal(surcharge_pct) / Decimal("100.00"))
+
+        min_subject_pct = sum(asc[:selected_count])
+        max_subject_pct = sum(desc[:selected_count])
+
+        min_subject_fee = annual_fee * (Decimal(min_subject_pct) / Decimal("100.00"))
+        max_subject_fee = annual_fee * (Decimal(max_subject_pct) / Decimal("100.00"))
+
+        rows.append({
+            "selected_count": selected_count,
+            "opted_out": opted_out,
+            "surcharge_pct": _q2pct(Decimal(surcharge_pct)),
+            "surcharge_fee": _q2(surcharge_fee),
+            "subject_pct_min": _q2pct(Decimal(min_subject_pct)),
+            "subject_pct_max": _q2pct(Decimal(max_subject_pct)),
+            "total_fee_min": _q2(min_subject_fee + surcharge_fee),
+            "total_fee_max": _q2(max_subject_fee + surcharge_fee),
+        })
+
+    return {
+        "annual_fee": _q2(annual_fee),
+        "total_subjects": total_subjects,
+        "rules_source": rules_source,
+        "rows": rows,
+    }
+
+
+@login_required(login_url='login')
+def course_offering_create(request):
+    sessions, active_session, selected_session = _get_selected_session(request)
+    if not selected_session:
+        messages.error(request, 'No academic session selected and no active session found.')
+        return redirect('course_offering_list')
+
+    selected_class_id = (request.GET.get('class') or request.POST.get('class') or '').strip()
+    initial_class = None
+    if selected_class_id and str(selected_class_id).isdigit():
+        initial_class = ClassName.objects.filter(id=int(selected_class_id)).first()
+
+    offering = CourseOffering(session=selected_session)
+    if initial_class:
+        offering.class_name = initial_class
+
+    if request.method == 'POST':
+        form = CourseOfferingForm(request.POST, instance=offering)
+        if form.is_valid():
+            with transaction.atomic():
+                offering = form.save()
+                subject_formset, rule_formset = _course_offering_formsets(offering, data=request.POST)
+
+                if subject_formset.is_valid() and rule_formset.is_valid():
+                    subject_formset.save()
+                    rule_formset.save()
+                    try:
+                        offering.full_clean()
+                    except ValidationError as e:
+                        form.add_error(None, e)
+                        transaction.set_rollback(True)
+                    else:
+                        messages.success(request, 'Course offering created.')
+                        if request.POST.get('save_add_another'):
+                            return redirect(
+                                f"{reverse('course_offering_create')}?session={offering.session_id}&class={offering.class_name_id}&prefill=1"
+                            )
+                        return redirect(f"{reverse('course_offering_list')}?session={offering.session_id}&class={offering.class_name_id}")
+                else:
+                    # Prevent committing a partially-created offering when inline rows are invalid.
+                    transaction.set_rollback(True)
+        else:
+            subject_formset, rule_formset = _course_offering_formsets(offering, data=request.POST)
+    else:
+        form = CourseOfferingForm(instance=offering)
+        subject_formset, rule_formset = _course_offering_formsets(offering)
+
+    return render(request, 'registration/course_offerings/course_offering_form.html', {
+        'mode': 'create',
+        'form': form,
+        'subject_formset': subject_formset,
+        'rule_formset': rule_formset,
+        'academic_sessions': sessions,
+        'active_session': active_session,
+        'selected_session': selected_session,
+    })
+
+
+@login_required(login_url='login')
+def course_offering_update(request, offering_id: int):
+    offering = get_object_or_404(CourseOffering, id=offering_id)
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+    selected_session = offering.session
+
+    if request.method == 'POST':
+        form = CourseOfferingForm(request.POST, instance=offering)
+        subject_formset, rule_formset = _course_offering_formsets(offering, data=request.POST)
+
+        if form.is_valid() and subject_formset.is_valid() and rule_formset.is_valid():
+            with transaction.atomic():
+                offering = form.save()
+                subject_formset.save()
+                rule_formset.save()
+                try:
+                    offering.full_clean()
+                except ValidationError as e:
+                    form.add_error(None, e)
+                else:
+                    messages.success(request, 'Course offering updated.')
+                    return redirect(f"{reverse('course_offering_list')}?session={offering.session_id}&class={offering.class_name_id}")
+    else:
+        form = CourseOfferingForm(instance=offering)
+        subject_formset, rule_formset = _course_offering_formsets(offering)
+
+    annual_fee_override = None
+    if request.method == 'POST':
+        annual_fee_raw = (request.POST.get('annual_fee') or '').strip()
+        if annual_fee_raw:
+            try:
+                annual_fee_override = Decimal(annual_fee_raw)
+            except Exception:
+                annual_fee_override = None
+
+    fee_preview = _build_course_offering_fee_preview(
+        offering,
+        subject_formset=subject_formset,
+        rule_formset=rule_formset,
+        annual_fee_override=annual_fee_override,
+    )
+
+    return render(request, 'registration/course_offerings/course_offering_form.html', {
+        'mode': 'update',
+        'offering': offering,
+        'form': form,
+        'subject_formset': subject_formset,
+        'rule_formset': rule_formset,
+        'fee_preview': fee_preview,
+        'academic_sessions': sessions,
+        'active_session': active_session,
+        'selected_session': selected_session,
+    })
+
+
+@login_required(login_url='login')
+def course_offering_delete(request, offering_id: int):
+    offering = get_object_or_404(CourseOffering, id=offering_id)
+    if request.method == 'POST':
+        session_id = offering.session_id
+        class_id = offering.class_name_id
+        offering.delete()
+        messages.success(request, 'Course offering deleted.')
+        return redirect(f"{reverse('course_offering_list')}?session={session_id}&class={class_id}")
+
+    return render(request, 'registration/course_offerings/course_offering_confirm_delete.html', {
+        'offering': offering,
+    })
 
 
 @login_required(login_url='login')
@@ -308,6 +629,14 @@ def student_enrollment_update(request, stu_id):
     selected_subject_ids = []
     if enrollment:
         selected_subject_ids = list(enrollment.subjects.values_list('id', flat=True))
+
+    # Offerings are session-wise and class-specific. If we know the class already,
+    # filter by it to avoid showing irrelevant course options.
+    current_class = getattr(enrollment, "class_name", None) if enrollment else None
+    course_offerings_qs = CourseOffering.objects.filter(session=selected_session, active=True)
+    if current_class and getattr(current_class, "id", None):
+        course_offerings_qs = course_offerings_qs.filter(class_name=current_class)
+    course_offerings = course_offerings_qs.order_by('name')
     
     if request.method == 'POST':
         class_id = request.POST.get('class_name')
@@ -321,16 +650,42 @@ def student_enrollment_update(request, stu_id):
             enrollment = StudentEnrollment(student=student, session=selected_session)
 
         enrollment.class_name = class_name
-        enrollment.course = request.POST.get('course') or None
+
+        course_offering_id = (request.POST.get('course_offering') or '').strip()
+        course_offering = None
+        if course_offering_id and str(course_offering_id).isdigit():
+            course_offering = CourseOffering.objects.filter(id=int(course_offering_id)).first()
+
+        enrollment.course_offering = course_offering
+
+        # Optional: keep legacy string populated for older templates/reports
+        if course_offering and not enrollment.course:
+            enrollment.course = course_offering.name
+
         enrollment.program_duration = request.POST.get('program_duration') or enrollment.program_duration
         enrollment.active = request.POST.get('active') == 'Active'
         remarks = (request.POST.get('remarks') or "").strip()
         enrollment.remarks = remarks or None
 
+        # Validate course offering scope early for clearer UI errors
+        try:
+            enrollment._validate_course_offering_scope()
+        except Exception:
+            messages.error(request, 'Selected course does not match the selected session/class.')
+            return redirect(f"{reverse('student_enrollment_update', args=[student.stu_id])}?session={selected_session.id}")
+
         enrollment.save()
 
         subject_ids_raw = request.POST.getlist('subjects[]') or request.POST.getlist('subjects')
         subject_ids = [int(s) for s in subject_ids_raw if str(s).isdigit()]
+
+        # Validate chosen subjects against course offering (if set)
+        try:
+            enrollment._validate_subjects_against_course(subject_ids)
+        except Exception:
+            messages.error(request, 'Some selected subjects are not allowed for the chosen course.')
+            return redirect(f"{reverse('student_enrollment_update', args=[student.stu_id])}?session={selected_session.id}")
+
         enrollment.subjects.set(subject_ids)
 
         eligible_batch_ids = set(
@@ -365,6 +720,10 @@ def student_enrollment_update(request, stu_id):
     classes = ClassName.objects.all().order_by('-name')
     subjects = Subject.objects.all().order_by('name')
 
+    # If a course offering is set, show only allowed subjects.
+    if enrollment and enrollment.course_offering_id:
+        subjects = enrollment.course_offering.subjects.all().order_by('name')
+
     page_mode = 'update' if has_enrollment else 'create'
 
     return render(request, "registration/enrollment/student_enrollment_update.html", {
@@ -373,6 +732,7 @@ def student_enrollment_update(request, stu_id):
         'has_enrollment': has_enrollment,
         'page_mode': page_mode,
         'classes': classes,
+        'course_offerings': course_offerings,
         'subjects': subjects,
         'selected_subject_ids': selected_subject_ids,
         'batches': batches,
@@ -844,6 +1204,57 @@ def student_enrollment_fees_details(request, stu_id):
 
     installments = Installment.objects.filter(fee_details=fees_details, enrollment=enrollment).order_by('due_date') if fees_details else Installment.objects.none()
 
+    # Read-only fee recommendation based on selected course offering + selected subjects.
+    # This is only a suggestion (does not save/modify any data).
+    fee_recommendation = {
+        "available": False,
+        "reason": None,
+        "course_offering": None,
+        "breakdown": None,
+        "selected_subjects_count": 0,
+        "total_subjects_count": 0,
+        "opted_out_subjects": 0,
+        "subjects": [],
+    }
+    course_offering = getattr(enrollment, "course_offering", None)
+    fee_recommendation["course_offering"] = course_offering
+
+    if not course_offering:
+        fee_recommendation["reason"] = "No course is selected for this enrollment."
+    else:
+        selected_subjects_qs = enrollment.subjects.all()
+        selected_subject_ids = set(selected_subjects_qs.values_list("id", flat=True))
+
+        # All subjects available in the chosen course offering
+        course_subjects = list(course_offering.subjects.all().order_by("name").values("id", "name"))
+        fee_recommendation["subjects"] = [
+            {
+                "id": s["id"],
+                "name": s["name"],
+                "selected": s["id"] in selected_subject_ids,
+            }
+            for s in course_subjects
+        ]
+        selected_count = selected_subjects_qs.count()
+        total_count = 0
+        try:
+            total_count = int(course_offering.total_subject_count() or 0)
+        except Exception:
+            total_count = 0
+
+        fee_recommendation["selected_subjects_count"] = selected_count
+        fee_recommendation["total_subjects_count"] = total_count
+        fee_recommendation["opted_out_subjects"] = max(total_count - selected_count, 0)
+
+        if selected_count <= 0:
+            fee_recommendation["reason"] = "No subjects are selected for this enrollment."
+        else:
+            try:
+                fee_recommendation["breakdown"] = course_offering.calculate_fee_for_subjects(selected_subjects_qs)
+                fee_recommendation["available"] = True
+            except Exception:
+                fee_recommendation["reason"] = "Could not calculate recommendation for the selected subjects."
+
     return render(request, "registration/enrollment/student_enrollment_fees_details.html", {
         'student': student,
         'enrollment': enrollment,
@@ -855,6 +1266,7 @@ def student_enrollment_fees_details(request, stu_id):
         'active_session': active_session,
         'selected_session': selected_session,
         'other_enrollment_fee_summaries': other_enrollment_fee_summaries,
+        'fee_recommendation': fee_recommendation,
     })
 
 

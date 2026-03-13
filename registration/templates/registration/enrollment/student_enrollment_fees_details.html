@@ -14,7 +14,7 @@
   }
 
   /* Make the main (next) flex item take remaining space */
-  .previous-fees-summary + div {
+  .previous-fees-summary+div {
     flex: 1 1 auto;
     min-width: 0;
   }
@@ -35,6 +35,7 @@
     cursor: pointer;
     list-style: none;
   }
+
   .previous-fees-summary summary::-webkit-details-marker {
     display: none;
   }
@@ -83,6 +84,77 @@
   <div class="d-flex ">
 
     <div class="previous-fees-summary me-3">
+      <div class="bg-light rounded p-2 mb-2">
+        <details class="bg-white rounded border p-2" open>
+          <summary class="d-flex justify-content-between align-items-center">
+            <span class="fw-semibold">Recommended Fees</span>
+            <span class="text-muted small">Course-based</span>
+          </summary>
+
+          <div class="pt-2">
+            {% if fee_recommendation.course_offering %}
+            <div class="small text-muted mb-2">
+              <div class="fw-semibold text-dark">{{ fee_recommendation.course_offering.name }}
+                <span class="text-muted">
+                  Course Fee: ₹{{ fee_recommendation.course_offering.annual_fee|floatformat:2 }}
+                </span>
+            </div>
+              
+            </div>
+            {% else %}
+            <div class="small text-muted mb-2">No course selected.</div>
+            {% endif %}
+
+            {% if fee_recommendation.available and fee_recommendation.breakdown %}
+            <div class="d-flex flex-wrap gap-2 mb-2">
+              <span class="badge text-bg-secondary">Total: ₹{{ fee_recommendation.breakdown.total_fee|floatformat:2 }}</span>
+              <span class="badge text-bg-light text-dark border">Tuition: ₹{{ fee_recommendation.breakdown.subject_component_fee|floatformat:2 }}</span>
+              <span class="badge text-bg-light text-dark border">Surcharge: ₹{{ fee_recommendation.breakdown.surcharge_fee|floatformat:2 }}</span>
+            </div>
+
+            <div class="small text-muted">
+              Fees: {{ fee_recommendation.breakdown.selected_subject_pct|floatformat:2 }}% &nbsp; Charge: {{ fee_recommendation.breakdown.surcharge_pct|floatformat:2 }}%
+            </div>
+
+            {% if fee_recommendation.subjects %}
+            <div class="d-flex flex-wrap gap-1 mt-2">
+              {% for s in fee_recommendation.subjects %}
+              {% if s.selected %}
+              <span class="badge rounded-pill text-bg-success">{{ s.name }}</span>
+              {% else %}
+              <span class="badge rounded-pill text-bg-danger">{{ s.name }}</span>
+              {% endif %}
+              {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- <div class="small text-muted mt-2">
+              Tip: use the <strong>Tuition</strong> amount as a suggested value for "Tuition Fees".
+            </div> -->
+            {% else %}
+            <div class="small text-muted">{{ fee_recommendation.reason|default:"Recommendation not available." }}</div>
+            {% if fee_recommendation.course_offering %}
+            <div class="small text-muted mt-1">
+              {% if fee_recommendation.subjects %}
+              <div class="d-flex flex-wrap gap-1 mt-2">
+                {% for s in fee_recommendation.subjects %}
+                {% if s.selected %}
+                <span class="badge rounded-pill text-bg-success">{{ s.name }}</span>
+                {% else %}
+                <span class="badge rounded-pill text-bg-danger">{{ s.name }}</span>
+                {% endif %}
+                {% endfor %}
+              </div>
+              {% else %}
+              Selected subjects: {{ fee_recommendation.selected_subjects_count }}
+              {% endif %}
+            </div>
+            {% endif %}
+            {% endif %}
+          </div>
+        </details>
+      </div>
+
       {% if other_enrollment_fee_summaries %}
       <div class="bg-light rounded p-2">
         <div class="d-flex flex-column gap-2">
@@ -131,12 +203,14 @@
     </div>
 
     <div class="flex-grow-1">
-      <form class="g-3 bg-light rounded p-2 pb-3" method="post" id="fee-form" action="?session={{ selected_session.id }}">
+      <form class="g-3 bg-light rounded p-2 pb-3" method="post" id="fee-form"
+        action="?session={{ selected_session.id }}">
         {% csrf_token %}
         <input type="hidden" name="session" value="{{ selected_session.id }}">
         <div class="row justify-content-evenly mt-3">
           <div class="col-md-10">
-            <p class="form-label fs-4 fw-normal text-end">Total: <span id="total_fees">{{fees_details.total_fees}}</span>
+            <p class="form-label fs-4 fw-normal text-end">Total: <span
+                id="total_fees">{{fees_details.total_fees}}</span>
             </p>
           </div>
         </div>
@@ -158,9 +232,9 @@
               name="cab_fees" id="cab_fees">
           </div>
         </div>
-    
+
         <div class="row justify-content-evenly mt-3">
-    
+
           <div class="col-md-4">
             <label for="discount" class="form-label">Discount Amount</label>
             <input type="text" minlength="10" maxlength="10" value="{{fees_details.discount}}" class="form-control"
@@ -172,7 +246,7 @@
               name="tuition_fees" id="tuition_fees" required>
           </div>
         </div>
-    
+
         <div class="row justify-content-evenly mt-3">
           <div class="col-md-4">
           </div>
@@ -188,7 +262,7 @@
         </div>
         <div class="row mt-3">
           <div class="col-md-1"></div>
-    
+
           <div class="col-md-3 ms-4">
             <label for="tuition_fees" class="form-label">No. Of Installments</label>
             <div class="d-flex p-1 px-2 rounded m-0" style="width: fit-content; background-color: white;">
@@ -203,7 +277,7 @@
             </div>
           </div>
         </div>
-    
+
         <div class="installments rounded p-2 my-2" style="background-color: white;">
           <div class="d-flex justify-content-end w-100">
             Total : <span class="fw-normal" id="installment-total-amt">0</span>
@@ -217,8 +291,9 @@
                   <span class="m-0 h4 fw-normal">{{forloop.counter}}. </span>
                   <input type="text" name="installment_label_{{forloop.counter}}" value="{{installment.label}}"
                     class="rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" required>
-                  <input type="text" name="installment_remark_{{forloop.counter}}" value="{{installment.remark|default:''}}"
-                    class="rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" placeholder="remark...">
+                  <input type="text" name="installment_remark_{{forloop.counter}}"
+                    value="{{installment.remark|default:''}}" class="rounded p-1 px-2"
+                    style="border: 2px solid rgba(184, 184, 184, 0.794);" placeholder="remark...">
                 </div>
                 <div class="d-flex gap-2">
                   <input type="number" name="installment_amount_{{forloop.counter}}" class="mt-1 rounded p-1 px-2"
@@ -238,8 +313,8 @@
                   <button type="button" data-stu_id="{{student.stu_id}}" data-installment_id="{{installment.id}}"
                     style="height: fit-content;"
                     class="delete-link px-2 py-1 ms-2 btn btn-outline-danger fw-semibold text-decoration-none">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash"
-                      viewBox="0 0 16 16">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
+                      class="bi bi-trash" viewBox="0 0 16 16">
                       <path
                         d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z">
                       </path>
@@ -267,7 +342,7 @@
                   <input type="text" name="installment_label_1" value="Installment" class="rounded p-1 px-2"
                     style="border: 2px solid rgba(184, 184, 184, 0.794);" required>
                 </div>
-    
+
                 <div class="d-flex gap-2">
                   <input type="number" name="installment_amount_1" placeholder="amount" class="mt-1 rounded p-1 px-2"
                     style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-amt-1" required>
@@ -289,10 +364,10 @@
             </div>
           </div>
           {% endif %}
-    
-    
+
+
         </div>
-    
+
         <div class="d-flex justify-content-center mt-3">
           <div class="">
             <button class="btn btn-warning" type="submit">Save Fee Details</button>

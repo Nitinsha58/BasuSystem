@@ -35,6 +35,9 @@ from .models import (
     StudentRemark,
     AcademicSession,
     StudentEnrollment,
+    CourseOffering,
+    CourseOfferingSubject,
+    CourseOfferingSurchargeRule,
     XPSolvLoginInitLog,
     )
 from .forms import TeacherForm, MentorForm
@@ -359,11 +362,30 @@ class StudentEnrollmentAdmin(admin.ModelAdmin):
         "student",
         "session",
         "class_name",
+        "course_offering",
         "course",
         "active"
     )
     list_filter = ("session", "active", "class_name")
     search_fields = ("student__user__first_name", "student__user__phone")
+
+
+class CourseOfferingSubjectInline(admin.TabularInline):
+    model = CourseOfferingSubject
+    extra = 0
+
+
+class CourseOfferingSurchargeRuleInline(admin.TabularInline):
+    model = CourseOfferingSurchargeRule
+    extra = 0
+
+
+class CourseOfferingAdmin(admin.ModelAdmin):
+    list_display = ("name", "session", "class_name", "annual_fee", "active")
+    list_filter = ("session", "class_name", "active")
+    search_fields = ("name", "target_focus")
+    ordering = ("-session__start_date", "class_name__name", "name")
+    inlines = (CourseOfferingSubjectInline, CourseOfferingSurchargeRuleInline)
 
 
 class EnrollmentBatchAdmin(admin.ModelAdmin):
@@ -424,6 +446,7 @@ class XPSolvLoginInitLogAdmin(admin.ModelAdmin):
 
 admin.site.register(EnrollmentBatch, EnrollmentBatchAdmin)
 admin.site.register(StudentEnrollment, StudentEnrollmentAdmin)
+admin.site.register(CourseOffering, CourseOfferingAdmin)
 admin.site.register(AcademicSession, AcademicSessionAdmin)
 admin.site.register(XPSolvLoginInitLog, XPSolvLoginInitLogAdmin)
 admin.site.register(StudentTestRemark)

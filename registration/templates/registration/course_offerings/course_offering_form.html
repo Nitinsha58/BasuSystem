@@ -1,0 +1,821 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block style %}
+<style>
+    .co-card {
+        background: #fff;
+        border: 1px solid var(--bs-border-color);
+        border-radius: .5rem;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .co-section-label {
+        font-size: .7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        color: var(--bs-secondary-color);
+        margin-bottom: .75rem;
+    }
+
+    .pct-track {
+        height: 6px;
+        border-radius: 999px;
+        background: var(--bs-border-color);
+        overflow: hidden;
+    }
+
+    .pct-fill {
+        height: 100%;
+        border-radius: 999px;
+        background: var(--bs-success);
+        transition: width .2s ease, background-color .2s ease;
+    }
+
+    .pct-fill.warn {
+        background: var(--bs-warning);
+    }
+
+    .pct-fill.danger {
+        background: var(--bs-danger);
+    }
+
+    .inline-row {
+        display: grid;
+        align-items: start;
+        gap: .5rem;
+        padding: .4rem 0;
+        border-bottom: 1px solid var(--bs-border-color-translucent);
+    }
+
+    .inline-row:last-child {
+        border-bottom: none;
+    }
+
+    .inline-row.subject-row {
+        grid-template-columns: 1fr 8.5rem 2.1rem;
+    }
+
+    .inline-row.rule-row {
+        grid-template-columns: 1fr 1fr 2.1rem;
+    }
+
+    .inline-row.row-deleted {
+        display: none;
+    }
+
+    .col-hdr {
+        font-size: .72rem;
+        font-weight: 600;
+        color: var(--bs-secondary-color);
+        padding-bottom: .25rem;
+        border-bottom: 1px solid var(--bs-border-color);
+        margin-bottom: .15rem;
+    }
+
+    .btn-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2.1rem;
+        padding: 0;
+        border-radius: .375rem;
+        flex-shrink: 0;
+    }
+
+    .total-value {
+        font-size: .8rem;
+        font-weight: 600;
+        transition: color .15s;
+    }
+
+    .total-value.ok {
+        color: var(--bs-success);
+    }
+
+    .total-value.warn {
+        color: var(--bs-warning-text-emphasis);
+    }
+
+    .total-value.err {
+        color: var(--bs-danger);
+    }
+
+    .note-text {
+        font-size: .75rem;
+        color: var(--bs-secondary-color);
+        line-height: 1.4;
+    }
+
+    .empty-hint {
+        text-align: center;
+        padding: 1.25rem 0;
+        color: var(--bs-secondary-color);
+        font-size: .85rem;
+    }
+
+    .sticky-save-bar {
+        position: sticky;
+        bottom: 0;
+        background: var(--bs-body-bg);
+        border-top: 1px solid var(--bs-border-color);
+        padding: .75rem 0;
+        margin-top: .5rem;
+        display: flex;
+        justify-content: flex-end;
+        gap: .5rem;
+        z-index: 10;
+    }
+
+    @media (min-width: 768px) {
+        .co-two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+    }
+
+    /* Button-select pills (session / class rows) */
+    .btn-select-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .4rem;
+    }
+
+    .btn-sel {
+        position: relative;
+        cursor: pointer;
+    }
+
+    .btn-sel input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+        pointer-events: none;
+    }
+
+    .btn-sel span {
+        display: inline-block;
+        padding: .28rem .85rem;
+        border: 1.5px solid var(--bs-border-color);
+        border-radius: 999px;
+        background: var(--bs-body-bg);
+        color: var(--bs-body-color);
+        font-size: .85rem;
+        line-height: 1.5;
+        transition: border-color .15s, background .15s, color .15s;
+        white-space: nowrap;
+        user-select: none;
+    }
+
+    .btn-sel input[type="radio"]:checked+span {
+        border-color: var(--bs-primary);
+        background: var(--bs-primary);
+        color: #fff;
+        font-weight: 600;
+    }
+
+    .btn-sel span:hover {
+        border-color: var(--bs-primary);
+        color: var(--bs-primary);
+    }
+
+    .btn-sel input[type="radio"]:checked+span:hover {
+        color: #fff;
+    }
+</style>
+{% endblock style %}
+
+{% block dashboard %}
+<div class="container-sm py-4 px-3">
+    <style>
+        /* block style already applied above */
+    </style>
+
+    <!-- Page header -->
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div>
+            <h2 class="fw-semibold mb-0 fs-4">
+                {% if mode == 'create' %}New Course Offering{% else %}Edit Course Offering{% endif %}
+            </h2>
+            <p class="text-muted small mb-0">
+                {% if mode == 'update' and offering %}
+                {{ offering.name }} &middot; Class {{ offering.class_name }} &middot; {{ offering.session }}
+                {% else %}
+                Fill in course details, add subjects and optional surcharge rules.
+                {% endif %}
+            </p>
+        </div>
+        <a class="btn btn-outline-secondary btn-sm"
+            href="{% url 'course_offering_list' %}{% if selected_session %}?session={{ selected_session.id }}{% endif %}">
+            ← Back
+        </a>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger py-2 mb-3 small">{{ form.non_field_errors }}</div>
+        {% endif %}
+
+        <!-- ── Section 1: Core course details ────────────────────────────── -->
+        <div class="co-card">
+            <div class="co-section-label">Course Details</div>
+            <div class="row g-3">
+
+                <!-- Session row -->
+                <div class="col-12">
+                    <label class="form-label mb-1">Session <span class="text-danger">*</span></label>
+                    {% if form.session.errors %}<div class="text-danger small mb-1">{{ form.session.errors }}</div>{% endif %}
+                    <div class="btn-select-group">
+                        {% with sel=form.session.value %}
+                        {% for obj in form.session.field.queryset %}
+                        <label class="btn-sel">
+                            <input type="radio" name="{{ form.session.html_name }}" value="{{ obj.pk }}" {% if sel|stringformat:"s" == obj.pk|stringformat:"s" %}checked{% endif %}>
+                            <span>{{ obj }}</span>
+                        </label>
+                        {% endfor %}
+                        {% endwith %}
+                    </div>
+                </div>
+
+                <!-- Class row -->
+                <div class="col-12">
+                    <label class="form-label mb-1">Class <span class="text-danger">*</span></label>
+                    {% if form.class_name.errors %}<div class="text-danger small mb-1">{{ form.class_name.errors }}
+                    </div>{% endif %}
+                    <div class="btn-select-group">
+                        {% with sel=form.class_name.value %}
+                        {% for obj in form.class_name.field.queryset %}
+                        <label class="btn-sel">
+                            <input type="radio" name="{{ form.class_name.html_name }}" value="{{ obj.pk }}" {% if sel|stringformat:"s" == obj.pk|stringformat:"s" %}checked{% endif %}>
+                            <span>{{ obj }}</span>
+                        </label>
+                        {% endfor %}
+                        {% endwith %}
+                    </div>
+                </div>
+
+                <div class="col-sm-4">
+                    <label class="form-label mb-1">Annual Fee <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        {{ form.annual_fee }}
+                    </div>
+                    {% if form.annual_fee.errors %}<div class="text-danger small mt-1">{{ form.annual_fee.errors }} </div>{% endif %}
+                </div>
+
+                <div class="col-sm-5">
+                    <label class="form-label mb-1">Course Name <span class="text-danger">*</span></label>
+                    {{ form.name }}
+                    {% if form.name.errors %}<div class="text-danger small mt-1">{{ form.name.errors }}</div>{% endif %}
+                </div>
+                <div class="col-sm-3">
+                    <label class="form-label mb-1 d-block">Status</label>
+                    <div class="form-check form-switch mt-1">
+                        {{ form.active }}
+                        <label class="form-check-label" for="{{ form.active.id_for_label }}">Active</label>
+                    </div>
+                    {% if form.active.errors %}<div class="text-danger small mt-1">{{ form.active.errors }}</div>{% endif %}
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label mb-1">Target Focus</label>
+                    {{ form.target_focus }}
+                    {% if form.target_focus.errors %}<div class="text-danger small mt-1">{{ form.target_focus.errors }}
+                    </div>{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Sections 2 & 3: Subjects + Surcharge side-by-side on md+ ─── -->
+        <div class="co-two-col">
+
+            <!-- Subjects & Weightage -->
+            <div class="co-card">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="co-section-label mb-0">Subjects & Weightage</span>
+                    <button type="button" class="btn btn-sm btn-primary" id="add-subject-btn">+ Subject</button>
+                </div>
+
+                {% if subject_formset.non_form_errors %}
+                <div class="alert alert-danger py-1 small mb-2">{{ subject_formset.non_form_errors }}</div>
+                {% endif %}
+
+                {{ subject_formset.management_form }}
+
+                <!-- Column headers -->
+                <div class="inline-row subject-row col-hdr"
+                    style="border-bottom: 1px solid var(--bs-border-color); padding-bottom: .3rem;">
+                    <span>Subject</span>
+                    <span>Share %</span>
+                    <span></span>
+                </div>
+
+                <div id="subjects-tbody">
+                    {% for f in subject_formset.forms %}
+                    <div class="inline-row subject-row">
+                        <div>
+                            {{ f.id }}
+                            {{ f.subject }}
+                            {% if f.subject.errors %}<div class="text-danger small">{{ f.subject.errors }}</div>{% endif %}
+                        </div>
+                        <div>
+                            {{ f.percentage }}
+                            {% if f.percentage.errors %}<div class="text-danger small">{{ f.percentage.errors }}</div>{% endif %}
+                        </div>
+                        <div>
+                            {{ f.DELETE }}
+                            <button type="button" class="btn btn-icon btn-outline-danger js-delete-row" title="Remove">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor"
+                                    viewBox="0 0 16 16">
+                                    <path
+                                        d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                                    <path
+                                        d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    <div id="subjects-empty-hint" class="empty-hint {% if subject_formset.forms %}d-none{% endif %}">
+                        No subjects yet &mdash; click <strong>+ Subject</strong> to add one.
+                    </div>
+                </div>
+
+                <!-- Live progress bar -->
+                <div class="mt-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="note-text">Total weightage</span>
+                        <span class="total-value" id="subjects-total-val">0.00%</span>
+                    </div>
+                    <div class="pct-track">
+                        <div class="pct-fill" id="subjects-pct-fill" style="width:0%"></div>
+                    </div>
+                    <div class="note-text mt-1" id="subjects-hint-text">Add subjects and set their share. Must sum to
+                        exactly 100%.</div>
+                </div>
+
+                <template id="subjects-empty-form-template">
+                    <div class="inline-row subject-row">
+                        <div>
+                            {{ subject_formset.empty_form.id }}
+                            {{ subject_formset.empty_form.subject }}
+                        </div>
+                        <div>
+                            {{ subject_formset.empty_form.percentage }}
+                        </div>
+                        <div>
+                            {{ subject_formset.empty_form.DELETE }}
+                            <button type="button" class="btn btn-icon btn-outline-danger js-delete-row" title="Remove">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor"
+                                    viewBox="0 0 16 16">
+                                    <path
+                                        d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                                    <path
+                                        d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Surcharge Rules -->
+            <div class="co-card">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="co-section-label mb-0">Surcharge Rules</span>
+                    <button type="button" class="btn btn-sm btn-primary" id="add-rule-btn">+ Rule</button>
+                </div>
+
+                {% if rule_formset.non_form_errors %}
+                <div class="alert alert-danger py-1 small mb-2">{{ rule_formset.non_form_errors }}</div>
+                {% endif %}
+
+                {{ rule_formset.management_form }}
+
+                <!-- Column headers -->
+                <div class="inline-row rule-row col-hdr"
+                    style="border-bottom: 1px solid var(--bs-border-color); padding-bottom: .3rem;">
+                    <span>Opted-out ≥</span>
+                    <span>Surcharge %</span>
+                    <span></span>
+                </div>
+
+                <div id="rules-tbody">
+                    {% for f in rule_formset.forms %}
+                    <div class="inline-row rule-row">
+                        <div>
+                            {{ f.id }}
+                            {{ f.min_opted_out_subjects }}
+                            {% if f.min_opted_out_subjects.errors %}<div class="text-danger small">{{ f.min_opted_out_subjects.errors }}</div>{% endif %}
+                        </div>
+                        <div>
+                            {{ f.surcharge_pct }}
+                            {% if f.surcharge_pct.errors %}<div class="text-danger small">{{ f.surcharge_pct.errors }}
+                            </div>{% endif %}
+                        </div>
+                        <div>
+                            {{ f.DELETE }}
+                            <button type="button" class="btn btn-icon btn-outline-danger js-delete-row" title="Remove">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor"
+                                    viewBox="0 0 16 16">
+                                    <path
+                                        d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                                    <path
+                                        d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    <div id="rules-empty-hint" class="empty-hint {% if rule_formset.forms %}d-none{% endif %}">
+                        No surcharge rules &mdash; click <strong>+ Rule</strong> to add one.
+                    </div>
+                </div>
+
+                <p class="note-text mt-3 mb-0">
+                    <strong>Tip:</strong> "Opted-out ≥ 2 → 7.5%" means dropping 2+ subjects adds a 7.5% surcharge on the
+                    full fee.
+                    Selecting <em>all</em> subjects always gives 0% surcharge.
+                </p>
+
+                <template id="rules-empty-form-template">
+                    <div class="inline-row rule-row">
+                        <div>
+                            {{ rule_formset.empty_form.id }}
+                            {{ rule_formset.empty_form.min_opted_out_subjects }}
+                        </div>
+                        <div>
+                            {{ rule_formset.empty_form.surcharge_pct }}
+                        </div>
+                        <div>
+                            {{ rule_formset.empty_form.DELETE }}
+                            <button type="button" class="btn btn-icon btn-outline-danger js-delete-row" title="Remove">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="currentColor"
+                                    viewBox="0 0 16 16">
+                                    <path
+                                        d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z" />
+                                    <path
+                                        d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+        </div><!-- /.co-two-col -->
+
+        {% if mode == 'update' %}
+        <!-- ── Preview (read-only) ─────────────────────────────────────── -->
+        <div class="co-card">
+            <div class="co-section-label">Preview fee calculation</div>
+            {% if fee_preview %}
+            <div class="note-text mb-2">
+                Read-only sanity check using annual fee ₹{{ fee_preview.annual_fee|floatformat:2 }} and the
+                {% if fee_preview.rules_source == 'form' %}currently entered{% else %}saved{% endif %}
+                subjects/rules.
+                Totals show a <strong>range</strong> because they depend on which subjects are selected.
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr class="small text-muted">
+                            <th scope="col">Selected</th>
+                            <th scope="col">Opted-out</th>
+                            <th scope="col">Surcharge %</th>
+                            <th scope="col">Surcharge ₹</th>
+                            <th scope="col">Subject % range</th>
+                            <th scope="col">Total fee range (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in fee_preview.rows %}
+                        <tr>
+                            <td>{{ row.selected_count }}/{{ fee_preview.total_subjects }}</td>
+                            <td>{{ row.opted_out }}</td>
+                            <td>{{ row.surcharge_pct|floatformat:2 }}%</td>
+                            <td>{{ row.surcharge_fee|floatformat:2 }}</td>
+                            <td>{{ row.subject_pct_min|floatformat:2 }}% - {{ row.subject_pct_max|floatformat:2 }}%</td>
+                            <td>{{ row.total_fee_min|floatformat:2 }} - {{ row.total_fee_max|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="note-text">Add at least one subject to see a preview.</div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- ── Sticky save bar ───────────────────────────────────────────── -->
+        <div class="sticky-save-bar">
+            {% if mode == 'create' %}
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="refresh-details-btn">
+                Refresh details
+            </button>
+            {% endif %}
+            <a class="btn btn-outline-secondary btn-sm"
+                href="{% url 'course_offering_list' %}{% if selected_session %}?session={{ selected_session.id }}{% endif %}">
+                Cancel
+            </a>
+            {% if mode == 'create' %}
+            <button type="submit" class="btn btn-primary btn-sm px-4" id="create-course-btn">
+                Create Course
+            </button>
+            <button type="submit" class="btn btn-outline-primary btn-sm px-4" name="save_add_another" value="1"
+                id="create-add-another-btn">
+                Create &amp; add another
+            </button>
+            {% else %}
+            <button type="submit" class="btn btn-primary btn-sm px-4">
+                Save Changes
+            </button>
+            {% endif %}
+        </div>
+
+    </form>
+</div>
+
+
+<script>
+    (function () {
+        const pageMode = "{{ mode|escapejs }}";
+        const DRAFT_KEY = 'courseOffering:lastSaved';
+
+        function byId(id) { return document.getElementById(id); }
+        function parseNum(v) { const n = parseFloat((v || '').toString().trim()); return Number.isFinite(n) ? n : 0; }
+        function qs() { return new URLSearchParams(window.location.search || ''); }
+
+        function getDraft() {
+            try {
+                const raw = localStorage.getItem(DRAFT_KEY);
+                if (!raw) return null;
+                return JSON.parse(raw);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function setDraft(payload) {
+            try {
+                localStorage.setItem(DRAFT_KEY, JSON.stringify(payload));
+            } catch (e) {
+                // ignore
+            }
+        }
+
+        function readRadioValue(name) {
+            const el = document.querySelector(`input[type="radio"][name="${name}"]:checked`);
+            return el ? (el.value || '') : '';
+        }
+
+        function setRadioValue(name, value) {
+            const v = (value ?? '').toString();
+            document.querySelectorAll(`input[type="radio"][name="${name}"]`).forEach(r => {
+                r.checked = (r.value || '') === v;
+            });
+        }
+
+        function captureDraft() {
+            const subjectRows = [];
+            byId('subjects-tbody')?.querySelectorAll('.subject-row').forEach(row => {
+                if (row.classList.contains('row-deleted')) return;
+                const del = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+                if (del && del.checked) return;
+                const subject = row.querySelector('select[name$="-subject"]')?.value;
+                const percentage = row.querySelector('input[name$="-percentage"]')?.value;
+                if (subject || percentage) subjectRows.push({ subject, percentage });
+            });
+
+            const ruleRows = [];
+            byId('rules-tbody')?.querySelectorAll('.rule-row').forEach(row => {
+                if (row.classList.contains('row-deleted')) return;
+                const del = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+                if (del && del.checked) return;
+                const min_opted_out_subjects = row.querySelector('input[name$="-min_opted_out_subjects"]')?.value;
+                const surcharge_pct = row.querySelector('input[name$="-surcharge_pct"]')?.value;
+                if (min_opted_out_subjects || surcharge_pct) ruleRows.push({ min_opted_out_subjects, surcharge_pct });
+            });
+
+            return {
+                savedAt: new Date().toISOString(),
+                session: readRadioValue('session'),
+                class_name: readRadioValue('class_name'),
+                annual_fee: document.querySelector('input[name="annual_fee"]')?.value ?? '',
+                name: document.querySelector('input[name="name"]')?.value ?? '',
+                target_focus: document.querySelector('input[name="target_focus"], textarea[name="target_focus"]')?.value ?? '',
+                active: !!document.querySelector('input[name="active"]')?.checked,
+                subjects: subjectRows,
+                rules: ruleRows,
+            };
+        }
+
+        function resetFormset(prefix, containerId, rowClass) {
+            const container = byId(containerId);
+            const totalInput = byId(`id_${prefix}-TOTAL_FORMS`);
+            if (!container || !totalInput) return;
+
+            container.querySelectorAll(`.${rowClass}`).forEach(r => r.remove());
+            totalInput.value = '0';
+        }
+
+        function applyDraft(draft) {
+            if (!draft) return;
+
+            setRadioValue('session', draft.session);
+            setRadioValue('class_name', draft.class_name);
+
+            const annual = document.querySelector('input[name="annual_fee"]');
+            if (annual && (draft.annual_fee ?? '') !== '') annual.value = draft.annual_fee;
+
+            const nm = document.querySelector('input[name="name"]');
+            if (nm && (draft.name ?? '') !== '') nm.value = draft.name;
+
+            const tf = document.querySelector('input[name="target_focus"], textarea[name="target_focus"]');
+            if (tf && (draft.target_focus ?? '') !== '') tf.value = draft.target_focus;
+
+            const act = document.querySelector('input[name="active"]');
+            if (act) act.checked = !!draft.active;
+
+            // Subjects
+            resetFormset('subjects', 'subjects-tbody', 'subject-row');
+            (draft.subjects || []).forEach(item => {
+                const row = addRow('subjects', 'subjects-empty-form-template', 'subjects-tbody', 'subjects-empty-hint', 'subject-row');
+                if (!row) return;
+                const sel = row.querySelector('select[name$="-subject"]');
+                if (sel && item.subject) { sel.value = item.subject; sel.dispatchEvent(new Event('change', { bubbles: true })); }
+                const pct = row.querySelector('input[name$="-percentage"]');
+                if (pct && item.percentage != null) { pct.value = item.percentage; pct.dispatchEvent(new Event('input', { bubbles: true })); }
+            });
+
+            // Rules
+            resetFormset('rules', 'rules-tbody', 'rule-row');
+            (draft.rules || []).forEach(item => {
+                const row = addRow('rules', 'rules-empty-form-template', 'rules-tbody', 'rules-empty-hint', 'rule-row');
+                if (!row) return;
+                const minEl = row.querySelector('input[name$="-min_opted_out_subjects"]');
+                if (minEl && item.min_opted_out_subjects != null) minEl.value = item.min_opted_out_subjects;
+                const pctEl = row.querySelector('input[name$="-surcharge_pct"]');
+                if (pctEl && item.surcharge_pct != null) pctEl.value = item.surcharge_pct;
+            });
+
+            recomputeTotal();
+            syncEmptyHint('subjects-tbody', 'subjects-empty-hint', 'subject-row');
+            syncEmptyHint('rules-tbody', 'rules-empty-hint', 'rule-row');
+        }
+
+        function hideMeta(el) {
+            el.querySelectorAll('input[type="checkbox"][name$="-DELETE"]').forEach(cb => cb.classList.add('d-none'));
+            el.querySelectorAll('input[type="hidden"][name$="-id"]').forEach(h => h.classList.add('d-none'));
+        }
+
+        function isExisting(row, prefix) {
+            const h = row.querySelector(`input[type="hidden"][name^="${prefix}-"][name$="-id"]`);
+            return !!(h && h.value.trim());
+        }
+
+        function syncEmptyHint(containerId, hintId, rowClass) {
+            const c = byId(containerId), h = byId(hintId);
+            if (!c || !h) return;
+            const hasVisible = Array.from(c.querySelectorAll(`.${rowClass}`)).some(r => !r.classList.contains('row-deleted'));
+            h.classList.toggle('d-none', hasVisible);
+        }
+
+        function wireRow(prefix, row) {
+            hideMeta(row);
+            const delBtn = row.querySelector('.js-delete-row');
+            if (delBtn) {
+                delBtn.addEventListener('click', () => {
+                    if (isExisting(row, prefix)) {
+                        const cb = row.querySelector(`input[type="checkbox"][name^="${prefix}-"][name$="-DELETE"]`);
+                        if (cb) cb.checked = true;
+                        row.classList.add('row-deleted');
+                    } else {
+                        row.remove();
+                    }
+                    if (prefix === 'subjects') recomputeTotal();
+                    syncEmptyHint(
+                        prefix === 'subjects' ? 'subjects-tbody' : 'rules-tbody',
+                        prefix === 'subjects' ? 'subjects-empty-hint' : 'rules-empty-hint',
+                        prefix === 'subjects' ? 'subject-row' : 'rule-row'
+                    );
+                });
+            }
+            if (prefix === 'subjects') {
+                const pct = row.querySelector('input[name$="-percentage"]');
+                if (pct) pct.addEventListener('input', recomputeTotal);
+            }
+        }
+
+        function addRow(prefix, templateId, containerId, hintId, rowClass) {
+            const totalInput = byId(`id_${prefix}-TOTAL_FORMS`);
+            const container = byId(containerId);
+            const tmpl = byId(templateId);
+            if (!totalInput || !container || !tmpl) return;
+
+            const idx = parseInt(totalInput.value || '0', 10);
+            const html = tmpl.innerHTML.replaceAll('__prefix__', idx);
+
+            const temp = document.createElement('div');
+            temp.innerHTML = html.trim();
+            const row = temp.firstElementChild;
+
+            const hint = byId(hintId);
+            hint ? container.insertBefore(row, hint) : container.appendChild(row);
+
+            totalInput.value = String(idx + 1);
+            wireRow(prefix, row);
+            if (prefix === 'subjects') recomputeTotal();
+            syncEmptyHint(containerId, hintId, rowClass);
+
+            // Auto-focus first interactive field
+            const first = row.querySelector('select, input:not([type="hidden"]):not([type="checkbox"])');
+            if (first) first.focus();
+
+            return row;
+        }
+
+        function recomputeTotal() {
+            const container = byId('subjects-tbody');
+            if (!container) return;
+
+            let sum = 0;
+            container.querySelectorAll('.subject-row').forEach(row => {
+                if (row.classList.contains('row-deleted')) return;
+                const cb = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+                if (cb && cb.checked) return;
+                sum += parseNum(row.querySelector('input[name$="-percentage"]')?.value);
+            });
+
+            const valEl = byId('subjects-total-val');
+            const fill = byId('subjects-pct-fill');
+            const hint = byId('subjects-hint-text');
+
+            const ok = Math.abs(sum - 100) <= 0.05;
+            const excess = sum > 100.05;
+
+            if (valEl) {
+                valEl.textContent = sum.toFixed(2) + '%';
+                valEl.className = 'total-value ' + (ok ? 'ok' : excess ? 'err' : 'warn');
+            }
+            if (fill) {
+                fill.style.width = Math.min(sum, 100) + '%';
+                fill.className = 'pct-fill' + (ok ? '' : excess ? ' danger' : ' warn');
+            }
+            if (hint) {
+                hint.textContent = ok
+                    ? '✓ Subject weights add up to 100% — looks good!'
+                    : excess
+                        ? `⚠ Total is ${sum.toFixed(2)}% — reduce some values.`
+                        : `${(100 - sum).toFixed(2)}% remaining to reach 100%.`;
+            }
+        }
+
+        // Wire existing server-rendered rows
+        byId('subjects-tbody')?.querySelectorAll('.subject-row').forEach(r => wireRow('subjects', r));
+        byId('rules-tbody')?.querySelectorAll('.rule-row').forEach(r => wireRow('rules', r));
+
+        // Add buttons
+        byId('add-subject-btn')?.addEventListener('click', () =>
+            addRow('subjects', 'subjects-empty-form-template', 'subjects-tbody', 'subjects-empty-hint', 'subject-row'));
+        byId('add-rule-btn')?.addEventListener('click', () =>
+            addRow('rules', 'rules-empty-form-template', 'rules-tbody', 'rules-empty-hint', 'rule-row'));
+
+        // Auto-seed one empty subject row on create (unless prefill is requested)
+        const subjectTotal = byId('id_subjects-TOTAL_FORMS');
+        const shouldPrefill = pageMode === 'create' && qs().get('prefill') === '1';
+        if (byId('subjects-tbody') && subjectTotal && parseInt(subjectTotal.value || '0', 10) === 0 && !shouldPrefill) {
+            addRow('subjects', 'subjects-empty-form-template', 'subjects-tbody', 'subjects-empty-hint', 'subject-row');
+        }
+
+        // Save last-entered details to localStorage on submit (frontend only)
+        document.querySelector('form')?.addEventListener('submit', () => {
+            try { setDraft(captureDraft()); } catch (e) { /* ignore */ }
+        });
+
+        // Prefill details when redirected with ?prefill=1
+        if (shouldPrefill) {
+            applyDraft(getDraft());
+        }
+
+        // Manual refresh button: re-apply last saved details
+        byId('refresh-details-btn')?.addEventListener('click', () => {
+            applyDraft(getDraft());
+        });
+
+        // Initial state
+        recomputeTotal();
+        syncEmptyHint('subjects-tbody', 'subjects-empty-hint', 'subject-row');
+        syncEmptyHint('rules-tbody', 'rules-empty-hint', 'rule-row');
+    })();
+</script>
+{% endblock dashboard %}

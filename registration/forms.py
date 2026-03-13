@@ -1,12 +1,31 @@
 from django import forms
 from django.contrib.auth.hashers import make_password
 from django.db import transaction
-from .models import Student, BaseUser, ParentDetails, FeeDetails, Installment, TransportDetails, Batch, Day, Teacher, Mentor, TransportMode, TransportPerson
+from .models import (
+    Student,
+    BaseUser,
+    ParentDetails,
+    FeeDetails,
+    Installment,
+    TransportDetails,
+    Batch,
+    Day,
+    Teacher,
+    Mentor,
+    TransportMode,
+    TransportPerson,
+    AcademicSession,
+    CourseOffering,
+    CourseOfferingSubject,
+    CourseOfferingSurchargeRule,
+)
 from center.models import Subject
 from django.core.exceptions import ValidationError
 from django.contrib import messages
 from django.db import IntegrityError
 from datetime import datetime, timedelta, time
+from decimal import Decimal
+from django.forms.models import BaseInlineFormSet
 
 
 class StudentRegistrationForm(forms.ModelForm):
@@ -239,15 +258,15 @@ class TeacherForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         # If updating an existing instance, populate fields
-        if self.instance and self.instance.pk:
+        if self.instance and self.instance.pk and getattr(self.instance, "user", None):
             self.fields['user'].initial = self.instance.user
             self.fields['first_name'].initial = self.instance.user.first_name
             self.fields['last_name'].initial = self.instance.user.last_name
             self.fields['phone'].initial = self.instance.user.phone
             self.fields['batches'].initial = self.instance.batches.all()
-    
+
     def clean(self):
-        cleaned_data = super().clean()
+        cleaned_data = super().clean() or {}
         user = cleaned_data.get('user')
         first_name = cleaned_data.get('first_name')
         last_name = cleaned_data.get('last_name')
@@ -265,7 +284,7 @@ class TeacherForm(forms.ModelForm):
         return cleaned_data
 
     def save(self, commit=True):
-        cleaned_data = self.cleaned_data
+        cleaned_data = getattr(self, "cleaned_data", None) or {}
         user = cleaned_data.get('user')
 
         if user:
@@ -273,7 +292,8 @@ class TeacherForm(forms.ModelForm):
             teacher.user = user
         else:
             # Check if a user with the same phone already exists
-            existing_user = BaseUser.objects.filter(phone=cleaned_data['phone']).first()
+            phone = cleaned_data.get('phone')
+            existing_user = BaseUser.objects.filter(phone=phone).first() if phone else None
 
             if existing_user:
                 self.add_error("phone", "A user with this phone number already exists.")
@@ -281,9 +301,9 @@ class TeacherForm(forms.ModelForm):
 
             # Create a new BaseUser
             base_user = BaseUser.objects.create(
-                first_name=cleaned_data['first_name'],
-                last_name=cleaned_data['last_name'],
-                phone=cleaned_data['phone'],
+                first_name=cleaned_data.get('first_name') or "",
+                last_name=cleaned_data.get('last_name') or "",
+                phone=phone or "",
             )
             teacher = super().save(commit=False)
             teacher.user = base_user
@@ -294,6 +314,94 @@ class TeacherForm(forms.ModelForm):
                 teacher.batches.set(cleaned_data['batches'])
 
         return teacher
+
+
+class CourseOfferingForm(forms.ModelForm):
+    class Meta:
+        model = CourseOffering
+        fields = (
+            "session",
+            "class_name",
+            "name",
+            "annual_fee",
+            "target_focus",
+            "active",
+        )
+
+        widgets = {
+            "session": forms.Select(attrs={"class": "form-select"}),
+            "class_name": forms.Select(attrs={"class": "form-select"}),
+            "name": forms.TextInput(attrs={"class": "form-control"}),
+            "annual_fee": forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
+            "target_focus": forms.TextInput(attrs={"class": "form-control"}),
+            "active": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+        }
+
+
+class CourseOfferingSubjectForm(forms.ModelForm):
+    class Meta:
+        model = CourseOfferingSubject
+        fields = ("subject", "percentage")
+        widgets = {
+            "subject": forms.Select(attrs={"class": "form-select"}),
+            "percentage": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0"}),
+        }
+
+
+class CourseOfferingSurchargeRuleForm(forms.ModelForm):
+    class Meta:
+        model = CourseOfferingSurchargeRule
+        fields = ("min_opted_out_subjects", "surcharge_pct")
+        widgets = {
+            "min_opted_out_subjects": forms.NumberInput(attrs={"class": "form-control", "min": "1"}),
+            "surcharge_pct": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0"}),
+        }
+
+
+class CourseOfferingSubjectInlineFormSet(BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+
+        total = Decimal("0.00")
+        seen_subject_ids = set()
+        for form in self.forms:
+            if not hasattr(form, "cleaned_data"):
+                continue
+            if not form.cleaned_data or form.cleaned_data.get("DELETE"):
+                continue
+            subject = form.cleaned_data.get("subject")
+            percentage = form.cleaned_data.get("percentage")
+
+            if subject is not None:
+                if subject.id in seen_subject_ids:
+                    raise ValidationError("Duplicate subjects are not allowed.")
+                seen_subject_ids.add(subject.id)
+
+            if percentage is not None:
+                total += Decimal(percentage)
+
+        # If user entered any subjects, enforce that the total is ~100.
+        if seen_subject_ids:
+            if abs(total - Decimal("100.00")) > Decimal("0.05"):
+                raise ValidationError(f"Subject percentages must sum to 100. Currently: {total}.")
+
+
+class CourseOfferingSurchargeRuleInlineFormSet(BaseInlineFormSet):
+    def clean(self):
+        super().clean()
+        seen_thresholds = set()
+        for form in self.forms:
+            if not hasattr(form, "cleaned_data"):
+                continue
+            if not form.cleaned_data or form.cleaned_data.get("DELETE"):
+                continue
+            threshold = form.cleaned_data.get("min_opted_out_subjects")
+            if threshold is None:
+                continue
+            threshold = int(threshold)
+            if threshold in seen_thresholds:
+                raise ValidationError("Duplicate opted-out thresholds are not allowed.")
+            seen_thresholds.add(threshold)
 
 class TransportPersonForm(forms.ModelForm):
     user = forms.ModelChoiceField(queryset=BaseUser.objects.all(), required=False)  # Optional user field

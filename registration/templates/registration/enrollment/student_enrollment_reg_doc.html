@@ -408,7 +408,7 @@
             <select name="session" id="academic-session" onchange="this.form.submit()"
                 class="form-select search-input fs-5 me-2 w-auto flex-grow-0 pe-5" disabled>
                 {% for session in academic_sessions %}
-                <option value="{{session.id}}" {% if session.id == selected_session.id %} selected {% endif %}>
+                <option value="{{session.id}}" {% if session.id==selected_session.id %} selected {% endif %}>
                     {{session.name}}</option>
                 {% endfor %}
             </select>
@@ -453,7 +453,8 @@
                 {% else %}N/A{% endif %}
             </span>
             <span><strong>Date of Issue:</strong>
-                {% if fees_details %}{{ fees_details.created_at|date:"d M Y" }}{% else %}{{ student.created_at|date:"d M Y" }}{% endif %}
+                {% if fees_details %}{{ fees_details.created_at|date:"d M Y" }}{% else %}{{ student.created_at|date:"d M
+                Y" }}{% endif %}
             </span>
         </div>
 
@@ -490,7 +491,8 @@
                     <td class="dt-value">
                         {% if student.user.phone %}
                         {% with phone=student.user.phone|stringformat:"s" %}
-                        {% if phone|length > 5 %}{{ phone|slice:":3" }}****{{ phone|slice:"-3:" }}{% else %}{{ phone }}{% endif %}
+                        {% if phone|length > 5 %}{{ phone|slice:":3" }}****{{ phone|slice:"-3:" }}{% else %}{{ phone
+                        }}{% endif %}
                         {% endwith %}
                         {% else %}N/A{% endif %}
                     </td>
@@ -500,7 +502,8 @@
                     <td class="dt-value">
                         {% if student.email %}
                         {% with email=student.email|stringformat:"s" %}
-                        {% if email|length > 15 %}{{ email|slice:":3" }}****{{ email|slice:"-12:" }}{% else %}{{ email }}{% endif %}
+                        {% if email|length > 15 %}{{ email|slice:":3" }}****{{ email|slice:"-12:" }}{% else %}{{ email
+                        }}{% endif %}
                         {% endwith %}
                         {% else %}N/A{% endif %}
                     </td>
@@ -519,7 +522,8 @@
                 </tr>
                 <tr>
                     <td class="dt-label">Class</td>
-                    <td class="dt-value">{% if enrollment.class_name %}{{ enrollment.class_name }}{% else %}N/A{% endif %}</td>
+                    <td class="dt-value">{% if enrollment.class_name %}{{ enrollment.class_name }}{% else %}N/A{% endif
+                        %}</td>
                 </tr>
                 <tr>
                     <td class="dt-label">Subjects</td>
@@ -531,11 +535,16 @@
                 </tr>
                 <tr>
                     <td class="dt-label">Course / Board</td>
-                    <td class="dt-value">{% if enrollment.course %}{{ enrollment.course }}{% else %}CBSE{% endif %}</td>
+                    <td class="dt-value">
+                        {% if enrollment.course_offering %}{{ enrollment.course_offering.name }}
+                        {% elif enrollment.course %}{{ enrollment.course }}
+                        {% else %}CBSE{% endif %}
+                    </td>
                 </tr>
                 <tr>
                     <td class="dt-label">Program Duration</td>
-                    <td class="dt-value">{% if enrollment.program_duration %}{{ enrollment.program_duration }}{% else %}1 Year{% endif %}</td>
+                    <td class="dt-value">{% if enrollment.program_duration %}{{ enrollment.program_duration }}{% else
+                        %}1 Year{% endif %}</td>
                 </tr>
                 <!-- <tr>
                     <td class="dt-label">Pick-up Location</td>
@@ -560,14 +569,16 @@
                 </tr>
                 <tr>
                     <td class="dt-label">Mother's Name</td>
-                    <td class="dt-value">{% if student.parent_details %}{{ student.parent_details.mother_name }}{% else %}N/A{% endif %}</td>
+                    <td class="dt-value">{% if student.parent_details %}{{ student.parent_details.mother_name }}{% else
+                        %}N/A{% endif %}</td>
                 </tr>
                 <tr>
                     <td class="dt-label">Father's Contact</td>
                     <td class="dt-value">
                         {% if student.parent_details and student.parent_details.father_contact %}
                         +91 {% with phone=student.parent_details.father_contact|stringformat:"s" %}
-                        {% if phone|length > 5 %}{{ phone|slice:":3" }}****{{ phone|slice:"-3:" }}{% else %}{{ phone }}{% endif %}
+                        {% if phone|length > 5 %}{{ phone|slice:":3" }}****{{ phone|slice:"-3:" }}{% else %}{{ phone
+                        }}{% endif %}
                         {% endwith %}
                         {% else %}N/A{% endif %}
                     </td>
@@ -577,7 +588,8 @@
                     <td class="dt-value">
                         {% if student.parent_details and student.parent_details.mother_contact %}
                         +91 {% with phone=student.parent_details.mother_contact|stringformat:"s" %}
-                        {% if phone|length > 5 %}{{ phone|slice:":3" }}****{{ phone|slice:"-3:" }}{% else %}{{ phone }}{% endif %}
+                        {% if phone|length > 5 %}{{ phone|slice:":3" }}****{{ phone|slice:"-3:" }}{% else %}{{ phone
+                        }}{% endif %}
                         {% endwith %}
                         {% else %}N/A{% endif %}
                     </td>
@@ -604,7 +616,8 @@
                         <td>Registration Fee</td>
                         <td>
                             {% if fees_details and fees_details.registration_fee %}
-                            {% if fees_details.registration_discount %}<s>₹ {{ fees_details.registration_fee }}</s>{% else %}₹ {{ fees_details.registration_fee }}{% endif %}
+                            {% if fees_details.registration_discount %}<s>₹ {{ fees_details.registration_fee }}</s>{%
+                            else %}₹ {{ fees_details.registration_fee }}{% endif %}
                             {% else %}N/A{% endif %}
                         </td>
                     </tr>
@@ -612,17 +625,20 @@
                         <td>Book Fee</td>
                         <td>
                             {% if fees_details and fees_details.book_fees %}
-                            {% if fees_details.book_discount %}<s>₹ {{ fees_details.book_fees }}</s>{% else %}₹ {{ fees_details.book_fees }}{% endif %}
+                            {% if fees_details.book_discount %}<s>₹ {{ fees_details.book_fees }}</s>{% else %}₹ {{
+                            fees_details.book_fees }}{% endif %}
                             {% else %}N/A{% endif %}
                         </td>
                     </tr>
                     <tr>
                         <td>Tuition Fee</td>
-                        <td>{% if fees_details and fees_details.tuition_fees %}₹ {{ fees_details.tuition_fees }}{% else %}N/A{% endif %}</td>
+                        <td>{% if fees_details and fees_details.tuition_fees %}₹ {{ fees_details.tuition_fees }}{% else
+                            %}N/A{% endif %}</td>
                     </tr>
                     <tr>
                         <td>Cab / Transport Fee</td>
-                        <td>{% if fees_details and fees_details.cab_fees %}₹ {{ fees_details.cab_fees }}{% else %}N/A{% endif %}</td>
+                        <td>{% if fees_details and fees_details.cab_fees %}₹ {{ fees_details.cab_fees }}{% else %}N/A{%
+                            endif %}</td>
                     </tr>
                     {% if fees_details and fees_details.discount %}
                     <tr class="fee-discount">
@@ -642,7 +658,8 @@
                     {% endif %}
                     <tr class="fee-total-row">
                         <td>Net Payable Fee</td>
-                        <td>{% if fees_details and fees_details.total_fees %}₹ {{ fees_details.total_fees }}{% else %}N/A{% endif %}</td>
+                        <td>{% if fees_details and fees_details.total_fees %}₹ {{ fees_details.total_fees }}{% else
+                            %}N/A{% endif %}</td>
                     </tr>
                 </tbody>
             </table>
@@ -658,9 +675,9 @@
                     <div class="inst-amount">₹ {{ installment.amount }}</div>
                     <div class="inst-date">
                         {% if installment.paid %}
-                            <span class="badge bg-success">Paid</span>
+                        <span class="badge bg-success">Paid</span>
                         {% else %}
-                            Due: {{ installment.due_date|date:"d M Y" }}
+                        Due: {{ installment.due_date|date:"d M Y" }}
                         {% endif %}
                     </div>
                 </div>
@@ -670,7 +687,11 @@
             <!-- Fee Declaration -->
             <div class="doc-declaration">
                 <strong>Declaration</strong>
-                <p>I, <strong>{% if student.parent_details.father_name %}{{ student.parent_details.father_name }}{% elif student.parent_details.mother_name %}{{ student.parent_details.mother_name }}{% endif %}</strong>, parent/guardian of <strong>{{ student.user.first_name }} {{ student.user.last_name }}</strong>, hereby confirm that the fee details stated above are correct and mutually agreed upon.</p>
+                <p>I, <strong>{% if student.parent_details.father_name %}{{ student.parent_details.father_name }}{% elif
+                        student.parent_details.mother_name %}{{ student.parent_details.mother_name }}{% endif
+                        %}</strong>, parent/guardian of <strong>{{ student.user.first_name }} {{ student.user.last_name
+                        }}</strong>, hereby confirm that the fee details stated above are correct and mutually agreed
+                    upon.</p>
             </div>
 
             <div class="doc-signature-block">
@@ -697,7 +718,8 @@
             </div>
             <div class="doc-terms-meta">
                 <span><strong>Effective Date:</strong>
-                    {% if fees_details %}{{ fees_details.created_at|date:"d M Y" }}{% else %}{{ student.created_at|date:"d M Y" }}{% endif %}
+                    {% if fees_details %}{{ fees_details.created_at|date:"d M Y" }}{% else %}{{
+                    student.created_at|date:"d M Y" }}{% endif %}
                 </span>
                 <span><strong>Applicable To:</strong> Students of Classes 7th to 12th</span>
             </div>
@@ -826,7 +848,10 @@
                 <!-- T&C Declaration -->
                 <div class="doc-declaration">
                     <strong>Declaration</strong>
-                    <p>I, <strong>{% if student.parent_details.father_name %}{{ student.parent_details.father_name }}{% elif student.parent_details.mother_name %}{{ student.parent_details.mother_name }}{% endif %}</strong>, parent/guardian of <strong>{{ student.user.first_name }} {{ student.user.last_name }}</strong>, by signing this agreement confirm that I have read,
+                    <p>I, <strong>{% if student.parent_details.father_name %}{{ student.parent_details.father_name }}{%
+                            elif student.parent_details.mother_name %}{{ student.parent_details.mother_name }}{% endif
+                            %}</strong>, parent/guardian of <strong>{{ student.user.first_name }} {{
+                            student.user.last_name }}</strong>, by signing this agreement confirm that I have read,
                         understood, and voluntarily agreed to all terms and conditions mentioned above.</p>
                     <p>I also acknowledge that these terms are subject to change, and any updates will be communicated
                         in advance.</p>
