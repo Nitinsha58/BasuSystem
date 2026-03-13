@@ -113,4 +113,5 @@ class FollowUp(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.inquiry.student_name}-{self.status.name}"
+        status_name = self.status.name if self.status else "No Status"
+        return f"{self.inquiry.student_name}-{status_name}"

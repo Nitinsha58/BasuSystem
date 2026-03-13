@@ -1,4 +1,6 @@
 from django.shortcuts import render, redirect
+from django.urls import reverse
+from django.utils.html import format_html
 from .models import Inquiry, ClassName, Subject, Referral, FollowUp, FollowUpStatus, AdmissionCounselor, StationaryPartner
 from datetime import datetime, timedelta
 from collections import defaultdict
@@ -7,6 +9,8 @@ from django.contrib import messages
 from django.utils.timezone import localtime, now
 from registration.models import AcademicSession
 from .session_selection import select_session_for_date
+
+from django.http import JsonResponse
 
 
 from django.utils import timezone
@@ -222,27 +226,80 @@ def create_inquiry(request):
     subjects = Subject.objects.all()
     referrals = Referral.objects.all()
 
+    is_counsellor = (
+        request.user
+        and request.user.is_authenticated
+        and AdmissionCounselor.objects.filter(user=request.user).exists()
+    )
+
+    is_superuser = bool(
+        request.user
+        and request.user.is_authenticated
+        and request.user.is_superuser
+    )
+
     if request.method == "POST":
         student_name = request.POST.get("student-name")
         selected_classes = request.POST.getlist("classes")  # getlist() for multiple selection
         selected_subjects = request.POST.getlist("subjects")
         school_name = request.POST.get("school-name")
         address = request.POST.get("address")
-        phone = request.POST.get("phone")
+        phone = (request.POST.get("phone") or "").strip()
         referral_source = request.POST.get("referral")
         existing_member = request.POST.get("existing_member") == "Yes"
 
-        existing_inquiries = Inquiry.objects.filter(phone=phone)
-        
-        if existing_inquiries:
-            if request.user and request.user.is_authenticated and AdmissionCounselor.objects.filter(user=request.user).first():
-                
+        existing_inquiry = Inquiry.objects.filter(phone=phone).first() if phone else None
+
+        if existing_inquiry:
+            if is_counsellor:
+                if is_superuser:
+                    inquiry_url = reverse('inquiry', kwargs={'inquiry_id': existing_inquiry.id})
+                    messages.info(
+                        request,
+                        format_html(
+                            (
+                                'Inquiry already exists for phone <b>{}</b>. '
+                                '<a href="{}" class="underline">Open existing inquiry</a>.'
+                            ),
+                            phone,
+                            inquiry_url,
+                        ),
+                    )
+                    return redirect('create_inquiry')
+
                 messages.success(request, "Inquiry Already Exists.")
                 return redirect('inquiries')
-            
+
+            today = localtime(now()).date()
+            old_session_id = existing_inquiry.session_id
+            current_session = select_session_for_date(today)
+
+            existing_inquiry.student_name = student_name
+            existing_inquiry.school = school_name
+            existing_inquiry.address = address
+            existing_inquiry.referral_id = referral_source
+            existing_inquiry.existing_member = existing_member
+            existing_inquiry.lead_type = 'Verified'
+            if current_session:
+                existing_inquiry.session = current_session
+            existing_inquiry.save()
+
+            existing_inquiry.classes.set(selected_classes)
+            existing_inquiry.subjects.set(selected_subjects)
+
+            session_note = "new session" if (current_session and current_session.id != old_session_id) else "same session"
+            default_status = FollowUpStatus.objects.order_by('order').first()
+            FollowUp.objects.create(
+                inquiry=existing_inquiry,
+                status=default_status,
+                admission_counsellor=None,
+                description=f"Parent re-submitted inquiry ({session_note}) on {today.strftime('%d-%b-%Y')}.",
+                followup_date=today,
+            )
+
             return render(request, 'success-page.html', {
-                'headline': "Thank you, Your Inquiry has already been submitted.",
-                'message': "You have taken the first step towards your child's Second Home.",
+                'headline': "Thank you, we already have your details.",
+                'message': "We’ve recorded your follow-up for the current session.",
             })
 
         inquiry = Inquiry.objects.create(
@@ -261,7 +318,7 @@ def create_inquiry(request):
         inquiry.subjects.set(selected_subjects)
         inquiry.save()
 
-        if request.user and request.user.is_authenticated and AdmissionCounselor.objects.filter(user=request.user).first():
+        if is_counsellor:
             messages.success(request, "Inquiry Created.")
             return redirect('inquiries')
         
@@ -273,7 +330,9 @@ def create_inquiry(request):
     return render(request, 'inquiry.html', {
         'classes':classes,
         'subjects':subjects,
-        'referrals': referrals
+        'referrals': referrals,
+        'is_counsellor': is_counsellor,
+        'check_inquiry_phone_url': reverse('check_inquiry_phone'),
         })
 
 def create_referral_inquiry(request):
@@ -343,6 +402,16 @@ def create_referral_inquiry(request):
 
 
 def search_inquiries(request):
+    if not (
+        request.user
+        and request.user.is_authenticated
+        and (
+            request.user.is_superuser
+            or AdmissionCounselor.objects.filter(user=request.user).exists()
+        )
+    ):
+        return render(request, 'inquiry_followup/inquiries_results.html', {'inquiries': []})
+
     search_term = request.GET.get('search', '').strip()
     if search_term:
         inquiries = Inquiry.objects.filter(
@@ -363,6 +432,34 @@ def search_inquiries(request):
     else:
         inquiry_list = []
     return render(request, 'inquiry_followup/inquiries_results.html', {'inquiries': inquiry_list})
+
+
+def check_inquiry_phone(request):
+    if not (
+        request.user
+        and request.user.is_authenticated
+        and request.user.is_superuser
+    ):
+        return JsonResponse({'exists': False})
+
+    phone = (request.GET.get('phone') or '').strip()
+    if phone and not phone.isdigit():
+        phone = ''.join(ch for ch in phone if ch.isdigit())
+
+    if len(phone) != 10:
+        return JsonResponse({'exists': False})
+
+    inquiry_obj = Inquiry.objects.filter(phone=phone).first()
+    if not inquiry_obj:
+        return JsonResponse({'exists': False})
+
+    return JsonResponse({
+        'exists': True,
+        'id': inquiry_obj.id,
+        'name': inquiry_obj.student_name,
+        'phone': inquiry_obj.phone,
+        'url': reverse('inquiry', kwargs={'inquiry_id': inquiry_obj.id}),
+    })
 
 def stationary_partner_inquiries(request, partner_id):
     partner = StationaryPartner.objects.filter(id=partner_id).first()

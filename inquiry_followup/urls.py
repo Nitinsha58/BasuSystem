@@ -8,12 +8,14 @@ from .views import (
     delete_followup, 
     delete_inquiry, 
     search_inquiries,
+    check_inquiry_phone,
     create_referral_inquiry,
     stationary_partner_inquiries
 )
 
 urlpatterns = [
     path('search-inquiries/', search_inquiries, name='search_inquiries'),
+    path('check-inquiry-phone/', check_inquiry_phone, name='check_inquiry_phone'),
     path('inquiry', create_inquiry, name='create_inquiry'),
     path('partner/referral', create_referral_inquiry, name='create_referral_inquiry'),
     path('inquiries', inquiries, name='inquiries'),
