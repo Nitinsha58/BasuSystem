@@ -7,6 +7,17 @@ from .base import _read_text_file
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 
+# Tell Django it's behind an HTTPS reverse proxy (nginx)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+
+# Required in Django 4.0+ for HTTPS; derive from ALLOWED_HOSTS automatically
+# You can also set CSRF_TRUSTED_ORIGINS explicitly in your .env file
+_csrf_env = env.list("CSRF_TRUSTED_ORIGINS", default=[])
+CSRF_TRUSTED_ORIGINS = _csrf_env if _csrf_env else [
+    f'https://{host}' for host in ALLOWED_HOSTS if host not in ('*', 'localhost', '127.0.0.1')
+]
+
 
 XPSOLV_CLIENT_ID = os.environ.get("XPSOLV_CLIENT_ID", "1345")
 
