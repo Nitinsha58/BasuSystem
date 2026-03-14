@@ -24,7 +24,7 @@
   --sans:     'IBM Plex Sans', sans-serif;
 }
 
-.ad-wrap {
+.pg-wrap {
   max-width: 860px;
   margin: 0 auto;
   padding: 24px 20px 48px;
@@ -34,32 +34,32 @@
 }
 
 /* ── BREADCRUMB ── */
-.ad-breadcrumb {
+.pg-breadcrumb {
   padding: 0 0 0;
   font-size: 12px; color: var(--muted);
   display: flex; align-items: center; gap: 6px; margin-bottom: 12px;
 }
-.ad-breadcrumb a { color: var(--muted); text-decoration: none; }
-.ad-breadcrumb a:hover { color: var(--navy); }
-.ad-breadcrumb .sep { color: var(--border); }
+.pg-breadcrumb a { color: var(--muted); text-decoration: none; }
+.pg-breadcrumb a:hover { color: var(--navy); }
+.pg-breadcrumb .sep { color: var(--border); }
 
 /* ── HERO ── */
-.ad-hero {
+.pg-hero {
   background: var(--navy); border-radius: 8px; padding: 20px 24px;
   margin-bottom: 16px; display: grid; grid-template-columns: 1fr auto;
   gap: 16px; align-items: center; position: relative; overflow: hidden;
 }
-.ad-hero::before {
+.pg-hero::before {
   content: ''; position: absolute; top: -40px; right: -40px;
   width: 160px; height: 160px; border-radius: 50%;
   background: rgba(201,168,76,.08);
 }
-.ad-hero-name { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 4px; }
-.ad-hero-meta {
+.pg-hero-name { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+.pg-hero-meta {
   font-size: 11px; color: rgba(255,255,255,.45);
   display: flex; gap: 14px; flex-wrap: wrap;
 }
-.ad-hero-meta span { display: flex; align-items: center; gap: 4px; }
+.pg-hero-meta span { display: flex; align-items: center; gap: 4px; }
 
 /* ── STATUS BADGE ── */
 .status-badge {
@@ -77,28 +77,28 @@
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 
 /* ── ALERTS ── */
-.ad-alert {
+.pg-alert {
   padding: 10px 14px; border-radius: 5px; font-size: 12px;
   margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
 }
-.ad-alert.success { background: var(--green-lt); color: var(--green); border: 1px solid #a7d9bc; }
-.ad-alert.error   { background: var(--red-lt);   color: var(--red);   border: 1px solid #f5bfbf; }
-.ad-alert.warning { background: var(--amber-lt); color: var(--amber); border: 1px solid #e8c87a; }
-.ad-alert .ac { margin-left:auto; cursor:pointer; opacity:.5; font-size:14px; background:none; border:none; color:inherit; }
+.pg-alert.success { background: var(--green-lt); color: var(--green); border: 1px solid #a7d9bc; }
+.pg-alert.error   { background: var(--red-lt);   color: var(--red);   border: 1px solid #f5bfbf; }
+.pg-alert.warning { background: var(--amber-lt); color: var(--amber); border: 1px solid #e8c87a; }
+.pg-alert .dismiss-btn { margin-left:auto; cursor:pointer; opacity:.5; font-size:14px; background:none; border:none; color:inherit; }
 
 /* ── 2-COL GRID ── */
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
 
 /* ── CARD ── */
-.ad-card {
+.pg-card {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 6px; overflow: hidden;
 }
-.ad-card-header {
+.pg-card-header {
   padding: 10px 16px; background: var(--bg); border-bottom: 1px solid var(--border);
   font-size: 9px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; color: var(--muted);
 }
-.ad-card-body { padding: 16px; }
+.pg-card-body { padding: 16px; }
 
 /* ── TEST LINK CARD ── */
 .url-row { display: flex; gap: 6px; margin-bottom: 10px; }
@@ -206,20 +206,20 @@
 
 {% include 'sat/_subnav.html' %}
 
-<div class="ad-wrap">
+<div class="pg-wrap">
 
   <!-- BREADCRUMB -->
-  <div class="ad-breadcrumb">
+  <div class="pg-breadcrumb">
     <a href="{% url 'sat:assignment_list' %}">← Assignments</a>
     <span class="sep">/</span>
     <span>{{ assignment.inquiry.student_name }}</span>
   </div>
 
   <!-- HERO -->
-  <div class="ad-hero">
+  <div class="pg-hero">
     <div>
-      <div class="ad-hero-name">{{ assignment.inquiry.student_name }}</div>
-      <div class="ad-hero-meta">
+      <div class="pg-hero-name">{{ assignment.inquiry.student_name }}</div>
+      <div class="pg-hero-meta">
         <span> {{ assignment.paper.title }}</span>
         <span> {{ assignment.paper.time_limit }} min</span>
         <span> +{{ assignment.paper.marks_per_correct }} per correct</span>
@@ -236,9 +236,9 @@
   <!-- ALERTS -->
   {% if messages %}
   {% for msg in messages %}
-  <div class="ad-alert {% if 'success' in msg.tags %}success{% elif 'error' in msg.tags %}error{% else %}warning{% endif %}">
+  <div class="pg-alert {% if 'success' in msg.tags %}success{% elif 'error' in msg.tags %}error{% else %}warning{% endif %}">
     <span>{{ msg }}</span>
-    <button class="ac" onclick="this.parentElement.remove()">✕</button>
+    <button class="dismiss-btn" onclick="this.parentElement.remove()">✕</button>
   </div>
   {% endfor %}
   {% endif %}
@@ -247,9 +247,9 @@
   <div class="two-col">
 
     <!-- TEST LINK CARD -->
-    <div class="ad-card">
-      <div class="ad-card-header">Test Link</div>
-      <div class="ad-card-body">
+    <div class="pg-card">
+      <div class="pg-card-header">Test Link</div>
+      <div class="pg-card-body">
         <div class="url-row">
           <input type="text" class="url-input" id="test-url" value="{{ test_url }}" readonly>
           <button class="btn-copy" onclick="copyText('test-url', this)">Copy</button>
@@ -264,9 +264,9 @@
     </div>
 
     <!-- DETAILS CARD -->
-    <div class="ad-card">
-      <div class="ad-card-header">Details</div>
-      <div class="ad-card-body" style="padding:12px 16px;">
+    <div class="pg-card">
+      <div class="pg-card-header">Details</div>
+      <div class="pg-card-body" style="padding:12px 16px;">
         <table class="detail-table">
           <tr>
             <td class="dt-label">Phone</td>
@@ -306,14 +306,14 @@
 
   <!-- RESULT SECTION -->
   {% if result %}
-  <div class="ad-card" style="margin-bottom:12px;">
-    <div class="ad-card-header" style="display:flex;justify-content:space-between;align-items:center;">
+  <div class="pg-card" style="margin-bottom:12px;">
+    <div class="pg-card-header" style="display:flex;justify-content:space-between;align-items:center;">
       <span>Result</span>
       <span style="font-family:var(--mono);font-size:11px;color:var(--text);font-weight:600;letter-spacing:0;text-transform:none;">
         {{ result.attempt.submitted_at|date:"d M Y, H:i" }}
       </span>
     </div>
-    <div class="ad-card-body">
+    <div class="pg-card-body">
 
       <!-- KPI Row -->
       <div class="result-kpi-row">
@@ -370,7 +370,7 @@
 
   <!-- ATTEMPT INFO + RESET -->
   {% if attempt %}
-  <div class="ad-card">
+  <div class="pg-card">
     <div class="attempt-row">
       <div class="attempt-times">
         <div class="at-item">
@@ -413,4 +413,4 @@ function copyText(id, btn) {
 }
 </script>
 
-{% endblock %}
+{% endblock dashboard %}
