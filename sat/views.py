@@ -213,8 +213,8 @@ def assignment_detail(request, pk):
     wa_message = (
         f"Dear {assignment.inquiry.student_name},\n\n"
         f"Your Scholarship Test has been scheduled.\n"
-        f"📝 Paper: {assignment.paper.title}\n"
-        f"⏱ Time limit: {assignment.paper.time_limit} minutes\n\n"
+        f"Paper: {assignment.paper.title}\n"
+        f"Time limit: {assignment.paper.time_limit} minutes\n\n"
         f"Click the link below to take the test:\n{test_url}\n\n"
         f"Best of luck! – BASU Nextgen Education"
     )
