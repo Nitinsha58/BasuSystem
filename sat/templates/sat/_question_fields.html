@@ -53,11 +53,19 @@
             {% endfor %}
         </select>
     </div>
-    <div class="col-md-6">
+    <div class="col-md-3">
         <label class="form-label small fw-medium">Subject Tag</label>
         <select name="subject_tag" class="form-select form-select-sm">
             {% for val, label in subject_choices %}
             <option value="{{ val }}" {% if q.subject_tag == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label small fw-medium">Question Type</label>
+        <select name="question_type" class="form-select form-select-sm">
+            {% for val, label in question_type_choices %}
+            <option value="{{ val }}" {% if q.question_type == val %}selected{% elif not q and val == 'Conceptual' %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
         </select>
     </div>
