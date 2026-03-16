@@ -1094,6 +1094,7 @@
             </div>
             <div class="id-chips-right">
                 <span class="chip chip-navy">Class {{ paper.class_name }}</span>
+                {% if is_admin %}
                 {% if result.scholarship_tier.color == 'gold' %}
                 <span class="chip chip-gold">🎓 {{ result.scholarship_tier.label }}</span>
                 {% elif result.scholarship_tier.color == 'silver' %}
@@ -1103,11 +1104,13 @@
                 {% else %}
                 <span class="chip chip-red">{{ result.scholarship_tier.label }}</span>
                 {% endif %}
+                {% endif %}
                 <span class="chip chip-green">{{ result.grade_band }}</span>
             </div>
         </div>
 
         <!-- SCHOLARSHIP STRIP -->
+        {% if is_admin %}
         <div class="schol-strip">
             <div class="schol-pct">{{ result.scholarship_tier.waiver }}</div>
             <div class="schol-divider"></div>
@@ -1129,6 +1132,7 @@
                 <div class="schol-basis">Based on: {{ result.percentage }}% overall · {{ result.grade_band }}</div>
             </div>
         </div>
+        {% endif %}
 
         <!-- SCORE HERO + 4 PANELS -->
         <div class="score-hero">
@@ -1386,10 +1390,12 @@
                             <div class="arc-stat-val">{{ correct_count }}/{{ total_q }}</div>
                             <div class="arc-stat-lbl">Correct</div>
                         </div>
+                        {% if is_admin %}
                         <div class="arc-stat">
                             <div class="arc-stat-val">{{ result.scholarship_tier.waiver }}</div>
                             <div class="arc-stat-lbl">Fee Waiver</div>
                         </div>
+                        {% endif %}
                     </div>
                 </div>
 
@@ -1610,7 +1616,7 @@
                 {{ result.attempt.assignment.inquiry.student_name }} ·
                 {{ result.attempt.assignment.paper.title }} ·
                 {{ result.attempt.submitted_at|date:"d M Y" }}<br>
-                Scholarship: {{ result.scholarship_tier.label }} · {{ result.scholarship_tier.waiver }} Waiver
+                {% if is_admin %}Scholarship: {{ result.scholarship_tier.label }} · {{ result.scholarship_tier.waiver }} Waiver{% endif %}
             </div>
         </div>
     </div>
