@@ -10,6 +10,7 @@ urlpatterns = [
     path('papers/create/', views.paper_create, name='paper_create'),
     path('papers/<int:pk>/', views.paper_detail, name='paper_detail'),
     path('papers/<int:pk>/delete/', views.paper_delete, name='paper_delete'),
+    path('papers/<int:pk>/reevaluate/', views.paper_reevaluate, name='paper_reevaluate'),
 
     # Assignment management
     path('assignments/', views.assignment_list, name='assignment_list'),

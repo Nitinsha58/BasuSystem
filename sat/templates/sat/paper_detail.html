@@ -346,6 +346,14 @@
          onclick="return confirm('Delete {{ paper.title }}? This cannot be undone.')">
         Delete Paper
       </a>
+
+      <form method="post" action="{% url 'sat:paper_reevaluate' paper.pk %}" style="display:inline;"
+            onsubmit="return confirm('Re-evaluate all submitted results for this paper? This will recalculate subject, difficulty, and section scores using the current question tags.')">
+        {% csrf_token %}
+        <button type="submit" class="btn-delete-paper" style="background:#1a7a4a;color:#fff;border-color:#1a7a4a;cursor:pointer;">
+          ↻ Re-evaluate Results
+        </button>
+      </form>
     </div>
   </div>
 

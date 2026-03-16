@@ -142,6 +142,90 @@ def paper_delete(request, pk):
     return render(request, 'sat/paper_confirm_delete.html', {'paper': paper})
 
 
+@login_required(login_url='login')
+def paper_reevaluate(request, pk):
+    """
+    Re-aggregate subject_scores, difficulty_scores, type_scores, and total_marks
+    for every TestResult linked to this paper, using the current question tags
+    and the already-stored QuestionResponse correctness data.
+    """
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+
+    paper = get_object_or_404(TestPaper, pk=pk)
+    marks_per = paper.marks_per_correct
+    max_marks = paper.questions.count() * marks_per
+
+    # All results for this paper
+    results = TestResult.objects.filter(
+        attempt__assignment__paper=paper
+    ).select_related('attempt').prefetch_related(
+        'attempt__responses__question'
+    )
+
+    updated = 0
+    for result in results:
+        subject_scores = {}
+        difficulty_scores = {}
+        type_scores = {}
+        total_marks = 0
+
+        for resp in result.attempt.responses.select_related('question').all():
+            q = resp.question
+            obtained = resp.marks_obtained
+            is_correct = resp.is_correct or False
+            selected = resp.selected_option
+
+            total_marks += obtained
+
+            # Subject
+            s = q.subject_tag
+            if s not in subject_scores:
+                subject_scores[s] = {'obtained': 0, 'max': 0, 'correct': 0, 'attempted': 0}
+            subject_scores[s]['max'] += marks_per
+            subject_scores[s]['obtained'] += obtained
+            if is_correct:
+                subject_scores[s]['correct'] += 1
+            if selected:
+                subject_scores[s]['attempted'] += 1
+
+            # Difficulty
+            d = q.difficulty
+            if d not in difficulty_scores:
+                difficulty_scores[d] = {'obtained': 0, 'max': 0, 'correct': 0, 'attempted': 0}
+            difficulty_scores[d]['max'] += marks_per
+            difficulty_scores[d]['obtained'] += obtained
+            if is_correct:
+                difficulty_scores[d]['correct'] += 1
+            if selected:
+                difficulty_scores[d]['attempted'] += 1
+
+            # Question type
+            t = q.question_type or 'Other'
+            if t not in type_scores:
+                type_scores[t] = {'obtained': 0, 'max': 0, 'correct': 0, 'attempted': 0}
+            type_scores[t]['max'] += marks_per
+            type_scores[t]['obtained'] += obtained
+            if is_correct:
+                type_scores[t]['correct'] += 1
+            if selected:
+                type_scores[t]['attempted'] += 1
+
+        result.subject_scores = subject_scores
+        result.difficulty_scores = difficulty_scores
+        result.type_scores = type_scores
+        result.total_marks = total_marks
+        result.max_marks = max_marks
+        result.save(update_fields=[
+            'subject_scores', 'difficulty_scores', 'type_scores',
+            'total_marks', 'max_marks',
+        ])
+        updated += 1
+
+    messages.success(request, f'Re-evaluated {updated} result(s) for "{paper.title}".')
+    return redirect('sat:paper_detail', pk=pk)
+
+
 # ─────────────────────────────────────────────
 # ASSIGNMENT MANAGEMENT
 # ─────────────────────────────────────────────
