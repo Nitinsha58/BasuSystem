@@ -436,10 +436,10 @@
         <!-- ── LETTERHEAD ── -->
         <div class="doc-header">
             <div class="doc-header-left">
-                <img src="{% static 'images/BASU.svg' %}" alt="Basu Education">
+                <img src="{% static 'images/BASU.svg' %}" alt="BASU Education">
                 <div>
                     <p class="doc-header-title">Student Registration Form</p>
-                    <p class="doc-header-subtitle">Basu Education &mdash; Enrollment Document</p>
+                    <p class="doc-header-subtitle">BASU Education &mdash; Enrollment Document</p>
                 </div>
             </div>
             <div class="doc-photo-frame">Student<br>Photo</div>
@@ -605,22 +605,6 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>Registration Fee</td>
-                        <td>
-                            {% if fees_details and fees_details.registration_fee %}
-                            {% if fees_details.registration_discount %}<s>₹ {{ fees_details.registration_fee }}</s>{% else %}₹ {{ fees_details.registration_fee }}{% endif %}
-                            {% else %}N/A{% endif %}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>Book Fee</td>
-                        <td>
-                            {% if fees_details and fees_details.book_fees %}
-                            {% if fees_details.book_discount %}<s>₹ {{ fees_details.book_fees }}</s>{% else %}₹ {{ fees_details.book_fees }}{% endif %}
-                            {% else %}N/A{% endif %}
-                        </td>
-                    </tr>
-                    <tr>
                         <td>Tuition Fee</td>
                         <td>{% if fees_details and fees_details.tuition_fees %}₹ {{ fees_details.tuition_fees }}{% else %}N/A{% endif %}</td>
                     </tr>
@@ -697,7 +681,7 @@
         <!-- ── PAGE 3: TERMS & CONDITIONS ── -->
         <div class="doc-page">
             <div class="doc-terms-header">
-                <img src="{% static 'images/BASU.svg' %}" alt="Basu Education">
+                <img src="{% static 'images/BASU.svg' %}" alt="BASU Education">
                 <h3>Terms &amp; Conditions</h3>
             </div>
             <div class="doc-terms-meta">
@@ -854,7 +838,7 @@
             </div>
 
             <div class="doc-footer">
-                This is a system-generated document. &copy; Basu Education. All rights reserved.
+                This is a system-generated document. &copy; BASU Education. All rights reserved.
             </div>
         </div>
     </div>

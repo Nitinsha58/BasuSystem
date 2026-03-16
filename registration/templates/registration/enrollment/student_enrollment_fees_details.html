@@ -4,7 +4,6 @@
 {% block dashboard %}
 
 <style>
-  /* Keep the side card narrow so the main form doesn't shrink */
   .previous-fees-summary {
     flex: 0 0 300px;
     width: 300px;
@@ -13,13 +12,11 @@
     overflow: auto;
   }
 
-  /* Make the main (next) flex item take remaining space */
   .previous-fees-summary+div {
     flex: 1 1 auto;
     min-width: 0;
   }
 
-  /* On small screens, stack instead of squeezing */
   @media (max-width: 991.98px) {
     .previous-fees-summary {
       flex: 1 1 auto;
@@ -47,17 +44,17 @@
     <a href="{% url 'student_enrollment_details_update' student.stu_id %}"
       class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Student</a>
     <a href="{% url 'student_enrollment_parent_details' student.stu_id %}"
-      class="text-decoration-none text-dark  p-1 px-2 rounded mx-2 my-1">Parent Details</a>
+      class="text-decoration-none text-dark p-1 px-2 rounded mx-2 my-1">Parent Details</a>
     <a href="{% url 'student_enrollment_update' student.stu_id %}?session={{ selected_session.id }}"
       class="text-decoration-none text-dark bg-light p-1 px-2 rounded mx-2 my-1">Enrollments</a>
   </div>
 
   <div class="my-4 mt-2">
-    <h2 class="fw-normal text-dark">{{student.user.first_name}}'s Fee Details </h2>
+    <h2 class="fw-normal text-dark">{{student.user.first_name}}'s Fee Details</h2>
   </div>
 
   <div class="d-flex justify-content-between mb-2 rounded">
-    <form action="" method="get" class="">
+    <form action="" method="get">
       <select name="session" id="academic-session" onchange="this.form.submit()"
         class="form-select search-input fs-5 me-2 w-auto flex-grow-0 pe-5" disabled>
         {% for session in academic_sessions %}
@@ -81,24 +78,21 @@
     </div>
   </div>
 
-  <div class="d-flex ">
+  <div class="d-flex">
 
+    <!-- ── Sidebar ── -->
     <div class="previous-fees-summary me-3">
       <div class="bg-light rounded p-2 mb-2">
         <details class="bg-white rounded border p-2" open>
           <summary class="d-flex justify-content-between align-items-center">
             <span class="fw-semibold">Recommended Fees</span>
           </summary>
-
           <div class="pt-2">
             {% if fee_recommendation.course_offering %}
             <div class="small text-muted mb-2">
               <div class="fw-semibold text-dark">{{ fee_recommendation.course_offering.name }}
-                <span class="text-muted">
-                  Course Fee: ₹{{ fee_recommendation.course_offering.annual_fee|floatformat:2 }}
-                </span>
-            </div>
-              
+                <span class="text-muted">Course Fee: ₹{{ fee_recommendation.course_offering.annual_fee|floatformat:2 }}</span>
+              </div>
             </div>
             {% else %}
             <div class="small text-muted mb-2">No course selected.</div>
@@ -110,26 +104,16 @@
               <span class="badge text-bg-light text-dark border">Tuition: ₹{{ fee_recommendation.breakdown.subject_component_fee|floatformat:2 }}</span>
               <span class="badge text-bg-light text-dark border">Surcharge: ₹{{ fee_recommendation.breakdown.surcharge_fee|floatformat:2 }}</span>
             </div>
-
             <div class="small text-muted">
               Fees: {{ fee_recommendation.breakdown.selected_subject_pct|floatformat:2 }}% &nbsp; Charge: {{ fee_recommendation.breakdown.surcharge_pct|floatformat:2 }}%
             </div>
-
             {% if fee_recommendation.subjects %}
             <div class="d-flex flex-wrap gap-1 mt-2">
               {% for s in fee_recommendation.subjects %}
-              {% if s.selected %}
-              <span class="badge rounded-pill text-bg-success">{{ s.name }}</span>
-              {% else %}
-              <span class="badge rounded-pill text-bg-danger">{{ s.name }}</span>
-              {% endif %}
+              <span class="badge rounded-pill {% if s.selected %}text-bg-success{% else %}text-bg-danger{% endif %}">{{ s.name }}</span>
               {% endfor %}
             </div>
             {% endif %}
-
-            <!-- <div class="small text-muted mt-2">
-              Tip: use the <strong>Tuition</strong> amount as a suggested value for "Tuition Fees".
-            </div> -->
             {% else %}
             <div class="small text-muted">{{ fee_recommendation.reason|default:"Recommendation not available." }}</div>
             {% if fee_recommendation.course_offering %}
@@ -137,11 +121,7 @@
               {% if fee_recommendation.subjects %}
               <div class="d-flex flex-wrap gap-1 mt-2">
                 {% for s in fee_recommendation.subjects %}
-                {% if s.selected %}
-                <span class="badge rounded-pill text-bg-success">{{ s.name }}</span>
-                {% else %}
-                <span class="badge rounded-pill text-bg-danger">{{ s.name }}</span>
-                {% endif %}
+                <span class="badge rounded-pill {% if s.selected %}text-bg-success{% else %}text-bg-danger{% endif %}">{{ s.name }}</span>
                 {% endfor %}
               </div>
               {% else %}
@@ -161,11 +141,8 @@
           <details class="bg-white rounded border p-2">
             <summary class="d-flex justify-content-between align-items-center">
               <span class="fw-semibold">{{ item.session.name|default:"Session" }}</span>
-              <span class="text-muted small">
-                {% if item.enrollment and item.enrollment.class_name %}{{ item.enrollment.class_name }}{% endif %}
-              </span>
+              <span class="text-muted small">{% if item.enrollment and item.enrollment.class_name %}{{ item.enrollment.class_name }}{% endif %}</span>
             </summary>
-
             <div class="pt-2">
               {% if item.fee_details %}
               <div class="d-flex flex-wrap gap-2">
@@ -173,23 +150,19 @@
                 <span class="badge text-bg-light text-dark border">Tuition: {{ item.fee_details.tuition_fees }}</span>
                 <span class="badge text-bg-light text-dark border">Reg: {{ item.fee_details.registration_fee }}</span>
               </div>
-
               {% if item.installments %}
               <div class="small text-muted mt-2">Installments ({{ item.installments|length }})</div>
               <ul class="list-unstyled m-0 mt-1 small">
                 {% for inst in item.installments %}
                 <li class="d-flex justify-content-between">
                   <span>{{ inst.due_date|date:"d M Y" }}</span>
-                  <span class="{% if inst.paid %}text-success{% else %}text-danger{% endif %}">
-                    {{ inst.amount }}
-                  </span>
+                  <span class="{% if inst.paid %}text-success{% else %}text-danger{% endif %}">{{ inst.amount }}</span>
                 </li>
                 {% endfor %}
               </ul>
               {% else %}
               <div class="small text-muted mt-2">No installments.</div>
               {% endif %}
-
               {% else %}
               <div class="small text-muted">No fee details saved for this session.</div>
               {% endif %}
@@ -201,339 +174,379 @@
       {% endif %}
     </div>
 
+    <!-- ── Main form ── -->
     <div class="flex-grow-1">
       <form class="g-3 bg-light rounded p-2 pb-3" method="post" id="fee-form"
         action="?session={{ selected_session.id }}">
         {% csrf_token %}
         <input type="hidden" name="session" value="{{ selected_session.id }}">
+
+        <!-- Total display -->
         <div class="row justify-content-evenly mt-3">
           <div class="col-md-10">
-            <p class="form-label fs-4 fw-normal text-end">Total: <span
-                id="total_fees">{{fees_details.total_fees}}</span>
+            <p class="form-label fs-4 fw-normal text-end">
+              Total: <span id="total_fees">{{fees_details.total_fees}}</span>
             </p>
           </div>
         </div>
-        <input type="text" hidden value="{{fees_details.total_fees}}" class="form-control" name="total_fees"
-          id="total_fees_input">
+        <input type="text" hidden value="{{fees_details.total_fees}}" class="form-control"
+          name="total_fees" id="total_fees_input">
+
+        <!-- Tuition + Cab -->
         <div class="row justify-content-evenly mt-3">
           <div class="col-md-4">
-            <label for="book_fees" class="form-label">Registration Fees</label>
-            <input type="text" value="{{fees_details.registration_fee}}" class="form-control" name="registration_fee"
-              id="registration_fee">
-            <div class="form-check form-switch mt-2">
-              <label class="form-check-label" for="registration_discount">Discount</label>
-              <input class="form-check-input w-4 h-4" type="checkbox" name="registration_discount" {% if fees_details.registration_discount %} checked {% endif %} role="switch" id="registration_discount">
-            </div>
+            <label for="tuition_fees" class="form-label">Tuition Fees</label>
+            <input type="text" minlength="10" maxlength="10" value="{{fees_details.tuition_fees}}"
+              class="form-control" name="tuition_fees" id="tuition_fees" required>
           </div>
           <div class="col-md-4">
             <label for="cab_fees" class="form-label">Cab Fees</label>
-            <input type="text" minlength="10" value="{{fees_details.cab_fees}}" maxlength="10" class="form-control"
-              name="cab_fees" id="cab_fees">
+            <input type="text" minlength="10" value="{{fees_details.cab_fees}}" maxlength="10"
+              class="form-control" name="cab_fees" id="cab_fees">
           </div>
         </div>
 
+        <!-- Installment count + Discount -->
         <div class="row justify-content-evenly mt-3">
-
-          <div class="col-md-4">
-            <label for="discount" class="form-label">Discount Amount</label>
-            <input type="text" minlength="10" maxlength="10" value="{{fees_details.discount}}" class="form-control"
-              name="discount" id="discount">
-          </div>
-          <div class="col-md-4">
-            <label for="tuition_fees" class="form-label">Tuition Fees</label>
-            <input type="text" minlength="10" maxlength="10" value="{{fees_details.tuition_fees}}" class="form-control"
-              name="tuition_fees" id="tuition_fees" required>
-          </div>
-        </div>
-
-        <div class="row justify-content-evenly mt-3">
-          <div class="col-md-4">
-          </div>
-          <div class="col-md-4">
-            <label for="book_fees" class="form-label">Book Fees</label>
-            <input type="text" minlength="10" maxlength="10" value="{{fees_details.book_fees}}" class="form-control"
-              name="book_fees" id="book_fees" required>
-            <div class="form-check form-switch mt-2">
-              <label class="form-check-label" for="book_discount">Discount</label>
-              <input class="form-check-input w-4 h-4" type="checkbox" name="book_discount" {% if fees_details.book_discount %} checked {% endif %} role="switch" id="book_discount">
-            </div>
-          </div>
-        </div>
-        <div class="row mt-3">
-          <div class="col-md-1"></div>
-
-          <div class="col-md-3 ms-4">
-            <label for="tuition_fees" class="form-label">No. Of Installments</label>
+          <div class="col-md-4 ms-4">
+            <label class="form-label">No. Of Installments</label>
             <div class="d-flex p-1 px-2 rounded m-0" style="width: fit-content; background-color: white;">
               {% if not installments %}
-              <button id="decrement-btn" class="btn bg-danger-subtle m-0 " type="button">-</button>
+              <button id="decrement-btn" class="btn bg-danger-subtle m-0" type="button">-</button>
               {% endif %}
               <input id="count-input" name="num_installments" readonly
                 class="m-0 border-0 rounded d-flex justify-content-center align-items-center"
-                style="width: 40px; height: 40px; padding: 7px; text-align: center;" {% if installments_count %}
-                value="{{installments_count}}" {% else %} value="1" {% endif %}>
-              <button id="increment-btn" class="btn bg-success-subtle m-0 " type="button">+</button>
+                style="width:40px;height:40px;padding:7px;text-align:center;"
+                value="{% if installments_count %}{{installments_count}}{% else %}1{% endif %}">
+              <button id="increment-btn" class="btn bg-success-subtle m-0" type="button">+</button>
             </div>
+          </div>
+          <div class="col-md-4">
+            <label for="discount" class="form-label">Discount Amount</label>
+            <input type="text" minlength="10" maxlength="10" value="{{fees_details.discount}}"
+              class="form-control" name="discount" id="discount">
           </div>
         </div>
 
-        <div class="installments rounded p-2 my-2" style="background-color: white;">
-          <div class="d-flex justify-content-end w-100">
-            Total : <span class="fw-normal" id="installment-total-amt">0</span>
+        <!-- ── Installments ── -->
+        <div class="installments-wrapper mt-3">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <h6 class="mb-0 text-muted fw-semibold text-uppercase"
+                style="letter-spacing:.06em; font-size:.75rem;">Installment Schedule</h6>
+            <div class="d-flex align-items-center gap-2">
+              <span class="text-muted small">Total</span>
+              <span class="badge bg-dark fs-6 fw-semibold px-3 py-2" id="installment-total-amt">0</span>
+            </div>
           </div>
-          {% if installments %}
-          {% for installment in installments %}
-          <div class="row installment m-0 justify-content-evenly">
-            <div class="col-10 col-md-10 rounded p-2 d-flex flex-column align-items-end">
-              <div class="d-flex justify-content-between w-100">
-                <div class="">
-                  <span class="m-0 h4 fw-normal">{{forloop.counter}}. </span>
-                  <input type="text" name="installment_label_{{forloop.counter}}" value="{{installment.label}}"
-                    class="rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" required>
-                  <input type="text" name="installment_remark_{{forloop.counter}}"
-                    value="{{installment.remark|default:''}}" class="rounded p-1 px-2"
-                    style="border: 2px solid rgba(184, 184, 184, 0.794);" placeholder="remark...">
+
+          <!-- id="installment-list" is the JS hook -->
+          <div class="d-flex flex-column gap-2" id="installment-list">
+
+            {% if installments %}
+            {% for installment in installments %}
+            <div class="installment-card card border shadow-none"
+                 style="border-color:#e4e6ea !important; border-radius:10px;">
+              <div class="card-body py-3 px-3">
+
+                <div class="row g-2 align-items-center mb-2">
+                  <div class="col-auto">
+                    <span class="badge bg-secondary-subtle text-secondary fw-bold"
+                          style="min-width:28px; border-radius:6px;">{{ forloop.counter }}</span>
+                  </div>
+                  <div class="col-12 col-sm-3">
+                    <input type="text" name="installment_label_{{ forloop.counter }}"
+                           value="{{ installment.label }}"
+                           class="form-control form-control-sm" placeholder="Label" required>
+                  </div>
+                  <div class="col-12 col-sm">
+                    <input type="text" name="installment_remark_{{ forloop.counter }}"
+                           value="{{ installment.remark|default:'' }}"
+                           class="form-control form-control-sm" placeholder="Remark (optional)">
+                  </div>
+                  <div class="col-auto ms-auto">
+                    <div class="form-check form-switch mb-0 d-flex align-items-center gap-2">
+                      <input class="form-check-input" type="checkbox" role="switch"
+                             name="paid_{{ forloop.counter }}"
+                             id="isPaid_{{ forloop.counter }}"
+                             {% if installment.paid %} checked {% endif %}>
+                      <label class="form-check-label small fw-medium text-success"
+                             for="isPaid_{{ forloop.counter }}">Paid</label>
+                    </div>
+                  </div>
                 </div>
-                <div class="d-flex gap-2">
-                  <input type="number" name="installment_amount_{{forloop.counter}}" class="mt-1 rounded p-1 px-2"
-                    value="{{installment.amount}}" style="border: 2px solid rgba(184, 184, 184, 0.794);"
-                    id="installment-amt-{{forloop.counter}}">
-                  <input type="date" name="installment_due_date_{{forloop.counter}}"
-                    value="{{installment.due_date|date:'Y-m-d'}}" class="mt-1 rounded p-1 px-2"
-                    style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-date-{{forloop.counter}}">
-                  <select class="form-select mt-1 rounded p-1 px-2" style="width: fit-content;"
-                    name="payment_type_{{forloop.counter}}" id="payment_type_{{forloop.counter}}">
-                    {% for option in payment_options %}
-                    <option value="{{option.0}}" {% if option.0 == installment.payment_type %} selected {% endif %}>
-                      {{option.1}}</option>
-                    {% endfor %}
-                  </select>
+
+                <div class="row g-2 align-items-center">
+                  <div class="col-12 col-sm-3">
+                    <div class="input-group input-group-sm">
+                      <span class="input-group-text text-muted">₹</span>
+                      <input type="number" name="installment_amount_{{ forloop.counter }}"
+                             value="{{ installment.amount }}" class="form-control"
+                             placeholder="Amount" id="installment-amt-{{ forloop.counter }}">
+                    </div>
+                  </div>
+                  <div class="col-12 col-sm-3">
+                    <input type="date" name="installment_due_date_{{ forloop.counter }}"
+                           value="{{ installment.due_date|date:'Y-m-d' }}"
+                           class="form-control form-control-sm"
+                           id="installment-date-{{ forloop.counter }}">
+                  </div>
+                  <div class="col-12 col-sm-3">
+                    <select class="form-select form-select-sm"
+                            name="payment_type_{{ forloop.counter }}"
+                            id="payment_type_{{ forloop.counter }}">
+                      {% for option in payment_options %}
+                      <option value="{{ option.0 }}"
+                        {% if option.0 == installment.payment_type %} selected {% endif %}>
+                        {{ option.1 }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
                   {% if not installment.paid %}
-                  <button type="button" data-stu_id="{{student.stu_id}}" data-installment_id="{{installment.id}}"
-                    style="height: fit-content;"
-                    class="delete-link px-2 py-1 ms-2 btn btn-outline-danger fw-semibold text-decoration-none">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"
-                      class="bi bi-trash" viewBox="0 0 16 16">
-                      <path
-                        d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z">
-                      </path>
-                      <path
-                        d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z">
-                      </path>
-                    </svg>
-                  </button>
+                  <div class="col-auto ms-auto">
+                    <button type="button"
+                            class="delete-link btn btn-outline-danger btn-sm"
+                            data-stu_id="{{ student.stu_id }}"
+                            data-installment_id="{{ installment.id }}"
+                            title="Delete installment">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                           fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
+                      </svg>
+                    </button>
+                  </div>
                   {% endif %}
                 </div>
-              </div>
-              <div class="form-check form-switch mt-2">
-                <label class="form-check-label" for="isPaid_{{forloop.counter}}">Paid</label>
-                <input class="form-check-input w-4 h-4" type="checkbox" name="paid_{{forloop.counter}}" {% if installment.paid %} checked {% endif %} role="switch" id="isPaid_{{forloop.counter}}">
+
               </div>
             </div>
-          </div>
-          {% endfor %}
-          {% else %}
-          <div class="row installment m-0 justify-content-evenly">
-            <div class="col-10 col-md-10 rounded p-2 d-flex flex-column align-items-end">
-              <div class="d-flex justify-content-between w-100">
-                <div class="">
-                  <span class="m-0 h4 fw-normal">1. </span>
-                  <input type="text" name="installment_label_1" value="Installment" class="rounded p-1 px-2"
-                    style="border: 2px solid rgba(184, 184, 184, 0.794);" required>
-                </div>
+            {% endfor %}
 
-                <div class="d-flex gap-2">
-                  <input type="number" name="installment_amount_1" placeholder="amount" class="mt-1 rounded p-1 px-2"
-                    style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-amt-1" required>
-                  <input type="date" name="installment_due_date_1" value="" class="mt-1 rounded p-1 px-2"
-                    style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-date-1">
-                  <select class="form-select mt-1 rounded p-1 px-2" style="width: fit-content;" name="payment_type_1"
-                    id="payment_type_1">
-                    {% for option in payment_options %}
-                    <option value="{{option.0}}">{{option.1}}</option>
-                    {% endfor %}
-                  </select>
+            {% else %}
+            <!-- Default first installment -->
+            <div class="installment-card card border shadow-none"
+                 style="border-color:#e4e6ea !important; border-radius:10px;">
+              <div class="card-body py-3 px-3">
+                <div class="row g-2 align-items-center mb-2">
+                  <div class="col-auto">
+                    <span class="badge bg-secondary-subtle text-secondary fw-bold"
+                          style="min-width:28px; border-radius:6px;">1</span>
+                  </div>
+                  <div class="col-12 col-sm-3">
+                    <input type="text" name="installment_label_1" value="Installment"
+                           class="form-control form-control-sm" placeholder="Label" required>
+                  </div>
+                  <div class="col-auto ms-auto">
+                    <div class="form-check form-switch mb-0 d-flex align-items-center gap-2">
+                      <input class="form-check-input" type="checkbox" role="switch"
+                             name="paid_1" id="flexSwitchCheckChecked">
+                      <label class="form-check-label small fw-medium text-success"
+                             for="flexSwitchCheckChecked">Paid</label>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div class="form-check form-switch mt-2">
-                <label class="form-check-label" for="flexSwitchCheckChecked">Paid</label>
-                <input class="form-check-input w-4 h-4" type="checkbox" name="paid_1" role="switch"
-                  id="flexSwitchCheckChecked">
+                <div class="row g-2 align-items-center">
+                  <div class="col-12 col-sm-3">
+                    <div class="input-group input-group-sm">
+                      <span class="input-group-text text-muted">₹</span>
+                      <input type="number" name="installment_amount_1" class="form-control"
+                             placeholder="Amount" id="installment-amt-1" required>
+                    </div>
+                  </div>
+                  <div class="col-12 col-sm-3">
+                    <input type="date" name="installment_due_date_1"
+                           class="form-control form-control-sm" id="installment-date-1">
+                  </div>
+                  <div class="col-12 col-sm-3">
+                    <select class="form-select form-select-sm"
+                            name="payment_type_1" id="payment_type_1">
+                      {% for option in payment_options %}
+                      <option value="{{ option.0 }}">{{ option.1 }}</option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-          {% endif %}
+            {% endif %}
 
-
-        </div>
+          </div><!-- /#installment-list -->
+        </div><!-- /.installments-wrapper -->
 
         <div class="d-flex justify-content-center mt-3">
-          <div class="">
-            <button class="btn btn-warning" type="submit">Save Fee Details</button>
-          </div>
+          <button class="btn btn-warning" type="submit">Save Fee Details</button>
         </div>
       </form>
     </div>
-  </div>
 
+  </div>
 </div>
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     const decrementBtn = document.getElementById("decrement-btn");
     const incrementBtn = document.getElementById("increment-btn");
-    const countInput = document.getElementById("count-input");
+    const countInput   = document.getElementById("count-input");
     const totalFeesElement = document.getElementById("total_fees");
-    const totalFeesInput = document.getElementById("total_fees_input");
-    const installmentContainer = document.querySelector(".installments");
-    const feeInputs = document.querySelectorAll("#registration_fee, #cab_fees, #tuition_fees, #discount, #book_fees");
-    today = new Date().toISOString().split('T')[0];
-
-    const registration_discount = document.getElementById("registration_discount");
-    const book_discount = document.getElementById("book_discount");
-
-    const fee_form = document.getElementById("fee-form");
+    const totalFeesInput   = document.getElementById("total_fees_input");
+    // ✅ Fixed: point to the new #installment-list container
+    const installmentList = document.getElementById("installment-list");
+    const feeInputs = document.querySelectorAll("#cab_fees, #tuition_fees, #discount");
+    const today = new Date().toISOString().split('T')[0];
 
     {% if not installments %}
-    first_installment_date = document.getElementById("installment-date-1");
-    first_installment_date.value = today;
+    const firstDate = document.getElementById("installment-date-1");
+    if (firstDate) firstDate.value = today;
     {% endif %}
 
+    // ── Form submit validation ──
     document.getElementById("fee-form").addEventListener("submit", function (event) {
-      let totalFees = totalFeesElement.textContent;
-      let installment_total_amt = document.getElementById("installment-total-amt").textContent;
-
-      if (totalFees != installment_total_amt) {
-        alert("Total fees and total installment Don't Match.");
+      const totalFees = totalFeesElement.textContent;
+      const installmentTotal = document.getElementById("installment-total-amt").textContent;
+      if (totalFees != installmentTotal) {
+        alert("Total fees and total installment don't match.");
         event.preventDefault();
       }
     });
 
-    // total_fees
-    // installment-total-amt
-
+    // ── Fee total calculation ──
     function calculateTotalFees() {
-      let totalFees = 0;
+      let total = 0;
       feeInputs.forEach(input => {
-        if (input.id === "discount") {
-          totalFees -= parseInt(input.value || 0, 10);
-        } else {
-          totalFees += parseInt(input.value || 0, 10);
-        }
+        total += input.id === "discount"
+          ? -parseInt(input.value || 0, 10)
+          :  parseInt(input.value || 0, 10);
       });
-
-      if (registration_discount.checked) {
-        totalFees -= parseInt(document.getElementById("registration_fee").value || 0, 10);
-      }
-
-      if (book_discount.checked) {
-        totalFees -= parseInt(document.getElementById("book_fees").value || 0, 10);
-      }
-
-      totalFeesElement.textContent = totalFees.toLocaleString();
-      totalFeesInput.value = totalFees;
+      totalFeesElement.textContent = total.toLocaleString();
+      totalFeesInput.value = total;
     }
-
-    registration_discount.addEventListener("input", calculateTotalFees);
-    book_discount.addEventListener("input", calculateTotalFees);
 
     feeInputs.forEach(input => {
       input.addEventListener("input", function () {
-        this.value = this.value.replace(/\D/g, "").slice(0, 10); // Allow only numbers
+        this.value = this.value.replace(/\D/g, "").slice(0, 10);
         calculateTotalFees();
       });
     });
 
-
-
+    // ── Installment total ──
     function updateTotalInstallmentAmt() {
-      let installments = document.querySelectorAll(".installment");
-      let installment_total_amt = document.getElementById("installment-total-amt");
+      // ✅ Fixed: query .installment-card instead of .installment
+      const cards = installmentList.querySelectorAll(".installment-card");
       let total = 0;
-      installments.forEach((installment, index) => {
-        let installmentAmtInput = installment.querySelector(`#installment-amt-${index + 1}`);
-        total += parseInt(installmentAmtInput.value || 0, 10);
+      cards.forEach((card, index) => {
+        const amtInput = card.querySelector(`input[type="number"]`);
+        if (amtInput) total += parseInt(amtInput.value || 0, 10);
       });
-      installment_total_amt.textContent = total.toLocaleString();
+      document.getElementById("installment-total-amt").textContent = total.toLocaleString();
     }
 
     updateTotalInstallmentAmt();
 
-    document.querySelectorAll(".installment input[type=number]").forEach((input) => {
-      input.addEventListener("input", updateTotalInstallmentAmt);
+    installmentList.addEventListener("input", function (e) {
+      if (e.target.type === "number") updateTotalInstallmentAmt();
     });
 
+    // ── Delete a dynamically added installment ──
     window.deleteInstallment = function (count) {
-      let installment = document.querySelector(`#installment-amt-${count}`).closest(".installment");
-      installment.remove();
-      countInput.value = parseInt(countInput.value, 10) - 1;
-      updateTotalInstallmentAmt();
-    }
+      // ✅ Fixed: find card by its amount input id, then remove closest .installment-card
+      const amtInput = document.getElementById(`installment-amt-${count}`);
+      if (amtInput) {
+        amtInput.closest(".installment-card").remove();
+        countInput.value = parseInt(countInput.value, 10) - 1;
+        updateTotalInstallmentAmt();
+      }
+    };
 
+    // ── Add a new installment card ──
     function addInstallment(count) {
-      let installmentDiv = document.createElement("div");
-      installmentDiv.classList.add("row", "installment", "m-0", "justify-content-evenly");
+      const paymentOptions = `{% for option in payment_options %}<option value="{{ option.0 }}">{{ option.1 }}</option>{% endfor %}`;
 
-      installmentDiv.innerHTML = `
-        <div class="col-10 col-md-10 rounded p-2 d-flex flex-column align-items-end">
-          <div class="d-flex justify-content-between w-100">
-            <div class="">
-              <span class="m-0 h4 fw-normal">${count}. </span>
-              <input type="text" name="installment_label_${count}" type="text" value="Installment" class="rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" required>
+      const card = document.createElement("div");
+      card.className = "installment-card card border shadow-none";
+      card.style.cssText = "border-color:#e4e6ea !important; border-radius:10px;";
+
+      card.innerHTML = `
+        <div class="card-body py-3 px-3">
+          <div class="row g-2 align-items-center mb-2">
+            <div class="col-auto">
+              <span class="badge bg-secondary-subtle text-secondary fw-bold"
+                    style="min-width:28px; border-radius:6px;">${count}</span>
             </div>
-            <div class="d-flex gap-2">
-              <input type="number" name="installment_amount_${count}" placeholder="amount" class="mt-1 rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-amt-${count}" required>
-              <input type="date" name="installment_due_date_${count}" class="mt-1 rounded p-1 px-2" style="border: 2px solid rgba(184, 184, 184, 0.794);" id="installment-date-${count}" required>
-              <select class="form-select mt-1 rounded p-1 px-2 pe-3" style="width: fit-content;" name="payment_type_${count}" id="payment_type_${count}">
-                  {% for option in payment_options %}
-                    <option value="{{option.0}}">{{option.1}}</option>
-                  {% endfor %}
+            <div class="col-12 col-sm-3">
+              <input type="text" name="installment_label_${count}" value="Installment"
+                     class="form-control form-control-sm" placeholder="Label" required>
+            </div>
+            <div class="col-12 col-sm">
+              <input type="text" name="installment_remark_${count}"
+                     class="form-control form-control-sm" placeholder="Remark (optional)">
+            </div>
+            <div class="col-auto ms-auto">
+              <div class="form-check form-switch mb-0 d-flex align-items-center gap-2">
+                <input class="form-check-input" type="checkbox" role="switch"
+                       name="paid_${count}" id="isPaid_${count}">
+                <label class="form-check-label small fw-medium text-success"
+                       for="isPaid_${count}">Paid</label>
+              </div>
+            </div>
+          </div>
+          <div class="row g-2 align-items-center">
+            <div class="col-12 col-sm-3">
+              <div class="input-group input-group-sm">
+                <span class="input-group-text text-muted">₹</span>
+                <input type="number" name="installment_amount_${count}" class="form-control"
+                       placeholder="Amount" id="installment-amt-${count}" required>
+              </div>
+            </div>
+            <div class="col-12 col-sm-3">
+              <input type="date" name="installment_due_date_${count}"
+                     class="form-control form-control-sm"
+                     id="installment-date-${count}" value="${today}">
+            </div>
+            <div class="col-12 col-sm-3">
+              <select class="form-select form-select-sm"
+                      name="payment_type_${count}" id="payment_type_${count}">
+                ${paymentOptions}
               </select>
-
-              <button type="button" onclick="deleteInstallment(${count})" id="delete-btn-${count}" style="height: fit-content;" class="px-2 py-1 ms-2 btn btn-outline-danger fw-semibold text-decoration-none">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                  <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"></path>
-                  <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"></path>
+            </div>
+            <div class="col-auto ms-auto">
+              <button type="button"
+                      onclick="deleteInstallment(${count})"
+                      class="btn btn-outline-danger btn-sm"
+                      title="Delete installment">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                     fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                  <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/>
+                  <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/>
                 </svg>
               </button>
             </div>
           </div>
+        </div>`;
 
-          <div class="form-check form-switch mt-2">
-            <label class="form-check-label" for="paid_${count}">Paid</label>
-            <input class="form-check-input w-4 h-4" type="checkbox" role="switch" name="paid_${count}" id="paid_${count}">
-          </div>
-        </div>
-      `;
-      installmentContainer.appendChild(installmentDiv);
-
-      installmentDiv.addEventListener("input", updateTotalInstallmentAmt);
+      installmentList.appendChild(card);
     }
 
     function removeLastInstallment() {
-      let installments = document.querySelectorAll(".installment");
-      let lastInstallment = installments[installments.length - 1];
-      lastInstallment.remove();
+      const cards = installmentList.querySelectorAll(".installment-card");
+      if (cards.length) cards[cards.length - 1].remove();
     }
 
-
     {% if not installments %}
-    decrementBtn.addEventListener("click", function () {
-      let count = parseInt(countInput.value, 10);
-      if (count > 1) {
-        countInput.value = count - 1;
-        // calculateTotalFees();
-        removeLastInstallment()
-      }
-    });
-
+    if (decrementBtn) {
+      decrementBtn.addEventListener("click", function () {
+        const count = parseInt(countInput.value, 10);
+        if (count > 1) {
+          countInput.value = count - 1;
+          removeLastInstallment();
+        }
+      });
+    }
     {% endif %}
 
     incrementBtn.addEventListener("click", function () {
-      let count = parseInt(countInput.value, 10);
+      const count = parseInt(countInput.value, 10);
       if (count <= 15) {
         countInput.value = count + 1;
-        // calculateTotalFees();
         addInstallment(count + 1);
       }
     });
@@ -541,41 +554,36 @@
     calculateTotalFees();
   });
 
-
+  // ── Delete confirmation modal ──
   document.addEventListener("DOMContentLoaded", function () {
     const deleteLinks = document.querySelectorAll(".delete-link");
     const modal = document.getElementById("deleteConfirmationModal");
     const confirmButton = document.getElementById("confirmDeleteButton");
-    const cancelButton = document.getElementById("cancelButton");
-
+    const cancelButton  = document.getElementById("cancelButton");
     let deleteUrl = "";
 
     deleteLinks.forEach(link => {
       link.addEventListener("click", function (event) {
         event.preventDefault();
-        document.getElementsByTagName('html')[0].style.overflow = 'hidden';
-        document.getElementsByTagName('body')[0].style.overflow = 'hidden';
+        document.documentElement.style.overflow = "hidden";
+        document.body.style.overflow = "hidden";
         deleteUrl = `/student/delete_installment/${this.dataset.stu_id}/${this.dataset.installment_id}`;
-
         const scrollPosition = window.scrollY || document.documentElement.scrollTop;
         modal.style.top = `${scrollPosition}px`;
-        modal.classList.remove('d-none');
+        modal.classList.remove("d-none");
       });
     });
 
     confirmButton.addEventListener("click", function () {
-      if (deleteUrl) {
-        window.location.href = deleteUrl; // Redirect to the delete URL
-      }
+      if (deleteUrl) window.location.href = deleteUrl;
     });
 
     cancelButton.addEventListener("click", function () {
       modal.classList.add("d-none");
-      document.getElementsByTagName('html')[0].style.overflow = 'auto';
-      document.getElementsByTagName('body')[0].style.overflow = 'auto';
+      document.documentElement.style.overflow = "auto";
+      document.body.style.overflow = "auto";
     });
   });
 </script>
-
 
 {% endblock dashboard %}
