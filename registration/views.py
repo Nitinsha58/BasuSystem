@@ -48,6 +48,102 @@ from .forms import (
 
 from .models import CourseOfferingSubject, CourseOfferingSurchargeRule
 
+import urllib.parse
+
+# ---------------------------------------------------------------------------
+# WhatsApp group links keyed by academic session name, then by class key.
+# To add a new session year, add a new top-level key — no other changes needed.
+# ---------------------------------------------------------------------------
+WHATSAPP_GROUPS_BY_SESSION = {
+    "2026-27": {
+        "7":           {"student": "https://chat.whatsapp.com/CODPG4w7eFX43VQpOi6BnD",  "parent": "https://chat.whatsapp.com/Hi0U7fSFFwbGNlfinyCZII"},
+        "8":           {"student": "https://chat.whatsapp.com/H2xTY2qpUOb5EXut75iNwV",  "parent": "https://chat.whatsapp.com/CGsBhqddvtI5BNKwzXm2wC"},
+        "9":           {"student": "https://chat.whatsapp.com/BasrRWXoC3x88lyXrvctEU",  "parent": "https://chat.whatsapp.com/IOj2m12EWZI3fp9rEjF01x"},
+        "10":          {"student": "https://chat.whatsapp.com/L0zF6dVCBDNEF1eGEBR1Wg",  "parent": "https://chat.whatsapp.com/Lb7Q1Xq1YBz9J2ZfcbK5dC"},
+        "11_PCM":      {"student": "https://chat.whatsapp.com/JdbjvZ55nwKDREkmsw2GMD",  "parent": "https://chat.whatsapp.com/IbQTtuqBQIALABUPcE688G"},
+        "11_COMMERCE": {"student": "https://chat.whatsapp.com/GruyEBmP0dZ0WOADZlEeic",  "parent": "https://chat.whatsapp.com/I6bm2asTs9T4KJEJvKgMCL"},
+        "12_PCM":      {"student": "https://chat.whatsapp.com/IsveJm0QuCT9IM9Y93vZ6s",  "parent": "https://chat.whatsapp.com/B7wsZHE4oDHDmpvC0UB1YH"},
+        "12_COMMERCE": {"student": "https://chat.whatsapp.com/Esgz3orRZuLEkyQB9iJ3Va",  "parent": "https://chat.whatsapp.com/ByZk2Dnu0el5WGanR4SZcB"},
+        "transport_erikshaw": "https://chat.whatsapp.com/Hea0v2pn5NzDdZdzCeE4mL",
+        "transport_cab":      "https://chat.whatsapp.com/IvSYxCyANmFL7QjzuHljGF",
+    },
+}
+
+
+def _wa_class_key(class_name_str):
+    """Map a class name string to its WHATSAPP_GROUPS key."""
+    cls = (class_name_str or "").upper()
+    for num in ("11", "12"):
+        if num in cls:
+            suffix = "COMMERCE" if "COMMERCE" in cls else "PCM"
+            return f"{num}_{suffix}"
+    for num in ("7", "8", "9", "10"):
+        if num in cls:
+            return num
+    return None
+
+
+def _build_wa_links(student, enrollment, session_groups):
+    """Return a dict of WhatsApp invite links for student / mother / father."""
+    class_name_str = enrollment.class_name.name if (enrollment and enrollment.class_name) else ""
+    session_name   = enrollment.session.name   if (enrollment and enrollment.session)   else ""
+
+    class_key = _wa_class_key(class_name_str)
+    student_group = parent_group = None
+    if class_key and class_key in session_groups:
+        grp = session_groups[class_key]
+        if isinstance(grp, dict):
+            student_group = grp.get("student")
+            parent_group  = grp.get("parent")
+
+    student_phone = str(student.user.phone) if (student.user and student.user.phone) else "your registered phone number"
+    message = (
+        f"Dear Parent,\n\n"
+        f"We're excited to begin the {session_name} session!\n\n"
+        "Thank you for your continued support. This year, we've made key improvements and new strategies to boost student results.\n\n"
+        f"Join the official WhatsApp groups for updates:\n\n"
+        f"{class_name_str} Students Group\n{student_group or 'N/A'}\n\n"
+        f"{class_name_str} Parents Group\n{parent_group or 'N/A'}\n\n"
+        "Student Portal Login\n"
+        "Access your student dashboard at:\n"
+        "app.basueducation.com\n\n"
+        f"Username: {student_phone}\n"
+        "Password: basu@123 (default)\n\n"
+        "You can change your password after logging in. For any login issues or queries, please contact our admin staff.\n\n"
+        "Feel free to reach out for any queries. We're here to help!\n\n"
+        "- BASU Classes"
+    )
+
+    def make_link(phone, msg):
+        return f"https://wa.me/{phone}?text={urllib.parse.quote(msg)}"
+
+    wa = {}
+    if student.user and student.user.phone:
+        wa["student"] = make_link(f"91{student.user.phone}", message)
+
+    pd = getattr(student, "parent_details", None)
+    if pd:
+        if getattr(pd, "mother_contact", None):
+            wa["mother"] = make_link(f"91{pd.mother_contact}", message)
+        if getattr(pd, "father_contact", None):
+            wa["father"] = make_link(f"91{pd.father_contact}", message)
+
+    transport = getattr(student, "transport", None)
+    if transport and student.user and student.user.phone:
+        mode_name = (getattr(getattr(transport, "transport_mode", None), "name", None) or "").lower()
+        transport_msg = (
+            "Dear Parent,\n\nJoin the official transport WhatsApp group for updates:\n{link}\n\n- BASU Classes"
+        )
+        wa["transport"] = []
+        for keyword, group_key in [("rikshaw", "transport_erikshaw"), ("rickshaw", "transport_erikshaw"), ("cab", "transport_cab")]:
+            if keyword in mode_name:
+                link = session_groups.get(group_key)
+                if link:
+                    wa["transport"].append(make_link(f"91{student.user.phone}", transport_msg.format(link=link)))
+                break
+
+    return wa
+
 
 @login_required(login_url='login')
 def api_course_offering_options(request):
@@ -852,6 +948,12 @@ def student_enrollment_update(request, stu_id):
 
     page_mode = 'update' if has_enrollment else 'create'
 
+    # WhatsApp invite links — only generated when the selected session has configured groups
+    wa_links = {}
+    session_groups = WHATSAPP_GROUPS_BY_SESSION.get(selected_session.name)
+    if session_groups and enrollment:
+        wa_links = _build_wa_links(student, enrollment, session_groups)
+
     return render(request, "registration/enrollment/student_enrollment_update.html", {
         'student': student,
         'enrollment': enrollment,
@@ -869,6 +971,7 @@ def student_enrollment_update(request, stu_id):
         'enrolled_session_ids': enrolled_session_ids,
         'display_sessions': display_sessions,
         'other_sessions': other_sessions,
+        'wa_links': wa_links,
     })
 
 
