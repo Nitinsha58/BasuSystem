@@ -1069,7 +1069,6 @@ def get_subjectwise_marks(student, start_date, end_date):
             'absent_percentage': round((absent_count / (present_count + absent_count) * 100) if (present_count + absent_count) > 0 else 0, 2),
         }
     
-        print(result)
 
     return result
 
@@ -1842,7 +1841,6 @@ def generate_single_student_report_data(student, start_date: date, end_date: dat
             'test_marks': calculate_test_scores_percentage(student, batch, start_date, end_date),
         })
 
-        print(batches_by_class_subject[key]['batches'][-1])
     return batches_by_class_subject
 
 
