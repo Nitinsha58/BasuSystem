@@ -4,6 +4,26 @@ from user.models import BaseUser
 from colorfield.fields import ColorField
 
 
+class ReferralSource(models.Model):
+    CATEGORY_CHOICES = [
+        ('digital', 'Digital'),
+        ('offline', 'Offline'),
+        ('representative', 'Representative'),
+        ('word_of_mouth', 'Word of Mouth'),
+    ]
+    name = models.CharField(max_length=255)
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['category', 'name']
+        unique_together = [('name', 'category')]
+
+    def __str__(self):
+        return f"{self.get_category_display()} → {self.name}"
+
+
 class AdmissionCounselor(models.Model):
     user = models.OneToOneField(BaseUser, on_delete=models.CASCADE, related_name="admission_counsellor")
     center = models.ForeignKey(Center, on_delete=models.CASCADE, related_name="admission_counsellor")
@@ -73,6 +93,7 @@ class FollowUpStatus(models.Model):
         return self.name
 
 class Referral(models.Model):
+    """Kept only as a migration reference. No longer used for new inquiries."""
     name = models.CharField(max_length=255, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -86,17 +107,43 @@ class Inquiry(models.Model):
         ('Verified', 'Verified'),
         ('Fake', 'Fake'),
     ]
+    LEAD_QUALITY_CHOICES = [
+        ('hot', 'Hot'),
+        ('warm', 'Warm'),
+        ('cold', 'Cold'),
+    ]
+    INTENT_CHOICES = [
+        ('single_subject', 'Single Subject'),
+        ('full_package', 'Full Package'),
+    ]
+
     student_name = models.CharField(max_length=255)
+    parent_name = models.CharField(max_length=255, blank=True)
+    parent_phone = models.CharField(max_length=15, blank=True)
     classes = models.ManyToManyField(ClassName, blank=True)
     subjects = models.ManyToManyField(Subject, blank=True)
     school = models.CharField(max_length=255)
     address = models.TextField()
     phone = models.CharField(max_length=15, unique=True)
+
+    # Two-level referral source
+    referral_source = models.ForeignKey(
+        ReferralSource, on_delete=models.SET_NULL, null=True, blank=True, related_name='inquiries'
+    )
+    # Populated only when referral_source.category == 'word_of_mouth'
+    referrer_name = models.CharField(max_length=255, blank=True)
+    referrer_phone = models.CharField(max_length=15, blank=True)
+    # Legacy flat referral kept temporarily; populated by data migration, do not use for new entries
+    # Will be removed in a future migration once data migration is confirmed
     referral = models.ForeignKey(Referral, on_delete=models.SET_NULL, null=True, blank=True, related_name='inquiry')
+
     stationary_partner = models.ForeignKey(StationaryPartner, on_delete=models.SET_NULL, null=True, blank=True, related_name='inquiries')
     lead_type = models.CharField(max_length=20, choices=LEAD_TYPE_CHOICES, default='Unverified')
+    lead_quality = models.CharField(max_length=10, choices=LEAD_QUALITY_CHOICES, null=True, blank=True)
+    intent = models.CharField(max_length=20, choices=INTENT_CHOICES, null=True, blank=True)
     existing_member = models.BooleanField(default=False)
     session = models.ForeignKey('registration.AcademicSession', on_delete=models.SET_NULL, null=True, blank=True, related_name='inquiries')
+    campaign = models.ForeignKey('marketing.Campaign', on_delete=models.SET_NULL, null=True, blank=True, related_name='inquiries')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

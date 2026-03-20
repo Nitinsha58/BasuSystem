@@ -1,6 +1,14 @@
 from django.contrib import admin
 from .forms import AdmissionCounselorForm, StationaryPartnerForm
-from .models import AdmissionCounselor, Inquiry, FollowUpStatus, FollowUp, Referral, StationaryPartner
+from .models import AdmissionCounselor, Inquiry, FollowUpStatus, FollowUp, Referral, StationaryPartner, ReferralSource
+
+
+@admin.register(ReferralSource)
+class ReferralSourceAdmin(admin.ModelAdmin):
+    list_display = ['name', 'category', 'is_active', 'created_at']
+    list_filter = ['category', 'is_active']
+    search_fields = ['name']
+    ordering = ['category', 'name']
 
 
 @admin.register(Inquiry)
@@ -10,9 +18,12 @@ class InquiryAdmin(admin.ModelAdmin):
         'phone',
         'school',
         'lead_type',
+        'lead_quality',
+        'intent',
         'existing_member',
         'session',
-        'referral',
+        'referral_source',
+        'campaign',
         'stationary_partner',
         'get_classes',
         'get_subjects',
@@ -21,9 +32,12 @@ class InquiryAdmin(admin.ModelAdmin):
     ]
     list_filter = [
         'lead_type',
+        'lead_quality',
+        'intent',
         'existing_member',
         ('session', admin.RelatedOnlyFieldListFilter),
-        ('referral', admin.RelatedOnlyFieldListFilter),
+        ('referral_source', admin.RelatedOnlyFieldListFilter),
+        ('campaign', admin.RelatedOnlyFieldListFilter),
         ('stationary_partner', admin.RelatedOnlyFieldListFilter),
         ('classes', admin.RelatedOnlyFieldListFilter),
         ('subjects', admin.RelatedOnlyFieldListFilter),
@@ -35,7 +49,12 @@ class InquiryAdmin(admin.ModelAdmin):
         'phone',
         'school',
         'address',
-        'referral__name',
+        'parent_name',
+        'parent_phone',
+        'referrer_name',
+        'referrer_phone',
+        'referral_source__name',
+        'campaign__name',
         'stationary_partner__name',
         'stationary_partner__user__first_name',
         'stationary_partner__user__last_name',
@@ -44,12 +63,30 @@ class InquiryAdmin(admin.ModelAdmin):
         'classes__name',
         'subjects__name',
     ]
-    list_select_related = ['referral', 'stationary_partner', 'session']
+    list_select_related = ['referral_source', 'stationary_partner', 'session', 'campaign']
     filter_horizontal = ['classes', 'subjects']
     date_hierarchy = 'created_at'
     ordering = ['-created_at']
     readonly_fields = ['created_at', 'updated_at']
     list_per_page = 50
+    fieldsets = [
+        ('Student Info', {
+            'fields': ['student_name', 'parent_name', 'parent_phone', 'phone', 'school', 'address', 'existing_member']
+        }),
+        ('Course Interest', {
+            'fields': ['classes', 'subjects']
+        }),
+        ('Lead Classification', {
+            'fields': ['lead_type', 'lead_quality', 'intent', 'session', 'campaign']
+        }),
+        ('Source', {
+            'fields': ['referral_source', 'referrer_name', 'referrer_phone', 'stationary_partner']
+        }),
+        ('Timestamps', {
+            'fields': ['created_at', 'updated_at'],
+            'classes': ['collapse'],
+        }),
+    ]
 
     @admin.display(description='Classes')
     def get_classes(self, obj):
@@ -65,8 +102,8 @@ class InquiryAdmin(admin.ModelAdmin):
 
     def get_search_results(self, request, queryset, search_term):
         queryset, use_distinct = super().get_search_results(request, queryset, search_term)
-        # Search includes M2M fields (classes/subjects), so we need DISTINCT.
         return queryset.distinct(), True
+
 
 class AdmissionCounselorAdmin(admin.ModelAdmin):
     form = AdmissionCounselorForm
@@ -92,4 +129,3 @@ admin.site.register(AdmissionCounselor, AdmissionCounselorAdmin)
 admin.site.register(StationaryPartner, StationaryPartnerAdmin)
 admin.site.register(FollowUpStatus)
 admin.site.register(FollowUp)
-admin.site.register(Referral)

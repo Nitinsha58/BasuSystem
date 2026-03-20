@@ -1,0 +1,273 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block dashboard %}
+<div class="container-fluid py-3">
+
+  <!-- Campaign header -->
+  <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+    <div>
+      <a href="{% url 'marketing:campaign_list' %}" class="text-muted text-decoration-none" style="font-size:13px;">← All Campaigns</a>
+      <h2 class="mb-0 mt-1">{{ campaign.name }}</h2>
+      <div class="d-flex gap-3 flex-wrap mt-1" style="font-size:13px;">
+        <span><strong>Channel:</strong> {{ campaign.get_channel_display }}</span>
+        {% if campaign.session %}<span><strong>Session:</strong> {{ campaign.session.name }}</span>{% endif %}
+        {% if campaign.start_date %}<span><strong>Start:</strong> {{ campaign.start_date|date:"d M Y" }}</span>{% endif %}
+        {% if campaign.end_date %}<span><strong>End:</strong> {{ campaign.end_date|date:"d M Y" }}</span>{% endif %}
+        {% if campaign.utm_source %}<span><strong>UTM:</strong> {{ campaign.utm_source }}</span>{% endif %}
+        <span>
+          {% if campaign.is_active %}
+          <span class="badge bg-success">Active</span>
+          {% else %}
+          <span class="badge bg-secondary">Inactive</span>
+          {% endif %}
+        </span>
+      </div>
+    </div>
+    <a href="{% url 'marketing:campaign_list' %}" class="btn btn-outline-secondary btn-sm">All Campaigns</a>
+  </div>
+
+  <!-- Bulk entry table -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <strong>Add Leads in Bulk</strong>
+      <div class="d-flex gap-2">
+        <button id="add-row-btn" class="btn btn-sm btn-outline-secondary">+ Add Row</button>
+        <button id="submit-rows-btn" class="btn btn-sm btn-primary">Submit All</button>
+      </div>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered mb-0" id="bulk-table">
+          <thead class="table-light">
+            <tr>
+              <th style="min-width:140px">Student Name*</th>
+              <th style="min-width:120px">Phone*</th>
+              <th style="min-width:120px">School</th>
+              <th style="min-width:120px">Address</th>
+              <th style="min-width:130px">Parent Name</th>
+              <th style="min-width:120px">Parent Phone</th>
+              <th style="min-width:130px">Class</th>
+              <th style="min-width:180px">Subjects</th>
+              <th style="width:36px"></th>
+            </tr>
+          </thead>
+          <tbody id="bulk-tbody">
+            <!-- rows injected by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast feedback -->
+  <div id="bulk-toast" class="position-fixed bottom-0 end-0 p-3" style="z-index:9999">
+    <div id="bulk-toast-inner" class="toast align-items-center border-0" role="alert">
+      <div class="d-flex">
+        <div class="toast-body" id="bulk-toast-body"></div>
+        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Existing inquiries -->
+  <div class="card shadow-sm">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <strong>Inquiries in this Campaign <span class="badge bg-secondary ms-1">{{ total }}</span></strong>
+    </div>
+    <div class="card-body p-0">
+      {% if inquiries %}
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Class</th>
+              <th>Quality</th>
+              <th>Latest Status</th>
+              <th>Created</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for inq in inquiries %}
+            <tr>
+              <td>{{ inq.student_name }}</td>
+              <td>{{ inq.phone }}</td>
+              <td>{{ inq.classes.all|join:", " }}</td>
+              <td>
+                {% if inq.lead_quality %}
+                  {% if inq.lead_quality == 'hot' %}<span class="badge bg-danger">Hot</span>
+                  {% elif inq.lead_quality == 'warm' %}<span class="badge bg-warning text-dark">Warm</span>
+                  {% else %}<span class="badge bg-info text-dark">Cold</span>
+                  {% endif %}
+                {% else %}—{% endif %}
+              </td>
+              <td>
+                {% if inq.latest_fu and inq.latest_fu.status %}
+                  <span class="badge" style="background-color: {{ inq.latest_fu.status.color|default:'#6c757d' }}">{{ inq.latest_fu.status.name }}</span>
+                {% else %}—{% endif %}
+              </td>
+              <td>{{ inq.created_at|date:"d M Y" }}</td>
+              <td><a href="{% url 'inquiry' inq.id %}" class="btn btn-sm btn-outline-primary">View</a></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <!-- Pagination -->
+      {% if has_prev or has_next %}
+      <div class="d-flex gap-2 p-2">
+        {% if has_prev %}<a href="?page={{ prev_page }}" class="btn btn-sm btn-outline-secondary">← Prev</a>{% endif %}
+        {% if has_next %}<a href="?page={{ next_page }}" class="btn btn-sm btn-outline-secondary">Next →</a>{% endif %}
+      </div>
+      {% endif %}
+      {% else %}
+      <p class="text-muted text-center py-4 mb-0">No inquiries yet. Add some above.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+  // Data from server
+  const classOptions = [{% for cls in classes %}{ id: {{ cls.id }}, name: "{{ cls.name|escapejs }}" },{% endfor %}];
+  const subjectOptions = [{% for sub in subjects %}{ id: {{ sub.id }}, name: "{{ sub.name|escapejs }}" },{% endfor %}];
+  const bulkUrl = "{% url 'marketing:bulk_create_inquiries' campaign.id %}";
+  const csrfToken = "{{ csrf_token }}";
+
+  function buildClassSelect() {
+    const sel = document.createElement('select');
+    sel.name = 'classes';
+    sel.className = 'form-select form-select-sm';
+    const empty = document.createElement('option');
+    empty.value = ''; empty.textContent = '—';
+    sel.appendChild(empty);
+    classOptions.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id; opt.textContent = c.name;
+      sel.appendChild(opt);
+    });
+    return sel;
+  }
+
+  function buildSubjectSelect() {
+    const sel = document.createElement('select');
+    sel.name = 'subjects';
+    sel.className = 'form-select form-select-sm';
+    sel.multiple = true;
+    sel.size = Math.min(subjectOptions.length, 3);
+    subjectOptions.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.id; opt.textContent = s.name;
+      sel.appendChild(opt);
+    });
+    return sel;
+  }
+
+  function buildRow() {
+    const tr = document.createElement('tr');
+    const fields = ['name', 'phone', 'school', 'address', 'parent_name', 'parent_phone'];
+    fields.forEach(f => {
+      const td = document.createElement('td');
+      const inp = document.createElement('input');
+      inp.type = 'text'; inp.className = 'form-control form-control-sm'; inp.dataset.field = f;
+      if (f === 'phone' || f === 'parent_phone') {
+        inp.maxLength = 10;
+        inp.addEventListener('input', function () { this.value = this.value.replace(/\D/g, '').slice(0, 10); });
+      }
+      td.appendChild(inp); tr.appendChild(td);
+    });
+
+    const tdCls = document.createElement('td');
+    tdCls.appendChild(buildClassSelect());
+    tr.appendChild(tdCls);
+
+    const tdSub = document.createElement('td');
+    tdSub.appendChild(buildSubjectSelect());
+    tr.appendChild(tdSub);
+
+    const tdDel = document.createElement('td');
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'btn btn-sm btn-outline-danger'; btn.textContent = '×';
+    btn.addEventListener('click', () => tr.remove());
+    tdDel.appendChild(btn); tr.appendChild(tdDel);
+
+    return tr;
+  }
+
+  function addRow() {
+    document.getElementById('bulk-tbody').appendChild(buildRow());
+  }
+
+  // Start with 5 blank rows
+  for (let i = 0; i < 5; i++) addRow();
+
+  document.getElementById('add-row-btn').addEventListener('click', addRow);
+
+  document.getElementById('submit-rows-btn').addEventListener('click', async function () {
+    const rows = [];
+    document.querySelectorAll('#bulk-tbody tr').forEach(tr => {
+      const cells = tr.querySelectorAll('input[data-field], select');
+      const row = {};
+      tr.querySelectorAll('input[data-field]').forEach(inp => row[inp.dataset.field] = inp.value.trim());
+      const classVal = tr.querySelector('select[name="classes"]');
+      row.classes = classVal && classVal.value ? [classVal.value] : [];
+      const subjectSel = tr.querySelector('select[name="subjects"]');
+      row.subjects = subjectSel ? Array.from(subjectSel.selectedOptions).map(o => o.value) : [];
+      rows.push(row);
+    });
+
+    const btn = this;
+    btn.disabled = true; btn.textContent = 'Saving…';
+
+    try {
+      const res = await fetch(bulkUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken,
+        },
+        body: JSON.stringify({ rows }),
+      });
+      const data = await res.json();
+
+      let msg = `✓ ${data.created} lead(s) created.`;
+      if (data.skipped && data.skipped.length) {
+        const reasons = data.skipped.map(s => `${s.name || s.phone}: ${s.reason}`).join('; ');
+        msg += ` ${data.skipped.length} skipped — ${reasons}`;
+      }
+
+      const toastEl = document.getElementById('bulk-toast-inner');
+      document.getElementById('bulk-toast-body').textContent = msg;
+      toastEl.classList.remove('text-bg-danger', 'text-bg-success');
+      toastEl.classList.add(data.created > 0 ? 'text-bg-success' : 'text-bg-warning');
+      const toast = new bootstrap.Toast(toastEl, { delay: 6000 });
+      toast.show();
+
+      // Clear successfully-created rows (those without their phone in skipped set)
+      const skippedPhones = new Set((data.skipped || []).map(s => s.phone));
+      document.querySelectorAll('#bulk-tbody tr').forEach(tr => {
+        const phoneInp = tr.querySelector('input[data-field="phone"]');
+        if (phoneInp && !skippedPhones.has(phoneInp.value.trim()) && phoneInp.value.trim()) {
+          tr.remove();
+        }
+      });
+
+      // Refresh inquiry list section
+      if (data.created > 0) {
+        setTimeout(() => window.location.reload(), 2000);
+      }
+    } catch (e) {
+      const toastEl = document.getElementById('bulk-toast-inner');
+      document.getElementById('bulk-toast-body').textContent = 'Error submitting. Please try again.';
+      toastEl.className = 'toast align-items-center border-0 text-bg-danger';
+      new bootstrap.Toast(toastEl, { delay: 5000 }).show();
+    } finally {
+      btn.disabled = false; btn.textContent = 'Submit All';
+    }
+  });
+</script>
+
+{% endblock dashboard %}

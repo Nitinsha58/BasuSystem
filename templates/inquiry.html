@@ -94,7 +94,7 @@
         <select required id="classes" multiple size="{{classes.count}}" name="classes"
           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
           {% for cls in classes %}
-          <option value="{{cls.id}}">{{cls.name}}</option>
+          <option value="{{ cls.id }}">{{ cls.name }}</option>
           {% endfor %}
         </select>
       </div>
@@ -104,7 +104,7 @@
         <select required id="subjects" multiple size="{{subjects.count}}" name="subjects"
           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
           {% for subject in subjects %}
-          <option value="{{subject.id}}">{{subject.name}}</option>
+          <option value="{{ subject.id }}">{{ subject.name }}</option>
           {% endfor %}
         </select>
       </div>
@@ -138,6 +138,20 @@
       </div>
 
       <div class="">
+        <label for="parent_name" class="block mb-2 text-sm font-medium text-gray-900">Parent / Guardian Name</label>
+        <input type="text" id="parent_name" name="parent_name"
+          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" />
+      </div>
+
+      <div class="">
+        <label for="parent_phone" class="block mb-2 text-sm font-medium text-gray-900">Parent Phone (optional)</label>
+        <div id="parent-phone-wrapper" style="position:relative">
+          <input type="text" id="parent_phone" name="parent_phone" minlength="10" maxlength="10"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 p-2.5" />
+        </div>
+      </div>
+
+      <div class="">
         <label for="existing_member" class="block mb-2 text-sm font-medium text-gray-900">Are you an existing member of
           BASU Classes?</label>
         <select id="existing_member" required name="existing_member"
@@ -147,14 +161,38 @@
         </select>
       </div>
 
+      <!-- Two-step referral source -->
       <div class="">
-        <label for="referral" class="block mb-2 text-sm font-medium text-gray-900">Where did you hear about us?</label>
-        <select id="referral" required size="{{referrals.count}}" name="referral"
+        <label for="referral_category" class="block mb-2 text-sm font-medium text-gray-900">Where did you hear about us?</label>
+        <select id="referral_category" required
           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-          {% for referral in referrals %}
-          <option value="{{referral.id}}">{{referral.name}}</option>
-          {% endfor %}
+          <option value="">-- Select category --</option>
+          <option value="digital">Digital (Google / YouTube / Instagram / WhatsApp)</option>
+          <option value="offline">Offline (Banner / Pamphlet / Event)</option>
+          <option value="representative">Representative</option>
+          <option value="word_of_mouth">Friends / Family</option>
         </select>
+      </div>
+
+      <div id="referral-source-wrapper" class="hidden">
+        <label for="referral_source" class="block mb-2 text-sm font-medium text-gray-900">Specify Source</label>
+        <select id="referral_source" name="referral_source"
+          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+          <option value="">-- Select --</option>
+        </select>
+      </div>
+
+      <div id="referrer-fields" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
+        <div>
+          <label for="referrer_name" class="block mb-2 text-sm font-medium text-gray-900">Referrer Name</label>
+          <input type="text" id="referrer_name" name="referrer_name"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" />
+        </div>
+        <div>
+          <label for="referrer_phone" class="block mb-2 text-sm font-medium text-gray-900">Referrer Phone</label>
+          <input type="text" id="referrer_phone" name="referrer_phone" minlength="10" maxlength="10"
+            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5" />
+        </div>
       </div>
 
       <!-- Full-width Submit Button -->
@@ -171,10 +209,62 @@
   </div>
 
   <script>
-    const input = document.getElementById('phone');
+    // Digit-only phone inputs
+    ['phone', 'parent_phone', 'referrer_phone'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', function () {
+        this.value = this.value.replace(/\D/g, '').slice(0, 10);
+      });
+    });
 
-    input.addEventListener("input", function () {
-      this.value = this.value.replace(/\D/g, "").slice(0, 10); // Remove non-digits and limit to 10
+    // Two-step referral source data from server
+    const referralSources = {
+      {% for src in referral_sources %}
+      "{{ src.category }}": (function(){
+        const existing = window._rSrc && window._rSrc["{{ src.category }}"] ? window._rSrc["{{ src.category }}"] : [];
+        existing.push({ id: {{ src.id }}, name: "{{ src.name|escapejs }}" });
+        return existing;
+      })(),
+      {% endfor %}
+    };
+    // Fix: rebuild as a proper dict since template loops append sequentially
+    const builtSources = {};
+    {% for src in referral_sources %}
+    if (!builtSources["{{ src.category }}"]) builtSources["{{ src.category }}"] = [];
+    builtSources["{{ src.category }}"].push({ id: {{ src.id }}, name: "{{ src.name|escapejs }}" });
+    {% endfor %}
+
+    const categorySelect = document.getElementById('referral_category');
+    const sourceWrapper = document.getElementById('referral-source-wrapper');
+    const sourceSelect = document.getElementById('referral_source');
+    const referrerFields = document.getElementById('referrer-fields');
+
+    categorySelect.addEventListener('change', function () {
+      const cat = this.value;
+      // Populate sub-source dropdown
+      const sources = builtSources[cat] || [];
+      sourceSelect.innerHTML = '<option value="">-- Select --</option>';
+      sources.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = s.name;
+        sourceSelect.appendChild(opt);
+      });
+
+      if (sources.length > 0) {
+        sourceWrapper.classList.remove('hidden');
+        sourceSelect.required = true;
+      } else {
+        sourceWrapper.classList.add('hidden');
+        sourceSelect.required = false;
+      }
+
+      // Show referrer fields only for word_of_mouth
+      if (cat === 'word_of_mouth') {
+        referrerFields.classList.remove('hidden');
+      } else {
+        referrerFields.classList.add('hidden');
+      }
     });
 
     const phoneSuggestion = document.getElementById('phone-suggestion');
@@ -195,32 +285,24 @@
           const url = new URL("{{ check_inquiry_phone_url }}", window.location.origin);
           url.searchParams.set('phone', phone);
           const res = await fetch(url.toString(), { headers: { 'Accept': 'application/json' } });
-          if (!res.ok) {
-            hidePhoneSuggestion();
-            return;
-          }
+          if (!res.ok) { hidePhoneSuggestion(); return; }
           const data = await res.json();
-          if (!data.exists) {
-            hidePhoneSuggestion();
-            return;
-          }
+          if (!data.exists) { hidePhoneSuggestion(); return; }
           phoneSuggestionText.textContent = ` ${data.name} (+91 ${data.phone})`;
           phoneSuggestionLink.setAttribute('href', data.url);
           phoneSuggestion.classList.remove('hidden');
-        } catch (e) {
-          hidePhoneSuggestion();
-        }
+        } catch (e) { hidePhoneSuggestion(); }
       }
 
-      input.addEventListener("input", function () {
-        const phone = this.value;
-        if (phoneLookupTimer) clearTimeout(phoneLookupTimer);
-        if (phone.length !== 10) {
-          hidePhoneSuggestion();
-          return;
-        }
-        phoneLookupTimer = setTimeout(() => checkPhoneSuggestion(phone), 250);
-      });
+      const input = document.getElementById('phone');
+      if (input) {
+        input.addEventListener('input', function () {
+          const phone = this.value;
+          if (phoneLookupTimer) clearTimeout(phoneLookupTimer);
+          if (phone.length !== 10) { hidePhoneSuggestion(); return; }
+          phoneLookupTimer = setTimeout(() => checkPhoneSuggestion(phone), 250);
+        });
+      }
 
       document.addEventListener('click', function (e) {
         if (!phoneSuggestion.classList.contains('hidden')) {

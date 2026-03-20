@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'lesson.apps.LessonConfig',
     'rest_framework',
     'sat.apps.SatConfig',
+    'marketing.apps.MarketingConfig',
 ]
 
 MIDDLEWARE = [

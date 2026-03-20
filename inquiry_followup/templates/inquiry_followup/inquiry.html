@@ -13,291 +13,457 @@
         display: flex;
         gap: 2rem;
     }
+
+    /* ── Toggle-button inputs ─────────────────────────────────── */
+    .checkbox-buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    .checkbox-btn {
+        position: relative;
+        cursor: pointer;
+    }
+    .checkbox-btn input[type="radio"] {
+        display: none;
+    }
+    .checkbox-btn span {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 14px;
+        border: 2px solid #ccc;
+        border-radius: 8px;
+        background: #f9f9f9;
+        font-size: 13px;
+        transition: 0.15s;
+        white-space: nowrap;
+    }
+    .checkbox-btn input[type="radio"]:checked + span {
+        border-color: #0d6efd;
+        background: #e0f0ff;
+        color: #0d6efd;
+        font-weight: 600;
+    }
+
+    /* ── Update Form ───────────────────────────────────────────── */
+    .iq-form-wrap {
+        background: #fff;
+        border: 1px solid #e2e4e9;
+        border-top: 3px solid #0d1b3e;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+    }
+
+    .iq-form-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 20px;
+        background: #f6f7f9;
+        border-bottom: 1px solid #e2e4e9;
+    }
+
+    .iq-form-title {
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: #0d1b3e;
+        margin: 0;
+    }
+
+    .iq-form-body {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    /* Section blocks */
+    .iq-section {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .iq-section-label {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: .15em;
+        text-transform: uppercase;
+        color: #9ca3af;
+        padding-bottom: 6px;
+        border-bottom: 1px solid #f0f1f3;
+        margin-bottom: 2px;
+    }
+
+    .iq-grid {
+        display: grid;
+        gap: 12px;
+    }
+    .iq-grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .iq-grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .iq-grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+    @media (max-width: 768px) {
+        .iq-grid-3, .iq-grid-2, .iq-grid-4 {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+    @media (max-width: 480px) {
+        .iq-grid-3, .iq-grid-2, .iq-grid-4 {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Field labels & inputs */
+    .iq-field label {
+        display: block;
+        font-size: 11px;
+        font-weight: 600;
+        color: #6b7280;
+        margin-bottom: 4px;
+        letter-spacing: .03em;
+    }
+
+    .iq-field .form-control,
+    .iq-field .form-select {
+        font-size: 13px;
+        border: 1px solid #d1d5db;
+        border-radius: 5px;
+        padding: 7px 10px;
+        color: #1c1f2e;
+        background: #fff;
+        transition: border-color .15s, box-shadow .15s;
+    }
+
+    .iq-field .form-control:focus,
+    .iq-field .form-select:focus {
+        border-color: #0d1b3e;
+        box-shadow: 0 0 0 3px rgba(13,27,62,.08);
+        outline: none;
+    }
+
+    .iq-field select[multiple] {
+        min-height: 80px;
+    }
+
+    /* Referrer conditional block */
+    .iq-referrer-block {
+        grid-column: span 2;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    /* Form footer */
+    .iq-form-footer {
+        display: flex;
+        gap: 8px;
+        padding: 14px 20px;
+        background: #f6f7f9;
+        border-top: 1px solid #e2e4e9;
+    }
+
+    .iq-btn-cancel {
+        font-size: 12px;
+        font-weight: 600;
+        padding: 8px 20px;
+        border-radius: 5px;
+        border: 1px solid #d1d5db;
+        background: #fff;
+        color: #374151;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background .12s;
+    }
+    .iq-btn-cancel:hover { background: #f3f4f6; color: #374151; }
+
+    .iq-btn-save {
+        font-size: 12px;
+        font-weight: 700;
+        padding: 8px 24px;
+        border-radius: 5px;
+        border: none;
+        background: #f59e0b;
+        color: #fff;
+        cursor: pointer;
+        transition: background .12s;
+    }
+    .iq-btn-save:hover { background: #d97706; }
+
+
+    /* ── SAT Card (unchanged) ────────────────────────────────── */
+    .sat-card {
+        background: var(--surface, #fff);
+        border: 1px solid var(--border, #e2e4e9);
+        border-top: 3px solid var(--navy, #0d1b3e);
+        border-radius: 6px;
+        margin-top: 12px;
+        overflow: hidden;
+        font-family: 'IBM Plex Sans', var(--sans, sans-serif);
+        font-size: 13px;
+        color: var(--text, #1c1f2e);
+    }
+    .sat-card-header {
+        padding: 10px 16px;
+        background: var(--bg, #f4f5f7);
+        border-bottom: 1px solid var(--border, #e2e4e9);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .sat-card-label {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: .15em;
+        text-transform: uppercase;
+        color: var(--muted, #6b7280);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .sat-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        padding: 3px 10px;
+        border-radius: 20px;
+        white-space: nowrap;
+    }
+    .sat-status .s-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+    .ss-completed { background: #e6f5ed; color: #1a7a4a; border: 1px solid #a7d9bc; }
+    .ss-started   { background: #fef0d8; color: #c07a10; border: 1px solid #e8c87a; }
+    .ss-pending   { background: var(--bg, #f4f5f7); color: var(--muted, #6b7280); border: 1px solid var(--border, #e2e4e9); }
+    .ss-completed .s-dot { background: #1a7a4a; }
+    .ss-started   .s-dot { background: #c07a10; animation: sat-pulse 1.5s infinite; }
+    .ss-pending   .s-dot { background: var(--muted, #6b7280); }
+    @keyframes sat-pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .sat-card-body { padding: 12px 16px; }
+    .sat-paper-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .sat-paper-name { font-weight: 600; font-size: 13px; color: var(--navy, #0d1b3e); }
+    .sat-paper-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .sat-meta-chip { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 3px; font-family: 'IBM Plex Mono', monospace; }
+    .smc-navy  { background: #0d1b3e; color: #fff; }
+    .smc-green { background: #e6f5ed; color: #1a7a4a; }
+    .smc-gold  { background: #fef3dc; color: #c9921a; }
+    .smc-amber { background: #fef0d8; color: #c07a10; }
+    .sat-result-strip { display: flex; align-items: center; gap: 12px; margin-top: 10px; padding: 10px 12px; background: var(--bg, #f4f5f7); border: 1px solid var(--border, #e2e4e9); border-radius: 4px; flex-wrap: wrap; }
+    .sat-score { font-family: 'IBM Plex Mono', monospace; font-size: 16px; font-weight: 700; color: #1a7a4a; line-height: 1; }
+    .sat-score-denom { font-size: 12px; color: var(--muted, #6b7280); font-weight: 400; }
+    .sat-pct { font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 700; padding: 2px 8px; border-radius: 3px; }
+    .sat-schol { font-size: 11px; color: #c07a10; font-weight: 600; }
+    .sat-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+    .sat-btn-view { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 6px 12px; border: 1px solid var(--border, #e2e4e9); border-radius: 4px; color: var(--navy, #0d1b3e); background: #fff; text-decoration: none; transition: background .12s, border-color .12s; white-space: nowrap; }
+    .sat-btn-view:hover { background: var(--navy, #0d1b3e); color: #fff; border-color: var(--navy, #0d1b3e); }
+    .sat-btn-view svg { width: 10px; height: 10px; }
+    .sat-unassigned { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .sat-unassigned-msg { font-size: 12px; color: var(--muted, #6b7280); display: flex; align-items: center; gap: 6px; }
+    .sat-btn-assign { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 7px 14px; border-radius: 4px; border: none; background: var(--navy, #0d1b3e); color: #fff; text-decoration: none; transition: background .12s; white-space: nowrap; }
+    .sat-btn-assign:hover { background: #1e3163; color: #fff; }
 </style>
 
 <div class="container-sm">
     <div class="w-md-75 my-2 py-2">
 
-        <form action="" id="update-inquiry-form" method="post" class="d-none bg-light rounded my-2 mb-4 p-2">
+        <!-- ══ UPDATE INQUIRY FORM ════════════════════════════════════ -->
+        <form action="" id="update-inquiry-form" method="post" class="d-none iq-form-wrap">
             {% csrf_token %}
-            <p class="border-0 h2 rounded">Update Inquiry</p>
-            <div class="d-flex gap-4">
-                <div class="col-md-3">
-                    <label for="student_name" class="form-label">Name</label>
-                    <input id="student_name" name="student_name" value="{{inquiry.student_name}}"
-                        class="rounded form-control">
-                </div>
-                <div class="col-md-3">
-                    <label for="classes" class="form-label">Classes</label>
-                    <select id="classes" multiple size="3" name="classes" class="form-select">
-                        {% for cls in classes %}
-                        <option value="{{ cls.id }}" {% if cls in inquiry.classes.all %} selected {% endif %}>
-                            {{ cls.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
 
-                <div class="col-md-3">
-                    <label for="subjects" class="form-label">Subjects</label>
-                    <select class="form-control" name="subjects" size="3" id="subjects" multiple>
-                        {% for subject in subjects %}
-                        <option value="{{ subject.id }}" {% if subject in inquiry.subjects.all %} selected {% endif %}>
-                            {{ subject.name }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
+            <div class="iq-form-header">
+                <p class="iq-form-title">Update Inquiry</p>
             </div>
 
-            <div class="row mt-3">
-                <div class="col-md-3">
-                    <label for="school" class="form-label">School</label>
-                    <input type="text" class="form-control" value="{{inquiry.school}}" name="school" id="school">
+            <div class="iq-form-body">
+
+                <!-- Section 1: Student -->
+                <div class="iq-section">
+                    <div class="iq-section-label">Student</div>
+                    <div class="iq-grid iq-grid-3">
+                        <div class="iq-field">
+                            <label for="student_name">Name</label>
+                            <input id="student_name" name="student_name" value="{{ inquiry.student_name }}" class="form-control">
+                        </div>
+                        <div class="iq-field">
+                            <label for="classes">Classes</label>
+                            <select id="classes" multiple size="3" name="classes" class="form-select">
+                                {% for cls in classes %}
+                                <option value="{{ cls.id }}" {% if cls in inquiry.classes.all %}selected{% endif %}>{{ cls.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="iq-field">
+                            <label for="subjects">Subjects</label>
+                            <select class="form-select" name="subjects" size="3" id="subjects" multiple>
+                                {% for subject in subjects %}
+                                <option value="{{ subject.id }}" {% if subject in inquiry.subjects.all %}selected{% endif %}>{{ subject.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="col-md-3">
-                    <label for="lead_type" class="form-label">Lead Type</label>
-                    <select id="lead_type" name="lead_type" class="form-select">
-                        {% for lead in lead_types %}
-                        <option value="{{ lead.0 }}" {% if inquiry.lead_type == lead.0 %}selected{% endif %}>{{ lead.1 }}
-                        </option>
-                        {% endfor %}
-                    </select>
+                <!-- Section 2: Academic -->
+                <div class="iq-section">
+                    <div class="iq-section-label">Academic</div>
+                    <div class="iq-grid iq-grid-3">
+                        <div class="iq-field">
+                            <label for="session_id">Session</label>
+                            <select id="session_id" name="session_id" class="form-select">
+                                <option value="">— No Session —</option>
+                                {% for session in academic_sessions %}
+                                <option value="{{ session.id }}" {% if inquiry.session and inquiry.session.id == session.id %}selected{% endif %}>{{ session.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="iq-field">
+                            <label for="school">School</label>
+                            <input type="text" class="form-control" value="{{ inquiry.school }}" name="school" id="school">
+                        </div>
+                        <div class="iq-field">
+                            <label for="address">Address</label>
+                            <input type="text" class="form-control" value="{{ inquiry.address }}" name="address" id="address">
+                        </div>
+                    </div>
                 </div>
 
-                <div class="col-md-3">
-                    <label for="session_id" class="form-label">Academic Session</label>
-                    <select id="session_id" name="session_id" class="form-select">
-                        <option value="">-- No Session --</option>
-                        {% for session in academic_sessions %}
-                        <option value="{{ session.id }}" {% if inquiry.session and inquiry.session.id == session.id %}selected{% endif %}>{{ session.name }}</option>
-                        {% endfor %}
-                    </select>
+                <!-- Section 3: Lead -->
+                <div class="iq-section">
+                    <div class="iq-section-label">Lead</div>
+                    <div class="iq-grid iq-grid-2">
+                        <div class="iq-field">
+                            <label>Type</label>
+                            <div class="checkbox-buttons mt-1">
+                                {% for lead in lead_types %}
+                                <label class="checkbox-btn">
+                                    <input type="radio" name="lead_type" value="{{ lead.0 }}" {% if inquiry.lead_type == lead.0 %}checked{% endif %}>
+                                    <span>{{ lead.1 }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <div class="iq-field">
+                            <label>Quality</label>
+                            <div class="checkbox-buttons mt-1">
+                                {% for q in lead_quality_choices %}
+                                <label class="checkbox-btn">
+                                    <input type="radio" name="lead_quality" value="{{ q.0 }}" {% if inquiry.lead_quality == q.0 %}checked{% endif %}>
+                                    <span>{{ q.1 }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="iq-grid iq-grid-2 mt-2">
+                        <div class="iq-field">
+                            <label for="campaign">Campaign</label>
+                            <select id="campaign" name="campaign" class="form-select">
+                                <option value="">— No Campaign —</option>
+                                {% for c in campaigns %}
+                                <option value="{{ c.id }}" {% if inquiry.campaign and inquiry.campaign.id == c.id %}selected{% endif %}>{{ c.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="col-md-3">
-                    <label for="address" class="form-label">Address</label>
-                    <input type="text" class="form-control" value="{{inquiry.address}}" name="address" id="address">
+                <!-- Section 4: Parent / Contact -->
+                <div class="iq-section">
+                    <div class="iq-section-label">Parent / Contact</div>
+                    <div class="iq-grid iq-grid-2">
+                        <div class="iq-field">
+                            <label for="parent_name">Parent Name</label>
+                            <input type="text" class="form-control" value="{{ inquiry.parent_name }}" name="parent_name" id="parent_name">
+                        </div>
+                        <div class="iq-field">
+                            <label for="parent_phone">Parent Phone</label>
+                            <input type="text" class="form-control" value="{{ inquiry.parent_phone }}" name="parent_phone" id="parent_phone" maxlength="15">
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="col-md-3 mt-2">
-                <a id="cancel-inquiry-button" class="btn btn-primary px-4 py-2" style="height: fit-content;">Cancel</a>
-                <button type="submit" class="btn btn-warning px-4 py-2" style="height: fit-content;">Update
-                    Inquiry</button>
+
+                <!-- Section 5: Source -->
+                <div class="iq-section">
+                    <div class="iq-section-label">Source</div>
+                    <div class="iq-grid iq-grid-3">
+                        <div class="iq-field">
+                            <label for="referral_source">Referral Source</label>
+                            <select id="referral_source" name="referral_source" class="form-select">
+                                <option value="">— Not Set —</option>
+                                {% for src in referral_sources %}
+                                <option value="{{ src.id }}" {% if inquiry.referral_source and inquiry.referral_source.id == src.id %}selected{% endif %}>{{ src }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div id="internal-referrer-fields" class="iq-referrer-block" {% if not inquiry.referral_source or inquiry.referral_source.category != 'word_of_mouth' %}style="display:none"{% endif %}>
+                            <div class="iq-field">
+                                <label for="referrer_name">Referrer Name</label>
+                                <input type="text" class="form-control" value="{{ inquiry.referrer_name }}" name="referrer_name" id="referrer_name">
+                            </div>
+                            <div class="iq-field">
+                                <label for="referrer_phone">Referrer Phone</label>
+                                <input type="text" class="form-control" value="{{ inquiry.referrer_phone }}" name="referrer_phone" id="referrer_phone" maxlength="15">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /.iq-form-body -->
+
+            <div class="iq-form-footer">
+                <button type="submit" class="iq-btn-save">Save Changes</button>
+                <a id="cancel-inquiry-button" class="iq-btn-cancel">Cancel</a>
             </div>
         </form>
-        <div class="d-flex justify-content-between ">
-            <p class="border-0 h2 rounded d-flex justify-content-center align-items-center">{{inquiry.student_name}} - {{inquiry.session}}</p>
+
+        <!-- ══ INQUIRY HEADER ════════════════════════════════════════ -->
+        <div class="d-flex justify-content-between">
+            <p class="border-0 h2 rounded d-flex justify-content-center align-items-center">
+                {{ inquiry.student_name }} - {{ inquiry.session }}
             </p>
             <div class="d-flex gap-2 position-relative pb-4">
-                <button id="update-inquiry-button" class="btn btn-warning px-4 py-2" style="height: fit-content;">Update
-                    Inquiry</button>
-                <a href="{% url 'delete_inquiry' inquiry.id %}" class="btn btn-danger px-4 py-2"
-                    style="height: fit-content;">Delete Inquiry</a>
-                <span class="m-0 me-2 mt-2 position-absolute end-0 bottom-0"
-                    style="font-size: 14px; translate: transformY(-12);">On <span class="fw-semibold" id="next-followup-date-{{forloop.counter}}">{{inquiry.created_at|date:'d M Y, h:i A'}}</span></span>
+                <button id="update-inquiry-button" class="btn btn-warning px-4 py-2" style="height: fit-content;">Update Inquiry</button>
+                <a href="{% url 'delete_inquiry' inquiry.id %}" class="btn btn-danger px-4 py-2" style="height: fit-content;">Delete Inquiry</a>
+                <span class="m-0 me-2 mt-2 position-absolute end-0 bottom-0" style="font-size: 14px;">On <span class="fw-semibold">{{ inquiry.created_at|date:'d M Y, h:i A' }}</span></span>
             </div>
         </div>
+
         <p class="m-0 mb-1">
             {% with classes=inquiry.classes.all|join:", " subjects=inquiry.subjects.all|join:", " %}
             {{ classes|title }} - {{ subjects|title }}
             {% endwith %}
         </p>
 
-        <div class="d-md-flex gap-4">
-            <p class="my-1"><span class="fw-semibold">Phone: </span> {{inquiry.phone}}</p>
-
-            <p class="my-1"><span class="fw-semibold">School: </span> {{inquiry.school}}</p>
-            <p class="my-1"><span class="fw-semibold">Address: </span> {{inquiry.address}}</p>
-            <p class="my-1"><span class="fw-semibold">Referral: </span> {% if inquiry.stationary_partner %}
-                {{inquiry.stationary_partner.name}}-{{inquiry.stationary_partner.address}} {% else %}
-                {{inquiry.referral}} {% endif%}</p>
-
-            <p class="my-1"><span class="fw-semibold">Lead Type: </span> {{inquiry.lead_type}}</p>
-            <p class="my-1"><span class="fw-semibold">Session: </span> {% if inquiry.session %}{{inquiry.session.name}}{% else %}—{% endif %}</p>
-            <p class="my-1"><span class="fw-semibold">Existing Parnet: </span>
-                {% if inquiry.existing_member %}
-                Yes
-                {% else %}
-                No
-                {% endif %}
+        <div class="d-md-flex gap-4 flex-wrap">
+            <p class="my-1"><span class="fw-semibold">Phone: </span>{{ inquiry.phone }}</p>
+            {% if inquiry.parent_name %}<p class="my-1"><span class="fw-semibold">Parent: </span>{{ inquiry.parent_name }}{% if inquiry.parent_phone %} · {{ inquiry.parent_phone }}{% endif %}</p>{% endif %}
+            <p class="my-1"><span class="fw-semibold">School: </span>{{ inquiry.school }}</p>
+            <p class="my-1"><span class="fw-semibold">Address: </span>{{ inquiry.address }}</p>
+            <p class="my-1"><span class="fw-semibold">Source: </span>
+                {% if inquiry.stationary_partner %}
+                    {{ inquiry.stationary_partner.name }} – {{ inquiry.stationary_partner.address }}
+                {% elif inquiry.referral_source %}
+                    {{ inquiry.referral_source }}{% if inquiry.referrer_name %} ({{ inquiry.referrer_name }}{% if inquiry.referrer_phone %} · {{ inquiry.referrer_phone }}{% endif %}){% endif %}
+                {% else %}—{% endif %}
             </p>
+            <p class="my-1"><span class="fw-semibold">Lead Type: </span>{{ inquiry.lead_type }}</p>
+            {% if inquiry.lead_quality %}<p class="my-1"><span class="fw-semibold">Quality: </span>{{ inquiry.get_lead_quality_display }}</p>{% endif %}
+            {% if inquiry.campaign %}<p class="my-1"><span class="fw-semibold">Campaign: </span>{{ inquiry.campaign.name }}</p>{% endif %}
+            <p class="my-1"><span class="fw-semibold">Session: </span>{% if inquiry.session %}{{ inquiry.session.name }}{% else %}—{% endif %}</p>
+            <p class="my-1"><span class="fw-semibold">Existing Member: </span>{% if inquiry.existing_member %}Yes{% else %}No{% endif %}</p>
         </div>
-            <p class="m-0" style="font-size: 14px;">Last Followup On <span class="fw-semibold"
-                id="next-followup-date-{{forloop.counter}}">{{latest_followup.created_at|date:'d M Y, h:i A'}}</span></span>
 
-            {% with sat_assignment=inquiry.sat_assignments.first %}
+        <p class="m-0" style="font-size: 14px;">Last Followup On <span class="fw-semibold">{{ latest_followup.created_at|date:'d M Y, h:i A' }}</span></p>
 
-            <style>
-            /* Scoped to .sat-card — safe to drop anywhere in the inquiry page */
-            .sat-card {
-            background: var(--surface, #fff);
-            border: 1px solid var(--border, #e2e4e9);
-            border-top: 3px solid var(--navy, #0d1b3e);
-            border-radius: 6px;
-            margin-top: 12px;
-            overflow: hidden;
-            font-family: 'IBM Plex Sans', var(--sans, sans-serif);
-            font-size: 13px;
-            color: var(--text, #1c1f2e);
-            }
-
-            .sat-card-header {
-            padding: 10px 16px;
-            background: var(--bg, #f4f5f7);
-            border-bottom: 1px solid var(--border, #e2e4e9);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            }
-
-            .sat-card-label {
-            font-size: 9px;
-            font-weight: 700;
-            letter-spacing: .15em;
-            text-transform: uppercase;
-            color: var(--muted, #6b7280);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            }
-
-            /* Status badge */
-            .sat-status {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: .06em;
-            text-transform: uppercase;
-            padding: 3px 10px;
-            border-radius: 20px;
-            white-space: nowrap;
-            }
-            .sat-status .s-dot {
-            width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
-            }
-            .ss-completed { background: #e6f5ed; color: #1a7a4a; border: 1px solid #a7d9bc; }
-            .ss-started   { background: #fef0d8; color: #c07a10; border: 1px solid #e8c87a; }
-            .ss-pending   { background: var(--bg, #f4f5f7); color: var(--muted, #6b7280); border: 1px solid var(--border, #e2e4e9); }
-            .ss-completed .s-dot { background: #1a7a4a; }
-            .ss-started   .s-dot { background: #c07a10; animation: sat-pulse 1.5s infinite; }
-            .ss-pending   .s-dot { background: var(--muted, #6b7280); }
-            @keyframes sat-pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
-
-            /* Body */
-            .sat-card-body { padding: 12px 16px; }
-
-            /* Assigned state */
-            .sat-paper-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-            }
-            .sat-paper-name {
-            font-weight: 600;
-            font-size: 13px;
-            color: var(--navy, #0d1b3e);
-            }
-            .sat-paper-meta {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            align-items: center;
-            }
-            .sat-meta-chip {
-            font-size: 10px;
-            font-weight: 600;
-            padding: 2px 8px;
-            border-radius: 3px;
-            font-family: 'IBM Plex Mono', monospace;
-            }
-            .smc-navy  { background: #0d1b3e;  color: #fff; }
-            .smc-green { background: #e6f5ed;  color: #1a7a4a; }
-            .smc-gold  { background: #fef3dc;  color: #c9921a; }
-            .smc-amber { background: #fef0d8;  color: #c07a10; }
-
-            /* Result strip */
-            .sat-result-strip {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-top: 10px;
-            padding: 10px 12px;
-            background: var(--bg, #f4f5f7);
-            border: 1px solid var(--border, #e2e4e9);
-            border-radius: 4px;
-            flex-wrap: wrap;
-            }
-            .sat-score {
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 16px;
-            font-weight: 700;
-            color: #1a7a4a;
-            line-height: 1;
-            }
-            .sat-score-denom { font-size: 12px; color: var(--muted, #6b7280); font-weight: 400; }
-            .sat-pct {
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 13px;
-            font-weight: 700;
-            padding: 2px 8px;
-            border-radius: 3px;
-            }
-            .sat-schol {
-            font-size: 11px;
-            color: #c07a10;
-            font-weight: 600;
-            }
-
-            /* Actions */
-            .sat-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
-            .sat-btn-view {
-            display: inline-flex; align-items: center; gap: 4px;
-            font-size: 11px; font-weight: 600; padding: 6px 12px;
-            border: 1px solid var(--border, #e2e4e9); border-radius: 4px;
-            color: var(--navy, #0d1b3e); background: #fff;
-            text-decoration: none; transition: background .12s, border-color .12s;
-            white-space: nowrap;
-            }
-            .sat-btn-view:hover { background: var(--navy, #0d1b3e); color: #fff; border-color: var(--navy, #0d1b3e); }
-            .sat-btn-view svg { width: 10px; height: 10px; }
-
-            /* Unassigned state */
-            .sat-unassigned {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            }
-            .sat-unassigned-msg {
-            font-size: 12px;
-            color: var(--muted, #6b7280);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            }
-            .sat-btn-assign {
-            display: inline-flex; align-items: center; gap: 5px;
-            font-size: 11px; font-weight: 700; padding: 7px 14px;
-            border-radius: 4px; border: none;
-            background: var(--navy, #0d1b3e); color: #fff;
-            text-decoration: none; transition: background .12s;
-            white-space: nowrap;
-            }
-            .sat-btn-assign:hover { background: #1e3163; color: #fff; }
-            </style>
-
-            <div class="sat-card">
-
-            <!-- HEADER -->
+        {% with sat_assignment=inquiry.sat_assignments.first %}
+        <div class="sat-card">
             <div class="sat-card-header">
-                <div class="sat-card-label">
-                Scholarship Test
-                </div>
+                <div class="sat-card-label">Scholarship Test</div>
                 {% if sat_assignment %}
                 {% with s=sat_assignment.status %}
                 <span class="sat-status {% if s == 'completed' %}ss-completed{% elif s == 'started' %}ss-started{% else %}ss-pending{% endif %}">
@@ -306,42 +472,31 @@
                 {% endwith %}
                 {% endif %}
             </div>
-
-            <!-- BODY -->
             <div class="sat-card-body">
-
                 {% if sat_assignment %}
-
-                <!-- Paper info row -->
                 <div class="sat-paper-row">
                     <div>
-                    <div class="sat-paper-name">{{ sat_assignment.paper.title }}</div>
+                        <div class="sat-paper-name">{{ sat_assignment.paper.title }}</div>
                     </div>
                     <div class="sat-paper-meta">
-                    <span class="sat-meta-chip smc-navy">{{ sat_assignment.paper.class_name }}</span>
-                    <span class="sat-meta-chip smc-gold">{{ sat_assignment.paper.time_limit }} min</span>
-                    <span class="sat-meta-chip smc-green">+{{ sat_assignment.paper.marks_per_correct }}/Q</span>
+                        <span class="sat-meta-chip smc-navy">{{ sat_assignment.paper.class_name }}</span>
+                        <span class="sat-meta-chip smc-gold">{{ sat_assignment.paper.time_limit }} min</span>
+                        <span class="sat-meta-chip smc-green">+{{ sat_assignment.paper.marks_per_correct }}/Q</span>
                     </div>
                     <div class="sat-actions">
-                    <a href="{% url 'sat:assignment_detail' sat_assignment.pk %}" class="sat-btn-view">
-                        View
-                        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <path d="M2 6h8M6 2l4 4-4 4"/>
-                        </svg>
-                    </a>
+                        <a href="{% url 'sat:assignment_detail' sat_assignment.pk %}" class="sat-btn-view">
+                            View
+                            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M2 6h8M6 2l4 4-4 4"/>
+                            </svg>
+                        </a>
                     </div>
                 </div>
-
-                <!-- Result strip (only if completed) -->
                 {% with result=sat_assignment.attempt.result %}
                 {% if result %}
                 <div class="sat-result-strip">
-                    <div class="sat-score">
-                    {{ result.total_marks }}<span class="sat-score-denom">/{{ result.max_marks }}</span>
-                    </div>
-                    <span class="sat-pct {% if result.percentage >= 75 %}smc-green{% elif result.percentage >= 50 %}smc-amber{% else %}" style="background:#fdecea;color:#c0392b;"{% endif %}">
-                    {{ result.percentage }}%
-                    </span>
+                    <div class="sat-score">{{ result.total_marks }}<span class="sat-score-denom">/{{ result.max_marks }}</span></div>
+                    <span class="sat-pct {% if result.percentage >= 75 %}smc-green{% elif result.percentage >= 50 %}smc-amber{% else %}" style="background:#fdecea;color:#c0392b;"{% endif %}>{{ result.percentage }}%</span>
                     <span class="sat-schol">{{ result.scholarship_tier.label }} · {{ result.scholarship_tier.waiver }}</span>
                     {% if result.visibility == 'shared' %}
                     <span style="font-size:10px;color:#1a7a4a;font-weight:600;margin-left:4px;">Released</span>
@@ -349,74 +504,51 @@
                     <span style="font-size:10px;color:var(--muted,#6b7280);margin-left:4px;">On Hold</span>
                     {% endif %}
                     <div style="margin-left:auto;">
-                    <a href="{% url 'sat:result_detail' result.pk %}" class="sat-btn-view">
-                        Full Report →
-                    </a>
+                        <a href="{% url 'sat:result_detail' result.pk %}" class="sat-btn-view">Full Report →</a>
                     </div>
                 </div>
                 {% endif %}
                 {% endwith %}
-
                 {% else %}
-
-                <!-- Unassigned state -->
                 <div class="sat-unassigned">
-                    <div class="sat-unassigned-msg">
-                    No test assigned yet
-                    </div>
+                    <div class="sat-unassigned-msg">No test assigned yet</div>
                     <a href="{% url 'sat:assignment_create' %}?inquiry={{ inquiry.pk }}" class="sat-btn-assign">
-                    <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M6 1v10M1 6h10"/>
-                    </svg>
-                    Assign Test
+                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 1v10M1 6h10"/></svg>
+                        Assign Test
                     </a>
                 </div>
-
                 {% endif %}
-
             </div>
-            </div>
-
-            {% endwith %}
         </div>
+        {% endwith %}
 
+    </div><!-- /.w-md-75 -->
+
+    <!-- ══ FOLLOWUP COLUMNS ══════════════════════════════════════════ -->
     <div class="d-flex g-4 w-100 dates-group pb-3">
         {% for status, followup_list in followups.items %}
-        <div class="card date-card" style="min-width: 20rem; height: fit-content; border: none;"
-            data-date="{{ date|date:'Y-m-d' }}">
+        <div class="card date-card" style="min-width: 20rem; height: fit-content; border: none;" data-date="{{ date|date:'Y-m-d' }}">
             <ul class="list-group" style="border: none;">
-                <li class="list-group-item text-dark rounded" style="background: {{status.color}};">{{ status.name|title }}</li>
+                <li class="list-group-item text-dark rounded" style="background: {{ status.color }};">{{ status.name|title }}</li>
 
                 <li class="list-group-item p-2 bg-light rounded my-2 border-1">
-                    <form class="d-flex flex-column gap-2 mb-2 input-form" method="post"
-                        action="{% url 'create_followup' inquiry.id %}">
+                    <form class="d-flex flex-column gap-2 mb-2 input-form" method="post" action="{% url 'create_followup' inquiry.id %}">
                         {% csrf_token %}
-                        <select hidden class="form-select" id="status" name="status" aria-label="select status"
-                            required>
+                        <select hidden class="form-select" id="status" name="status" aria-label="select status" required>
                             {% for sts in followup_status %}
-                            <option value="{{sts.id}}" {% if sts == status %} selected {% endif %}>{{sts.name}}</option>
+                            <option value="{{ sts.id }}" {% if sts == status %}selected{% endif %}>{{ sts.name }}</option>
                             {% endfor %}
                         </select>
-                        <textarea type="text" class="form-control" id="description-{{forloop.counter}}"
-                            name="description" placeholder="Followup details..." rows="2" required></textarea>
-                        <div class="d-flex justify-content-between align-items-center"
-                            id="followup-gap-group-{{forloop.counter}}">
-                            <p id="next-followup-label-{{forloop.counter}}" class="m-0">Next followup on<br> <span
-                                    class="" id="next-followup-date-{{forloop.counter}}">20 Feb 25</span></p>
-                            <div class="d-flex ms-auto p-1 px-2 rounded m-0"
-                                style="width: fit-content; background-color: white;">
-                                <button id="decrement-btn-{{forloop.counter}}" class="btn bg-danger-subtle m-0 "
-                                    type="button">-</button>
-                                <input id="count-input-{{forloop.counter}}" name="followup_days_gap" readonly
-                                    class="m-0 border-0 rounded d-flex justify-content-center align-items-center"
-                                    style="width: 40px; height: 40px; padding: 7px; text-align: center;" value="0">
-                                <button id="increment-btn-{{forloop.counter}}" class="btn bg-success-subtle m-0 "
-                                    type="button">+</button>
+                        <textarea type="text" class="form-control" id="description-{{ forloop.counter }}" name="description" placeholder="Followup details..." rows="2" required></textarea>
+                        <div class="d-flex justify-content-between align-items-center" id="followup-gap-group-{{ forloop.counter }}">
+                            <p id="next-followup-label-{{ forloop.counter }}" class="m-0">Next followup on<br><span class="" id="next-followup-date-{{ forloop.counter }}">20 Feb 25</span></p>
+                            <div class="d-flex ms-auto p-1 px-2 rounded m-0" style="width: fit-content; background-color: white;">
+                                <button id="decrement-btn-{{ forloop.counter }}" class="btn bg-danger-subtle m-0" type="button">-</button>
+                                <input id="count-input-{{ forloop.counter }}" name="followup_days_gap" readonly class="m-0 border-0 rounded d-flex justify-content-center align-items-center" style="width: 40px; height: 40px; padding: 7px; text-align: center;" value="0">
+                                <button id="increment-btn-{{ forloop.counter }}" class="btn bg-success-subtle m-0" type="button">+</button>
                             </div>
                         </div>
-
-                        <div id="btn-group-{{forloop.counter}}" style="display: none;"
-                            class="btn-container w-100 justify-content-between">
+                        <div id="btn-group-{{ forloop.counter }}" style="display: none;" class="btn-container w-100 justify-content-between">
                             <button type="submit" class="btn btn-success px-4">Submit</button>
                             <a href="" class="btn btn-primary px-4">Cancel</a>
                         </div>
@@ -424,51 +556,39 @@
                 </li>
 
                 {% for followup in followup_list %}
-                <li class="list-group-item p-2 my-2 border-1 rounded bg-light-subtle ">
-                    <form class=" d-flex flex-column gap-2 mb-2 update-form" method="post"
-                        action="{% url 'update_followup' followup.inquiry.id followup.id %}">
+                <li class="list-group-item p-2 my-2 border-1 rounded bg-light-subtle">
+                    <form class="d-flex flex-column gap-2 mb-2 update-form" method="post" action="{% url 'update_followup' followup.inquiry.id followup.id %}">
                         {% csrf_token %}
-                        <select class="form-select" id="status" name="status" {% if followup.status.color %}
-                            style="background: {{followup.status.color}}; width: fit-content;" {% endif %} required>
+                        <select class="form-select" id="status" name="status" {% if followup.status.color %}style="background: {{ followup.status.color }}; width: fit-content;"{% endif %} required>
                             {% for status in followup_status %}
-                            <option value="{{status.id}}" {% if followup.status == status %} selected {% endif %}>
-                                {{status.name}}</option>
+                            <option value="{{ status.id }}" {% if followup.status == status %}selected{% endif %}>{{ status.name }}</option>
                             {% endfor %}
                         </select>
                         {% if followup.description %}
-                        <textarea type="text" class="form-control" id="update-description" name="description"
-                            placeholder="Followup details..." rows="2">{{followup.description|title}}</textarea>
+                        <textarea type="text" class="form-control" id="update-description" name="description" placeholder="Followup details..." rows="2">{{ followup.description|title }}</textarea>
                         {% else %}
-                        <textarea style="display: none;" type="text" class="form-control" id="update-description"
-                            name="description" placeholder="Followup details..." rows="2"></textarea>
+                        <textarea style="display: none;" type="text" class="form-control" id="update-description" name="description" placeholder="Followup details..." rows="2"></textarea>
                         {% endif %}
-
-                        <p class="m-0" style="font-size: 12px;">On <span class="fw-semibold"
-                                id="next-followup-date-{{forloop.counter}}">{{followup.created_at|date:'d M Y, h:i A'}}</span></p>
+                        <p class="m-0" style="font-size: 12px;">On <span class="fw-semibold">{{ followup.created_at|date:'d M Y, h:i A' }}</span></p>
                         {% if followup.followup_date %}
-                        <p class="m-0">Next followup on <span class="fw-semibold"
-                                id="next-followup-date-{{forloop.counter}}">{{followup.followup_date|date:'d M Y'}}</span></p>
+                        <p class="m-0">Next followup on <span class="fw-semibold">{{ followup.followup_date|date:'d M Y' }}</span></p>
                         {% endif %}
-                        <div id="update-btn-group" style="display: none;"
-                            class="btn-container w-100 justify-content-between">
+                        <div id="update-btn-group" style="display: none;" class="btn-container w-100 justify-content-between">
                             <button type="submit" class="btn btn-warning px-4">Update</button>
-                            <a href="{% url 'delete_followup' followup.inquiry.id followup.id %}"
-                                class="btn btn-danger px-4">Delete</a>
+                            <a href="{% url 'delete_followup' followup.inquiry.id followup.id %}" class="btn btn-danger px-4">Delete</a>
                         </div>
                     </form>
                     {% if followup.admission_counsellor %}
                     <p class="m-0 me-2 mt-2 position-absolute end-0 top-0" style="font-size: 14px;">
-                        {{followup.admission_counsellor.user.first_name}}
-                        {{followup.admission_counsellor.user.last_name}}</p>
+                        {{ followup.admission_counsellor.user.first_name }} {{ followup.admission_counsellor.user.last_name }}
+                    </p>
                     {% endif %}
                 </li>
-
                 {% endfor %}
 
             </ul>
         </div>
         {% endfor %}
-
     </div>
 </div>
 
@@ -478,12 +598,9 @@
         const inputs = form.querySelectorAll("input, select, textarea");
         const btnContainer = document.getElementById(`btn-group-${index + 1}`);
         const description = form.querySelector(`#description-${index + 1}`);
-
         const countInput = form.querySelector(`#count-input-${index + 1}`);
         const nextFollowupDate = form.querySelector(`#next-followup-date-${index + 1}`);
-
         const nextFollowupLabel = form.querySelector(`#next-followup-label-${index + 1}`);
-
         const decrementBtn = form.querySelector(`#decrement-btn-${index + 1}`);
         const incrementBtn = form.querySelector(`#increment-btn-${index + 1}`);
 
@@ -491,92 +608,64 @@
             const result = new Date(date);
             result.setDate(result.getDate() + days);
             return result;
-        }
+        };
 
-        if (parseInt(countInput.value, 10) === 0) {
-            nextFollowupLabel.style.display = "none";
-        }
+        if (parseInt(countInput.value, 10) === 0) nextFollowupLabel.style.display = "none";
+
         decrementBtn.addEventListener("click", function () {
             let count = parseInt(countInput.value, 10);
             if (count >= 1) {
                 countInput.value = count - 1;
-
                 const nextDate = addDays(new Date(), count - 1);
-                nextFollowupDate.innerText = nextDate.toLocaleDateString('en-GB', {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric'
-                }).replace(/ /g, ' ').slice(0, 11);
+                nextFollowupDate.innerText = nextDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).slice(0, 11);
             }
-
-            if (count - 1 === 0) {
-                nextFollowupLabel.style.display = "none";
-            }
+            if (count - 1 === 0) nextFollowupLabel.style.display = "none";
         });
-
 
         incrementBtn.addEventListener("click", function () {
             let count = parseInt(countInput.value, 10);
-
             if (count <= 15) {
                 countInput.value = count + 1;
-
                 const nextDate = addDays(new Date(), count + 1);
-                nextFollowupDate.innerText = nextDate.toLocaleDateString('en-GB', {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric'
-                }).replace(/ /g, ' ').slice(0, 11);
+                nextFollowupDate.innerText = nextDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).slice(0, 11);
             }
-            if (count === 0) {
-                nextFollowupLabel.style.display = "block";
-            }
+            if (count === 0) nextFollowupLabel.style.display = "block";
         });
 
-
-        // Add event listeners for focus and blur
         inputs.forEach(input => {
             input.addEventListener("focus", () => {
-                btnContainer.style.display = "flex"; // Show the buttons 
+                btnContainer.style.display = "flex";
                 description.style.display = "block";
             });
-
-            input.addEventListener("blur", () => {
-                // Check if any input is still focused
-                setTimeout(() => {
-                    const isActive = Array.from(inputs).some(inp => inp === document.activeElement);
-                    if (!isActive) {
-                        // btnContainer.style.display = "none"; // Hide the buttons
-                    }
-                }, 100); // Delay to ensure blur doesn't hide buttons immediately when switching between inputs
-            });
-        });
-    });
-
-
-    const updateForms = document.querySelectorAll(".update-form");
-    updateForms.forEach((form, index) => {
-        const inputs = form.querySelectorAll("input, select, textarea");
-        const btnContainer = form.querySelector("#update-btn-group");
-        const update_description = form.querySelector("#update-description");
-
-        inputs.forEach(input => {
-            input.addEventListener("focus", () => {
-                btnContainer.style.display = "flex"; // Show the buttons
-                update_description.style.display = "block";
-            });
-
             input.addEventListener("blur", () => {
                 setTimeout(() => {
                     const isActive = Array.from(inputs).some(inp => inp === document.activeElement);
-                    if (!isActive) {
-                        // btnContainer.style.display = "none"; // Hide the buttons if no field is focused
-                    }
+                    // if (!isActive) btnContainer.style.display = "none";
                 }, 100);
             });
         });
     });
 
+    const updateForms = document.querySelectorAll(".update-form");
+    updateForms.forEach((form) => {
+        const inputs = form.querySelectorAll("input, select, textarea");
+        const btnContainer = form.querySelector("#update-btn-group");
+        const update_description = form.querySelector("#update-description");
+        inputs.forEach(input => {
+            input.addEventListener("focus", () => {
+                btnContainer.style.display = "flex";
+                update_description.style.display = "block";
+            });
+            input.addEventListener("blur", () => {
+                setTimeout(() => {
+                    // const isActive = Array.from(inputs).some(inp => inp === document.activeElement);
+                    // if (!isActive) btnContainer.style.display = "none";
+                }, 100);
+            });
+        });
+    });
+
+    // Toggle update form
     const updateInquiryButton = document.getElementById("update-inquiry-button");
     const updateInquiryForm = document.getElementById("update-inquiry-form");
     const cancelInquiryButton = document.getElementById("cancel-inquiry-button");
@@ -591,28 +680,35 @@
         updateInquiryButton.classList.remove("d-none");
     });
 
-</script>
+    // Show/hide referrer fields based on referral source category
+    const internalReferralSourceSelect = document.getElementById('referral_source');
+    const internalReferrerFields = document.getElementById('internal-referrer-fields');
+    {% if referral_sources %}
+    const wordOfMouthIds = new Set([{% for src in referral_sources %}{% if src.category == 'word_of_mouth' %}{{ src.id }},{% endif %}{% endfor %}]);
+    {% else %}
+    const wordOfMouthIds = new Set();
+    {% endif %}
+    if (internalReferralSourceSelect && internalReferrerFields) {
+        internalReferralSourceSelect.addEventListener('change', function () {
+            internalReferrerFields.style.display = wordOfMouthIds.has(parseInt(this.value)) ? '' : 'none';
+        });
+    }
 
-<script>
+    // Auto-resize textareas
     function estimateRowsSimple(textarea) {
-        const avgCharWidth = 7.2; // average for ~16px font
+        const avgCharWidth = 7.2;
         const textLength = textarea.value.length;
         const textareaWidth = textarea.clientWidth;
-
-        // Add line breaks (\n) as full rows
         const newlines = textarea.value.split('\n').length - 1;
-
         const estimatedWrappedRows = Math.ceil((textLength * avgCharWidth) / textareaWidth);
-        const estimatedTotalRows = Math.max(2, estimatedWrappedRows + newlines);
-        textarea.rows = estimatedTotalRows;
+        textarea.rows = Math.max(2, estimatedWrappedRows + newlines);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-        const textareas = document.querySelectorAll('textarea.form-control');
-        textareas.forEach(textarea => {
+        document.querySelectorAll('textarea.form-control').forEach(textarea => {
             estimateRowsSimple(textarea);
             textarea.addEventListener('input', () => estimateRowsSimple(textarea));
-            window.addEventListener('resize', () => estimateRowsSimple(textarea)); // Optional
+            window.addEventListener('resize', () => estimateRowsSimple(textarea));
         });
     });
 </script>

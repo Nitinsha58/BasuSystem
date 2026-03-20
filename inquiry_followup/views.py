@@ -1,13 +1,14 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils.html import format_html
-from .models import Inquiry, ClassName, Subject, Referral, FollowUp, FollowUpStatus, AdmissionCounselor, StationaryPartner
+from .models import Inquiry, ClassName, Subject, FollowUp, FollowUpStatus, AdmissionCounselor, StationaryPartner, ReferralSource
 from datetime import datetime, timedelta
 from collections import defaultdict
 from django.db.models import Max, Q
 from django.contrib import messages
 from django.utils.timezone import localtime, now
 from registration.models import AcademicSession
+from marketing.models import Campaign
 from .session_selection import select_session_for_date
 
 from django.http import JsonResponse
@@ -20,6 +21,7 @@ def inquiries(request):
     today = timezone.now().date()
     year = int(request.GET.get('year', today.year))
     month = int(request.GET.get('month', today.month))
+    campaign_id = request.GET.get('campaign')
 
     if not year or not month:
         year = today.year
@@ -32,7 +34,9 @@ def inquiries(request):
     # Generate all dates for the month
     dates = [first_day + timedelta(days=i) for i in range((last_day - first_day).days + 1)]
 
-    latest_followups = FollowUp.objects.select_related('inquiry').order_by('inquiry', '-created_at').distinct('inquiry')
+    latest_followups = FollowUp.objects.select_related('inquiry', 'inquiry__campaign').order_by('inquiry', '-created_at').distinct('inquiry')
+    if campaign_id:
+        latest_followups = latest_followups.filter(inquiry__campaign_id=campaign_id)
 
     inquiry_followup_dict = defaultdict(list)
 
@@ -51,9 +55,17 @@ def inquiries(request):
         else:
             inquiry_followup_dict[created_date].append(followup)
 
-    merged_dict = {date: inquiry_followup_dict[date] for date in dates}
+    def _campaign_sort_key(fu):
+        c = fu.inquiry.campaign
+        if c is None:
+            return (1, None)
+        return (0, -c.created_at.timestamp())
+
+    merged_dict = {date: sorted(inquiry_followup_dict[date], key=_campaign_sort_key) for date in dates}
 
     total_inquiries = Inquiry.objects.count()
+    if campaign_id:
+        total_inquiries = Inquiry.objects.filter(campaign_id=campaign_id).count()
 
     return render(request, 'inquiry_followup/inquiries.html', {
         'dates': merged_dict,
@@ -63,13 +75,17 @@ def inquiries(request):
         'prev_month': (first_day - timedelta(days=1)),
         'next_month': (last_day + timedelta(days=1)),
         'total_inquiries': total_inquiries,
+        'campaigns': Campaign.objects.filter(is_active=True).order_by('-created_at'),
+        'selected_campaign_id': campaign_id,
     })
 
 def inquiry(request, inquiry_id):
     classes = ClassName.objects.all()
     subjects = Subject.objects.all()
-    referrals = Referral.objects.all()
+    referral_sources = ReferralSource.objects.filter(is_active=True).order_by('category', 'name')
+    campaigns = Campaign.objects.filter(is_active=True).order_by('-created_at')
     lead_types = Inquiry.LEAD_TYPE_CHOICES
+    lead_quality_choices = Inquiry.LEAD_QUALITY_CHOICES
     academic_sessions = AcademicSession.objects.all().order_by('-start_date')
     inquiry_obj = Inquiry.objects.filter(id=inquiry_id).first()
     if not inquiry_obj:
@@ -97,6 +113,13 @@ def inquiry(request, inquiry_id):
         school_name = request.POST.get("school")
         address = request.POST.get("address")
         lead_type = request.POST.get("lead_type")
+        lead_quality = request.POST.get("lead_quality") or None
+        parent_name = request.POST.get("parent_name", "").strip()
+        parent_phone = request.POST.get("parent_phone", "").strip()
+        referral_source_id = request.POST.get("referral_source") or None
+        referrer_name = request.POST.get("referrer_name", "").strip()
+        referrer_phone = request.POST.get("referrer_phone", "").strip()
+        campaign_id = request.POST.get("campaign") or None
         session_id = request.POST.get("session_id")
 
         inquiry_created_date = localtime(inquiry_obj.created_at).date()
@@ -105,11 +128,18 @@ def inquiry(request, inquiry_id):
         if session_id:
             selected_session = AcademicSession.objects.filter(id=session_id).first()
 
-        # update inquiry accordingly 
+        # update inquiry accordingly
         inquiry_obj.student_name = student_name
         inquiry_obj.school = school_name
         inquiry_obj.address = address
         inquiry_obj.lead_type = lead_type
+        inquiry_obj.lead_quality = lead_quality
+        inquiry_obj.parent_name = parent_name
+        inquiry_obj.parent_phone = parent_phone
+        inquiry_obj.referral_source_id = referral_source_id
+        inquiry_obj.referrer_name = referrer_name
+        inquiry_obj.referrer_phone = referrer_phone
+        inquiry_obj.campaign_id = campaign_id
 
         # Enforce: only associate a session if inquiry year matches session start year.
         # Never leave session NULL if any sessions exist (fallbacks handled by helper).
@@ -130,16 +160,18 @@ def inquiry(request, inquiry_id):
 
         messages.success(request, "Inquiry Updated.")
         return redirect('inquiry', inquiry_id=inquiry_id)
-    
+
 
     return render(request, 'inquiry_followup/inquiry.html', {
         'inquiry': inquiry_obj,
         'followups': dict(followup_status_dict),
         'followup_status': FollowUpStatus.objects.all(),
-        'classes':classes,
-        'subjects':subjects,
-        'referrals': referrals,
+        'classes': classes,
+        'subjects': subjects,
+        'referral_sources': referral_sources,
+        'campaigns': campaigns,
         'lead_types': lead_types,
+        'lead_quality_choices': lead_quality_choices,
         'latest_followup': latest_followup,
         'academic_sessions': academic_sessions,
     })
@@ -224,7 +256,7 @@ def update_followup(request, inquiry_id, followup_id):
 def create_inquiry(request):
     classes = ClassName.objects.all()
     subjects = Subject.objects.all()
-    referrals = Referral.objects.all()
+    referral_sources = ReferralSource.objects.filter(is_active=True).order_by('category', 'name')
 
     is_counsellor = (
         request.user
@@ -240,12 +272,16 @@ def create_inquiry(request):
 
     if request.method == "POST":
         student_name = request.POST.get("student-name")
-        selected_classes = request.POST.getlist("classes")  # getlist() for multiple selection
+        selected_classes = request.POST.getlist("classes")
         selected_subjects = request.POST.getlist("subjects")
         school_name = request.POST.get("school-name")
         address = request.POST.get("address")
         phone = (request.POST.get("phone") or "").strip()
-        referral_source = request.POST.get("referral")
+        referral_source_id = request.POST.get("referral_source") or None
+        referrer_name = request.POST.get("referrer_name", "").strip()
+        referrer_phone = request.POST.get("referrer_phone", "").strip()
+        parent_name = request.POST.get("parent_name", "").strip()
+        parent_phone = request.POST.get("parent_phone", "").strip()
         existing_member = request.POST.get("existing_member") == "Yes"
 
         existing_inquiry = Inquiry.objects.filter(phone=phone).first() if phone else None
@@ -277,7 +313,11 @@ def create_inquiry(request):
             existing_inquiry.student_name = student_name
             existing_inquiry.school = school_name
             existing_inquiry.address = address
-            existing_inquiry.referral_id = referral_source
+            existing_inquiry.referral_source_id = referral_source_id
+            existing_inquiry.referrer_name = referrer_name
+            existing_inquiry.referrer_phone = referrer_phone
+            existing_inquiry.parent_name = parent_name
+            existing_inquiry.parent_phone = parent_phone
             existing_inquiry.existing_member = existing_member
             existing_inquiry.lead_type = 'Verified'
             if current_session:
@@ -307,13 +347,16 @@ def create_inquiry(request):
             school=school_name,
             address=address,
             phone=phone,
-            referral_id=referral_source,
+            referral_source_id=referral_source_id,
+            referrer_name=referrer_name,
+            referrer_phone=referrer_phone,
+            parent_name=parent_name,
+            parent_phone=parent_phone,
             existing_member=existing_member,
             lead_type='Verified',
             session=select_session_for_date(localtime(now()).date()),
         )
 
-        # Add many-to-many relationships (if applicable)
         inquiry.classes.set(selected_classes)
         inquiry.subjects.set(selected_subjects)
         inquiry.save()
@@ -321,19 +364,19 @@ def create_inquiry(request):
         if is_counsellor:
             messages.success(request, "Inquiry Created.")
             return redirect('inquiries')
-        
+
         return render(request, 'success-page.html', {
             'headline': "Thank you for submitting your details.",
             'message': "You have taken the first step towards your child's Second Home.",
         })
 
     return render(request, 'inquiry.html', {
-        'classes':classes,
-        'subjects':subjects,
-        'referrals': referrals,
+        'classes': classes,
+        'subjects': subjects,
+        'referral_sources': referral_sources,
         'is_counsellor': is_counsellor,
         'check_inquiry_phone_url': reverse('check_inquiry_phone'),
-        })
+    })
 
 def create_referral_inquiry(request):
     classes = ClassName.objects.all()

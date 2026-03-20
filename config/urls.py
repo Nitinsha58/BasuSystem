@@ -17,6 +17,7 @@ urlpatterns = [
     path("lesson/", include("lesson.urls")),
     path('sat/', include('sat.urls', namespace='sat')),
     path('api/sat/', include('sat.api_urls')),
+    path('marketing/', include('marketing.urls', namespace='marketing')),
     path('test/<str:token>/', test_shell, name='test_shell'),
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
