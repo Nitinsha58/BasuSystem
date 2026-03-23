@@ -4,7 +4,7 @@ from django.utils.html import format_html
 from .models import Inquiry, ClassName, Subject, FollowUp, FollowUpStatus, AdmissionCounselor, StationaryPartner, ReferralSource
 from datetime import datetime, timedelta
 from collections import defaultdict
-from django.db.models import Max, Q
+from django.db.models import Count, Max, Q
 from django.contrib import messages
 from django.utils.timezone import localtime, now
 from registration.models import AcademicSession
@@ -12,71 +12,183 @@ from marketing.models import Campaign
 from .session_selection import select_session_for_date
 
 from django.http import JsonResponse
+from urllib.parse import urlencode
+from django.views.decorators.http import require_GET
 
 
 from django.utils import timezone
 from calendar import monthrange
 
+
+@require_GET
+def inquiry_stats(request):
+    """
+    GET /inquiries/stats?start=YYYY-MM-DD&end=YYYY-MM-DD[&campaign=&session=&counsellor=&referral_category=]
+    Also accepts ?period=weekly|monthly|bi_monthly as a fallback.
+    Returns per-current_status inquiry counts for those with followup activity in the range.
+    """
+    start_str = request.GET.get('start')
+    end_str   = request.GET.get('end')
+
+    try:
+        if start_str and end_str:
+            start_date = datetime.strptime(start_str, '%Y-%m-%d').date()
+            end_date   = datetime.strptime(end_str,   '%Y-%m-%d').date()
+        else:
+            raise ValueError('use period fallback')
+    except (ValueError, TypeError):
+        PERIOD_MAP = {'weekly': 7, 'monthly': 30, 'bi_monthly': 60}
+        period = request.GET.get('period', 'weekly')
+        days = PERIOD_MAP.get(period, 7)
+        end_date   = timezone.now().date()
+        start_date = end_date - timedelta(days=days)
+
+    # Inquiries with at least one followup in the date range
+    qs = Inquiry.objects.filter(followup__created_at__date__range=(start_date, end_date)).distinct()
+
+    # Optional filters
+    campaign_id = request.GET.get('campaign')
+    if campaign_id:
+        qs = qs.filter(campaign_id=campaign_id)
+
+    session_id = request.GET.get('session')
+    if session_id:
+        qs = qs.filter(session_id=session_id)
+
+    counsellor_id = request.GET.get('counsellor')
+    if counsellor_id:
+        qs = qs.filter(followup__admission_counsellor_id=counsellor_id).distinct()
+
+    referral_category = request.GET.get('referral_category')
+    if referral_category:
+        qs = qs.filter(referral_source__category=referral_category)
+
+    # Group by current_status
+    status_rows = (
+        qs
+        .values(
+            'current_status__id',
+            'current_status__name',
+            'current_status__color',
+            'current_status__order',
+        )
+        .annotate(count=Count('id'))
+        .order_by('current_status__order')
+    )
+
+    stats = []
+    no_followup = 0
+    for row in status_rows:
+        if row['current_status__id'] is None:
+            no_followup = row['count']
+        else:
+            stats.append({
+                'name': row['current_status__name'],
+                'color': row['current_status__color'] or '#94a3b8',
+                'count': row['count'],
+            })
+
+    return JsonResponse({'stats': stats, 'no_followup': no_followup})
+
 def inquiries(request):
     today = timezone.now().date()
     year = int(request.GET.get('year', today.year))
     month = int(request.GET.get('month', today.month))
-    campaign_id = request.GET.get('campaign')
 
-    if not year or not month:
-        year = today.year
-        month = today.month
-
-    # Get the first and last day of the selected month
     first_day = datetime(year, month, 1).date()
     last_day = datetime(year, month, monthrange(year, month)[1]).date()
-
-    # Generate all dates for the month
     dates = [first_day + timedelta(days=i) for i in range((last_day - first_day).days + 1)]
 
-    latest_followups = FollowUp.objects.select_related('inquiry', 'inquiry__campaign').order_by('inquiry', '-created_at').distinct('inquiry')
+    # Extract filters
+    campaign_id    = request.GET.get('campaign')
+    status_id      = request.GET.get('status')
+    lead_quality   = request.GET.get('lead_quality')
+    lead_type      = request.GET.get('lead_type')
+    session_filter = request.GET.get('session')
+    class_id       = request.GET.get('class_name')
+    counsellor_id  = request.GET.get('counsellor')
+
+    inquiry_qs = Inquiry.objects.select_related('campaign', 'session', 'current_status')
+
     if campaign_id:
-        latest_followups = latest_followups.filter(inquiry__campaign_id=campaign_id)
+        inquiry_qs = inquiry_qs.filter(campaign_id=campaign_id)
+    if status_id == 'none':
+        inquiry_qs = inquiry_qs.filter(current_status__isnull=True)
+    elif status_id:
+        inquiry_qs = inquiry_qs.filter(current_status_id=status_id)
+    if lead_quality:
+        inquiry_qs = inquiry_qs.filter(lead_quality=lead_quality)
+    if lead_type:
+        inquiry_qs = inquiry_qs.filter(lead_type=lead_type)
+    if session_filter:
+        inquiry_qs = inquiry_qs.filter(session_id=session_filter)
+    if class_id:
+        inquiry_qs = inquiry_qs.filter(classes__id=class_id).distinct()
+    if counsellor_id:
+        inquiry_qs = inquiry_qs.filter(followup__admission_counsellor_id=counsellor_id).distinct()
+
+    # Only fetch followups visible in this month — either scheduled via followup_date
+    # or created within this month (if no followup_date set)
+    latest_followups = (
+        FollowUp.objects
+        .filter(
+            inquiry__in=inquiry_qs,
+        )
+        .filter(
+            Q(followup_date__range=(first_day, last_day)) |
+            Q(followup_date__isnull=True, created_at__date__range=(first_day, last_day))
+        )
+        .select_related('inquiry', 'inquiry__campaign', 'status', 'admission_counsellor__user')
+        .order_by('inquiry', '-created_at')
+        .distinct('inquiry')
+    )
 
     inquiry_followup_dict = defaultdict(list)
-
-    status_counts = defaultdict(int)
-
     for followup in latest_followups:
-        if followup.status:
-            status_counts[followup.status] += 1
-
-    for followup in latest_followups:
-        # created_date = followup.inquiry.created_at.date()
-        created_date = followup.created_at.date()
-        followup_date = followup.followup_date
-        if followup_date:
-            inquiry_followup_dict[followup_date].append(followup)
-        else:
-            inquiry_followup_dict[created_date].append(followup)
+        key = followup.followup_date or followup.created_at.date()
+        inquiry_followup_dict[key].append(followup)
 
     def _campaign_sort_key(fu):
         c = fu.inquiry.campaign
-        if c is None:
-            return (1, None)
-        return (0, -c.created_at.timestamp())
+        return (1, None) if c is None else (0, -c.created_at.timestamp())
 
-    merged_dict = {date: sorted(inquiry_followup_dict[date], key=_campaign_sort_key) for date in dates}
+    merged_dict = {
+        date: sorted(inquiry_followup_dict.get(date, []), key=_campaign_sort_key)
+        for date in dates
+    }
 
-    total_inquiries = Inquiry.objects.count()
-    if campaign_id:
-        total_inquiries = Inquiry.objects.filter(campaign_id=campaign_id).count()
+    active_filter_params = {k: v for k, v in {
+        'campaign':    campaign_id,
+        'status':      status_id,
+        'lead_quality': lead_quality,
+        'lead_type':   lead_type,
+        'session':     session_filter,
+        'class_name':  class_id,
+        'counsellor':  counsellor_id,
+    }.items() if v}
 
     return render(request, 'inquiry_followup/inquiries.html', {
-        'dates': merged_dict,
-        'followup_status': FollowUpStatus.objects.all(),
-        'status_counts': dict(status_counts),
-        'current_month': first_day,
-        'prev_month': (first_day - timedelta(days=1)),
-        'next_month': (last_day + timedelta(days=1)),
-        'total_inquiries': total_inquiries,
-        'campaigns': Campaign.objects.filter(is_active=True).order_by('-created_at'),
+        'dates':               merged_dict,
+        'followup_status':     FollowUpStatus.objects.all(),
+        'current_month':       first_day,
+        'prev_month':          (first_day - timedelta(days=1)),
+        'next_month':          (last_day + timedelta(days=1)),
+        'campaigns':           Campaign.objects.filter(is_active=True).order_by('-created_at'),
         'selected_campaign_id': campaign_id,
+        'filter_statuses':     FollowUpStatus.objects.order_by('order'),
+        'filter_sessions':     AcademicSession.objects.order_by('-name'),
+        'filter_classes':      ClassName.objects.order_by('name'),
+        'filter_counsellors':  AdmissionCounselor.objects.select_related('user').order_by('user__first_name'),
+        'active_filters': {
+            'campaign':    campaign_id or '',
+            'status':      status_id or '',
+            'lead_quality': lead_quality or '',
+            'lead_type':   lead_type or '',
+            'session':     session_filter or '',
+            'class_name':  class_id or '',
+            'counsellor':  counsellor_id or '',
+        },
+        'filter_qs': urlencode(active_filter_params) if active_filter_params else '',
     })
 
 def inquiry(request, inquiry_id):

@@ -1,7 +1,31 @@
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, post_delete
 from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 from .models import Inquiry, FollowUpStatus, FollowUp
+
+
+def _sync_current_status(inquiry):
+    """Update the denormalized current_status on an Inquiry from its latest FollowUp."""
+    latest = (
+        inquiry.followup
+        .select_related('status')
+        .order_by('-created_at')
+        .first()
+    )
+    new_status = latest.status if latest else None
+    new_status_id = new_status.id if new_status else None
+    if inquiry.current_status_id != new_status_id:
+        Inquiry.objects.filter(pk=inquiry.pk).update(current_status=new_status)
+
+
+@receiver(post_save, sender=FollowUp)
+def followup_saved(sender, instance, **kwargs):
+    _sync_current_status(instance.inquiry)
+
+
+@receiver(post_delete, sender=FollowUp)
+def followup_deleted(sender, instance, **kwargs):
+    _sync_current_status(instance.inquiry)
 
 
 @receiver(m2m_changed, sender=Inquiry.subjects.through)

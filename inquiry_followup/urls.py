@@ -1,16 +1,17 @@
 from django.urls import path
 from .views import (
-    create_inquiry, 
+    create_inquiry,
     inquiries,
-    inquiry, 
-    update_followup, 
-    create_followup, 
-    delete_followup, 
-    delete_inquiry, 
+    inquiry,
+    update_followup,
+    create_followup,
+    delete_followup,
+    delete_inquiry,
     search_inquiries,
     check_inquiry_phone,
     create_referral_inquiry,
-    stationary_partner_inquiries
+    stationary_partner_inquiries,
+    inquiry_stats,
 )
 
 urlpatterns = [
@@ -19,6 +20,7 @@ urlpatterns = [
     path('inquiry', create_inquiry, name='create_inquiry'),
     path('partner/referral', create_referral_inquiry, name='create_referral_inquiry'),
     path('inquiries', inquiries, name='inquiries'),
+    path('inquiries/stats', inquiry_stats, name='inquiry_stats'),
     path('inquiries/<int:inquiry_id>', inquiry, name='inquiry'),
     path('create-followup/<int:inquiry_id>/', create_followup, name='create_followup'),
     path('update-followup/<int:inquiry_id>/<int:followup_id>', update_followup, name='update_followup'),

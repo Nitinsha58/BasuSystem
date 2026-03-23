@@ -142,6 +142,12 @@ class Inquiry(models.Model):
     lead_quality = models.CharField(max_length=10, choices=LEAD_QUALITY_CHOICES, null=True, blank=True)
     intent = models.CharField(max_length=20, choices=INTENT_CHOICES, null=True, blank=True)
     existing_member = models.BooleanField(default=False)
+    current_status = models.ForeignKey(
+        'FollowUpStatus',
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='current_inquiries'
+    )
     session = models.ForeignKey('registration.AcademicSession', on_delete=models.SET_NULL, null=True, blank=True, related_name='inquiries')
     campaign = models.ForeignKey('marketing.Campaign', on_delete=models.SET_NULL, null=True, blank=True, related_name='inquiries')
     created_at = models.DateTimeField(auto_now_add=True)
