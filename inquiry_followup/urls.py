@@ -12,6 +12,7 @@ from .views import (
     create_referral_inquiry,
     stationary_partner_inquiries,
     inquiry_stats,
+    bulk_assign_campaign,
 )
 
 urlpatterns = [
@@ -28,4 +29,5 @@ urlpatterns = [
     path('delete-inquiry/<int:inquiry_id>/', delete_inquiry, name='delete_inquiry'),
 
     path('partner-inquiries/<int:partner_id>/', stationary_partner_inquiries, name='partner_inquiry'),
+    path('inquiries/bulk-assign-campaign', bulk_assign_campaign, name='bulk_assign_campaign'),
 ]

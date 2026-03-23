@@ -4,713 +4,1177 @@
 
 {% block dashboard %}
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
 <style>
-    .dates-group {
-        list-style-type: none;
-        padding: 0;
-        margin: 0;
-        overflow-x: auto;
-        display: flex;
-        gap: 2rem;
-    }
+/* ── Design tokens (same as board) ────────────────────── */
+:root {
+    --brand: #392994;
+    --brand-dim: rgba(57,41,148,0.10);
+    --surface: #ffffff;
+    --surface-2: #eef0f5;
+    --surface-3: #e2e5ed;
+    --border: #d4d8e4;
+    --border-mid: #bcc2d0;
+    --text-1: #0a0f1e;
+    --text-2: #2d3748;
+    --text-3: #64748b;
+    --font: 'DM Sans', system-ui, sans-serif;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --shadow: 0 1px 3px rgba(10,15,30,0.08), 0 3px 10px rgba(10,15,30,0.05);
+}
 
-    /* ── Toggle-button inputs ─────────────────────────────────── */
-    .checkbox-buttons {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-    }
-    .checkbox-btn {
-        position: relative;
-        cursor: pointer;
-    }
-    .checkbox-btn input[type="radio"] {
-        display: none;
-    }
-    .checkbox-btn span {
-        display: inline-flex;
-        align-items: center;
-        padding: 6px 14px;
-        border: 2px solid #ccc;
-        border-radius: 8px;
-        background: #f9f9f9;
-        font-size: 13px;
-        transition: 0.15s;
-        white-space: nowrap;
-    }
-    .checkbox-btn input[type="radio"]:checked + span {
-        border-color: #0d6efd;
-        background: #e0f0ff;
-        color: #0d6efd;
-        font-weight: 600;
-    }
+*, *::before, *::after { box-sizing: border-box; }
+body { font-family: var(--font); }
 
-    /* ── Update Form ───────────────────────────────────────────── */
-    .iq-form-wrap {
-        background: #fff;
-        border: 1px solid #e2e4e9;
-        border-top: 3px solid #0d1b3e;
-        border-radius: 8px;
-        margin-bottom: 1.5rem;
-        overflow: hidden;
-    }
+/* ── Page shell ─────────────────────────────────────── */
+.iq-detail-page {
+    background: var(--surface-2);
+    min-height: calc(100vh - 56px);
+    padding: 20px 20px 40px;
+}
 
-    .iq-form-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 14px 20px;
-        background: #f6f7f9;
-        border-bottom: 1px solid #e2e4e9;
-    }
+/* ── Header card ─────────────────────────────────────── */
+.iq-header-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 14px;
+    overflow: hidden;
+}
+.iq-header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+}
+.iq-student-name {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-1);
+    letter-spacing: -.02em;
+    line-height: 1.15;
+    margin: 0 0 4px;
+}
+.iq-student-sub {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-3);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.iq-student-sub .sep { color: var(--border-mid); }
 
-    .iq-form-title {
-        font-size: 13px;
-        font-weight: 700;
-        letter-spacing: .12em;
-        text-transform: uppercase;
-        color: #0d1b3e;
-        margin: 0;
-    }
+.iq-header-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    flex-shrink: 0;
+}
+.iq-header-btns {
+    display: flex;
+    gap: 6px;
+}
+.iq-hbtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 7px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    border: none;
+    font-family: var(--font);
+    transition: opacity .15s, background .15s;
+    white-space: nowrap;
+}
+.iq-hbtn:hover { opacity: .85; text-decoration: none; }
+.iq-hbtn-warn   { background: #f59e0b; color: #fff; }
+.iq-hbtn-danger { background: #ef4444; color: #fff; }
 
-    .iq-form-body {
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-    }
+.iq-created-on {
+    font-size: 11px;
+    color: var(--text-3);
+    white-space: nowrap;
+}
 
-    /* Section blocks */
-    .iq-section {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
+/* Meta grid */
+.iq-meta-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    padding: 0;
+}
+.iq-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 12px 20px;
+    border-right: 1px solid var(--border);
+    min-width: 100px;
+}
+.iq-meta-item:last-child { border-right: none; }
+.iq-meta-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--text-3);
+}
+.iq-meta-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-1);
+    line-height: 1.3;
+}
+.iq-meta-value a { color: var(--brand); text-decoration: none; }
+.iq-meta-value a:hover { text-decoration: underline; }
 
-    .iq-section-label {
-        font-size: 9px;
-        font-weight: 700;
-        letter-spacing: .15em;
-        text-transform: uppercase;
-        color: #9ca3af;
-        padding-bottom: 6px;
-        border-bottom: 1px solid #f0f1f3;
-        margin-bottom: 2px;
-    }
+.iq-last-followup {
+    padding: 8px 20px;
+    background: var(--surface-2);
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-3);
+    font-weight: 500;
+}
+.iq-last-followup strong { color: var(--text-2); font-weight: 700; }
 
-    .iq-grid {
-        display: grid;
-        gap: 12px;
-    }
-    .iq-grid-3 { grid-template-columns: repeat(3, 1fr); }
-    .iq-grid-2 { grid-template-columns: repeat(2, 1fr); }
-    .iq-grid-4 { grid-template-columns: repeat(4, 1fr); }
+/* ── SAT Card ─────────────────────────────────────────── */
+.sat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 14px;
+    overflow: hidden;
+    font-family: var(--font);
+}
+.sat-card-header {
+    padding: 10px 16px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.sat-card-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--text-3);
+}
+.sat-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 20px;
+}
+.sat-status .s-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+.ss-completed { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+.ss-started   { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+.ss-pending   { background: var(--surface-3); color: var(--text-3); border: 1px solid var(--border); }
+.ss-completed .s-dot { background: #166534; }
+.ss-started   .s-dot { background: #854d0e; animation: sat-pulse 1.5s infinite; }
+.ss-pending   .s-dot { background: var(--text-3); }
+@keyframes sat-pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+.sat-card-body { padding: 14px 16px; }
+.sat-paper-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.sat-paper-name { font-weight: 700; font-size: 14px; color: var(--text-1); }
+.sat-paper-meta { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
+.sat-meta-chip {
+    font-size: 10px; font-weight: 700; padding: 2px 7px;
+    border-radius: 4px; font-family: 'DM Mono', monospace;
+    letter-spacing: .03em;
+}
+.smc-navy  { background: var(--text-1); color: #fff; }
+.smc-green { background: #dcfce7; color: #166534; }
+.smc-gold  { background: #fef9c3; color: #854d0e; }
+.smc-amber { background: #fef3c7; color: #92400e; }
+.sat-result-strip {
+    display: flex; align-items: center; gap: 12px; margin-top: 12px;
+    padding: 10px 14px; background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); flex-wrap: wrap;
+}
+.sat-score { font-size: 18px; font-weight: 800; color: #166534; line-height: 1; }
+.sat-score-denom { font-size: 12px; color: var(--text-3); font-weight: 500; }
+.sat-pct { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+.sat-schol { font-size: 11px; color: #92400e; font-weight: 600; }
+.sat-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+.sat-btn-view {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 700; padding: 6px 12px;
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    color: var(--text-1); background: var(--surface); text-decoration: none;
+    font-family: var(--font); transition: background .12s, border-color .12s;
+}
+.sat-btn-view:hover { background: var(--text-1); color: #fff; border-color: var(--text-1); text-decoration: none; }
+.sat-unassigned { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.sat-unassigned-msg { font-size: 12px; color: var(--text-3); }
+.sat-btn-assign {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; font-weight: 700; padding: 7px 14px;
+    border-radius: var(--radius-sm); border: none;
+    background: var(--brand); color: #fff; text-decoration: none;
+    font-family: var(--font); transition: background .12s;
+}
+.sat-btn-assign:hover { background: #2d2080; color: #fff; text-decoration: none; }
 
-    @media (max-width: 768px) {
-        .iq-grid-3, .iq-grid-2, .iq-grid-4 {
-            grid-template-columns: 1fr 1fr;
-        }
-    }
-    @media (max-width: 480px) {
-        .iq-grid-3, .iq-grid-2, .iq-grid-4 {
-            grid-template-columns: 1fr;
-        }
-    }
+/* ── Followup Board ───────────────────────────────────── */
+.fup-board {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    align-items: flex-start;
+    padding-bottom: 12px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-mid) transparent;
+}
+.fup-board::-webkit-scrollbar { height: 5px; }
+.fup-board::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 99px; }
 
-    /* Field labels & inputs */
-    .iq-field label {
-        display: block;
-        font-size: 11px;
-        font-weight: 600;
-        color: #6b7280;
-        margin-bottom: 4px;
-        letter-spacing: .03em;
-    }
+.fup-col {
+    flex-shrink: 0;
+    width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
 
-    .iq-field .form-control,
-    .iq-field .form-select {
-        font-size: 13px;
-        border: 1px solid #d1d5db;
-        border-radius: 5px;
-        padding: 7px 10px;
-        color: #1c1f2e;
-        background: #fff;
-        transition: border-color .15s, box-shadow .15s;
-    }
+.fup-col-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .02em;
+    border: 2px solid transparent;
+}
 
-    .iq-field .form-control:focus,
-    .iq-field .form-select:focus {
-        border-color: #0d1b3e;
-        box-shadow: 0 0 0 3px rgba(13,27,62,.08);
-        outline: none;
-    }
+/* ── Input card (new followup) ───────────────────────── */
+.fup-input-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.fup-textarea {
+    width: 100%;
+    border: 1px solid var(--border-mid);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    font-size: 13px;
+    font-family: var(--font);
+    color: var(--text-1);
+    background: var(--surface-2);
+    resize: none;
+    overflow: hidden;
+    transition: border-color .15s, background .15s;
+    line-height: 1.5;
+    min-height: 60px;
+}
+.fup-textarea:focus {
+    outline: none;
+    border-color: var(--brand);
+    background: #fff;
+}
+.fup-textarea::placeholder { color: var(--text-3); }
 
-    .iq-field select[multiple] {
-        min-height: 80px;
-    }
+/* Day picker */
+.fup-day-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+.fup-day-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-3);
+    flex: 1;
+    min-width: 0;
+}
+.fup-day-label strong {
+    display: block;
+    font-size: 12px;
+    color: var(--text-2);
+}
+.fup-counter {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid var(--border-mid);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--surface);
+}
+.fup-counter-btn {
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: var(--surface-3);
+    color: var(--text-2);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background .12s;
+    flex-shrink: 0;
+    font-family: var(--font);
+    line-height: 1;
+}
+.fup-counter-btn:hover { background: var(--border); color: var(--text-1); }
+.fup-counter-input {
+    width: 38px;
+    height: 30px;
+    border: none;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-1);
+    background: var(--surface);
+    font-family: var(--font);
+}
 
-    /* Referrer conditional block */
-    .iq-referrer-block {
-        grid-column: span 2;
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-    }
+.fup-submit-row {
+    display: flex;
+    gap: 6px;
+    display: none;
+}
+.fup-btn-submit {
+    flex: 1;
+    padding: 7px 0;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--brand);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: var(--font);
+    transition: background .12s;
+}
+.fup-btn-submit:hover { background: #2d2080; }
+.fup-btn-cancel-submit {
+    padding: 7px 14px;
+    border: 1px solid var(--border-mid);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text-2);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font);
+    text-decoration: none;
+    transition: background .12s;
+}
+.fup-btn-cancel-submit:hover { background: var(--surface-3); color: var(--text-1); }
 
-    /* Form footer */
-    .iq-form-footer {
-        display: flex;
-        gap: 8px;
-        padding: 14px 20px;
-        background: #f6f7f9;
-        border-top: 1px solid #e2e4e9;
-    }
+/* ── Followup entry cards ─────────────────────────────── */
+.fup-entry-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 11px 12px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.fup-entry-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+.fup-status-select {
+    appearance: none;
+    -webkit-appearance: none;
+    border: none;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 10px;
+    cursor: pointer;
+    font-family: var(--font);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(255,255,255,0.7)'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 7px center;
+    background-size: 7px;
+    padding-right: 22px;
+}
+.fup-counsellor {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-3);
+    white-space: nowrap;
+}
+.fup-entry-desc {
+    font-size: 13px;
+    color: var(--text-1);
+    line-height: 1.5;
+    font-weight: 500;
+}
+.fup-entry-desc-edit {
+    width: 100%;
+    border: 1px solid var(--border-mid);
+    border-radius: var(--radius-sm);
+    padding: 7px 10px;
+    font-size: 13px;
+    font-family: var(--font);
+    color: var(--text-1);
+    resize: none;
+    line-height: 1.5;
+    overflow: hidden;
+    transition: border-color .15s;
+    background: var(--surface-2);
+}
+.fup-entry-desc-edit:focus { outline: none; border-color: var(--brand); background: #fff; }
+.fup-entry-meta {
+    font-size: 11px;
+    color: var(--text-3);
+    font-weight: 500;
+}
+.fup-entry-meta strong { color: var(--text-2); font-weight: 700; }
+.fup-next-date {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--brand);
+    background: var(--brand-dim);
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin-top: -2px;
+}
+.fup-update-row {
+    display: none;
+    gap: 6px;
+}
+.fup-btn-update {
+    flex: 1;
+    padding: 6px 0;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: #f59e0b;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: var(--font);
+}
+.fup-btn-update:hover { background: #d97706; }
+.fup-btn-delete {
+    padding: 6px 12px;
+    border: 1px solid #fca5a5;
+    border-radius: var(--radius-sm);
+    background: #fff;
+    color: #dc2626;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: var(--font);
+    text-decoration: none;
+    transition: background .12s;
+}
+.fup-btn-delete:hover { background: #fef2f2; text-decoration: none; }
 
-    .iq-btn-cancel {
-        font-size: 12px;
-        font-weight: 600;
-        padding: 8px 20px;
-        border-radius: 5px;
-        border: 1px solid #d1d5db;
-        background: #fff;
-        color: #374151;
-        cursor: pointer;
-        text-decoration: none;
-        transition: background .12s;
-    }
-    .iq-btn-cancel:hover { background: #f3f4f6; color: #374151; }
+/* ── Update Inquiry Form ──────────────────────────────── */
+.iq-update-form-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--brand);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 14px;
+    overflow: hidden;
+    display: none;
+}
+.iq-update-form-wrap.is-open { display: block; }
 
-    .iq-btn-save {
-        font-size: 12px;
-        font-weight: 700;
-        padding: 8px 24px;
-        border-radius: 5px;
-        border: none;
-        background: #f59e0b;
-        color: #fff;
-        cursor: pointer;
-        transition: background .12s;
-    }
-    .iq-btn-save:hover { background: #d97706; }
+.iq-form-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+}
+.iq-form-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-2);
+    margin: 0;
+}
+.iq-form-body {
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+.iq-section { display: flex; flex-direction: column; gap: 10px; }
+.iq-section-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+}
+.iq-grid { display: grid; gap: 10px; }
+.iq-grid-3 { grid-template-columns: repeat(3,1fr); }
+.iq-grid-2 { grid-template-columns: repeat(2,1fr); }
+@media(max-width:768px){.iq-grid-3,.iq-grid-2{grid-template-columns:1fr 1fr;}}
+@media(max-width:480px){.iq-grid-3,.iq-grid-2{grid-template-columns:1fr;}}
 
+.iq-field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-3);
+    margin-bottom: 4px;
+    letter-spacing: .03em;
+}
+.iq-field .form-control,
+.iq-field .form-select {
+    font-size: 13px;
+    border: 1px solid var(--border-mid);
+    border-radius: var(--radius-sm);
+    padding: 7px 10px;
+    color: var(--text-1);
+    background: var(--surface);
+    font-family: var(--font);
+    transition: border-color .15s, box-shadow .15s;
+    width: 100%;
+}
+.iq-field .form-control:focus,
+.iq-field .form-select:focus {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px var(--brand-dim);
+    outline: none;
+}
+.iq-field select[multiple] { min-height: 80px; }
 
-    /* ── SAT Card (unchanged) ────────────────────────────────── */
-    .sat-card {
-        background: var(--surface, #fff);
-        border: 1px solid var(--border, #e2e4e9);
-        border-top: 3px solid var(--navy, #0d1b3e);
-        border-radius: 6px;
-        margin-top: 12px;
-        overflow: hidden;
-        font-family: 'IBM Plex Sans', var(--sans, sans-serif);
-        font-size: 13px;
-        color: var(--text, #1c1f2e);
-    }
-    .sat-card-header {
-        padding: 10px 16px;
-        background: var(--bg, #f4f5f7);
-        border-bottom: 1px solid var(--border, #e2e4e9);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-    .sat-card-label {
-        font-size: 9px;
-        font-weight: 700;
-        letter-spacing: .15em;
-        text-transform: uppercase;
-        color: var(--muted, #6b7280);
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-    .sat-status {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: .06em;
-        text-transform: uppercase;
-        padding: 3px 10px;
-        border-radius: 20px;
-        white-space: nowrap;
-    }
-    .sat-status .s-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
-    .ss-completed { background: #e6f5ed; color: #1a7a4a; border: 1px solid #a7d9bc; }
-    .ss-started   { background: #fef0d8; color: #c07a10; border: 1px solid #e8c87a; }
-    .ss-pending   { background: var(--bg, #f4f5f7); color: var(--muted, #6b7280); border: 1px solid var(--border, #e2e4e9); }
-    .ss-completed .s-dot { background: #1a7a4a; }
-    .ss-started   .s-dot { background: #c07a10; animation: sat-pulse 1.5s infinite; }
-    .ss-pending   .s-dot { background: var(--muted, #6b7280); }
-    @keyframes sat-pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
-    .sat-card-body { padding: 12px 16px; }
-    .sat-paper-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .sat-paper-name { font-weight: 600; font-size: 13px; color: var(--navy, #0d1b3e); }
-    .sat-paper-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-    .sat-meta-chip { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 3px; font-family: 'IBM Plex Mono', monospace; }
-    .smc-navy  { background: #0d1b3e; color: #fff; }
-    .smc-green { background: #e6f5ed; color: #1a7a4a; }
-    .smc-gold  { background: #fef3dc; color: #c9921a; }
-    .smc-amber { background: #fef0d8; color: #c07a10; }
-    .sat-result-strip { display: flex; align-items: center; gap: 12px; margin-top: 10px; padding: 10px 12px; background: var(--bg, #f4f5f7); border: 1px solid var(--border, #e2e4e9); border-radius: 4px; flex-wrap: wrap; }
-    .sat-score { font-family: 'IBM Plex Mono', monospace; font-size: 16px; font-weight: 700; color: #1a7a4a; line-height: 1; }
-    .sat-score-denom { font-size: 12px; color: var(--muted, #6b7280); font-weight: 400; }
-    .sat-pct { font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 700; padding: 2px 8px; border-radius: 3px; }
-    .sat-schol { font-size: 11px; color: #c07a10; font-weight: 600; }
-    .sat-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
-    .sat-btn-view { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 6px 12px; border: 1px solid var(--border, #e2e4e9); border-radius: 4px; color: var(--navy, #0d1b3e); background: #fff; text-decoration: none; transition: background .12s, border-color .12s; white-space: nowrap; }
-    .sat-btn-view:hover { background: var(--navy, #0d1b3e); color: #fff; border-color: var(--navy, #0d1b3e); }
-    .sat-btn-view svg { width: 10px; height: 10px; }
-    .sat-unassigned { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-    .sat-unassigned-msg { font-size: 12px; color: var(--muted, #6b7280); display: flex; align-items: center; gap: 6px; }
-    .sat-btn-assign { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; padding: 7px 14px; border-radius: 4px; border: none; background: var(--navy, #0d1b3e); color: #fff; text-decoration: none; transition: background .12s; white-space: nowrap; }
-    .sat-btn-assign:hover { background: #1e3163; color: #fff; }
+.iq-form-footer {
+    display: flex;
+    gap: 8px;
+    padding: 12px 18px;
+    background: var(--surface-2);
+    border-top: 1px solid var(--border);
+}
+
+/* Radio toggle buttons */
+.checkbox-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+.checkbox-btn { position: relative; cursor: pointer; }
+.checkbox-btn input[type="radio"] { display: none; }
+.checkbox-btn span {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 12px;
+    border: 1.5px solid var(--border-mid);
+    border-radius: var(--radius-sm);
+    background: var(--surface-3);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-2);
+    font-family: var(--font);
+    transition: .15s;
+    white-space: nowrap;
+}
+.checkbox-btn input[type="radio"]:checked + span {
+    border-color: var(--brand);
+    background: var(--brand-dim);
+    color: var(--brand);
+}
 </style>
 
-<div class="container-sm">
-    <div class="w-md-75 my-2 py-2">
+<div class="iq-detail-page">
+<div style="max-width:1100px;margin:0 auto;">
 
-        <!-- ══ UPDATE INQUIRY FORM ════════════════════════════════════ -->
-        <form action="" id="update-inquiry-form" method="post" class="d-none iq-form-wrap">
-            {% csrf_token %}
-
-            <div class="iq-form-header">
-                <p class="iq-form-title">Update Inquiry</p>
+    <!-- ══ UPDATE FORM ══════════════════════════════════════ -->
+    <form action="" id="update-inquiry-form" method="post" class="iq-update-form-wrap">
+        {% csrf_token %}
+        <div class="iq-form-header">
+            <p class="iq-form-title">Update Inquiry</p>
+        </div>
+        <div class="iq-form-body">
+            <div class="iq-section">
+                <div class="iq-section-label">Student</div>
+                <div class="iq-grid iq-grid-3">
+                    <div class="iq-field">
+                        <label for="student_name">Name</label>
+                        <input id="student_name" name="student_name" value="{{ inquiry.student_name }}" class="form-control">
+                    </div>
+                    <div class="iq-field">
+                        <label for="classes">Classes</label>
+                        <select id="classes" multiple size="3" name="classes" class="form-select">
+                            {% for cls in classes %}
+                            <option value="{{ cls.id }}" {% if cls in inquiry.classes.all %}selected{% endif %}>{{ cls.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="iq-field">
+                        <label for="subjects">Subjects</label>
+                        <select class="form-select" name="subjects" size="3" id="subjects" multiple>
+                            {% for subject in subjects %}
+                            <option value="{{ subject.id }}" {% if subject in inquiry.subjects.all %}selected{% endif %}>{{ subject.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
             </div>
-
-            <div class="iq-form-body">
-
-                <!-- Section 1: Student -->
-                <div class="iq-section">
-                    <div class="iq-section-label">Student</div>
-                    <div class="iq-grid iq-grid-3">
-                        <div class="iq-field">
-                            <label for="student_name">Name</label>
-                            <input id="student_name" name="student_name" value="{{ inquiry.student_name }}" class="form-control">
-                        </div>
-                        <div class="iq-field">
-                            <label for="classes">Classes</label>
-                            <select id="classes" multiple size="3" name="classes" class="form-select">
-                                {% for cls in classes %}
-                                <option value="{{ cls.id }}" {% if cls in inquiry.classes.all %}selected{% endif %}>{{ cls.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="iq-field">
-                            <label for="subjects">Subjects</label>
-                            <select class="form-select" name="subjects" size="3" id="subjects" multiple>
-                                {% for subject in subjects %}
-                                <option value="{{ subject.id }}" {% if subject in inquiry.subjects.all %}selected{% endif %}>{{ subject.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
+            <div class="iq-section">
+                <div class="iq-section-label">Academic</div>
+                <div class="iq-grid iq-grid-3">
+                    <div class="iq-field">
+                        <label for="session_id">Session</label>
+                        <select id="session_id" name="session_id" class="form-select">
+                            <option value="">— No Session —</option>
+                            {% for session in academic_sessions %}
+                            <option value="{{ session.id }}" {% if inquiry.session and inquiry.session.id == session.id %}selected{% endif %}>{{ session.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="iq-field">
+                        <label for="school">School</label>
+                        <input type="text" class="form-control" value="{{ inquiry.school }}" name="school" id="school">
+                    </div>
+                    <div class="iq-field">
+                        <label for="address">Address</label>
+                        <input type="text" class="form-control" value="{{ inquiry.address }}" name="address" id="address">
                     </div>
                 </div>
-
-                <!-- Section 2: Academic -->
-                <div class="iq-section">
-                    <div class="iq-section-label">Academic</div>
-                    <div class="iq-grid iq-grid-3">
-                        <div class="iq-field">
-                            <label for="session_id">Session</label>
-                            <select id="session_id" name="session_id" class="form-select">
-                                <option value="">— No Session —</option>
-                                {% for session in academic_sessions %}
-                                <option value="{{ session.id }}" {% if inquiry.session and inquiry.session.id == session.id %}selected{% endif %}>{{ session.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="iq-field">
-                            <label for="school">School</label>
-                            <input type="text" class="form-control" value="{{ inquiry.school }}" name="school" id="school">
-                        </div>
-                        <div class="iq-field">
-                            <label for="address">Address</label>
-                            <input type="text" class="form-control" value="{{ inquiry.address }}" name="address" id="address">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section 3: Lead -->
-                <div class="iq-section">
-                    <div class="iq-section-label">Lead</div>
-                    <div class="iq-grid iq-grid-2">
-                        <div class="iq-field">
-                            <label>Type</label>
-                            <div class="checkbox-buttons mt-1">
-                                {% for lead in lead_types %}
-                                <label class="checkbox-btn">
-                                    <input type="radio" name="lead_type" value="{{ lead.0 }}" {% if inquiry.lead_type == lead.0 %}checked{% endif %}>
-                                    <span>{{ lead.1 }}</span>
-                                </label>
-                                {% endfor %}
-                            </div>
-                        </div>
-                        <div class="iq-field">
-                            <label>Quality</label>
-                            <div class="checkbox-buttons mt-1">
-                                {% for q in lead_quality_choices %}
-                                <label class="checkbox-btn">
-                                    <input type="radio" name="lead_quality" value="{{ q.0 }}" {% if inquiry.lead_quality == q.0 %}checked{% endif %}>
-                                    <span>{{ q.1 }}</span>
-                                </label>
-                                {% endfor %}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="iq-grid iq-grid-2 mt-2">
-                        <div class="iq-field">
-                            <label for="campaign">Campaign</label>
-                            <select id="campaign" name="campaign" class="form-select">
-                                <option value="">— No Campaign —</option>
-                                {% for c in campaigns %}
-                                <option value="{{ c.id }}" {% if inquiry.campaign and inquiry.campaign.id == c.id %}selected{% endif %}>{{ c.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section 4: Parent / Contact -->
-                <div class="iq-section">
-                    <div class="iq-section-label">Parent / Contact</div>
-                    <div class="iq-grid iq-grid-2">
-                        <div class="iq-field">
-                            <label for="parent_name">Parent Name</label>
-                            <input type="text" class="form-control" value="{{ inquiry.parent_name }}" name="parent_name" id="parent_name">
-                        </div>
-                        <div class="iq-field">
-                            <label for="parent_phone">Parent Phone</label>
-                            <input type="text" class="form-control" value="{{ inquiry.parent_phone }}" name="parent_phone" id="parent_phone" maxlength="15">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Section 5: Source -->
-                <div class="iq-section">
-                    <div class="iq-section-label">Source</div>
-                    <div class="iq-grid iq-grid-3">
-                        <div class="iq-field">
-                            <label for="referral_source">Referral Source</label>
-                            <select id="referral_source" name="referral_source" class="form-select">
-                                <option value="">— Not Set —</option>
-                                {% for src in referral_sources %}
-                                <option value="{{ src.id }}" {% if inquiry.referral_source and inquiry.referral_source.id == src.id %}selected{% endif %}>{{ src }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div id="internal-referrer-fields" class="iq-referrer-block" {% if not inquiry.referral_source or inquiry.referral_source.category != 'word_of_mouth' %}style="display:none"{% endif %}>
-                            <div class="iq-field">
-                                <label for="referrer_name">Referrer Name</label>
-                                <input type="text" class="form-control" value="{{ inquiry.referrer_name }}" name="referrer_name" id="referrer_name">
-                            </div>
-                            <div class="iq-field">
-                                <label for="referrer_phone">Referrer Phone</label>
-                                <input type="text" class="form-control" value="{{ inquiry.referrer_phone }}" name="referrer_phone" id="referrer_phone" maxlength="15">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div><!-- /.iq-form-body -->
-
-            <div class="iq-form-footer">
-                <button type="submit" class="iq-btn-save">Save Changes</button>
-                <a id="cancel-inquiry-button" class="iq-btn-cancel">Cancel</a>
             </div>
-        </form>
-
-        <!-- ══ INQUIRY HEADER ════════════════════════════════════════ -->
-        <div class="d-flex justify-content-between">
-            <p class="border-0 h2 rounded d-flex justify-content-center align-items-center">
-                {{ inquiry.student_name }} - {{ inquiry.session }}
-            </p>
-            <div class="d-flex gap-2 position-relative pb-4">
-                <button id="update-inquiry-button" class="btn btn-warning px-4 py-2" style="height: fit-content;">Update Inquiry</button>
-                <a href="{% url 'delete_inquiry' inquiry.id %}" class="btn btn-danger px-4 py-2" style="height: fit-content;">Delete Inquiry</a>
-                <span class="m-0 me-2 mt-2 position-absolute end-0 bottom-0" style="font-size: 14px;">On <span class="fw-semibold">{{ inquiry.created_at|date:'d M Y, h:i A' }}</span></span>
+            <div class="iq-section">
+                <div class="iq-section-label">Lead</div>
+                <div class="iq-grid iq-grid-2">
+                    <div class="iq-field">
+                        <label>Type</label>
+                        <div class="checkbox-buttons mt-1">
+                            {% for lead in lead_types %}
+                            <label class="checkbox-btn">
+                                <input type="radio" name="lead_type" value="{{ lead.0 }}" {% if inquiry.lead_type == lead.0 %}checked{% endif %}>
+                                <span>{{ lead.1 }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="iq-field">
+                        <label>Quality</label>
+                        <div class="checkbox-buttons mt-1">
+                            {% for q in lead_quality_choices %}
+                            <label class="checkbox-btn">
+                                <input type="radio" name="lead_quality" value="{{ q.0 }}" {% if inquiry.lead_quality == q.0 %}checked{% endif %}>
+                                <span>{{ q.1 }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="iq-grid iq-grid-2">
+                    <div class="iq-field">
+                        <label for="campaign">Campaign</label>
+                        <select id="campaign" name="campaign" class="form-select">
+                            <option value="">— No Campaign —</option>
+                            {% for c in campaigns %}
+                            <option value="{{ c.id }}" {% if inquiry.campaign and inquiry.campaign.id == c.id %}selected{% endif %}>{{ c.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="iq-section">
+                <div class="iq-section-label">Parent / Contact</div>
+                <div class="iq-grid iq-grid-2">
+                    <div class="iq-field">
+                        <label for="parent_name">Parent Name</label>
+                        <input type="text" class="form-control" value="{{ inquiry.parent_name }}" name="parent_name" id="parent_name">
+                    </div>
+                    <div class="iq-field">
+                        <label for="parent_phone">Parent Phone</label>
+                        <input type="text" class="form-control" value="{{ inquiry.parent_phone }}" name="parent_phone" id="parent_phone" maxlength="15">
+                    </div>
+                </div>
+            </div>
+            <div class="iq-section">
+                <div class="iq-section-label">Source</div>
+                <div class="iq-grid iq-grid-3">
+                    <div class="iq-field">
+                        <label for="referral_category">Category</label>
+                        <select id="referral_category" class="form-select">
+                            <option value="">— Not Set —</option>
+                            <option value="digital">Digital</option>
+                            <option value="offline">Offline</option>
+                            <option value="representative">Representative</option>
+                            <option value="word_of_mouth">Friends / Family</option>
+                        </select>
+                    </div>
+                    <div class="iq-field" id="referral-source-wrapper" {% if not inquiry.referral_source %}style="display:none;"{% endif %}>
+                        <label for="referral_source">Specific Source</label>
+                        <select id="referral_source" name="referral_source" class="form-select">
+                            <option value="">— Select —</option>
+                        </select>
+                    </div>
+                    <div id="internal-referrer-fields" style="grid-column:span 2;display:grid;grid-template-columns:1fr 1fr;gap:10px;" class="{% if not inquiry.referral_source or inquiry.referral_source.category != 'word_of_mouth' %}d-none{% endif %}">
+                        <div class="iq-field">
+                            <label for="referrer_name">Referrer Name</label>
+                            <input type="text" class="form-control" value="{{ inquiry.referrer_name }}" name="referrer_name" id="referrer_name">
+                        </div>
+                        <div class="iq-field">
+                            <label for="referrer_phone">Referrer Phone</label>
+                            <input type="text" class="form-control" value="{{ inquiry.referrer_phone }}" name="referrer_phone" id="referrer_phone" maxlength="15">
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <p class="m-0 mb-1">
-            {% with classes=inquiry.classes.all|join:", " subjects=inquiry.subjects.all|join:", " %}
-            {{ classes|title }} - {{ subjects|title }}
-            {% endwith %}
-        </p>
-
-        <div class="d-md-flex gap-4 flex-wrap">
-            <p class="my-1"><span class="fw-semibold">Phone: </span>{{ inquiry.phone }}</p>
-            {% if inquiry.parent_name %}<p class="my-1"><span class="fw-semibold">Parent: </span>{{ inquiry.parent_name }}{% if inquiry.parent_phone %} · {{ inquiry.parent_phone }}{% endif %}</p>{% endif %}
-            <p class="my-1"><span class="fw-semibold">School: </span>{{ inquiry.school }}</p>
-            <p class="my-1"><span class="fw-semibold">Address: </span>{{ inquiry.address }}</p>
-            <p class="my-1"><span class="fw-semibold">Source: </span>
-                {% if inquiry.stationary_partner %}
-                    {{ inquiry.stationary_partner.name }} – {{ inquiry.stationary_partner.address }}
-                {% elif inquiry.referral_source %}
-                    {{ inquiry.referral_source }}{% if inquiry.referrer_name %} ({{ inquiry.referrer_name }}{% if inquiry.referrer_phone %} · {{ inquiry.referrer_phone }}{% endif %}){% endif %}
-                {% else %}—{% endif %}
-            </p>
-            <p class="my-1"><span class="fw-semibold">Lead Type: </span>{{ inquiry.lead_type }}</p>
-            {% if inquiry.lead_quality %}<p class="my-1"><span class="fw-semibold">Quality: </span>{{ inquiry.get_lead_quality_display }}</p>{% endif %}
-            {% if inquiry.campaign %}<p class="my-1"><span class="fw-semibold">Campaign: </span>{{ inquiry.campaign.name }}</p>{% endif %}
-            <p class="my-1"><span class="fw-semibold">Session: </span>{% if inquiry.session %}{{ inquiry.session.name }}{% else %}—{% endif %}</p>
-            <p class="my-1"><span class="fw-semibold">Existing Member: </span>{% if inquiry.existing_member %}Yes{% else %}No{% endif %}</p>
+        <div class="iq-form-footer">
+            <button type="submit" class="iq-hbtn iq-hbtn-warn">Save Changes</button>
+            <button type="button" id="cancel-inquiry-button" class="iq-hbtn" style="background:var(--surface-3);color:var(--text-2);border:1px solid var(--border-mid);">Cancel</button>
         </div>
+    </form>
 
-        <p class="m-0" style="font-size: 14px;">Last Followup On <span class="fw-semibold">{{ latest_followup.created_at|date:'d M Y, h:i A' }}</span></p>
-
-        {% with sat_assignment=inquiry.sat_assignments.first %}
-        <div class="sat-card">
-            <div class="sat-card-header">
-                <div class="sat-card-label">Scholarship Test</div>
-                {% if sat_assignment %}
-                {% with s=sat_assignment.status %}
-                <span class="sat-status {% if s == 'completed' %}ss-completed{% elif s == 'started' %}ss-started{% else %}ss-pending{% endif %}">
-                    <span class="s-dot"></span>{{ s|capfirst }}
-                </span>
-                {% endwith %}
-                {% endif %}
+    <!-- ══ HEADER ══════════════════════════════════════════ -->
+    <div class="iq-header-card">
+        <div class="iq-header-top">
+            <div>
+                <h1 class="iq-student-name">{{ inquiry.student_name|title }}</h1>
+                <div class="iq-student-sub">
+                    <span>
+                        {% with classes=inquiry.classes.all|join:", " %}{{ classes|title }}{% endwith %}
+                    </span>
+                    <span class="sep">·</span>
+                    <span>
+                        {% with subjects=inquiry.subjects.all|join:", " %}{{ subjects|title }}{% endwith %}
+                    </span>
+                    {% if inquiry.session %}<span class="sep">·</span><span>{{ inquiry.session.name }}</span>{% endif %}
+                </div>
             </div>
-            <div class="sat-card-body">
-                {% if sat_assignment %}
-                <div class="sat-paper-row">
-                    <div>
-                        <div class="sat-paper-name">{{ sat_assignment.paper.title }}</div>
-                    </div>
-                    <div class="sat-paper-meta">
-                        <span class="sat-meta-chip smc-navy">{{ sat_assignment.paper.class_name }}</span>
-                        <span class="sat-meta-chip smc-gold">{{ sat_assignment.paper.time_limit }} min</span>
-                        <span class="sat-meta-chip smc-green">+{{ sat_assignment.paper.marks_per_correct }}/Q</span>
-                    </div>
-                    <div class="sat-actions">
-                        <a href="{% url 'sat:assignment_detail' sat_assignment.pk %}" class="sat-btn-view">
-                            View
-                            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5">
-                                <path d="M2 6h8M6 2l4 4-4 4"/>
-                            </svg>
-                        </a>
-                    </div>
-                </div>
-                {% with result=sat_assignment.attempt.result %}
-                {% if result %}
-                <div class="sat-result-strip">
-                    <div class="sat-score">{{ result.total_marks }}<span class="sat-score-denom">/{{ result.max_marks }}</span></div>
-                    <span class="sat-pct {% if result.percentage >= 75 %}smc-green{% elif result.percentage >= 50 %}smc-amber{% else %}" style="background:#fdecea;color:#c0392b;"{% endif %}>{{ result.percentage }}%</span>
-                    <span class="sat-schol">{{ result.scholarship_tier.label }} · {{ result.scholarship_tier.waiver }}</span>
-                    {% if result.visibility == 'shared' %}
-                    <span style="font-size:10px;color:#1a7a4a;font-weight:600;margin-left:4px;">Released</span>
-                    {% else %}
-                    <span style="font-size:10px;color:var(--muted,#6b7280);margin-left:4px;">On Hold</span>
-                    {% endif %}
-                    <div style="margin-left:auto;">
-                        <a href="{% url 'sat:result_detail' result.pk %}" class="sat-btn-view">Full Report →</a>
-                    </div>
-                </div>
-                {% endif %}
-                {% endwith %}
-                {% else %}
-                <div class="sat-unassigned">
-                    <div class="sat-unassigned-msg">No test assigned yet</div>
-                    <a href="{% url 'sat:assignment_create' %}?inquiry={{ inquiry.pk }}" class="sat-btn-assign">
-                        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 1v10M1 6h10"/></svg>
-                        Assign Test
+            <div class="iq-header-actions">
+                <div class="iq-header-btns">
+                    <button id="update-inquiry-button" class="iq-hbtn iq-hbtn-warn">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        Update
+                    </button>
+                    <a href="{% url 'delete_inquiry' inquiry.id %}" class="iq-hbtn iq-hbtn-danger">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                        Delete
                     </a>
                 </div>
-                {% endif %}
+                <span class="iq-created-on">Created {{ inquiry.created_at|date:'d M Y, h:i A' }}</span>
             </div>
         </div>
-        {% endwith %}
 
-    </div><!-- /.w-md-75 -->
+        <!-- Meta items row -->
+        <div class="iq-meta-grid">
+            <div class="iq-meta-item">
+                <span class="iq-meta-label">Phone</span>
+                <span class="iq-meta-value">{{ inquiry.phone }}</span>
+            </div>
+            {% if inquiry.parent_name %}
+            <div class="iq-meta-item">
+                <span class="iq-meta-label">Parent</span>
+                <span class="iq-meta-value">{{ inquiry.parent_name }}{% if inquiry.parent_phone %}<br><span style="font-weight:500;color:var(--text-3);font-size:12px;">{{ inquiry.parent_phone }}</span>{% endif %}</span>
+            </div>
+            {% endif %}
+            <div class="iq-meta-item">
+                <span class="iq-meta-label">School</span>
+                <span class="iq-meta-value">{{ inquiry.school|default:"—" }}</span>
+            </div>
+            <div class="iq-meta-item">
+                <span class="iq-meta-label">Address</span>
+                <span class="iq-meta-value">{{ inquiry.address|default:"—" }}</span>
+            </div>
+            <div class="iq-meta-item">
+                <span class="iq-meta-label">Source</span>
+                <span class="iq-meta-value">
+                    {% if inquiry.stationary_partner %}{{ inquiry.stationary_partner.name }}
+                    {% elif inquiry.referral_source %}{{ inquiry.referral_source }}{% if inquiry.referrer_name %} <span style="color:var(--text-3);font-weight:500;">({{ inquiry.referrer_name }})</span>{% endif %}
+                    {% else %}—{% endif %}
+                </span>
+            </div>
+            <div class="iq-meta-item">
+                <span class="iq-meta-label">Lead</span>
+                <span class="iq-meta-value">{{ inquiry.lead_type }}{% if inquiry.lead_quality %} · {{ inquiry.get_lead_quality_display }}{% endif %}</span>
+            </div>
+            {% if inquiry.campaign %}
+            <div class="iq-meta-item">
+                <span class="iq-meta-label">Campaign</span>
+                <span class="iq-meta-value">{{ inquiry.campaign.name }}</span>
+            </div>
+            {% endif %}
+            <div class="iq-meta-item">
+                <span class="iq-meta-label">Member</span>
+                <span class="iq-meta-value">{% if inquiry.existing_member %}Yes{% else %}No{% endif %}</span>
+            </div>
+        </div>
 
-    <!-- ══ FOLLOWUP COLUMNS ══════════════════════════════════════════ -->
-    <div class="d-flex g-4 w-100 dates-group pb-3">
+        <div class="iq-last-followup">
+            Last followup <strong>{{ latest_followup.created_at|date:'d M Y, h:i A' }}</strong>
+        </div>
+    </div>
+
+    <!-- ══ SAT CARD ══════════════════════════════════════════ -->
+    {% with sat_assignment=inquiry.sat_assignments.first %}
+    <div class="sat-card">
+        <div class="sat-card-header">
+            <div class="sat-card-label">Scholarship Test</div>
+            {% if sat_assignment %}
+            {% with s=sat_assignment.status %}
+            <span class="sat-status {% if s == 'completed' %}ss-completed{% elif s == 'started' %}ss-started{% else %}ss-pending{% endif %}">
+                <span class="s-dot"></span>{{ s|capfirst }}
+            </span>
+            {% endwith %}
+            {% endif %}
+        </div>
+        <div class="sat-card-body">
+            {% if sat_assignment %}
+            <div class="sat-paper-row">
+                <div class="sat-paper-name">{{ sat_assignment.paper.title }}</div>
+                <div class="sat-paper-meta">
+                    <span class="sat-meta-chip smc-navy">{{ sat_assignment.paper.class_name }}</span>
+                    <span class="sat-meta-chip smc-gold">{{ sat_assignment.paper.time_limit }} min</span>
+                    <span class="sat-meta-chip smc-green">+{{ sat_assignment.paper.marks_per_correct }}/Q</span>
+                </div>
+                <div class="sat-actions">
+                    <a href="{% url 'sat:assignment_detail' sat_assignment.pk %}" class="sat-btn-view">View →</a>
+                </div>
+            </div>
+            {% with result=sat_assignment.attempt.result %}
+            {% if result %}
+            <div class="sat-result-strip">
+                <div class="sat-score">{{ result.total_marks }}<span class="sat-score-denom">/{{ result.max_marks }}</span></div>
+                <span class="sat-pct {% if result.percentage >= 75 %}smc-green{% elif result.percentage >= 50 %}smc-amber{% else %}" style="background:#fee2e2;color:#991b1b;"{% endif %}>{{ result.percentage }}%</span>
+                <span class="sat-schol">{{ result.scholarship_tier.label }} · {{ result.scholarship_tier.waiver }}</span>
+                {% if result.visibility == 'shared' %}
+                <span style="font-size:10px;color:#166534;font-weight:700;">Released</span>
+                {% else %}
+                <span style="font-size:10px;color:var(--text-3);font-weight:600;">On Hold</span>
+                {% endif %}
+                <div style="margin-left:auto;">
+                    <a href="{% url 'sat:result_detail' result.pk %}" class="sat-btn-view">Full Report →</a>
+                </div>
+            </div>
+            {% endif %}
+            {% endwith %}
+            {% else %}
+            <div class="sat-unassigned">
+                <div class="sat-unassigned-msg">No test assigned yet</div>
+                <a href="{% url 'sat:assignment_create' %}?inquiry={{ inquiry.pk }}" class="sat-btn-assign">
+                    <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 1v10M1 6h10"/></svg>
+                    Assign Test
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endwith %}
+
+    <!-- ══ FOLLOWUP BOARD ════════════════════════════════════ -->
+    <div class="fup-board">
         {% for status, followup_list in followups.items %}
-        <div class="card date-card" style="min-width: 20rem; height: fit-content; border: none;" data-date="{{ date|date:'Y-m-d' }}">
-            <ul class="list-group" style="border: none;">
-                <li class="list-group-item text-dark rounded" style="background: {{ status.color }};">{{ status.name|title }}</li>
+        <div class="fup-col">
 
-                <li class="list-group-item p-2 bg-light rounded my-2 border-1">
-                    <form class="d-flex flex-column gap-2 mb-2 input-form" method="post" action="{% url 'create_followup' inquiry.id %}">
-                        {% csrf_token %}
-                        <select hidden class="form-select" id="status" name="status" aria-label="select status" required>
+            <!-- Column header -->
+            <div class="fup-col-header" id="fup-header-{{ forloop.counter }}"
+                 data-color="{{ status.color }}"
+                 style="background-color:{{ status.color }}; border-color:{{ status.color }};">
+                {{ status.name|title }}
+            </div>
+
+            <!-- New followup input -->
+            <form class="fup-input-card input-form" method="post" action="{% url 'create_followup' inquiry.id %}" data-index="{{ forloop.counter }}">
+                {% csrf_token %}
+                <select hidden name="status">
+                    {% for sts in followup_status %}
+                    <option value="{{ sts.id }}" {% if sts == status %}selected{% endif %}>{{ sts.name }}</option>
+                    {% endfor %}
+                </select>
+                <textarea name="description" class="fup-textarea" placeholder="Add a followup note…" rows="2" required></textarea>
+                <div class="fup-day-row">
+                    <div class="fup-day-label">
+                        Next followup
+                        <strong class="fup-next-date-display" style="display:none;"></strong>
+                    </div>
+                    <div class="fup-counter">
+                        <button type="button" class="fup-counter-btn fup-dec">−</button>
+                        <input type="text" class="fup-counter-input" name="followup_days_gap" value="0" readonly>
+                        <button type="button" class="fup-counter-btn fup-inc">+</button>
+                    </div>
+                </div>
+                <div class="fup-submit-row">
+                    <button type="submit" class="fup-btn-submit">Submit</button>
+                    <button type="button" class="fup-btn-cancel-submit fup-cancel-btn">Cancel</button>
+                </div>
+            </form>
+
+            <!-- Existing followups -->
+            {% for followup in followup_list %}
+            <div class="fup-entry-card">
+                <form class="update-form" method="post" action="{% url 'update_followup' followup.inquiry.id followup.id %}">
+                    {% csrf_token %}
+                    <div class="fup-entry-header">
+                        <select class="fup-status-select" name="status" data-color="{{ followup.status.color }}"
+                                {% if followup.status.color %}style="background-color:{{ followup.status.color }};"{% endif %}>
                             {% for sts in followup_status %}
-                            <option value="{{ sts.id }}" {% if sts == status %}selected{% endif %}>{{ sts.name }}</option>
+                            <option value="{{ sts.id }}" {% if followup.status == sts %}selected{% endif %}>{{ sts.name }}</option>
                             {% endfor %}
                         </select>
-                        <textarea type="text" class="form-control" id="description-{{ forloop.counter }}" name="description" placeholder="Followup details..." rows="2" required></textarea>
-                        <div class="d-flex justify-content-between align-items-center" id="followup-gap-group-{{ forloop.counter }}">
-                            <p id="next-followup-label-{{ forloop.counter }}" class="m-0">Next followup on<br><span class="" id="next-followup-date-{{ forloop.counter }}">20 Feb 25</span></p>
-                            <div class="d-flex ms-auto p-1 px-2 rounded m-0" style="width: fit-content; background-color: white;">
-                                <button id="decrement-btn-{{ forloop.counter }}" class="btn bg-danger-subtle m-0" type="button">-</button>
-                                <input id="count-input-{{ forloop.counter }}" name="followup_days_gap" readonly class="m-0 border-0 rounded d-flex justify-content-center align-items-center" style="width: 40px; height: 40px; padding: 7px; text-align: center;" value="0">
-                                <button id="increment-btn-{{ forloop.counter }}" class="btn bg-success-subtle m-0" type="button">+</button>
-                            </div>
-                        </div>
-                        <div id="btn-group-{{ forloop.counter }}" style="display: none;" class="btn-container w-100 justify-content-between">
-                            <button type="submit" class="btn btn-success px-4">Submit</button>
-                            <a href="" class="btn btn-primary px-4">Cancel</a>
-                        </div>
-                    </form>
-                </li>
+                        {% if followup.admission_counsellor %}
+                        <span class="fup-counsellor">{{ followup.admission_counsellor.user.first_name }} {{ followup.admission_counsellor.user.last_name }}</span>
+                        {% endif %}
+                    </div>
 
-                {% for followup in followup_list %}
-                <li class="list-group-item p-2 my-2 border-1 rounded bg-light-subtle">
-                    <form class="d-flex flex-column gap-2 mb-2 update-form" method="post" action="{% url 'update_followup' followup.inquiry.id followup.id %}">
-                        {% csrf_token %}
-                        <select class="form-select" id="status" name="status" {% if followup.status.color %}style="background: {{ followup.status.color }}; width: fit-content;"{% endif %} required>
-                            {% for status in followup_status %}
-                            <option value="{{ status.id }}" {% if followup.status == status %}selected{% endif %}>{{ status.name }}</option>
-                            {% endfor %}
-                        </select>
-                        {% if followup.description %}
-                        <textarea type="text" class="form-control" id="update-description" name="description" placeholder="Followup details..." rows="2">{{ followup.description|title }}</textarea>
-                        {% else %}
-                        <textarea style="display: none;" type="text" class="form-control" id="update-description" name="description" placeholder="Followup details..." rows="2"></textarea>
-                        {% endif %}
-                        <p class="m-0" style="font-size: 12px;">On <span class="fw-semibold">{{ followup.created_at|date:'d M Y, h:i A' }}</span></p>
-                        {% if followup.followup_date %}
-                        <p class="m-0">Next followup on <span class="fw-semibold">{{ followup.followup_date|date:'d M Y' }}</span></p>
-                        {% endif %}
-                        <div id="update-btn-group" style="display: none;" class="btn-container w-100 justify-content-between">
-                            <button type="submit" class="btn btn-warning px-4">Update</button>
-                            <a href="{% url 'delete_followup' followup.inquiry.id followup.id %}" class="btn btn-danger px-4">Delete</a>
-                        </div>
-                    </form>
-                    {% if followup.admission_counsellor %}
-                    <p class="m-0 me-2 mt-2 position-absolute end-0 top-0" style="font-size: 14px;">
-                        {{ followup.admission_counsellor.user.first_name }} {{ followup.admission_counsellor.user.last_name }}
-                    </p>
+                    {% if followup.description %}
+                    <div class="fup-entry-desc fup-desc-display">{{ followup.description|title }}</div>
+                    <textarea class="fup-entry-desc-edit" name="description" rows="2" style="display:none;">{{ followup.description|title }}</textarea>
+                    {% else %}
+                    <textarea class="fup-entry-desc-edit" name="description" rows="2" style="display:none;" placeholder="Add description…"></textarea>
                     {% endif %}
-                </li>
-                {% endfor %}
 
-            </ul>
+                    <div class="fup-entry-meta">On <strong>{{ followup.created_at|date:'d M Y, h:i A' }}</strong></div>
+                    {% if followup.followup_date %}
+                    <div class="fup-next-date">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                        {{ followup.followup_date|date:'d M Y' }}
+                    </div>
+                    {% endif %}
+
+                    <div class="fup-update-row">
+                        <button type="submit" class="fup-btn-update">Update</button>
+                        <a href="{% url 'delete_followup' followup.inquiry.id followup.id %}" class="fup-btn-delete">Delete</a>
+                    </div>
+                </form>
+            </div>
+            {% endfor %}
+
         </div>
         {% endfor %}
     </div>
-</div>
+
+</div><!-- /max-width wrapper -->
+</div><!-- /iq-detail-page -->
 
 <script>
-    const forms = document.querySelectorAll(".input-form");
-    forms.forEach((form, index) => {
-        const inputs = form.querySelectorAll("input, select, textarea");
-        const btnContainer = document.getElementById(`btn-group-${index + 1}`);
-        const description = form.querySelector(`#description-${index + 1}`);
-        const countInput = form.querySelector(`#count-input-${index + 1}`);
-        const nextFollowupDate = form.querySelector(`#next-followup-date-${index + 1}`);
-        const nextFollowupLabel = form.querySelector(`#next-followup-label-${index + 1}`);
-        const decrementBtn = form.querySelector(`#decrement-btn-${index + 1}`);
-        const incrementBtn = form.querySelector(`#increment-btn-${index + 1}`);
+/* ── Contrast utility ─────────────────────────────────── */
+function contrastColor(hex) {
+    if (!hex) return null;
+    var c = hex.replace('#','');
+    if (c.length===3) c=c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
+    var r=parseInt(c.slice(0,2),16), g=parseInt(c.slice(2,4),16), b=parseInt(c.slice(4,6),16);
+    var tl=function(v){v/=255;return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);};
+    var L=0.2126*tl(r)+0.7152*tl(g)+0.0722*tl(b);
+    return L>0.179?'#111827':'#ffffff';
+}
 
-        const addDays = (date, days) => {
-            const result = new Date(date);
-            result.setDate(result.getDate() + days);
-            return result;
-        };
+document.addEventListener('DOMContentLoaded', function() {
 
-        if (parseInt(countInput.value, 10) === 0) nextFollowupLabel.style.display = "none";
+    /* Apply contrast to all colored elements */
+    document.querySelectorAll('.fup-col-header, .fup-status-select').forEach(function(el) {
+        var hex = el.dataset.color || '';
+        if (!hex) return;
+        var fg = contrastColor(hex);
+        if (!fg) return;
+        el.style.color = fg;
+        if (el.classList.contains('fup-status-select')) {
+            /* Rebuild background-image with correct chevron color — must use backgroundColor not background */
+            el.style.backgroundColor = hex;
+            var svgFill = fg === '#ffffff' ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.5)';
+            var encoded = encodeURIComponent(svgFill);
+            el.style.backgroundImage = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='"+encoded+"'/%3E%3C/svg%3E\")";
+        }
+    });
 
-        decrementBtn.addEventListener("click", function () {
-            let count = parseInt(countInput.value, 10);
-            if (count >= 1) {
-                countInput.value = count - 1;
-                const nextDate = addDays(new Date(), count - 1);
-                nextFollowupDate.innerText = nextDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).slice(0, 11);
+    /* ── New followup forms ── */
+    document.querySelectorAll('.input-form').forEach(function(form) {
+        var textarea  = form.querySelector('.fup-textarea');
+        var counter   = form.querySelector('.fup-counter-input');
+        var decBtn    = form.querySelector('.fup-dec');
+        var incBtn    = form.querySelector('.fup-inc');
+        var submitRow = form.querySelector('.fup-submit-row');
+        var dateDisp  = form.querySelector('.fup-next-date-display');
+        var cancelBtn = form.querySelector('.fup-cancel-btn');
+
+        function updateDateDisplay(n) {
+            if (n > 0) {
+                var d = new Date(); d.setDate(d.getDate() + n);
+                dateDisp.textContent = d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+                dateDisp.style.display = 'block';
+            } else {
+                dateDisp.style.display = 'none';
             }
-            if (count - 1 === 0) nextFollowupLabel.style.display = "none";
+        }
+
+        decBtn.addEventListener('click', function() {
+            var v = parseInt(counter.value,10);
+            if (v > 0) { counter.value = v-1; updateDateDisplay(v-1); }
+        });
+        incBtn.addEventListener('click', function() {
+            var v = parseInt(counter.value,10);
+            if (v < 30) { counter.value = v+1; updateDateDisplay(v+1); }
         });
 
-        incrementBtn.addEventListener("click", function () {
-            let count = parseInt(countInput.value, 10);
-            if (count <= 15) {
-                countInput.value = count + 1;
-                const nextDate = addDays(new Date(), count + 1);
-                nextFollowupDate.innerText = nextDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).slice(0, 11);
+        function showForm() { submitRow.style.display = 'flex'; }
+        function hideForm() { submitRow.style.display = 'none'; }
+
+        textarea.addEventListener('focus', showForm);
+        textarea.addEventListener('input', function() {
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+        });
+        cancelBtn.addEventListener('click', function() {
+            textarea.value = '';
+            counter.value = '0';
+            dateDisp.style.display = 'none';
+            hideForm();
+            textarea.rows = 2;
+        });
+    });
+
+    /* ── Update followup forms ── */
+    document.querySelectorAll('.update-form').forEach(function(form) {
+        var descDisplay = form.querySelector('.fup-desc-display');
+        var descEdit    = form.querySelector('.fup-entry-desc-edit');
+        var updateRow   = form.querySelector('.fup-update-row');
+        var statusSel   = form.querySelector('.fup-status-select');
+
+        function autoSize(ta) {
+            ta.style.height = 'auto';
+            ta.style.height = ta.scrollHeight + 'px';
+        }
+
+        function showEdit() {
+            if (descDisplay) descDisplay.style.display = 'none';
+            if (descEdit) {
+                descEdit.style.display = 'block';
+                autoSize(descEdit);          // size immediately on reveal
+                descEdit.focus();
             }
-            if (count === 0) nextFollowupLabel.style.display = "block";
-        });
+            updateRow.style.display = 'flex';
+        }
 
-        inputs.forEach(input => {
-            input.addEventListener("focus", () => {
-                btnContainer.style.display = "flex";
-                description.style.display = "block";
-            });
-            input.addEventListener("blur", () => {
-                setTimeout(() => {
-                    const isActive = Array.from(inputs).some(inp => inp === document.activeElement);
-                    // if (!isActive) btnContainer.style.display = "none";
-                }, 100);
-            });
+        if (descEdit) {
+            descEdit.addEventListener('input', function() { autoSize(descEdit); });
+        }
+
+        [statusSel].forEach(function(el) {
+            if (el) el.addEventListener('change', showEdit);
         });
+        if (descDisplay) {
+            descDisplay.addEventListener('click', showEdit);
+            descDisplay.style.cursor = 'pointer';
+            descDisplay.title = 'Click to edit';
+        }
+        if (descEdit) {
+            descEdit.addEventListener('focus', showEdit);
+        }
     });
 
-    const updateForms = document.querySelectorAll(".update-form");
-    updateForms.forEach((form) => {
-        const inputs = form.querySelectorAll("input, select, textarea");
-        const btnContainer = form.querySelector("#update-btn-group");
-        const update_description = form.querySelector("#update-description");
-        inputs.forEach(input => {
-            input.addEventListener("focus", () => {
-                btnContainer.style.display = "flex";
-                update_description.style.display = "block";
-            });
-            input.addEventListener("blur", () => {
-                setTimeout(() => {
-                    // const isActive = Array.from(inputs).some(inp => inp === document.activeElement);
-                    // if (!isActive) btnContainer.style.display = "none";
-                }, 100);
-            });
+    /* ── Auto-resize textareas ── */
+    document.querySelectorAll('textarea').forEach(function(ta) {
+        function resize() {
+            ta.style.height = 'auto';
+            ta.style.height = ta.scrollHeight + 'px';
+        }
+        resize();
+        ta.addEventListener('input', resize);
+    });
+
+    /* ── Update inquiry form toggle ── */
+    var updateBtn  = document.getElementById('update-inquiry-button');
+    var updateForm = document.getElementById('update-inquiry-form');
+    var cancelBtn  = document.getElementById('cancel-inquiry-button');
+
+    if (updateBtn) updateBtn.addEventListener('click', function() {
+        updateForm.classList.toggle('is-open');
+    });
+    if (cancelBtn) cancelBtn.addEventListener('click', function() {
+        updateForm.classList.remove('is-open');
+    });
+
+    /* ── Referral two-step (matches create inquiry form) ── */
+    var builtSources = {};
+    {% for src in referral_sources %}
+    if (!builtSources["{{ src.category }}"]) builtSources["{{ src.category }}"] = [];
+    builtSources["{{ src.category }}"].push({ id: {{ src.id }}, name: "{{ src.name|escapejs }}" });
+    {% endfor %}
+
+    var catSelect  = document.getElementById('referral_category');
+    var srcWrapper = document.getElementById('referral-source-wrapper');
+    var srcSelect  = document.getElementById('referral_source');
+    var refFields  = document.getElementById('internal-referrer-fields');
+
+    function populateSources(cat, selectedId) {
+        var sources = builtSources[cat] || [];
+        srcSelect.innerHTML = '<option value="">— Select —</option>';
+        sources.forEach(function(s) {
+            var opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.name;
+            if (selectedId && s.id === selectedId) opt.selected = true;
+            srcSelect.appendChild(opt);
         });
-    });
-
-    // Toggle update form
-    const updateInquiryButton = document.getElementById("update-inquiry-button");
-    const updateInquiryForm = document.getElementById("update-inquiry-form");
-    const cancelInquiryButton = document.getElementById("cancel-inquiry-button");
-
-    updateInquiryButton.addEventListener("click", function () {
-        updateInquiryForm.classList.toggle("d-none");
-        updateInquiryButton.classList.toggle("d-none");
-    });
-
-    cancelInquiryButton.addEventListener("click", function () {
-        updateInquiryForm.classList.add("d-none");
-        updateInquiryButton.classList.remove("d-none");
-    });
-
-    // Show/hide referrer fields based on referral source category
-    const internalReferralSourceSelect = document.getElementById('referral_source');
-    const internalReferrerFields = document.getElementById('internal-referrer-fields');
-    {% if referral_sources %}
-    const wordOfMouthIds = new Set([{% for src in referral_sources %}{% if src.category == 'word_of_mouth' %}{{ src.id }},{% endif %}{% endfor %}]);
-    {% else %}
-    const wordOfMouthIds = new Set();
-    {% endif %}
-    if (internalReferralSourceSelect && internalReferrerFields) {
-        internalReferralSourceSelect.addEventListener('change', function () {
-            internalReferrerFields.style.display = wordOfMouthIds.has(parseInt(this.value)) ? '' : 'none';
-        });
+        srcWrapper.style.display = sources.length ? '' : 'none';
     }
 
-    // Auto-resize textareas
-    function estimateRowsSimple(textarea) {
-        const avgCharWidth = 7.2;
-        const textLength = textarea.value.length;
-        const textareaWidth = textarea.clientWidth;
-        const newlines = textarea.value.split('\n').length - 1;
-        const estimatedWrappedRows = Math.ceil((textLength * avgCharWidth) / textareaWidth);
-        textarea.rows = Math.max(2, estimatedWrappedRows + newlines);
+    function onCategoryChange() {
+        var cat = catSelect.value;
+        populateSources(cat, null);
+        if (cat === 'word_of_mouth') {
+            refFields.classList.remove('d-none');
+        } else {
+            refFields.classList.add('d-none');
+            document.getElementById('referrer_name').value = '';
+            document.getElementById('referrer_phone').value = '';
+        }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('textarea.form-control').forEach(textarea => {
-            estimateRowsSimple(textarea);
-            textarea.addEventListener('input', () => estimateRowsSimple(textarea));
-            window.addEventListener('resize', () => estimateRowsSimple(textarea));
-        });
-    });
+    if (catSelect && srcSelect && refFields) {
+        catSelect.addEventListener('change', onCategoryChange);
+        {% if inquiry.referral_source %}
+        /* Pre-populate from saved inquiry data */
+        (function() {
+            catSelect.value = "{{ inquiry.referral_source.category }}";
+            populateSources("{{ inquiry.referral_source.category }}", {{ inquiry.referral_source.id }});
+            {% if inquiry.referral_source.category == 'word_of_mouth' %}
+            refFields.classList.remove('d-none');
+            {% endif %}
+        })();
+        {% endif %}
+    }
+});
 </script>
 
 {% endblock dashboard %}

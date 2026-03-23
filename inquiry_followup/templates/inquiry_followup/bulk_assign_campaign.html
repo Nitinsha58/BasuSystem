@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block dashboard %}
+
+<div class="container py-4" style="max-width: 720px;">
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <a href="{% url 'inquiries' %}" class="btn btn-sm btn-outline-secondary">&larr; Back</a>
+        <h4 class="mb-0 fw-bold">Bulk Assign Campaign</h4>
+    </div>
+
+    <!-- ── Result banner ── -->
+    {% if done %}
+    <div class="mb-4">
+        <div class="alert alert-success mb-3">
+            <strong>{{ assigned|length }}</strong> inquir{{ assigned|length|pluralize:"y,ies" }} assigned to
+            <strong>{{ campaign.name }}</strong>.
+            {% if skipped %}
+            &nbsp;·&nbsp;<strong>{{ skipped|length }}</strong> skipped (already had a campaign).
+            {% endif %}
+            {% if not_found %}
+            &nbsp;·&nbsp;<strong>{{ not_found|length }}</strong> phone number{{ not_found|length|pluralize }} not found.
+            {% endif %}
+        </div>
+
+        {% if assigned %}
+        <div class="card mb-3">
+            <div class="card-header py-2 fw-semibold" style="background:#d1fae5; color:#065f46;">
+                ✅ Assigned ({{ assigned|length }})
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for item in assigned %}
+                <li class="list-group-item py-1 d-flex justify-content-between">
+                    <span>{{ item.name|title }}</span>
+                    <span class="text-muted" style="font-size:13px;">+91 {{ item.phone }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if skipped %}
+        <div class="card mb-3">
+            <div class="card-header py-2 fw-semibold" style="background:#fef9c3; color:#713f12;">
+                ⚠️ Skipped — already has a campaign ({{ skipped|length }})
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for item in skipped %}
+                <li class="list-group-item py-1 d-flex justify-content-between align-items-center flex-wrap gap-1">
+                    <div>
+                        <span>{{ item.name|title }}</span>
+                        <span class="text-muted ms-2" style="font-size:13px;">+91 {{ item.phone }}</span>
+                    </div>
+                    <span class="badge rounded-pill" style="background:#e0d9ff; color:#392994; font-size:11px;">{{ item.existing }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if not_found %}
+        <div class="card mb-3">
+            <div class="card-header py-2 fw-semibold" style="background:#fee2e2; color:#991b1b;">
+                ❌ Not Found ({{ not_found|length }})
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for phone in not_found %}
+                <li class="list-group-item py-1 text-muted" style="font-size:13px;">+91 {{ phone }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- ── Form ── -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="post" action="{% url 'bulk_assign_campaign' %}">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" for="campaign">Select Campaign <span class="text-danger">*</span></label>
+                    <select name="campaign" id="campaign" class="form-select" required>
+                        <option value="">— Choose a campaign —</option>
+                        {% for c in campaigns %}
+                        <option value="{{ c.id }}">{{ c.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" for="phones">
+                        Phone Numbers
+                        <span class="text-muted fw-normal" style="font-size:12px;">(one per line, or comma/space separated; +91 prefix is stripped automatically)</span>
+                    </label>
+                    <textarea name="phones" id="phones" class="form-control font-monospace" rows="12"
+                              placeholder="9876543210&#10;9123456780&#10;+91 9012345678"
+                              required>{{ raw_phones }}</textarea>
+                </div>
+
+                <div class="mb-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="overwrite" value="1" id="overwrite">
+                        <label class="form-check-label" for="overwrite">
+                            Overwrite existing campaign assignment
+                            <span class="text-muted" style="font-size:12px;">(if unchecked, inquiries that already have a campaign will be skipped)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn px-4 fw-semibold"
+                        style="background:#392994; color:#fff; border:none; border-radius:8px;">
+                    Assign Campaign
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock dashboard %}

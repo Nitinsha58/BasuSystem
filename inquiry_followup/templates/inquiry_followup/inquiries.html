@@ -5,345 +5,809 @@
 {% block dashboard %}
 
 <style>
-    .dates-group {
-        list-style-type: none;
-        padding: 0;
-        margin: 0;
-        overflow-x: auto;
+    /* ── Typography & Tokens ───────────────────────────── */
+    :root {
+        --brand: #392994;
+        --brand-dim: rgba(57,41,148,0.10);
+        --surface: #ffffff;
+        --surface-2: #eef0f5;     /* board bg — noticeably darker than cards */
+        --surface-3: #e8eaf0;     /* muted fills */
+        --border: #d4d8e4;
+        --border-mid: #bcc2d0;
+        --text-1: #0a0f1e;        /* near-black names */
+        --text-2: #2d3748;        /* dark gray — class, meta */
+        --text-3: #64748b;        /* medium gray — phone, time */
+        --radius-sm: 6px;
+        --radius-md: 10px;
+        --radius-lg: 14px;
+        --shadow-card: 0 1px 2px rgba(10,15,30,0.08), 0 3px 10px rgba(10,15,30,0.06);
+        --shadow-card-hover: 0 2px 8px rgba(10,15,30,0.13), 0 8px 24px rgba(10,15,30,0.10);
+        --col-w: 272px;
+        --font: 'DM Sans', system-ui, sans-serif;
+    }
+
+    /* ── Layout Shell ──────────────────────────────────── */
+    .iq-shell {
         display: flex;
-        gap: 2rem;
+        flex-direction: column;
+        height: calc(100vh - 56px);
+        overflow: hidden;
+        background: var(--surface-2);
+        font-family: var(--font);
     }
-    .filter-select {
-        padding: 4px 8px;
-        border: 1px solid #dee2e6;
-        border-radius: 6px;
-        font-size: 13px;
-        background: #fff;
-        cursor: pointer;
-    }
-    .filter-select:focus {
-        outline: 2px solid #392994;
-        outline-offset: 1px;
-    }
-    .filter-bar {
+
+    /* ── Top Bar ───────────────────────────────────────── */
+    .iq-topbar {
         display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        flex-shrink: 0;
         flex-wrap: wrap;
+        position: relative;
+        z-index: 100;
+    }
+
+    /* Search */
+    .iq-search-wrap {
+        position: relative;
+        flex-shrink: 0;
+    }
+    .iq-search-wrap svg {
+        position: absolute;
+        left: 9px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-3);
+        pointer-events: none;
+    }
+    #search-stu-input {
+        padding: 6px 10px 6px 30px;
+        border: 1px solid var(--border-mid);
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        width: 210px;
+        background: var(--surface-3);
+        color: var(--text-1);
+        transition: border-color .15s, background .15s;
+        font-family: var(--font);
+    }
+    #search-stu-input:focus {
+        outline: none;
+        border-color: var(--brand);
+        background: #fff;
+    }
+    #search-stu-input::placeholder { color: var(--text-3); }
+
+    /* Month nav */
+    .iq-month-nav {
+        display: flex;
         align-items: center;
         gap: 6px;
+        flex-shrink: 0;
+    }
+    .iq-month-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-1);
+        white-space: nowrap;
+        min-width: 90px;
+        text-align: center;
+    }
+    .iq-nav-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 26px;
+        height: 26px;
+        border: 1px solid var(--border-mid);
+        border-radius: var(--radius-sm);
+        background: var(--surface);
+        color: var(--text-2);
+        font-size: 12px;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background .15s, border-color .15s;
+        flex-shrink: 0;
+    }
+    .iq-nav-btn:hover {
+        background: var(--surface-3);
+        border-color: var(--brand);
+        color: var(--brand);
+    }
+
+    /* Divider */
+    .iq-bar-divider {
+        width: 1px;
+        height: 22px;
+        background: var(--border);
+        flex-shrink: 0;
+    }
+
+    /* Filters */
+    .iq-filters {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: none;
+        flex: 1;
+        min-width: 0;
+    }
+    .iq-filters::-webkit-scrollbar { display: none; }
+
+    .filter-select {
+        padding: 5px 24px 5px 8px;
+        border: 1px solid var(--border-mid);
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        font-weight: 500;
+        background: var(--surface-3) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E") no-repeat right 7px center / 8px;
+        color: var(--text-2);
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        white-space: nowrap;
+        transition: border-color .15s;
+        font-family: var(--font);
+        flex-shrink: 0;
+    }
+    .filter-select:focus {
+        outline: none;
+        border-color: var(--brand);
+        background-color: #fff;
+    }
+    .filter-select.is-active {
+        border-color: var(--brand);
+        background-color: var(--brand-dim);
+        color: var(--brand);
+        font-weight: 600;
+    }
+
+    .iq-clear-btn {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 5px 9px;
+        border: 1px solid var(--border-mid);
+        border-radius: var(--radius-sm);
+        background: var(--surface);
+        color: var(--text-2);
+        font-size: 12px;
+        font-weight: 500;
+        text-decoration: none;
+        cursor: pointer;
+        white-space: nowrap;
+        flex-shrink: 0;
+        transition: background .15s, border-color .15s, color .15s;
+        font-family: var(--font);
+    }
+    .iq-clear-btn:hover {
+        background: #fff0f0;
+        border-color: #fca5a5;
+        color: #dc2626;
+    }
+
+    /* CTA Buttons */
+    .iq-topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+        margin-left: auto;
+    }
+    .iq-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 13px;
+        border-radius: var(--radius-sm);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        white-space: nowrap;
+        border: none;
+        font-family: var(--font);
+        transition: opacity .15s;
+    }
+    .iq-btn:hover { opacity: .85; }
+    .iq-btn-dark  { background: #1e293b; color: #fff; }
+    .iq-btn-brand { background: var(--brand); color: #fff; }
+
+    /* Search results dropdown */
+    #search-inquiries-list {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        width: 320px;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        box-shadow: 0 8px 24px rgba(15,23,42,0.12);
+        z-index: 9999;
+        padding: 4px;
+        list-style: none;
+        margin: 0;
+        display: none;
+    }
+
+    /* ── Board Body ────────────────────────────────────── */
+    .iq-board {
+        display: flex;
+        gap: 10px;
+        padding: 12px 14px 16px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        flex: 1;
+        align-items: flex-start;
+        scrollbar-width: thin;
+        scrollbar-color: var(--border-mid) transparent;
+    }
+    .iq-board::-webkit-scrollbar { height: 5px; }
+    .iq-board::-webkit-scrollbar-track { background: transparent; }
+    .iq-board::-webkit-scrollbar-thumb {
+        background: var(--border-mid);
+        border-radius: 99px;
+    }
+
+    /* ── Day Column ────────────────────────────────────── */
+    .day-col {
+        flex-shrink: 0;
+        width: var(--col-w);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .day-header {
+        display: flex;
+        align-items: center;
+        padding: 6px 10px;
+        border-radius: var(--radius-sm);
+        background: #d6dae6;
+        border: 1px solid #bcc2d0;
+        font-size: 12px;
+        font-weight: 700;
+        color: #1e293b;
+        letter-spacing: .01em;
+        white-space: nowrap;
+    }
+    .day-header.is-today {
+        background: var(--brand);
+        border-color: var(--brand);
+        color: #fff;
+    }
+
+    .day-cards {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        overflow-y: auto;
+        max-height: calc(100vh - 130px);
+        padding-bottom: 4px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--border-mid) transparent;
+    }
+    .day-cards::-webkit-scrollbar { width: 3px; }
+    .day-cards::-webkit-scrollbar-thumb {
+        background: var(--border-mid);
+        border-radius: 99px;
+    }
+
+    /* Campaign group divider */
+    .camp-divider {
+        height: 1px;
+        margin: 2px 0;
+        border: none;
+        border-top: 1.5px dashed var(--border);
+    }
+
+    /* ── Inquiry Card ──────────────────────────────────── */
+    .iq-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        border-left: 3px solid var(--border);
+        padding: 10px 11px;
+        text-decoration: none;
+        color: var(--text-1);
+        display: block;
+        cursor: pointer;
+        box-shadow: var(--shadow-card);
+        transition: box-shadow .18s, transform .15s;
+        position: relative;
+    }
+    .iq-card:hover {
+        box-shadow: var(--shadow-card-hover);
+        transform: translateY(-1px);
+        color: var(--text-1);
+        text-decoration: none;
+    }
+    .iq-card.has-followup {
+        border-top: 1.5px solid var(--brand);
+        border-right: 1.5px solid var(--brand);
+        border-bottom: 1.5px solid var(--brand);
+    }
+
+    /* Row 1: Name + badge */
+    .iq-card-row1 {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 6px;
+        margin-bottom: 4px;
+    }
+    .iq-name {
+        font-size: 15px;
+        font-weight: 800;
+        color: var(--text-1);
+        line-height: 1.2;
+        letter-spacing: -.01em;
+    }
+    .iq-badge {
+        font-size: 10px;
+        font-weight: 600;
+        padding: 2px 6px;
+        border-radius: 4px;
+        white-space: nowrap;
+        flex-shrink: 0;
+        margin-top: 1px;
+    }
+    .iq-badge-existing {
+        background: #fff0e5;
+        color: #b83c0a;
+        border: 1px solid #f5b48a;
+    }
+    .iq-badge-camp {
+        font-size: 9px;
+        font-weight: 700;
+        padding: 2px 6px;
+        border-radius: 4px;
+        white-space: nowrap;
+        color: #fff;
+        flex-shrink: 0;
+        margin-top: 1px;
+    }
+
+    /* Row 2: Class + phone */
+    .iq-card-row2 {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 3px;
+    }
+    .iq-class {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text-2);
+    }
+    .iq-phone {
+        font-size: 11.5px;
+        font-weight: 500;
+        color: var(--text-3);
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Row 3: Subjects */
+    .iq-subjects {
+        font-size: 11.5px;
+        font-weight: 500;
+        color: var(--text-3);
+        margin-bottom: 7px;
+        line-height: 1.4;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Row 4: Description */
+    .iq-desc {
+        font-size: 12px;
+        font-weight: 500;
+        padding: 5px 9px;
+        border-radius: 5px;
+        background: var(--surface-3);
+        color: var(--text-1);
+        margin-bottom: 7px;
+        line-height: 1.45;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    /* Row 5: Footer */
+    .iq-card-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+    }
+    .iq-status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 4px;
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        letter-spacing: .01em;
+    }
+    .iq-footer-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 1px;
+        flex-shrink: 0;
+    }
+    .iq-counsellor {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text-2);
+        white-space: nowrap;
+    }
+    .iq-time {
+        font-size: 10.5px;
+        font-weight: 500;
+        color: var(--text-3);
+        white-space: nowrap;
+    }
+    .iq-session {
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--text-3);
+    }
+    .iq-partner-tag {
+        font-size: 10px;
+        font-weight: 600;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: #fef9c3;
+        color: #854d0e;
+        border: 1px solid #fde68a;
+        white-space: nowrap;
     }
 </style>
-<div id="searchStuModal" class="start-0 d-flex flex-column flex-md-row items-center justify-content-between p-2">
-    <div class="position-relative rounded-lg rounded my-2 w-100 bg-white shadow-md"
-        style="height: fit-content;  z-index: 2355;">
-        <div class="search-form d-flex w-100 flex-wrap align-items-center gap-2">
-            <input type="text" class="form-control search-input p-2 fs-5" id="search-stu-input" maxlength="60"
-                placeholder="Search Inquiry..." autocomplete="off" autofocus name="search"
-                hx-get="/search-inquiries?search={value}" hx-trigger="keyup changed delay:500ms, search"
-                hx-target="#search-inquiries-list" style="max-width: 400px;">
-            <div class="d-flex flex-wrap align-items-center gap-2 mx-2">
-                <p class="mb-0">{{ current_month|date:"F Y" }}</p>
-                <ul class="pagination mb-0">
-                    <li class="page-item"><a class="page-link"
-                            href="?year={{ prev_month.year }}&month={{ prev_month.month }}{% if filter_qs %}&{{ filter_qs }}{% endif %}">Previous</a>
-                    </li>
-                    <li class="page-item"><a class="page-link"
-                            href="?year={{ next_month.year }}&month={{ next_month.month }}{% if filter_qs %}&{{ filter_qs }}{% endif %}">Next</a>
-                    </li>
-                </ul>
-            </div>
 
-            <!-- Filter Bar -->
-            <div class="filter-bar mx-2">
-                {% if campaigns %}
-                <select name="campaign" class="filter-select" onchange="applyFilters()">
-                    <option value="">All Campaigns</option>
-                    {% for c in campaigns %}
-                    <option value="{{ c.id }}" {% if active_filters.campaign == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
-                    {% endfor %}
-                </select>
-                {% endif %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-                <select name="status" class="filter-select" onchange="applyFilters()">
-                    <option value="">All Statuses</option>
-                    <option value="none" {% if active_filters.status == "none" %}selected{% endif %}>— No Status</option>
-                    {% for st in filter_statuses %}
-                    <option value="{{ st.id }}" {% if active_filters.status == st.id|stringformat:"s" %}selected{% endif %}>{{ st.name }}</option>
-                    {% endfor %}
-                </select>
+<div class="iq-shell">
 
-                <select name="lead_quality" class="filter-select" onchange="applyFilters()">
-                    <option value="">All Quality</option>
-                    <option value="hot" {% if active_filters.lead_quality == "hot" %}selected{% endif %}>🔥 Hot</option>
-                    <option value="warm" {% if active_filters.lead_quality == "warm" %}selected{% endif %}>🌤 Warm</option>
-                    <option value="cold" {% if active_filters.lead_quality == "cold" %}selected{% endif %}>❄️ Cold</option>
-                </select>
+    <!-- ── Top Bar ─────────────────────────────────── -->
+    <div class="iq-topbar">
+        <!-- Search -->
+        <div class="iq-search-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="search-stu-input" name="search" maxlength="60"
+                   placeholder="Search inquiry…" autocomplete="off"
+                   hx-get="/search-inquiries/" hx-trigger="keyup changed delay:500ms, search"
+                   hx-target="#search-inquiries-list">
+            <ul id="search-inquiries-list"></ul>
+        </div>
 
-                <select name="lead_type" class="filter-select" onchange="applyFilters()">
-                    <option value="">All Types</option>
-                    <option value="Unverified" {% if active_filters.lead_type == "Unverified" %}selected{% endif %}>Unverified</option>
-                    <option value="Verified" {% if active_filters.lead_type == "Verified" %}selected{% endif %}>Verified</option>
-                    <option value="Fake" {% if active_filters.lead_type == "Fake" %}selected{% endif %}>Fake</option>
-                </select>
+        <div class="iq-bar-divider"></div>
 
-                <select name="session" class="filter-select" onchange="applyFilters()">
-                    <option value="">All Sessions</option>
-                    {% for sess in filter_sessions %}
-                    <option value="{{ sess.id }}" {% if active_filters.session == sess.id|stringformat:"s" %}selected{% endif %}>{{ sess.name }}</option>
-                    {% endfor %}
-                </select>
+        <!-- Month nav -->
+        <div class="iq-month-nav">
+            <a class="iq-nav-btn" href="?year={{ prev_month.year }}&month={{ prev_month.month }}{% if filter_qs %}&{{ filter_qs }}{% endif %}" title="Previous month">&#8592;</a>
+            <span class="iq-month-label">{{ current_month|date:"M Y" }}</span>
+            <a class="iq-nav-btn" href="?year={{ next_month.year }}&month={{ next_month.month }}{% if filter_qs %}&{{ filter_qs }}{% endif %}" title="Next month">&#8594;</a>
+        </div>
 
-                <select name="class_name" class="filter-select" onchange="applyFilters()">
-                    <option value="">All Classes</option>
-                    {% for cls in filter_classes %}
-                    <option value="{{ cls.id }}" {% if active_filters.class_name == cls.id|stringformat:"s" %}selected{% endif %}>{{ cls.name }}</option>
-                    {% endfor %}
-                </select>
+        <div class="iq-bar-divider"></div>
 
-                <select name="counsellor" class="filter-select" onchange="applyFilters()">
-                    <option value="">All Counsellors</option>
-                    {% for ac in filter_counsellors %}
-                    <option value="{{ ac.id }}" {% if active_filters.counsellor == ac.id|stringformat:"s" %}selected{% endif %}>{{ ac.user.first_name }} {{ ac.user.last_name }}</option>
-                    {% endfor %}
-                </select>
+        <!-- Filters -->
+        <div class="iq-filters">
+            {% if campaigns %}
+            <select name="campaign" class="filter-select {% if active_filters.campaign %}is-active{% endif %}" onchange="applyFilters()">
+                <option value="">Campaign</option>
+                {% for c in campaigns %}
+                <option value="{{ c.id }}" {% if active_filters.campaign == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+                {% endfor %}
+            </select>
+            {% endif %}
 
-                {% if active_filters.status or active_filters.lead_quality or active_filters.lead_type or active_filters.session or active_filters.class_name or active_filters.counsellor or active_filters.campaign %}
-                <a href="?year={{ current_month.year }}&month={{ current_month.month }}" class="btn btn-sm btn-outline-secondary">✕ Clear</a>
-                {% endif %}
-            </div>
-            <ul class="position-absolute p-2 mt-2 top-2 w-100 rounded" id="search-inquiries-list">
+            <select name="status" class="filter-select {% if active_filters.status %}is-active{% endif %}" onchange="applyFilters()">
+                <option value="">Status</option>
+                <option value="none" {% if active_filters.status == "none" %}selected{% endif %}>— None</option>
+                {% for st in filter_statuses %}
+                <option value="{{ st.id }}" {% if active_filters.status == st.id|stringformat:"s" %}selected{% endif %}>{{ st.name }}</option>
+                {% endfor %}
+            </select>
 
-            </ul>
+            <select name="lead_quality" class="filter-select {% if active_filters.lead_quality %}is-active{% endif %}" onchange="applyFilters()">
+                <option value="">Quality</option>
+                <option value="hot"  {% if active_filters.lead_quality == "hot"  %}selected{% endif %}>🔥 Hot</option>
+                <option value="warm" {% if active_filters.lead_quality == "warm" %}selected{% endif %}>🌤 Warm</option>
+                <option value="cold" {% if active_filters.lead_quality == "cold" %}selected{% endif %}>❄️ Cold</option>
+            </select>
+
+            <select name="lead_type" class="filter-select {% if active_filters.lead_type %}is-active{% endif %}" onchange="applyFilters()">
+                <option value="">Type</option>
+                <option value="Unverified" {% if active_filters.lead_type == "Unverified" %}selected{% endif %}>Unverified</option>
+                <option value="Verified"   {% if active_filters.lead_type == "Verified"   %}selected{% endif %}>Verified</option>
+                <option value="Fake"       {% if active_filters.lead_type == "Fake"       %}selected{% endif %}>Fake</option>
+            </select>
+
+            <select name="session" class="filter-select {% if active_filters.session %}is-active{% endif %}" onchange="applyFilters()">
+                <option value="">Session</option>
+                {% for sess in filter_sessions %}
+                <option value="{{ sess.id }}" {% if active_filters.session == sess.id|stringformat:"s" %}selected{% endif %}>{{ sess.name }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="class_name" class="filter-select {% if active_filters.class_name %}is-active{% endif %}" onchange="applyFilters()">
+                <option value="">Class</option>
+                {% for cls in filter_classes %}
+                <option value="{{ cls.id }}" {% if active_filters.class_name == cls.id|stringformat:"s" %}selected{% endif %}>{{ cls.name }}</option>
+                {% endfor %}
+            </select>
+
+            <select name="counsellor" class="filter-select {% if active_filters.counsellor %}is-active{% endif %}" onchange="applyFilters()">
+                <option value="">Counsellor</option>
+                {% for ac in filter_counsellors %}
+                <option value="{{ ac.id }}" {% if active_filters.counsellor == ac.id|stringformat:"s" %}selected{% endif %}>{{ ac.user.first_name }} {{ ac.user.last_name }}</option>
+                {% endfor %}
+            </select>
+
+            {% if active_filters.status or active_filters.lead_quality or active_filters.lead_type or active_filters.session or active_filters.class_name or active_filters.counsellor or active_filters.campaign %}
+            <a href="?year={{ current_month.year }}&month={{ current_month.month }}" class="iq-clear-btn">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                Clear
+            </a>
+            {% endif %}
+        </div>
+
+        <!-- Actions -->
+        <div class="iq-topbar-actions">
+            <a href="{% url 'bulk_assign_campaign' %}" class="iq-btn iq-btn-dark">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Bulk Assign
+            </a>
+            <button id="openStatsModal" type="button" class="iq-btn iq-btn-brand">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                Stats
+            </button>
         </div>
     </div>
 
-    <div>
-        <button id="openStatsModal" type="button"
-            style="background:#392994; color:#fff; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; white-space:nowrap; transition:background .2s;"
-            onmouseover="this.style.background='#2d2080'" onmouseout="this.style.background='#392994'"> Stats
-        </button>
-    </div>
-
-</div>
-
-<div class="mx-2 px-2">
-    <div class="d-flex g-4 w-100 dates-group pb-3">
+    <!-- ── Board ────────────────────────────────────── -->
+    <div class="iq-board" id="iq-board">
         {% for date, followups in dates.items %}
-        <div class="card date-card" style="min-width: 20rem; height: fit-content; border: none;"
-            data-date="{{ date|date:'Y-m-d' }}">
-            <ul class="list-group ">
-                <li class="list-group-item text-dark bg-light rounded">{{ date|date:'d b Y ( l )'|title }}</li>
-
+        <div class="day-col" data-date="{{ date|date:'Y-m-d' }}">
+            <div class="day-header">{{ date|date:'d M · D' }}</div>
+            <div class="day-cards">
                 {% for followup in followups %}
                 {% with camp=followup.inquiry.campaign %}
-                <li class="list-group-item p-2 my-2 rounded bg-light-subtle position-relative"
-                    style="border-left: 4px solid {{ camp.color|default:'#dee2e6' }};{% if followup.followup_date %} box-shadow: -3px -3px 12px #39299410, 6px 6px 12px #39299420; border-top: 2px solid #392994; border-right: 2px solid #392994; border-bottom: 2px solid #392994;{% endif %}">
-                    {% if camp %}
-                    <span class="position-absolute top-0 start-0 mt-1 ms-1 px-1 rounded-pill text-white"
-                          style="font-size:10px; background:{{ camp.color }}; opacity:0.9; line-height:1.6;">{{ camp.name }}</span>
-                    {% endif %}
-                    <a href="{% url 'inquiry' followup.inquiry.id %}" class="text-decoration-none text-dark" style="{% if camp %}padding-top:1.2rem;{% endif %} display:block;">
-                        <p class="m-0 me-2 mb-2 position-absolute end-0 top-0" style="font-size: 14px;">
-                            {% if followup.inquiry.existing_member %}
-                            Existing Member
-                            {% else %}
-                            New Inquiry
+                <a href="{% url 'inquiry' followup.inquiry.id %}"
+                   class="iq-card {% if followup.followup_date %}has-followup{% endif %}"
+                   style="border-left-color: {{ camp.color|default:'var(--border-mid)' }};"
+                   data-camp-color="{{ camp.color|default:'' }}">
+
+                    <!-- Row 1: Name + badges -->
+                    <div class="iq-card-row1">
+                        <span class="iq-name">{{ followup.inquiry.student_name|title }}</span>
+                        <div style="display:flex;align-items:center;gap:3px;flex-wrap:wrap;justify-content:flex-end;">
+                            {% if camp %}
+                            <span class="iq-badge-camp" style="background:{{ camp.color }};">{{ camp.name }}</span>
                             {% endif %}
-                        </p>
-                        <p class="fs-5 m-0 mb-1">{{followup.inquiry.student_name|title}}</p>
-                        <div class="d-flex justify-content-between">
-                            <p class="m-0 ">
-                                {% for cls in followup.inquiry.classes.all %}
-                                {{cls.name|title}}
-                                {% endfor %}
-                            </p>
-                            <p class="m-0">+91 {{followup.inquiry.phone}}</p>
+                            {% if followup.inquiry.existing_member %}
+                            <span class="iq-badge iq-badge-existing">Member</span>
+                            {% endif %}
                         </div>
-                        <p class="m-0 mb-2">
-                            {% for subject in followup.inquiry.subjects.all %}
-                            {{subject.name|title}}
-                            {% endfor %}
-                        </p>
-                        {% if followup.status.color %}
-                        <p class="m-0 mb-2 p-1 ps-2 d-inline-block text-dark rounded"
-                            style="width:100%; max-width: 100%; font-size: 12px; background: {{followup.status.color}};">
-                            {{followup.description|title}}</p>
-                        {% else %}
-                        <p class="m-0 mb-2 p-1 ps-2 d-inline-block text-dark rounded"
-                            style="width:100%; max-width: 100%; font-size: 12px;">{{followup.description|title}}</p>
-                        {% endif %}
-                        <div class="d-flex align-items-center gap-2 flex-wrap">
-                            <p class="rounded px-2 py-1 m-0" id="status" name="status" {% if followup.status.color %}
-                                style="background: {{followup.status.color}}; width: fit-content;" {% endif %} required>
-                                {{followup.status.name}}</p>
-                            <p class="m-0" style="font-size: 12px;">{% if followup.inquiry.session %} {{ followup.inquiry.session.name }} {% else %}—{% endif %}</p>
+                    </div>
+
+                    <!-- Row 2: Class + Phone -->
+                    <div class="iq-card-row2">
+                        <span class="iq-class">
+                            {% for cls in followup.inquiry.classes.all %}{{ cls.name|title }}{% endfor %}
+                        </span>
+                        <span class="iq-phone">{{ followup.inquiry.phone }}</span>
+                    </div>
+
+                    <!-- Row 3: Subjects -->
+                    <div class="iq-subjects">
+                        {% for subject in followup.inquiry.subjects.all %}{{ subject.name|title }}{% if not forloop.last %} · {% endif %}{% endfor %}
+                    </div>
+
+                    <!-- Row 4: Description (if present) -->
+                    {% if followup.description %}
+                    <div class="iq-desc" data-color="{% if followup.status.color %}{{ followup.status.color }}{% endif %}"
+                         {% if followup.status.color %}style="background:{{ followup.status.color }}22;"{% endif %}>
+                        {{ followup.description|title }}
+                    </div>
+                    {% endif %}
+
+                    <!-- Row 5: Footer -->
+                    <div class="iq-card-footer">
+                        <div style="display:flex;align-items:center;gap:5px;min-width:0;">
+                            {% if followup.status.name %}
+                            <span class="iq-status-pill" data-color="{{ followup.status.color }}"
+                                  {% if followup.status.color %}style="background:{{ followup.status.color }};"{% else %}style="background:var(--surface-3);color:var(--text-2);"{% endif %}>
+                                {{ followup.status.name }}
+                            </span>
+                            {% endif %}
+                            <span class="iq-session">
+                                {% if followup.inquiry.session %}{{ followup.inquiry.session.name }}{% else %}—{% endif %}
+                            </span>
                         </div>
-                        {% if followup.inquiry.stationary_partner %}
-                        <p class="m-0 me-2 mb-2 position-absolute end-0 bottom-0 bg-warning-subtle rounded p-1"
-                            style="font-size: 14px;">{{followup.inquiry.stationary_partner.name}}</p>
-                        {% elif followup.admission_counsellor %}
-                        <div class="">
-                            <p class="m-0 me-2 mb-4 position-absolute end-0 bottom-0 text-bold"
-                                style="font-size: 14px;">{{followup.created_at|date:'h:i A'}}</p>
-                            <p class="m-0 me-2 mb-2 position-absolute end-0 bottom-0" style="font-size: 14px;">
-                                {{followup.admission_counsellor.user.first_name}}
-                                {{followup.admission_counsellor.user.last_name}}</p>
+                        <div class="iq-footer-right">
+                            {% if followup.inquiry.stationary_partner %}
+                                <span class="iq-partner-tag">{{ followup.inquiry.stationary_partner.name }}</span>
+                            {% elif followup.admission_counsellor %}
+                                <span class="iq-counsellor">{{ followup.admission_counsellor.user.first_name }} {{ followup.admission_counsellor.user.last_name }}</span>
+                                <span class="iq-time">{{ followup.created_at|date:'h:i A' }}</span>
+                            {% endif %}
                         </div>
-                        {% endif %}
-                    </a>
-                </li>
+                    </div>
+
+                </a>
                 {% endwith %}
                 {% endfor %}
+            </div>
         </div>
         {% endfor %}
-
     </div>
 </div>
 
+<!-- ── Scripts ───────────────────────────────────────── -->
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const searchInput = document.getElementById("search-stu-input");
-        const searchList = document.getElementById("search-inquiries-list");
+/* ── Contrast utility ────────────────────────────────
+   Returns '#000' or '#fff' depending on which has
+   higher contrast against the given hex background.   */
+function contrastColor(hex) {
+    if (!hex || hex === 'var(--surface-3)') return null;
+    var c = hex.replace('#', '');
+    if (c.length === 3) c = c[0]+c[0]+c[1]+c[1]+c[2]+c[2];
+    var r = parseInt(c.slice(0,2),16),
+        g = parseInt(c.slice(2,4),16),
+        b = parseInt(c.slice(4,6),16);
+    // Relative luminance (WCAG formula)
+    var toLinear = function(v) { v/=255; return v<=0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055,2.4); };
+    var L = 0.2126*toLinear(r) + 0.7152*toLinear(g) + 0.0722*toLinear(b);
+    return L > 0.179 ? '#111827' : '#ffffff';
+}
 
-        searchInput.addEventListener("blur", function () {
-            setTimeout(() => searchList.style.display = "none", 200);
-        });
+document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("search-stu-input");
+    const searchList  = document.getElementById("search-inquiries-list");
+    searchInput.addEventListener("blur",  () => setTimeout(() => searchList.style.display = "none", 200));
+    searchInput.addEventListener("focus", () => searchList.style.display = "block");
 
-        searchInput.addEventListener("focus", function () {
-            searchList.style.display = "block";
+    // Active filter highlight
+    document.querySelectorAll('.filter-select').forEach(sel => {
+        sel.addEventListener('change', () => {
+            sel.classList.toggle('is-active', !!sel.value);
         });
     });
 
-    function applyFilters() {
-        const params = new URLSearchParams(window.location.search);
-        document.querySelectorAll('.filter-select').forEach(function (sel) {
-            if (sel.value) params.set(sel.name, sel.value);
-            else params.delete(sel.name);
-        });
-        window.location.search = params.toString();
+    // Fix text contrast on all colored elements
+    document.querySelectorAll('.iq-status-pill, .iq-desc[data-color], .iq-badge-camp').forEach(el => {
+        var bg = el.dataset.color || el.style.background || el.style.backgroundColor;
+        // Extract hex if it's inline like "background: #f00"
+        var match = (bg||'').match(/#[0-9a-fA-F]{3,6}/);
+        if (match) {
+            var fg = contrastColor(match[0]);
+            if (fg) el.style.color = fg;
+        }
+    });
+});
+
+function applyFilters() {
+    const params = new URLSearchParams(window.location.search);
+    document.querySelectorAll('.filter-select').forEach(sel => {
+        if (sel.value) params.set(sel.name, sel.value);
+        else params.delete(sel.name);
+    });
+    window.location.search = params.toString();
+}
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const options  = { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' };
+    const today    = new Date().toLocaleDateString('en-CA', options);
+    const board    = document.getElementById('iq-board');
+    const dayCols  = document.querySelectorAll('.day-col');
+    const colW     = 272;
+    const gap      = 10;
+
+    // Highlight today's header
+    let scrollOffset = 0;
+    for (let i = 0; i < dayCols.length; i++) {
+        if (dayCols[i].dataset.date === today) {
+            dayCols[i].querySelector('.day-header').classList.add('is-today');
+            break;
+        }
+        scrollOffset += colW + gap;
     }
-</script>
+    scrollOffset = Math.max(0, scrollOffset - colW - gap);
 
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const options = { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' };
-        const today = new Date().toLocaleDateString('en-CA', options);
-        const dateCards = document.querySelectorAll(".date-card");
-        const gap = 32;
-        const container = document.querySelector(".dates-group");
-
-        const cardWidth = dateCards[0]?.offsetWidth || 0;
-
-        let scrollOffset = 0;
-
-        const scrollPosition = sessionStorage.getItem("inquiriesPosition");
-        if (scrollPosition) {
-            container.scrollTo({
-                left: scrollPosition,
-            });
-
-            sessionStorage.removeItem("inquiriesPosition");
-        }
-        window.addEventListener("beforeunload", function () {
-            sessionStorage.setItem("inquiriesPosition", container.scrollLeft);
-        });
-
-        for (let i = 0; i < dateCards.length; i++) {
-            if (dateCards[i].dataset.date === today) {
-                dateCards[i].querySelector('ul.list-group').children[0].innerText += "";
-                dateCards[i].querySelector('ul.list-group').children[0].classList.remove("text-dark", "bg-light");
-                dateCards[i].querySelector('ul.list-group').children[0].classList.add("bg-dark", "text-white", "border-dark");
-                break;
-            }
-            scrollOffset += gap + cardWidth;
-        }
-        scrollOffset -= gap * 2 + cardWidth;
-
-        if (!scrollPosition) {
-            container.scrollTo({
-                left: scrollOffset,
-                // behavior: "smooth",
-            });
-        }
-
-        // Campaign group dividers within each day column
-        document.querySelectorAll('.date-card ul.list-group').forEach(function (ul) {
-            const cards = Array.from(ul.querySelectorAll('li.list-group-item:not(:first-child)'));
-            for (let i = 1; i < cards.length; i++) {
-                const prevColor = cards[i - 1].style.borderLeftColor || '';
-                const currColor = cards[i].style.borderLeftColor || '';
-                if (prevColor !== currColor) {
-                    const divider = document.createElement('li');
-                    divider.className = 'list-group-item p-0';
-                    divider.style.cssText = 'border: none; background: transparent;';
-                    const hr = document.createElement('hr');
-                    hr.style.cssText = `margin: 4px 0; border-color: ${currColor}; opacity: 0.5; border-width: 2px;`;
-                    divider.appendChild(hr);
-                    cards[i].before(divider);
-                }
-            }
-        });
+    // Restore scroll position
+    const saved = sessionStorage.getItem("iqBoardScroll");
+    if (saved) {
+        board.scrollLeft = +saved;
+        sessionStorage.removeItem("iqBoardScroll");
+    } else {
+        board.scrollLeft = scrollOffset;
+    }
+    window.addEventListener("beforeunload", () => {
+        sessionStorage.setItem("iqBoardScroll", board.scrollLeft);
     });
+
+    // Campaign group dividers within each day
+    document.querySelectorAll('.day-cards').forEach(col => {
+        const cards = Array.from(col.querySelectorAll('.iq-card'));
+        for (let i = 1; i < cards.length; i++) {
+            const prev = cards[i-1].dataset.campColor || '';
+            const curr = cards[i].dataset.campColor   || '';
+            if (prev !== curr) {
+                const hr = document.createElement('hr');
+                hr.className = 'camp-divider';
+                hr.style.borderColor = curr || 'var(--border)';
+                cards[i].before(hr);
+            }
+        }
+    });
+});
 </script>
 
-<!-- ========= Stats Modal ========= -->
+<!-- ════════════ Stats Modal (unchanged logic, restyled) ════════════ -->
 <div id="statsModal" role="dialog" aria-modal="true" aria-labelledby="statsModalTitle"
-     style="position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:9999;display:none;align-items:center;justify-content:center;">
+     style="position:fixed;inset:0;background:rgba(15,23,42,0.6);z-index:9999;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
     <div id="statsModalContent"
-         style="background:#0f172a;border-radius:12px;width:min(580px,95vw);max-height:90vh;overflow-y:auto;padding:1.5rem;border:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(16px);font-family:'Inter',system-ui,sans-serif;box-shadow:0 24px 64px rgba(0,0,0,0.6);animation:statsModalIn .18s ease both;">
+         style="background:#0f172a;border-radius:14px;width:min(560px,94vw);max-height:88vh;overflow-y:auto;padding:1.5rem;border:1px solid rgba(255,255,255,0.09);font-family:'DM Sans',system-ui,sans-serif;box-shadow:0 32px 80px rgba(0,0,0,0.5);animation:smIn .18s ease both;">
 
-        <!-- Header -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
-            <h3 id="statsModalTitle" style="color:#f1f5f9;font-size:1.1rem;font-weight:700;margin:0;letter-spacing:-.01em;">Inquiry Stats</h3>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+            <h3 id="statsModalTitle" style="color:#f1f5f9;font-size:1rem;font-weight:700;margin:0;">Inquiry Stats</h3>
             <button id="closeStatsModal" aria-label="Close"
-                    style="background:rgba(255,255,255,0.07);border:none;color:#94a3b8;width:30px;height:30px;border-radius:6px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;transition:background .15s;"
+                    style="background:rgba(255,255,255,0.07);border:none;color:#94a3b8;width:28px;height:28px;border-radius:6px;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s;"
                     onmouseover="this.style.background='rgba(255,255,255,0.14)'" onmouseout="this.style.background='rgba(255,255,255,0.07)'">&times;</button>
         </div>
 
-        <!-- Period pill toggle -->
-        <div id="statsPeriodToggle" style="display:flex;gap:8px;margin-bottom:0.875rem;flex-wrap:wrap;">
-            <button class="stats-period-btn stats-period-active" data-period="weekly" data-days="7">Weekly</button>
-            <button class="stats-period-btn" data-period="monthly" data-days="30">Monthly</button>
+        <div id="statsPeriodToggle" style="display:flex;gap:6px;margin-bottom:.75rem;flex-wrap:wrap;">
+            <button class="stats-period-btn stats-period-active" data-period="weekly"    data-days="7">Weekly</button>
+            <button class="stats-period-btn" data-period="monthly"   data-days="30">Monthly</button>
             <button class="stats-period-btn" data-period="bi_monthly" data-days="60">Bi-Monthly</button>
         </div>
 
-        <!-- Date range row -->
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:1.5rem;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:1.25rem;">
             <button id="statsNavPrev" aria-label="Previous range" class="stats-nav-btn">&#8592;</button>
             <div style="flex:1;min-width:0;position:relative;">
                 <button id="statsDateStartDisplay" class="stats-date-display" type="button">—</button>
-                <input type="date" id="statsDateStart" tabindex="-1"
-                       style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;pointer-events:none;">
+                <input type="date" id="statsDateStart" tabindex="-1" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;pointer-events:none;">
             </div>
-            <span style="color:#475569;font-size:13px;flex-shrink:0;">&#8211;</span>
+            <span style="color:#475569;font-size:13px;flex-shrink:0;">–</span>
             <div style="flex:1;min-width:0;position:relative;">
                 <button id="statsDateEndDisplay" class="stats-date-display" type="button">—</button>
-                <input type="date" id="statsDateEnd" tabindex="-1"
-                       style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;pointer-events:none;">
+                <input type="date" id="statsDateEnd" tabindex="-1" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;pointer-events:none;">
             </div>
             <button id="statsNavNext" aria-label="Next range" class="stats-nav-btn">&#8594;</button>
         </div>
 
-        <!-- Stats filters -->
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.25rem;">
-            <select id="statsFilterCampaign" style="padding:5px 8px;border:1px solid rgba(255,255,255,0.15);border-radius:6px;background:#1e293b;color:#cbd5e1;font-size:12px;">
+        <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:1.25rem;">
+            <select id="statsFilterCampaign"   style="padding:5px 8px;border:1px solid rgba(255,255,255,0.12);border-radius:6px;background:#1e293b;color:#cbd5e1;font-size:12px;font-family:'DM Sans',system-ui,sans-serif;">
                 <option value="">All Campaigns</option>
-                {% for c in campaigns %}
-                <option value="{{ c.id }}">{{ c.name }}</option>
-                {% endfor %}
+                {% for c in campaigns %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
             </select>
-            <select id="statsFilterSession" style="padding:5px 8px;border:1px solid rgba(255,255,255,0.15);border-radius:6px;background:#1e293b;color:#cbd5e1;font-size:12px;">
+            <select id="statsFilterSession"    style="padding:5px 8px;border:1px solid rgba(255,255,255,0.12);border-radius:6px;background:#1e293b;color:#cbd5e1;font-size:12px;font-family:'DM Sans',system-ui,sans-serif;">
                 <option value="">All Sessions</option>
-                {% for sess in filter_sessions %}
-                <option value="{{ sess.id }}">{{ sess.name }}</option>
-                {% endfor %}
+                {% for sess in filter_sessions %}<option value="{{ sess.id }}">{{ sess.name }}</option>{% endfor %}
             </select>
-            <select id="statsFilterCounsellor" style="padding:5px 8px;border:1px solid rgba(255,255,255,0.15);border-radius:6px;background:#1e293b;color:#cbd5e1;font-size:12px;">
+            <select id="statsFilterCounsellor" style="padding:5px 8px;border:1px solid rgba(255,255,255,0.12);border-radius:6px;background:#1e293b;color:#cbd5e1;font-size:12px;font-family:'DM Sans',system-ui,sans-serif;">
                 <option value="">All Counsellors</option>
-                {% for ac in filter_counsellors %}
-                <option value="{{ ac.id }}">{{ ac.user.first_name }} {{ ac.user.last_name }}</option>
-                {% endfor %}
+                {% for ac in filter_counsellors %}<option value="{{ ac.id }}">{{ ac.user.first_name }} {{ ac.user.last_name }}</option>{% endfor %}
             </select>
-            <select id="statsFilterReferral" style="padding:5px 8px;border:1px solid rgba(255,255,255,0.15);border-radius:6px;background:#1e293b;color:#cbd5e1;font-size:12px;">
+            <select id="statsFilterReferral"   style="padding:5px 8px;border:1px solid rgba(255,255,255,0.12);border-radius:6px;background:#1e293b;color:#cbd5e1;font-size:12px;font-family:'DM Sans',system-ui,sans-serif;">
                 <option value="">All Sources</option>
                 <option value="digital">Digital</option>
                 <option value="offline">Offline</option>
@@ -352,117 +816,45 @@
             </select>
         </div>
 
-        <!-- Results grid -->
-        <div id="statsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:12px;min-height:120px;transition:opacity 0.18s ease;"></div>
-
+        <div id="statsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;min-height:100px;transition:opacity .18s;"></div>
     </div>
 </div>
 
 <style>
-    @keyframes statsModalIn {
-        from { opacity:0; transform:scale(0.94) translateY(8px); }
-        to   { opacity:1; transform:scale(1)    translateY(0); }
-    }
+    @keyframes smIn { from{opacity:0;transform:scale(.95) translateY(6px)} to{opacity:1;transform:scale(1) translateY(0)} }
     .stats-period-btn {
-        background: rgba(255,255,255,0.06);
-        color: #94a3b8;
-        border: 1px solid rgba(255,255,255,0.10);
-        border-radius: 999px;
-        padding: 6px 20px;
-        font-size: 13px;
-        font-weight: 600;
-        cursor: pointer;
-        font-family: 'Inter', system-ui, sans-serif;
-        transition: background .2s, color .2s, border-color .2s;
-        white-space: nowrap;
+        background:rgba(255,255,255,0.06); color:#94a3b8;
+        border:1px solid rgba(255,255,255,0.10);
+        border-radius:999px; padding:5px 16px;
+        font-size:12px; font-weight:600; cursor:pointer;
+        font-family:'DM Sans',system-ui,sans-serif;
+        transition:background .2s,color .2s,border-color .2s;
     }
-    .stats-period-btn:hover {
-        background: rgba(57,41,148,0.35);
-        color: #e2e8f0;
-        border-color: rgba(57,41,148,0.6);
-    }
-    .stats-period-btn.stats-period-active {
-        background: #392994;
-        color: #fff;
-        border-color: #392994;
-    }
+    .stats-period-btn:hover { background:rgba(57,41,148,.35); color:#e2e8f0; border-color:rgba(57,41,148,.6); }
+    .stats-period-btn.stats-period-active { background:#392994; color:#fff; border-color:#392994; }
     .stats-nav-btn {
-        background: rgba(255,255,255,0.07);
-        border: 1px solid rgba(255,255,255,0.12);
-        color: #94a3b8;
-        width: 32px;
-        height: 32px;
-        border-radius: 7px;
-        font-size: 15px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        transition: background .2s, color .2s;
+        background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12);
+        color:#94a3b8; width:30px; height:30px; border-radius:7px; font-size:14px;
+        cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+        transition:background .2s,color .2s;
     }
-    .stats-nav-btn:hover {
-        background: rgba(255,255,255,0.14);
-        color: #e2e8f0;
-    }
+    .stats-nav-btn:hover { background:rgba(255,255,255,.14); color:#e2e8f0; }
     .stats-date-display {
-        width: 100%;
-        padding: 6px 10px;
-        border: 1px solid rgba(255,255,255,0.15);
-        border-radius: 7px;
-        background: #1e293b;
-        color: #cbd5e1;
-        font-size: 13px;
-        font-family: 'Inter', system-ui, sans-serif;
-        cursor: pointer;
-        transition: border-color .2s, background .2s;
-        text-align: left;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        width:100%; padding:5px 10px;
+        border:1px solid rgba(255,255,255,0.12); border-radius:7px;
+        background:#1e293b; color:#cbd5e1; font-size:12px;
+        font-family:'DM Sans',system-ui,sans-serif;
+        cursor:pointer; transition:border-color .2s; text-align:left;
     }
-    .stats-date-display:hover {
-        background: #263347;
-        border-color: rgba(255,255,255,0.25);
-    }
-    .stats-date-display:focus {
-        outline: none;
-        border-color: rgba(57,41,148,0.7);
-    }
+    .stats-date-display:hover { background:#263347; border-color:rgba(255,255,255,.22); }
     .stats-card {
-        background: #1e293b;
-        border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 10px;
-        padding: 1rem 0.875rem;
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
+        background:#1e293b; border:1px solid rgba(255,255,255,0.07);
+        border-radius:10px; padding:.875rem .75rem;
+        display:flex; flex-direction:column; gap:5px;
     }
-    .stats-card-count {
-        font-size: 2rem;
-        font-weight: 800;
-        color: #f1f5f9;
-        line-height: 1;
-        letter-spacing: -.03em;
-    }
-    .stats-card-label {
-        font-size: 12px;
-        color: #94a3b8;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-weight: 500;
-    }
-    .stats-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        flex-shrink: 0;
-        display: inline-block;
-    }
-    @keyframes statsSpinAnim {
-        to { transform: rotate(360deg); }
-    }
+    .stats-card-count { font-size:1.875rem; font-weight:800; color:#f1f5f9; line-height:1; letter-spacing:-.03em; }
+    .stats-card-label { font-size:11px; color:#94a3b8; display:flex; align-items:center; gap:5px; font-weight:500; }
+    .stats-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; display:inline-block; }
 </style>
 
 <script>
@@ -480,208 +872,89 @@
     const displayStart = document.getElementById('statsDateStartDisplay');
     const displayEnd   = document.getElementById('statsDateEndDisplay');
 
-    // activeRange holds JS Date objects (local midnight)
     var activeRange = { start: null, end: null };
-
-    /* ── helpers ────────────────────────────────────────────── */
     var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-    function toIso(d) {
-        var y = d.getFullYear();
-        var m = String(d.getMonth() + 1).padStart(2, '0');
-        var day = String(d.getDate()).padStart(2, '0');
-        return y + '-' + m + '-' + day;
+    function toIso(d) { return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+    function toDisplay(d) { return d.getDate()+' '+MONTHS[d.getMonth()]+' '+d.getFullYear(); }
+    function fromIso(s) { var p=s.split('-'); return new Date(+p[0],+p[1]-1,+p[2]); }
+    function localMidnight(n) { var d=new Date(); d.setHours(0,0,0,0); if(n) d.setDate(d.getDate()+n); return d; }
+
+    function setInputs(s, e) {
+        inputStart.value = toIso(s); inputEnd.value = toIso(e);
+        displayStart.textContent = toDisplay(s); displayEnd.textContent = toDisplay(e);
+        activeRange.start = s; activeRange.end = e;
+    }
+    function clearPills() { periodBtns.forEach(b=>b.classList.remove('stats-period-active')); }
+    function applyPreset(days) { setInputs(localMidnight(-(days-1)), localMidnight(0)); }
+    function shiftRange(fwd) {
+        if (!activeRange.start) return;
+        var gap = Math.round((activeRange.end-activeRange.start)/86400000)+1;
+        var dir = fwd ? gap : -gap;
+        var s = new Date(activeRange.start); s.setDate(s.getDate()+dir);
+        var e = new Date(activeRange.end);   e.setDate(e.getDate()+dir);
+        clearPills(); setInputs(s,e); fetchStats();
     }
 
-    function toDisplay(d) {
-        return d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear();
-    }
+    displayStart.addEventListener('click',()=>{ inputStart.style.pointerEvents='auto'; if(inputStart.showPicker)inputStart.showPicker(); else inputStart.click(); setTimeout(()=>inputStart.style.pointerEvents='none',300); });
+    displayEnd.addEventListener('click',()=>{ inputEnd.style.pointerEvents='auto'; if(inputEnd.showPicker)inputEnd.showPicker(); else inputEnd.click(); setTimeout(()=>inputEnd.style.pointerEvents='none',300); });
 
-    function fromIso(s) {
-        var parts = s.split('-');
-        return new Date(+parts[0], +parts[1] - 1, +parts[2]);
-    }
-
-    function localMidnight(offsetDays) {
-        var d = new Date();
-        d.setHours(0, 0, 0, 0);
-        if (offsetDays) d.setDate(d.getDate() + offsetDays);
-        return d;
-    }
-
-    function setInputs(start, end) {
-        inputStart.value   = toIso(start);
-        inputEnd.value     = toIso(end);
-        displayStart.textContent = toDisplay(start);
-        displayEnd.textContent   = toDisplay(end);
-        activeRange.start = start;
-        activeRange.end   = end;
-    }
-
-    /* ── open picker on display button click ─────────────────── */
-    displayStart.addEventListener('click', function () {
-        inputStart.style.pointerEvents = 'auto';
-        if (inputStart.showPicker) { inputStart.showPicker(); }
-        else { inputStart.click(); }
-        setTimeout(function () { inputStart.style.pointerEvents = 'none'; }, 300);
-    });
-    displayEnd.addEventListener('click', function () {
-        inputEnd.style.pointerEvents = 'auto';
-        if (inputEnd.showPicker) { inputEnd.showPicker(); }
-        else { inputEnd.click(); }
-        setTimeout(function () { inputEnd.style.pointerEvents = 'none'; }, 300);
-    });
-
-    function clearPills() {
-        periodBtns.forEach(function (b) { b.classList.remove('stats-period-active'); });
-    }
-
-    function applyPreset(days) {
-        var end   = localMidnight(0);
-        var start = localMidnight(-(days - 1));   // inclusive: today counts as day 1
-        setInputs(start, end);
-    }
-
-    function shiftRange(forward) {
-        if (!activeRange.start || !activeRange.end) return;
-        var gap = Math.round(
-            (activeRange.end - activeRange.start) / 86400000
-        ) + 1;   // number of days in the current range
-        var dir = forward ? gap : -gap;
-        var newStart = new Date(activeRange.start);
-        var newEnd   = new Date(activeRange.end);
-        newStart.setDate(newStart.getDate() + dir);
-        newEnd.setDate(newEnd.getDate() + dir);
-        clearPills();
-        setInputs(newStart, newEnd);
-        fetchStats();
-    }
-
-    /* ── modal open/close ────────────────────────────────────── */
     function openModal() {
-        modal.style.display = 'flex';
-        content.style.animation = 'none';
-        void content.offsetWidth;
-        content.style.animation = '';
-        // Default to Weekly on first open; keep state on re-open
-        if (!activeRange.start) {
-            applyPreset(7);
-            periodBtns[0].classList.add('stats-period-active');
-        }
+        modal.style.display='flex';
+        content.style.animation='none'; void content.offsetWidth; content.style.animation='';
+        if (!activeRange.start) { applyPreset(7); periodBtns[0].classList.add('stats-period-active'); }
         fetchStats();
     }
-
-    function closeModal() { modal.style.display = 'none'; }
+    function closeModal() { modal.style.display='none'; }
 
     openBtn.addEventListener('click', openModal);
     closeBtn.addEventListener('click', closeModal);
-    modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
-    document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && modal.style.display === 'flex') closeModal();
-    });
+    modal.addEventListener('click', e=>{ if(e.target===modal) closeModal(); });
+    document.addEventListener('keydown', e=>{ if(e.key==='Escape'&&modal.style.display==='flex') closeModal(); });
 
-    /* ── period pills ────────────────────────────────────────── */
-    periodBtns.forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            clearPills();
-            btn.classList.add('stats-period-active');
-            applyPreset(+btn.dataset.days);
-            fetchStats();
-        });
-    });
+    periodBtns.forEach(btn=>btn.addEventListener('click',()=>{ clearPills(); btn.classList.add('stats-period-active'); applyPreset(+btn.dataset.days); fetchStats(); }));
 
-    /* ── date inputs (custom range) ─────────────────────────── */
     function onDateInputChange() {
-        if (!inputStart.value || !inputEnd.value) return;
-        var s = fromIso(inputStart.value);
-        var e = fromIso(inputEnd.value);
-        if (s > e) {
-            // Snap end to match start if end is before start
-            e = new Date(s);
-        }
-        clearPills();
-        setInputs(s, e);   // updates display labels + activeRange
-        fetchStats();
+        if (!inputStart.value||!inputEnd.value) return;
+        var s=fromIso(inputStart.value), e=fromIso(inputEnd.value);
+        if(s>e) e=new Date(s);
+        clearPills(); setInputs(s,e); fetchStats();
     }
     inputStart.addEventListener('change', onDateInputChange);
     inputEnd.addEventListener('change', onDateInputChange);
+    prevBtn.addEventListener('click', ()=>shiftRange(false));
+    nextBtn.addEventListener('click', ()=>shiftRange(true));
 
-    /* ── navigation arrows ───────────────────────────────────── */
-    prevBtn.addEventListener('click', function () { shiftRange(false); });
-    nextBtn.addEventListener('click', function () { shiftRange(true); });
+    ['statsFilterCampaign','statsFilterSession','statsFilterCounsellor','statsFilterReferral'].forEach(id=>{ var el=document.getElementById(id); if(el) el.addEventListener('change', fetchStats); });
 
-    /* ── filter selects ─────────────────────────────────────── */
-    ['statsFilterCampaign', 'statsFilterSession', 'statsFilterCounsellor', 'statsFilterReferral'].forEach(function (id) {
-        var el = document.getElementById(id);
-        if (el) el.addEventListener('change', fetchStats);
-    });
-
-    /* ── fetch ───────────────────────────────────────────────── */
-    var _fetchSeq = 0;  // cancel stale responses
+    var _seq=0;
     function fetchStats() {
-        if (!activeRange.start || !activeRange.end) return;
-        var seq = ++_fetchSeq;
-        grid.style.opacity = '0.35';
-        grid.style.pointerEvents = 'none';
-
-        var params = new URLSearchParams({
-            start: toIso(activeRange.start),
-            end:   toIso(activeRange.end),
-        });
-        var campaign   = document.getElementById('statsFilterCampaign').value;
-        var session    = document.getElementById('statsFilterSession').value;
-        var counsellor = document.getElementById('statsFilterCounsellor').value;
-        var referral   = document.getElementById('statsFilterReferral').value;
-        if (campaign)   params.set('campaign', campaign);
-        if (session)    params.set('session', session);
-        if (counsellor) params.set('counsellor', counsellor);
-        if (referral)   params.set('referral_category', referral);
-
-        fetch('/inquiries/stats?' + params.toString())
-            .then(function (r) {
-                if (!r.ok) throw new Error('Network error: ' + r.status);
-                return r.json();
-            })
-            .then(function (data) {
-                if (seq !== _fetchSeq) return;  // stale — discard
-                renderStats(data);
-                grid.style.opacity = '1';
-                grid.style.pointerEvents = '';
-            })
-            .catch(function (err) {
-                if (seq !== _fetchSeq) return;
-                grid.innerHTML = '<p style="color:#f87171;font-size:13px;">Failed to load stats.</p>';
-                grid.style.opacity = '1';
-                grid.style.pointerEvents = '';
-                console.error('Stats fetch error:', err);
-            });
+        if (!activeRange.start) return;
+        var seq=++_seq;
+        grid.style.opacity='.35'; grid.style.pointerEvents='none';
+        var p=new URLSearchParams({start:toIso(activeRange.start),end:toIso(activeRange.end)});
+        var c=document.getElementById('statsFilterCampaign').value;
+        var s=document.getElementById('statsFilterSession').value;
+        var ac=document.getElementById('statsFilterCounsellor').value;
+        var r=document.getElementById('statsFilterReferral').value;
+        if(c) p.set('campaign',c); if(s) p.set('session',s); if(ac) p.set('counsellor',ac); if(r) p.set('referral_category',r);
+        fetch('/inquiries/stats?'+p.toString())
+            .then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); })
+            .then(data=>{ if(seq!==_seq) return; renderStats(data); grid.style.opacity='1'; grid.style.pointerEvents=''; })
+            .catch(err=>{ if(seq!==_seq) return; grid.innerHTML='<p style="color:#f87171;font-size:13px;">Failed to load stats.</p>'; grid.style.opacity='1'; grid.style.pointerEvents=''; });
     }
 
-    /* ── render ──────────────────────────────────────────────── */
     function renderStats(data) {
-        grid.innerHTML = '';
-        var allStats = (data.stats || []).slice();
-        allStats.push({ name: 'No Followup', color: '#475569', count: data.no_followup || 0 });
-        allStats.forEach(function (item) {
-            var card = document.createElement('div');
-            card.className = 'stats-card';
-            card.innerHTML =
-                '<span class="stats-card-count">' + item.count + '</span>' +
-                '<span class="stats-card-label">' +
-                    '<span class="stats-dot" style="background:' + (item.color || '#94a3b8') + ';"></span>' +
-                    escapeHtml(item.name) +
-                '</span>';
+        grid.innerHTML='';
+        var all=(data.stats||[]).slice();
+        all.push({name:'No Followup',color:'#475569',count:data.no_followup||0});
+        all.forEach(item=>{
+            var card=document.createElement('div'); card.className='stats-card';
+            card.innerHTML='<span class="stats-card-count">'+item.count+'</span><span class="stats-card-label"><span class="stats-dot" style="background:'+(item.color||'#94a3b8')+'"></span>'+esc(item.name)+'</span>';
             grid.appendChild(card);
         });
     }
-
-    function escapeHtml(str) {
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
-    }
+    function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 }());
 </script>
 

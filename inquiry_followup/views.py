@@ -628,3 +628,75 @@ def stationary_partner_inquiries(request, partner_id):
         'inquiries': inquiries,
         'partner': partner
     })
+
+
+import re as _re
+
+def bulk_assign_campaign(request):
+    campaigns = Campaign.objects.filter(is_active=True).order_by('-created_at')
+
+    if request.method == 'POST':
+        raw_phones   = request.POST.get('phones', '')
+        campaign_id  = request.POST.get('campaign', '')
+        overwrite    = request.POST.get('overwrite') == '1'
+
+        campaign = Campaign.objects.filter(id=campaign_id).first()
+        if not campaign:
+            messages.error(request, "Please select a valid campaign.")
+            return render(request, 'inquiry_followup/bulk_assign_campaign.html', {
+                'campaigns': campaigns,
+                'raw_phones': raw_phones,
+            })
+
+        # Normalise each token: strip country code (+91 / 91), spaces, dashes, dots
+        def normalise(token):
+            digits = _re.sub(r'\D', '', token)
+            if digits.startswith('91') and len(digits) == 12:
+                digits = digits[2:]
+            return digits
+
+        tokens = [t.strip() for t in _re.split(r'[\s,;]+', raw_phones) if t.strip()]
+        phone_list = [normalise(t) for t in tokens if normalise(t)]
+        # Drop empty / too-short entries
+        phone_list = [p for p in phone_list if len(p) >= 8]
+
+        if not phone_list:
+            messages.error(request, "No valid phone numbers found.")
+            return render(request, 'inquiry_followup/bulk_assign_campaign.html', {
+                'campaigns': campaigns,
+                'raw_phones': raw_phones,
+            })
+
+        matched      = Inquiry.objects.filter(phone__in=phone_list)
+        matched_dict = {inq.phone: inq for inq in matched}
+
+        assigned  = []
+        skipped   = []
+        not_found = []
+
+        for phone in phone_list:
+            inq = matched_dict.get(phone)
+            if inq is None:
+                not_found.append(phone)
+                continue
+            if inq.campaign_id and not overwrite:
+                skipped.append({'phone': phone, 'name': inq.student_name, 'existing': inq.campaign.name})
+            else:
+                inq.campaign = campaign
+                inq.save(update_fields=['campaign'])
+                assigned.append({'phone': phone, 'name': inq.student_name})
+
+        return render(request, 'inquiry_followup/bulk_assign_campaign.html', {
+            'campaigns':   campaigns,
+            'raw_phones':  raw_phones,
+            'done':        True,
+            'campaign':    campaign,
+            'overwrite':   overwrite,
+            'assigned':    assigned,
+            'skipped':     skipped,
+            'not_found':   not_found,
+        })
+
+    return render(request, 'inquiry_followup/bulk_assign_campaign.html', {
+        'campaigns': campaigns,
+    })
