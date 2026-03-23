@@ -55,7 +55,7 @@ import urllib.parse
 # To add a new session year, add a new top-level key — no other changes needed.
 # ---------------------------------------------------------------------------
 WHATSAPP_GROUPS_BY_SESSION = {
-    "2026-27": {
+    "2025-26": {
         "7":           {"student": "https://chat.whatsapp.com/CODPG4w7eFX43VQpOi6BnD",  "parent": "https://chat.whatsapp.com/Hi0U7fSFFwbGNlfinyCZII"},
         "8":           {"student": "https://chat.whatsapp.com/H2xTY2qpUOb5EXut75iNwV",  "parent": "https://chat.whatsapp.com/CGsBhqddvtI5BNKwzXm2wC"},
         "9":           {"student": "https://chat.whatsapp.com/BasrRWXoC3x88lyXrvctEU",  "parent": "https://chat.whatsapp.com/IOj2m12EWZI3fp9rEjF01x"},
@@ -66,6 +66,20 @@ WHATSAPP_GROUPS_BY_SESSION = {
         "12_COMMERCE": {"student": "https://chat.whatsapp.com/Esgz3orRZuLEkyQB9iJ3Va",  "parent": "https://chat.whatsapp.com/ByZk2Dnu0el5WGanR4SZcB"},
         "transport_erikshaw": "https://chat.whatsapp.com/Hea0v2pn5NzDdZdzCeE4mL",
         "transport_cab":      "https://chat.whatsapp.com/IvSYxCyANmFL7QjzuHljGF",
+    },
+    "2026-27": {
+        "7":           {"student": "https://chat.whatsapp.com/IomV8NKGi0y8sQ0OrD59vt?mode=gi_t",   "parent": "https://chat.whatsapp.com/IjhyMSJfznRAXnTgKND7HM?mode=gi_t"},
+        "8":           {"student": "https://chat.whatsapp.com/HUDhwwcYkjE87Ek5Up4Y8d?mode=gi_t",   "parent": "https://chat.whatsapp.com/Ba4qCVtCULc3nBfBV3KqP3?mode=hq2tswa"},
+        "9":           {"student": "https://chat.whatsapp.com/KtBXuQp4rJCBWWAJg0ShoH?mode=gi_t",   "parent": "https://chat.whatsapp.com/LN9gcsbnwMX0lUsfrd1fiZ?mode=hq1tswa"},
+        "10":          {"student": "https://chat.whatsapp.com/F0e2a1UQwT49csasXC9dvU?mode=gi_t",   "parent": "https://chat.whatsapp.com/KgnLxNHN7yJLHau0g0r5a6?mode=gi_t"},
+        "11_PCM":      {"student": "https://chat.whatsapp.com/CHt2Si0Km64FUsqTieDgcK",             "parent": "https://chat.whatsapp.com/GRdaHUZvU5QLboP1sFQdn2"},
+        "11_JEE":      {"student": "https://chat.whatsapp.com/LoO00b6uLKt3hgFbUkqbuf",             "parent": "https://chat.whatsapp.com/GEpIH67T40z20f9u2fCSk0"},
+        "11_COMMERCE": {"student": "https://chat.whatsapp.com/HkTMfyU4N0N55M87ZZ3w37",             "parent": "https://chat.whatsapp.com/DBTC3d3XH4q3PZua6xuz75"},
+        "12_PCM":      {"student": "https://chat.whatsapp.com/GAM7KeiYBr9I8bX7nO6Nd5",             "parent": "https://chat.whatsapp.com/FXSqbsVtsYqLo2n1uoAzqF"},
+        "12_JEE":      {"student": "https://chat.whatsapp.com/D5MA2Wniv2i0Y4Px6fpUjg",             "parent": "https://chat.whatsapp.com/BkXMv6jqU1XIVV3go6a3HR"},
+        "12_COMMERCE": {"student": "https://chat.whatsapp.com/JrridViL9Xq2KY2BtSOqc0",             "parent": "https://chat.whatsapp.com/LpOAMsHSYpYCipZ7Vt6Edk"},
+        "transport_erikshaw": "https://chat.whatsapp.com/Hea0v2pn5NzDdZdzCeE4mL?mode=gi_t",
+        "transport_cab":      "https://chat.whatsapp.com/IvSYxCyANmFL7QjzuHljGF?mode=gi_t",
     },
 }
 
