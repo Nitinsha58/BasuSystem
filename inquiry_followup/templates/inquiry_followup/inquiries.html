@@ -126,70 +126,156 @@
         flex-shrink: 0;
     }
 
-    /* Filters */
-    .iq-filters {
-        display: flex;
+    /* Filters trigger button */
+    .iq-filter-btn {
+        display: inline-flex;
         align-items: center;
         gap: 6px;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        scrollbar-width: none;
-        flex: 1;
+        padding: 5px 12px;
+        border: 1.5px solid var(--border-mid);
+        border-radius: var(--radius-sm);
+        background: var(--surface-3);
+        color: var(--text-2);
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+        font-family: var(--font);
+        transition: border-color .15s, background .15s, color .15s;
+        flex-shrink: 0;
+    }
+    .iq-filter-btn:hover, .iq-filter-btn.is-active {
+        border-color: var(--brand);
+        background: var(--brand-dim);
+        color: var(--brand);
+    }
+    .iq-filter-btn-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+        border-radius: 99px;
+        background: var(--brand);
+        color: #fff;
+        font-size: 10px;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    /* Filter panel */
+    .iq-filter-panel {
+        position: fixed;
+        left: 0;
+        right: 0;
+        z-index: 300;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        box-shadow: 0 8px 32px rgba(10,15,30,.14);
+        display: none;
+    }
+    .iq-filter-panel.is-open { display: block; }
+    .fp-inner {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 14px 20px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+    .fp-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        align-items: flex-start;
+    }
+    .fp-section {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
         min-width: 0;
     }
-    .iq-filters::-webkit-scrollbar { display: none; }
-
-    .filter-select {
-        padding: 5px 24px 5px 8px;
-        border: 1px solid var(--border-mid);
+    .fp-section-label {
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        color: var(--text-3);
+    }
+    .fp-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        align-items: center;
+    }
+    /* Chip radios */
+    .fp-chip { position: relative; cursor: pointer; }
+    .fp-chip input[type="radio"] { display: none; }
+    .fp-chip span {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 11px;
+        border: 1.5px solid var(--border-mid);
+        border-radius: 20px;
+        background: var(--surface-3);
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-2);
+        font-family: var(--font);
+        transition: .12s;
+        white-space: nowrap;
+        line-height: 1.4;
+    }
+    .fp-chip input[type="radio"]:checked + span {
+        border-color: var(--brand);
+        background: var(--brand-dim);
+        color: var(--brand);
+    }
+    /* Quality variants */
+    .fp-chip-hot  input[type="radio"]:checked + span { border-color:#dc2626; background:#fee2e2; color:#dc2626; }
+    .fp-chip-warm input[type="radio"]:checked + span { border-color:#d97706; background:#fef3c7; color:#d97706; }
+    .fp-chip-cold input[type="radio"]:checked + span { border-color:#0284c7; background:#e0f2fe; color:#0284c7; }
+    /* Origin variants */
+    .fp-chip-walkin   input[type="radio"]:checked + span { border-color:#7c3aed; background:#ede9fe; color:#7c3aed; }
+    .fp-chip-organic  input[type="radio"]:checked + span { border-color:#059669; background:#d1fae5; color:#059669; }
+    .fp-chip-campaign input[type="radio"]:checked + span { border-color:#0284c7; background:#e0f2fe; color:#0284c7; }
+    /* Type variants */
+    .fp-chip-verified input[type="radio"]:checked + span { border-color:#059669; background:#d1fae5; color:#059669; }
+    .fp-chip-fake     input[type="radio"]:checked + span { border-color:#dc2626; background:#fee2e2; color:#dc2626; }
+    /* Panel selects */
+    .fp-select {
+        padding: 5px 24px 5px 9px;
+        border: 1.5px solid var(--border-mid);
         border-radius: var(--radius-sm);
         font-size: 12px;
-        font-weight: 500;
+        font-weight: 600;
         background: var(--surface-3) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E") no-repeat right 7px center / 8px;
         color: var(--text-2);
         cursor: pointer;
         appearance: none;
         -webkit-appearance: none;
-        white-space: nowrap;
+        font-family: var(--font);
         transition: border-color .15s;
-        font-family: var(--font);
-        flex-shrink: 0;
+        min-width: 140px;
     }
-    .filter-select:focus {
-        outline: none;
-        border-color: var(--brand);
-        background-color: #fff;
-    }
-    .filter-select.is-active {
-        border-color: var(--brand);
-        background-color: var(--brand-dim);
-        color: var(--brand);
-        font-weight: 600;
-    }
-
-    .iq-clear-btn {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        padding: 5px 9px;
-        border: 1px solid var(--border-mid);
-        border-radius: var(--radius-sm);
-        background: var(--surface);
-        color: var(--text-2);
+    .fp-select:focus { outline: none; border-color: var(--brand); }
+    .fp-select.is-active { border-color: var(--brand); background-color: var(--brand-dim); color: var(--brand); }
+    .fp-divider { border: none; border-top: 1px solid var(--border); margin: 0; }
+    .fp-footer { display: flex; align-items: center; justify-content: flex-end; padding-top: 2px; }
+    .fp-clear-link {
         font-size: 12px;
-        font-weight: 500;
+        font-weight: 600;
+        color: var(--text-3);
         text-decoration: none;
-        cursor: pointer;
-        white-space: nowrap;
-        flex-shrink: 0;
-        transition: background .15s, border-color .15s, color .15s;
-        font-family: var(--font);
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 8px;
+        border-radius: var(--radius-sm);
+        transition: color .15s, background .15s;
     }
-    .iq-clear-btn:hover {
-        background: #fff0f0;
-        border-color: #fca5a5;
-        color: #dc2626;
-    }
+    .fp-clear-link:hover { color: #dc2626; background: #fef2f2; }
 
     /* CTA Buttons */
     .iq-topbar-actions {
@@ -490,6 +576,27 @@
         white-space: nowrap;
     }
     .iq-count-num { font-size: 14px; font-weight: 800; letter-spacing: -.02em; }
+    .iq-my-board-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        flex-shrink: 0;
+        border-radius: var(--radius-sm);
+        padding: 5px 11px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        text-decoration: none;
+        border: 1.5px solid var(--border-mid);
+        background: var(--surface-3);
+        color: var(--text-2);
+        white-space: nowrap;
+        font-family: var(--font);
+        transition: border-color .15s, background .15s, color .15s;
+    }
+    .iq-my-board-btn:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-dim); text-decoration: none; }
+    .iq-my-board-btn.is-active { background: var(--brand); color: #fff; border-color: var(--brand); }
+    .iq-my-board-btn.is-active:hover { background: #2d2080; border-color: #2d2080; }
 </style>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -520,80 +627,37 @@
 
         <div class="iq-bar-divider"></div>
 
-        <!-- Filters -->
-        <div class="iq-filters">
-            {% if campaigns %}
-            <select name="campaign" class="filter-select {% if active_filters.campaign %}is-active{% endif %}" onchange="applyFilters()">
-                <option value="">Campaign</option>
-                {% for c in campaigns %}
-                <option value="{{ c.id }}" {% if active_filters.campaign == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
-                {% endfor %}
-            </select>
-            {% endif %}
-
-            <select name="status" class="filter-select {% if active_filters.status %}is-active{% endif %}" onchange="applyFilters()">
-                <option value="">Status</option>
-                <option value="none" {% if active_filters.status == "none" %}selected{% endif %}>— None</option>
-                {% for st in filter_statuses %}
-                <option value="{{ st.id }}" {% if active_filters.status == st.id|stringformat:"s" %}selected{% endif %}>{{ st.name }}</option>
-                {% endfor %}
-            </select>
-
-            <select name="lead_quality" class="filter-select {% if active_filters.lead_quality %}is-active{% endif %}" onchange="applyFilters()">
-                <option value="">Quality</option>
-                <option value="hot"  {% if active_filters.lead_quality == "hot"  %}selected{% endif %}>🔥 Hot</option>
-                <option value="warm" {% if active_filters.lead_quality == "warm" %}selected{% endif %}>🌤 Warm</option>
-                <option value="cold" {% if active_filters.lead_quality == "cold" %}selected{% endif %}>❄️ Cold</option>
-            </select>
-
-            <select name="lead_type" class="filter-select {% if active_filters.lead_type %}is-active{% endif %}" onchange="applyFilters()">
-                <option value="">Type</option>
-                <option value="Unverified" {% if active_filters.lead_type == "Unverified" %}selected{% endif %}>Unverified</option>
-                <option value="Verified"   {% if active_filters.lead_type == "Verified"   %}selected{% endif %}>Verified</option>
-                <option value="Fake"       {% if active_filters.lead_type == "Fake"       %}selected{% endif %}>Fake</option>
-            </select>
-
-            <select name="origin" class="filter-select {% if active_filters.origin %}is-active{% endif %}" onchange="applyFilters()">
-                <option value="">Origin</option>
-                <option value="walk_in"      {% if active_filters.origin == "walk_in"      %}selected{% endif %}>Walk-In</option>
-                <option value="organic_call" {% if active_filters.origin == "organic_call" %}selected{% endif %}>Organic Call</option>
-                <option value="campaign"     {% if active_filters.origin == "campaign"     %}selected{% endif %}>Campaign</option>
-            </select>
-
-            <select name="session" class="filter-select {% if active_filters.session %}is-active{% endif %}" onchange="applyFilters()">
-                <option value="">Session</option>
-                {% for sess in filter_sessions %}
-                <option value="{{ sess.id }}" {% if active_filters.session == sess.id|stringformat:"s" %}selected{% endif %}>{{ sess.name }}</option>
-                {% endfor %}
-            </select>
-
-            <select name="class_name" class="filter-select {% if active_filters.class_name %}is-active{% endif %}" onchange="applyFilters()">
-                <option value="">Class</option>
-                {% for cls in filter_classes %}
-                <option value="{{ cls.id }}" {% if active_filters.class_name == cls.id|stringformat:"s" %}selected{% endif %}>{{ cls.name }}</option>
-                {% endfor %}
-            </select>
-
-            <select name="counsellor" class="filter-select {% if active_filters.counsellor %}is-active{% endif %}" onchange="applyFilters()">
-                <option value="">Counsellor</option>
-                {% for ac in filter_counsellors %}
-                <option value="{{ ac.id }}" {% if active_filters.counsellor == ac.id|stringformat:"s" %}selected{% endif %}>{{ ac.user.first_name }} {{ ac.user.last_name }}</option>
-                {% endfor %}
-            </select>
-
-            {% if active_filters.status or active_filters.lead_quality or active_filters.lead_type or active_filters.session or active_filters.class_name or active_filters.counsellor or active_filters.campaign or active_filters.origin %}
-            <a href="?year={{ current_month.year }}&month={{ current_month.month }}" class="iq-clear-btn">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                Clear
-            </a>
-            {% endif %}
-        </div>
+        <!-- Filters button -->
+        <button type="button"
+                class="iq-filter-btn {% if active_filter_count %}is-active{% endif %}"
+                id="filter-panel-toggle">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
+            </svg>
+            Filters
+            {% if active_filter_count %}<span class="iq-filter-btn-badge">{{ active_filter_count }}</span>{% endif %}
+        </button>
 
         <!-- Count badge -->
         <span class="iq-count-badge" id="iq-count-badge" title="Total inquiries matching current filters">
             <span class="iq-count-num" id="iq-count-num">—</span>
             inquiries
         </span>
+
+        {% if my_counsellor_id %}
+        <!-- My Board chip -->
+        {% if active_filters.my_board %}
+        <a href="?year={{ current_month.year }}&month={{ current_month.month }}" class="iq-my-board-btn is-active" title="Showing your inquiries — click to clear">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            My Board
+        </a>
+        {% else %}
+        <a href="javascript:void(0)" class="iq-my-board-btn" id="my-board-btn" title="Show only your assigned inquiries">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            My Board
+        </a>
+        {% endif %}
+        {% endif %}
 
         <!-- Actions -->
         <div class="iq-topbar-actions">
@@ -609,6 +673,128 @@
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
                 Stats
             </button>
+        </div>
+    </div>
+
+    <!-- ── Filter Panel (position:fixed — escapes iq-shell overflow:hidden) ── -->
+    <div class="iq-filter-panel" id="iq-filter-panel">
+        <div class="fp-inner">
+
+            <!-- Row 1: chip radios -->
+            <div class="fp-row">
+
+                <div class="fp-section">
+                    <div class="fp-section-label">Type</div>
+                    <div class="fp-chips">
+                        <label class="fp-chip"><input type="radio" name="lead_type" value="" onchange="applyFilters()" {% if not active_filters.lead_type %}checked{% endif %}><span>All</span></label>
+                        <label class="fp-chip"><input type="radio" name="lead_type" value="Unverified" onchange="applyFilters()" {% if active_filters.lead_type == 'Unverified' %}checked{% endif %}><span>Unverified</span></label>
+                        <label class="fp-chip fp-chip-verified"><input type="radio" name="lead_type" value="Verified" onchange="applyFilters()" {% if active_filters.lead_type == 'Verified' %}checked{% endif %}><span>Verified</span></label>
+                        <label class="fp-chip fp-chip-fake"><input type="radio" name="lead_type" value="Fake" onchange="applyFilters()" {% if active_filters.lead_type == 'Fake' %}checked{% endif %}><span>Fake</span></label>
+                    </div>
+                </div>
+
+                <div class="fp-section">
+                    <div class="fp-section-label">Quality</div>
+                    <div class="fp-chips">
+                        <label class="fp-chip"><input type="radio" name="lead_quality" value="" onchange="applyFilters()" {% if not active_filters.lead_quality %}checked{% endif %}><span>All</span></label>
+                        <label class="fp-chip fp-chip-hot"><input type="radio" name="lead_quality" value="hot" onchange="applyFilters()" {% if active_filters.lead_quality == 'hot' %}checked{% endif %}><span>🔥 Hot</span></label>
+                        <label class="fp-chip fp-chip-warm"><input type="radio" name="lead_quality" value="warm" onchange="applyFilters()" {% if active_filters.lead_quality == 'warm' %}checked{% endif %}><span>🌤 Warm</span></label>
+                        <label class="fp-chip fp-chip-cold"><input type="radio" name="lead_quality" value="cold" onchange="applyFilters()" {% if active_filters.lead_quality == 'cold' %}checked{% endif %}><span>❄️ Cold</span></label>
+                    </div>
+                </div>
+
+                <div class="fp-section">
+                    <div class="fp-section-label">Origin</div>
+                    <div class="fp-chips">
+                        <label class="fp-chip"><input type="radio" name="origin" value="" onchange="applyFilters()" {% if not active_filters.origin %}checked{% endif %}><span>All</span></label>
+                        <label class="fp-chip fp-chip-walkin"><input type="radio" name="origin" value="walk_in" onchange="applyFilters()" {% if active_filters.origin == 'walk_in' %}checked{% endif %}><span>Walk-In</span></label>
+                        <label class="fp-chip fp-chip-organic"><input type="radio" name="origin" value="organic_call" onchange="applyFilters()" {% if active_filters.origin == 'organic_call' %}checked{% endif %}><span>Organic</span></label>
+                        <label class="fp-chip fp-chip-campaign"><input type="radio" name="origin" value="campaign" onchange="applyFilters()" {% if active_filters.origin == 'campaign' %}checked{% endif %}><span>Campaign</span></label>
+                    </div>
+                </div>
+
+                <div class="fp-section">
+                    <div class="fp-section-label">Status</div>
+                    <div class="fp-chips">
+                        <label class="fp-chip"><input type="radio" name="status" value="" onchange="applyFilters()" {% if not active_filters.status %}checked{% endif %}><span>All</span></label>
+                        <label class="fp-chip"><input type="radio" name="status" value="none" onchange="applyFilters()" {% if active_filters.status == 'none' %}checked{% endif %}><span>None</span></label>
+                        {% for st in filter_statuses %}
+                        <label class="fp-chip"><input type="radio" name="status" value="{{ st.id }}" onchange="applyFilters()" {% if active_filters.status == st.id|stringformat:'s' %}checked{% endif %}><span>{{ st.name }}</span></label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="fp-section">
+                    <div class="fp-section-label">Session</div>
+                    <div class="fp-chips">
+                        <label class="fp-chip"><input type="radio" name="session" value="" onchange="applyFilters()" {% if not active_filters.session %}checked{% endif %}><span>All</span></label>
+                        {% for sess in filter_sessions %}
+                        <label class="fp-chip"><input type="radio" name="session" value="{{ sess.id }}" onchange="applyFilters()" {% if active_filters.session == sess.id|stringformat:'s' %}checked{% endif %}><span>{{ sess.name }}</span></label>
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </div>
+
+            <hr class="fp-divider">
+
+            <!-- Row 2: dropdown selects -->
+            <div class="fp-row">
+
+                {% if campaigns %}
+                <div class="fp-section">
+                    <div class="fp-section-label">Campaign</div>
+                    <select name="campaign" class="fp-select {% if active_filters.campaign %}is-active{% endif %}" onchange="applyFilters()">
+                        <option value="">All Campaigns</option>
+                        {% for c in campaigns %}<option value="{{ c.id }}" {% if active_filters.campaign == c.id|stringformat:'s' %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+
+                <div class="fp-section">
+                    <div class="fp-section-label">Class</div>
+                    <select name="class_name" class="fp-select {% if active_filters.class_name %}is-active{% endif %}" onchange="applyFilters()">
+                        <option value="">All Classes</option>
+                        {% for cls in filter_classes %}<option value="{{ cls.id }}" {% if active_filters.class_name == cls.id|stringformat:'s' %}selected{% endif %}>{{ cls.name }}</option>{% endfor %}
+                    </select>
+                </div>
+
+                <div class="fp-section">
+                    <div class="fp-section-label">Counsellor</div>
+                    <select name="counsellor" class="fp-select {% if active_filters.counsellor %}is-active{% endif %}" onchange="applyFilters()">
+                        <option value="">All Counsellors</option>
+                        {% for ac in filter_counsellors %}<option value="{{ ac.id }}" {% if active_filters.counsellor == ac.id|stringformat:'s' %}selected{% endif %}>{{ ac.user.first_name }} {{ ac.user.last_name }}</option>{% endfor %}
+                    </select>
+                </div>
+
+                <div class="fp-section">
+                    <div class="fp-section-label">Sales Person</div>
+                    <select name="sales_person" class="fp-select {% if active_filters.sales_person %}is-active{% endif %}" onchange="applyFilters()">
+                        <option value="">All Sales</option>
+                        {% for sp in filter_sales_persons %}<option value="{{ sp.id }}" {% if active_filters.sales_person == sp.id|stringformat:'s' %}selected{% endif %}>{{ sp.name }}</option>{% endfor %}
+                    </select>
+                </div>
+
+                <div class="fp-section">
+                    <div class="fp-section-label">Caller</div>
+                    <select name="caller" class="fp-select {% if active_filters.caller %}is-active{% endif %}" onchange="applyFilters()">
+                        <option value="">All Callers</option>
+                        {% for ac in filter_callers %}<option value="{{ ac.id }}" {% if active_filters.caller == ac.id|stringformat:'s' %}selected{% endif %}>{{ ac.user.first_name }} {{ ac.user.last_name }}</option>{% endfor %}
+                    </select>
+                </div>
+
+            </div>
+
+            {% if active_filter_count %}
+            <hr class="fp-divider">
+            <div class="fp-footer">
+                <a href="?year={{ current_month.year }}&month={{ current_month.month }}" class="fp-clear-link">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    Clear all filters
+                </a>
+            </div>
+            {% endif %}
+
         </div>
     </div>
 
@@ -719,8 +905,8 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById('iq-count-num').textContent =
         document.querySelectorAll('.iq-card').length;
 
-    // Active filter highlight
-    document.querySelectorAll('.filter-select').forEach(sel => {
+    // Active filter highlight (panel selects)
+    document.querySelectorAll('.fp-select').forEach(sel => {
         sel.addEventListener('change', () => {
             sel.classList.toggle('is-active', !!sel.value);
         });
@@ -740,12 +926,64 @@ document.addEventListener("DOMContentLoaded", function () {
 
 function applyFilters() {
     const params = new URLSearchParams(window.location.search);
-    document.querySelectorAll('.filter-select').forEach(sel => {
-        if (sel.value) params.set(sel.name, sel.value);
-        else params.delete(sel.name);
+    const panel  = document.getElementById('iq-filter-panel');
+
+    // Clear all radio param names first, then set checked values
+    const radioNames = new Set();
+    panel.querySelectorAll('input[type=radio][name]').forEach(r => radioNames.add(r.name));
+    radioNames.forEach(name => params.delete(name));
+    panel.querySelectorAll('input[type=radio][name]:checked').forEach(r => {
+        if (r.value) params.set(r.name, r.value);
     });
+
+    // Selects
+    panel.querySelectorAll('select[name]').forEach(sel => {
+        if (sel.value) params.set(sel.name, sel.value);
+        else           params.delete(sel.name);
+    });
+
     window.location.search = params.toString();
 }
+
+// Filter panel toggle
+(function () {
+    const btn   = document.getElementById('filter-panel-toggle');
+    const panel = document.getElementById('iq-filter-panel');
+    if (!btn || !panel) return;
+
+    function openPanel() {
+        const rect = document.querySelector('.iq-topbar').getBoundingClientRect();
+        panel.style.top = rect.bottom + 'px';
+        panel.classList.add('is-open');
+    }
+    function closePanel() {
+        panel.classList.remove('is-open');
+    }
+
+    btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        panel.classList.contains('is-open') ? closePanel() : openPanel();
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!panel.contains(e.target) && !btn.contains(e.target)) closePanel();
+    });
+}());
+
+{% if my_counsellor_id %}
+const myBoardBtn = document.getElementById('my-board-btn');
+if (myBoardBtn) {
+    myBoardBtn.addEventListener('click', function() {
+        const params = new URLSearchParams(window.location.search);
+        params.set('my_board', '1');
+        // Clear member-specific filters when My Board activates to avoid double-filtering
+        params.delete('counsellor');
+        params.delete('caller');
+        params.delete('sales_person');
+        window.location.search = params.toString();
+    });
+}
+{% endif %}
 </script>
 
 <script>
