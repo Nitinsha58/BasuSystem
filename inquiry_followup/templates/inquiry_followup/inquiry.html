@@ -619,9 +619,9 @@ body { font-family: var(--font); }
     color: var(--brand);
 }
 
-/* ── Page two-column layout ────────────────────────────── */
+/* ── Page three-column layout ────────────────────────────── */
 .iq-page-wrap {
-    max-width: 1280px;
+    max-width: 1600px;
     margin: 0 auto;
 }
 .iq-layout {
@@ -634,15 +634,210 @@ body { font-family: var(--font); }
     min-width: 0;
 }
 .iq-sidebar {
-    width: 230px;
+    width: 220px;
     flex-shrink: 0;
     position: sticky;
     top: 14px;
 }
+@media(max-width:1100px) {
+    .iq-lsidebar { width: 100%; position: static; max-height: none; }
+    .iq-layout { flex-wrap: wrap; }
+    .iq-main { order: 0; flex: 1 1 100%; }
+    .iq-lsidebar { order: 1; }
+}
 @media(max-width:900px) {
     .iq-layout { flex-direction: column; }
-    .iq-sidebar { width: 100%; position: static; }
+    .iq-sidebar, .iq-lsidebar { width: 100%; position: static; max-height: none; }
 }
+
+/* ── Left sidebar (student edit) ──────────────────────── */
+.iq-lsidebar {
+    width: 220px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 14px;
+    max-height: calc(100vh - 84px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-mid) transparent;
+}
+.iq-lsidebar::-webkit-scrollbar { width: 4px; }
+.iq-lsidebar::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 99px; }
+
+.lbar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+.lbar-section {
+    padding: 0 0 12px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+.lbar-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.lbar-section-header {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--text-3);
+    padding-bottom: 5px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2px;
+}
+.lbar-field { display: flex; flex-direction: column; gap: 3px; }
+.lbar-label {
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--text-3);
+}
+.lbar-input-wrap { position: relative; display: flex; align-items: center; }
+.lbar-input {
+    width: 100%;
+    border: 1px solid var(--border-mid);
+    border-radius: var(--radius-sm);
+    padding: 5px 26px 5px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-1);
+    background: var(--surface-2);
+    font-family: var(--font);
+    transition: border-color .15s, background .15s;
+}
+.lbar-input:focus { outline: none; border-color: var(--brand); background: #fff; }
+.lbar-input::placeholder { color: var(--text-3); font-weight: 500; }
+.lbar-select {
+    width: 100%;
+    appearance: none;
+    -webkit-appearance: none;
+    border: 1px solid var(--border-mid);
+    border-radius: var(--radius-sm);
+    padding: 5px 24px 5px 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-1);
+    background: var(--surface-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2364748b'/%3E%3C/svg%3E") no-repeat right 8px center;
+    background-size: 8px;
+    font-family: var(--font);
+    cursor: pointer;
+    transition: border-color .15s;
+}
+.lbar-select:focus { outline: none; border-color: var(--brand); }
+.lbar-readonly {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-2);
+    padding: 4px 2px;
+    min-height: 28px;
+    line-height: 1.4;
+}
+.saved-tick {
+    position: absolute;
+    right: 7px;
+    font-size: 10px;
+    font-weight: 800;
+    color: #059669;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s;
+    white-space: nowrap;
+}
+.saved-tick.show { opacity: 1; }
+
+/* Subject pill picker */
+.lbar-subj-wrap { position: relative; }
+.lbar-subj-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 5px 8px;
+    min-height: 32px;
+    border: 1px solid var(--border-mid);
+    border-radius: var(--radius-sm);
+    background: var(--surface-2);
+    cursor: pointer;
+    align-items: center;
+    transition: border-color .15s;
+}
+.lbar-subj-pills:hover, .lbar-subj-pills.active { border-color: var(--brand); }
+.lbar-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: var(--brand-dim);
+    color: var(--brand);
+    border: 1px solid rgba(57,41,148,0.2);
+    border-radius: 4px;
+    padding: 1px 5px 1px 7px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.5;
+}
+.lbar-pill-x {
+    border: none;
+    background: none;
+    color: var(--brand);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    opacity: .65;
+    font-family: var(--font);
+    display: flex;
+    align-items: center;
+}
+.lbar-pill-x:hover { opacity: 1; }
+.lbar-subj-placeholder { font-size: 12px; color: var(--text-3); font-weight: 500; }
+.lbar-subj-popover {
+    position: absolute;
+    z-index: 100;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border-mid);
+    border-radius: var(--radius-sm);
+    box-shadow: 0 4px 20px rgba(10,15,30,0.14);
+    padding: 4px 0;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+    scrollbar-width: thin;
+}
+.lbar-subj-popover.open { display: block; }
+.lbar-subj-check {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-1);
+    cursor: pointer;
+    transition: background .1s;
+}
+.lbar-subj-check:hover { background: var(--surface-2); }
+.lbar-subj-check input { margin: 0; cursor: pointer; accent-color: var(--brand); }
+.lbar-subj-saved {
+    font-size: 10px;
+    font-weight: 700;
+    color: #059669;
+    opacity: 0;
+    transition: opacity .2s;
+    margin-top: 2px;
+    display: block;
+}
+.lbar-subj-saved.show { opacity: 1; }
 
 /* ── Quick-update bar (vertical) ────────────────────────── */
 .qbar {
@@ -738,8 +933,8 @@ body { font-family: var(--font); }
 <div class="iq-detail-page">
 <div class="iq-page-wrap">
 
-    <!-- ══ UPDATE FORM ══════════════════════════════════════ -->
-    <form action="" id="update-inquiry-form" method="post" class="iq-update-form-wrap">
+    <!-- ══ UPDATE FORM (hidden, kept for POST fallback) ════════ -->
+    <form action="" id="update-inquiry-form" method="post" style="display:none;">
         {% csrf_token %}
         <div class="iq-form-header">
             <p class="iq-form-title">Update Inquiry</p>
@@ -913,8 +1108,163 @@ body { font-family: var(--font); }
         </div>
     </form>
 
-    <!-- ══ TWO-COLUMN LAYOUT ═════════════════════════════════ -->
+    <!-- ══ THREE-COLUMN LAYOUT ═══════════════════════════════ -->
     <div class="iq-layout">
+
+    <!-- ══ LEFT SIDEBAR — Student Edit ══════════════════════ -->
+    <aside class="iq-lsidebar">
+    <div class="lbar">
+
+        <!-- Student -->
+        <div class="lbar-section">
+            <div class="lbar-section-header">Student</div>
+
+            <div class="lbar-field">
+                <div class="lbar-label">Name</div>
+                <div class="lbar-input-wrap">
+                    <input type="text" class="lbar-input" id="lf-name" value="{{ inquiry.student_name }}" data-field="student_name" placeholder="Student name">
+                    <span class="saved-tick" id="tick-student_name">✓</span>
+                </div>
+            </div>
+
+            <div class="lbar-field">
+                <div class="lbar-label">Phone</div>
+                <div class="lbar-input-wrap">
+                    <input type="text" class="lbar-input" id="lf-phone" value="{{ inquiry.phone }}" data-field="phone" maxlength="15" placeholder="Phone">
+                    <span class="saved-tick" id="tick-phone">✓</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Academic -->
+        <div class="lbar-section">
+            <div class="lbar-section-header">Academic</div>
+
+            <div class="lbar-field">
+                <div class="lbar-label">Class</div>
+                <div class="lbar-input-wrap" style="position:relative;">
+                    <select class="lbar-select" id="lf-class" data-field="class_id">
+                        <option value="">— None —</option>
+                        {% for cls in classes %}
+                        <option value="{{ cls.id }}" {% if cls in inquiry.classes.all %}selected{% endif %}>{{ cls.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <span class="saved-tick" id="tick-class_id" style="right:22px;">✓</span>
+                </div>
+            </div>
+
+            <div class="lbar-field">
+                <div class="lbar-label">Subjects</div>
+                <div class="lbar-subj-wrap">
+                    <div class="lbar-subj-pills" id="lf-subj-pills">
+                        {% for subj in inquiry.subjects.all %}
+                        <span class="lbar-pill" data-id="{{ subj.id }}">{{ subj.name }}<button type="button" class="lbar-pill-x" data-id="{{ subj.id }}">×</button></span>
+                        {% empty %}
+                        <span class="lbar-subj-placeholder">— None —</span>
+                        {% endfor %}
+                    </div>
+                    <div class="lbar-subj-popover" id="lf-subj-popover">
+                        {% for subj in subjects %}
+                        <label class="lbar-subj-check">
+                            <input type="checkbox" value="{{ subj.id }}" {% if subj in inquiry.subjects.all %}checked{% endif %}>
+                            {{ subj.name }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <span class="lbar-subj-saved" id="tick-subject_ids">Saved ✓</span>
+            </div>
+
+            <div class="lbar-field">
+                <div class="lbar-label">School</div>
+                <div class="lbar-input-wrap">
+                    <input type="text" class="lbar-input" id="lf-school" value="{{ inquiry.school }}" data-field="school" placeholder="School name">
+                    <span class="saved-tick" id="tick-school">✓</span>
+                </div>
+            </div>
+
+            <div class="lbar-field">
+                <div class="lbar-label">Address</div>
+                <div class="lbar-input-wrap">
+                    <input type="text" class="lbar-input" id="lf-address" value="{{ inquiry.address }}" data-field="address" placeholder="Address">
+                    <span class="saved-tick" id="tick-address">✓</span>
+                </div>
+            </div>
+
+            <div class="lbar-field">
+                <div class="lbar-label">Session</div>
+                <div class="lbar-readonly">{{ inquiry.session.name|default:"—" }}</div>
+            </div>
+        </div>
+
+        <!-- Parent / Contact -->
+        <div class="lbar-section">
+            <div class="lbar-section-header">Parent / Contact</div>
+
+            <div class="lbar-field">
+                <div class="lbar-label">Parent Name</div>
+                <div class="lbar-input-wrap">
+                    <input type="text" class="lbar-input" id="lf-parent-name" value="{{ inquiry.parent_name }}" data-field="parent_name" placeholder="Parent name">
+                    <span class="saved-tick" id="tick-parent_name">✓</span>
+                </div>
+            </div>
+
+            <div class="lbar-field">
+                <div class="lbar-label">Parent Phone</div>
+                <div class="lbar-input-wrap">
+                    <input type="text" class="lbar-input" id="lf-parent-phone" value="{{ inquiry.parent_phone }}" data-field="parent_phone" maxlength="15" placeholder="Parent phone">
+                    <span class="saved-tick" id="tick-parent_phone">✓</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Source -->
+        <div class="lbar-section">
+            <div class="lbar-section-header">Source</div>
+
+            <div class="lbar-field">
+                <div class="lbar-label">Category</div>
+                <select class="lbar-select" id="lf-ref-category">
+                    <option value="">— Not Set —</option>
+                    <option value="digital"{% if inquiry.referral_source and inquiry.referral_source.category == 'digital' %} selected{% endif %}>Digital</option>
+                    <option value="offline"{% if inquiry.referral_source and inquiry.referral_source.category == 'offline' %} selected{% endif %}>Offline</option>
+                    <option value="representative"{% if inquiry.referral_source and inquiry.referral_source.category == 'representative' %} selected{% endif %}>Representative</option>
+                    <option value="word_of_mouth"{% if inquiry.referral_source and inquiry.referral_source.category == 'word_of_mouth' %} selected{% endif %}>Friends / Family</option>
+                </select>
+            </div>
+
+            <div class="lbar-field" id="lf-ref-src-wrap" {% if not inquiry.referral_source %}style="display:none;"{% endif %}>
+                <div class="lbar-label">Specific Source</div>
+                <div class="lbar-input-wrap" style="position:relative;">
+                    <select class="lbar-select" id="lf-ref-source" data-field="referral_source_id"
+                            data-current-id="{{ inquiry.referral_source_id|default:'' }}">
+                        <option value="">— Select —</option>
+                    </select>
+                    <span class="saved-tick" id="tick-referral_source_id">✓</span>
+                </div>
+            </div>
+
+            <div id="lf-ref-wom-fields" {% if not inquiry.referral_source or inquiry.referral_source.category != 'word_of_mouth' %}style="display:none;"{% endif %}>
+                <div class="lbar-field">
+                    <div class="lbar-label">Referrer Name</div>
+                    <div class="lbar-input-wrap">
+                        <input type="text" class="lbar-input" id="lf-referrer-name" value="{{ inquiry.referrer_name }}" data-field="referrer_name" placeholder="Referrer name">
+                        <span class="saved-tick" id="tick-referrer_name">✓</span>
+                    </div>
+                </div>
+                <div class="lbar-field" style="margin-top:7px;">
+                    <div class="lbar-label">Referrer Phone</div>
+                    <div class="lbar-input-wrap">
+                        <input type="text" class="lbar-input" id="lf-referrer-phone" value="{{ inquiry.referrer_phone }}" data-field="referrer_phone" maxlength="15" placeholder="Referrer phone">
+                        <span class="saved-tick" id="tick-referrer_phone">✓</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /lbar -->
+    </aside><!-- /iq-lsidebar -->
+
     <div class="iq-main">
 
     <!-- ══ HEADER ══════════════════════════════════════════ -->
@@ -935,11 +1285,8 @@ body { font-family: var(--font); }
             </div>
             <div class="iq-header-actions">
                 <div class="iq-header-btns">
-                    <button id="update-inquiry-button" class="iq-hbtn iq-hbtn-warn">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                        Update
-                    </button>
-                    <a href="{% url 'delete_inquiry' inquiry.id %}" class="iq-hbtn iq-hbtn-danger">
+                    <a href="{% url 'delete_inquiry' inquiry.id %}" class="iq-hbtn iq-hbtn-danger"
+                       onclick="return confirm('Delete this inquiry? This cannot be undone.')">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
                         Delete
                     </a>
@@ -1378,68 +1725,193 @@ document.addEventListener('DOMContentLoaded', function() {
         ta.addEventListener('input', resize);
     });
 
-    /* ── Update inquiry form toggle ── */
-    var updateBtn  = document.getElementById('update-inquiry-button');
-    var updateForm = document.getElementById('update-inquiry-form');
-    var cancelBtn  = document.getElementById('cancel-inquiry-button');
+    /* ── Left sidebar: PATCH on blur/change ── */
+    var PATCH_URL = "{% url 'patch_inquiry_field' inquiry.id %}";
+    var CSRF_TOKEN = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-    if (updateBtn) updateBtn.addEventListener('click', function() {
-        updateForm.classList.toggle('is-open');
-    });
-    if (cancelBtn) cancelBtn.addEventListener('click', function() {
-        updateForm.classList.remove('is-open');
-    });
+    function patchField(field, value, tickId, isSubj) {
+        fetch(PATCH_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': CSRF_TOKEN,
+            },
+            body: JSON.stringify({field: field, value: value}),
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.ok) {
+                if (isSubj) {
+                    var t = document.getElementById('tick-subject_ids');
+                    if (t) { t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); }, 1600); }
+                } else {
+                    var t = document.getElementById(tickId);
+                    if (t) { t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); }, 1600); }
+                }
+            }
+            return data;
+        })
+        .catch(function(err) { console.error('Patch error:', err); });
+    }
 
-    /* ── Referral two-step (matches create inquiry form) ── */
-    var builtSources = {};
-    {% for src in referral_sources %}
-    if (!builtSources["{{ src.category }}"]) builtSources["{{ src.category }}"] = [];
-    builtSources["{{ src.category }}"].push({ id: {{ src.id }}, name: "{{ src.name|escapejs }}" });
-    {% endfor %}
-
-    var catSelect  = document.getElementById('referral_category');
-    var srcWrapper = document.getElementById('referral-source-wrapper');
-    var srcSelect  = document.getElementById('referral_source');
-    var refFields  = document.getElementById('internal-referrer-fields');
-
-    function populateSources(cat, selectedId) {
-        var sources = builtSources[cat] || [];
-        srcSelect.innerHTML = '<option value="">— Select —</option>';
-        sources.forEach(function(s) {
-            var opt = document.createElement('option');
-            opt.value = s.id;
-            opt.textContent = s.name;
-            if (selectedId && s.id === selectedId) opt.selected = true;
-            srcSelect.appendChild(opt);
+    /* Text inputs: save on blur if changed */
+    document.querySelectorAll('.lbar-input[data-field]').forEach(function(input) {
+        var origVal = input.value;
+        input.addEventListener('focus', function() { origVal = input.value; });
+        input.addEventListener('blur', function() {
+            if (input.value !== origVal) {
+                patchField(input.dataset.field, input.value, 'tick-' + input.dataset.field, false);
+            }
         });
-        srcWrapper.style.display = sources.length ? '' : 'none';
+    });
+
+    /* Class select: save on change */
+    var classSelect = document.getElementById('lf-class');
+    if (classSelect) {
+        classSelect.addEventListener('change', function() {
+            patchField('class_id', classSelect.value, 'tick-class_id', false);
+        });
     }
 
-    function onCategoryChange() {
-        var cat = catSelect.value;
-        populateSources(cat, null);
-        if (cat === 'word_of_mouth') {
-            refFields.classList.remove('d-none');
-        } else {
-            refFields.classList.add('d-none');
-            document.getElementById('referrer_name').value = '';
-            document.getElementById('referrer_phone').value = '';
+    /* ── Two-step referral source ── */
+    (function() {
+        var builtSources = {};
+        {% for src in referral_sources %}
+        if (!builtSources["{{ src.category }}"]) builtSources["{{ src.category }}"] = [];
+        builtSources["{{ src.category }}"].push({ id: {{ src.id }}, name: "{{ src.name|escapejs }}" });
+        {% endfor %}
+
+        var catSel    = document.getElementById('lf-ref-category');
+        var srcWrap   = document.getElementById('lf-ref-src-wrap');
+        var srcSel    = document.getElementById('lf-ref-source');
+        var womFields = document.getElementById('lf-ref-wom-fields');
+        if (!catSel) return;
+
+        function populateSources(cat, selectedId) {
+            var sources = builtSources[cat] || [];
+            srcSel.innerHTML = '<option value="">\u2014 Select \u2014</option>';
+            sources.forEach(function(s) {
+                var opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.name;
+                if (selectedId && String(s.id) === String(selectedId)) opt.selected = true;
+                srcSel.appendChild(opt);
+            });
+            srcWrap.style.display = sources.length ? '' : 'none';
         }
-    }
 
-    if (catSelect && srcSelect && refFields) {
-        catSelect.addEventListener('change', onCategoryChange);
+        function onCategoryChange() {
+            var cat = catSel.value;
+            if (!cat) {
+                srcWrap.style.display = 'none';
+                womFields.style.display = 'none';
+                /* Clear the source on the server too */
+                patchField('referral_source_id', '', 'tick-referral_source_id', false);
+                return;
+            }
+            populateSources(cat, null);
+            /* Referrer fields visible only for word_of_mouth */
+            womFields.style.display = cat === 'word_of_mouth' ? '' : 'none';
+        }
+
+        catSel.addEventListener('change', onCategoryChange);
+
+        srcSel.addEventListener('change', function() {
+            var id = srcSel.value;
+            patchField('referral_source_id', id, 'tick-referral_source_id', false)
+            .then(function(data) {
+                if (data && !data.is_wom) {
+                    /* Clear referrer inputs visually */
+                    var rn = document.getElementById('lf-referrer-name');
+                    var rp = document.getElementById('lf-referrer-phone');
+                    if (rn) rn.value = '';
+                    if (rp) rp.value = '';
+                    womFields.style.display = 'none';
+                } else if (data && data.is_wom) {
+                    womFields.style.display = '';
+                }
+            });
+        });
+
+        /* Pre-populate on load */
         {% if inquiry.referral_source %}
-        /* Pre-populate from saved inquiry data */
         (function() {
-            catSelect.value = "{{ inquiry.referral_source.category }}";
-            populateSources("{{ inquiry.referral_source.category }}", {{ inquiry.referral_source.id }});
-            {% if inquiry.referral_source.category == 'word_of_mouth' %}
-            refFields.classList.remove('d-none');
-            {% endif %}
+            var cat = "{{ inquiry.referral_source.category }}";
+            populateSources(cat, {{ inquiry.referral_source_id }});
         })();
         {% endif %}
-    }
+    })();
+
+    /* Subject pill picker */
+    (function() {
+        var pillsWrap  = document.getElementById('lf-subj-pills');
+        var popover    = document.getElementById('lf-subj-popover');
+        if (!pillsWrap || !popover) return;
+
+        var checkboxes = popover.querySelectorAll('input[type=checkbox]');
+
+        function getSelectedIds() {
+            return Array.from(checkboxes).filter(function(c){ return c.checked; }).map(function(c){ return c.value; });
+        }
+
+        function getLabelForId(id) {
+            var cb = Array.from(checkboxes).find(function(c){ return c.value === id; });
+            if (!cb) return id;
+            return cb.closest('.lbar-subj-check').textContent.trim();
+        }
+
+        function rebuildPills() {
+            var selected = getSelectedIds();
+            pillsWrap.innerHTML = '';
+            if (selected.length === 0) {
+                pillsWrap.innerHTML = '<span class="lbar-subj-placeholder">— None —</span>';
+                return;
+            }
+            selected.forEach(function(id) {
+                var pill = document.createElement('span');
+                pill.className = 'lbar-pill';
+                pill.dataset.id = id;
+                var xBtn = document.createElement('button');
+                xBtn.type = 'button';
+                xBtn.className = 'lbar-pill-x';
+                xBtn.dataset.id = id;
+                xBtn.textContent = '×';
+                xBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var cb = Array.from(checkboxes).find(function(c){ return c.value === id; });
+                    if (cb) cb.checked = false;
+                    rebuildPills();
+                    patchField('subject_ids', getSelectedIds(), null, true);
+                });
+                pill.textContent = getLabelForId(id);
+                pill.appendChild(xBtn);
+                pillsWrap.appendChild(pill);
+            });
+        }
+
+        /* Open/close popover on pills click */
+        pillsWrap.addEventListener('click', function(e) {
+            if (e.target.classList.contains('lbar-pill-x')) return;
+            popover.classList.toggle('open');
+            pillsWrap.classList.toggle('active');
+        });
+
+        /* Save on checkbox change */
+        checkboxes.forEach(function(cb) {
+            cb.addEventListener('change', function() {
+                rebuildPills();
+                patchField('subject_ids', getSelectedIds(), null, true);
+            });
+        });
+
+        /* Close on outside click */
+        document.addEventListener('click', function(e) {
+            if (!pillsWrap.contains(e.target) && !popover.contains(e.target)) {
+                popover.classList.remove('open');
+                pillsWrap.classList.remove('active');
+            }
+        });
+    })();
 });
 </script>
 

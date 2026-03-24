@@ -475,6 +475,21 @@
         border: 1px solid #fde68a;
         white-space: nowrap;
     }
+    .iq-count-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        flex-shrink: 0;
+        background: var(--brand-dim);
+        color: var(--brand);
+        border: 1px solid rgba(57,41,148,0.18);
+        border-radius: var(--radius-sm);
+        padding: 4px 11px;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .iq-count-num { font-size: 14px; font-weight: 800; letter-spacing: -.02em; }
 </style>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -573,6 +588,12 @@
             </a>
             {% endif %}
         </div>
+
+        <!-- Count badge -->
+        <span class="iq-count-badge" id="iq-count-badge" title="Total inquiries matching current filters">
+            <span class="iq-count-num" id="iq-count-num">—</span>
+            inquiries
+        </span>
 
         <!-- Actions -->
         <div class="iq-topbar-actions">
@@ -693,6 +714,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const searchList  = document.getElementById("search-inquiries-list");
     searchInput.addEventListener("blur",  () => setTimeout(() => searchList.style.display = "none", 200));
     searchInput.addEventListener("focus", () => searchList.style.display = "block");
+
+    // Inquiry count badge
+    document.getElementById('iq-count-num').textContent =
+        document.querySelectorAll('.iq-card').length;
 
     // Active filter highlight
     document.querySelectorAll('.filter-select').forEach(sel => {

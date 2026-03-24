@@ -15,6 +15,7 @@ from .views import (
     bulk_assign_campaign,
     add_leads,
     quick_update_inquiry,
+    patch_inquiry_field,
 )
 
 urlpatterns = [
@@ -34,4 +35,5 @@ urlpatterns = [
     path('inquiries/bulk-assign-campaign', bulk_assign_campaign, name='bulk_assign_campaign'),
     path('inquiries/add-leads/', add_leads, name='add_leads'),
     path('inquiries/<int:inquiry_id>/quick-update/', quick_update_inquiry, name='quick_update_inquiry'),
+    path('inquiries/<int:inquiry_id>/patch-field/', patch_inquiry_field, name='patch_inquiry_field'),
 ]

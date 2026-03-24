@@ -13,7 +13,8 @@ from .session_selection import select_session_for_date
 
 from django.http import JsonResponse
 from urllib.parse import urlencode
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_POST
+import json
 
 
 from django.utils import timezone
@@ -302,6 +303,58 @@ def inquiry(request, inquiry_id):
         'sales_persons': sales_persons,
         'counsellors': counsellors,
     })
+
+@require_POST
+def patch_inquiry_field(request, inquiry_id):
+    """AJAX single-field patcher for the left sidebar. Returns JSON."""
+    inquiry_obj = Inquiry.objects.filter(id=inquiry_id).first()
+    if not inquiry_obj:
+        return JsonResponse({'error': 'Not found'}, status=404)
+
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    field = data.get('field')
+    value = data.get('value')
+
+    TEXT_FIELDS = {
+        'student_name', 'phone', 'school', 'address',
+        'parent_name', 'parent_phone', 'referrer_name', 'referrer_phone',
+    }
+
+    if field in TEXT_FIELDS:
+        setattr(inquiry_obj, field, (value or '').strip())
+        inquiry_obj.save(update_fields=[field])
+    elif field == 'referral_source_id':
+        source = ReferralSource.objects.filter(id=value).first() if value else None
+        inquiry_obj.referral_source = source
+        # Clear referrer fields if source is no longer word_of_mouth
+        if not source or source.category != 'word_of_mouth':
+            inquiry_obj.referrer_name = ''
+            inquiry_obj.referrer_phone = ''
+            inquiry_obj.save(update_fields=['referral_source', 'referrer_name', 'referrer_phone'])
+        else:
+            inquiry_obj.save(update_fields=['referral_source'])
+        # Return the new category so the frontend can show/hide referrer fields
+        return JsonResponse({'ok': True, 'category': source.category if source else '', 'is_wom': source.category == 'word_of_mouth' if source else False})
+    elif field == 'class_id':
+        if value:
+            cls = ClassName.objects.filter(id=value).first()
+            if not cls:
+                return JsonResponse({'error': 'Invalid class'}, status=400)
+            inquiry_obj.classes.set([cls])
+        else:
+            inquiry_obj.classes.clear()
+    elif field == 'subject_ids':
+        ids = value if isinstance(value, list) else []
+        inquiry_obj.subjects.set(ids)
+    else:
+        return JsonResponse({'error': 'Unknown field'}, status=400)
+
+    return JsonResponse({'ok': True})
+
 
 def quick_update_inquiry(request, inquiry_id):
     """Single-field quick updates: lead type, quality, campaign, origin, ownership."""
