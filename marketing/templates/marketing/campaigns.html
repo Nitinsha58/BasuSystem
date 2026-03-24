@@ -2,71 +2,132 @@
 {% load static %}
 
 {% block dashboard %}
-<div class="container-fluid py-3">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2 class="mb-0">Campaigns</h2>
-    <a href="{% url 'marketing:campaign_create' %}" class="btn btn-primary btn-sm">+ New Campaign</a>
-  </div>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --brand: #392994; --brand-dim: rgba(57,41,148,0.10);
+        --surface: #ffffff; --surface-2: #eef0f5; --surface-3: #e2e5ed;
+        --border: #d4d8e4; --border-mid: #bcc2d0;
+        --text-1: #0a0f1e; --text-2: #2d3748; --text-3: #64748b;
+        --font: 'DM Sans', system-ui, sans-serif;
+        --radius: 10px; --radius-sm: 6px;
+        --shadow: 0 1px 3px rgba(10,15,30,0.08), 0 3px 10px rgba(10,15,30,0.05);
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: var(--font); }
+    .pg-wrap { background: var(--surface-2); min-height: calc(100vh - 56px); padding: 20px 20px 40px; }
+    .pg-inner { max-width: 1060px; margin: 0 auto; }
+    .pg-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+    .pg-title { font-size: 22px; font-weight: 800; color: var(--text-1); letter-spacing: -.02em; margin: 0; }
+    .btn-brand { display: inline-flex; align-items: center; gap: 6px; background: var(--brand); color: #fff;
+        border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 700;
+        padding: 7px 15px; cursor: pointer; text-decoration: none; font-family: var(--font); transition: opacity .15s; }
+    .btn-brand:hover { opacity: .88; color: #fff; }
+    .inq-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+        box-shadow: var(--shadow); overflow: hidden; }
+    .inq-table { width: 100%; border-collapse: collapse; }
+    .inq-table thead th { font-size: 10px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
+        color: var(--text-3); padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--surface-2);
+        white-space: nowrap; }
+    .inq-table tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+    .inq-table tbody tr:last-child { border-bottom: none; }
+    .inq-table tbody tr:hover { background: var(--surface-2); }
+    .inq-table td { padding: 10px 14px; font-size: 13px; color: var(--text-2); vertical-align: middle; }
+    .inq-table td strong { color: var(--text-1); font-weight: 700; }
+    .cam-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 7px;
+        flex-shrink: 0; vertical-align: middle; }
+    .badge-pill { display: inline-flex; align-items: center; padding: 3px 10px;
+        border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .badge-active { background: #d1fae5; color: #065f46; }
+    .badge-inactive { background: var(--surface-3); color: var(--text-3); }
+    .badge-num { background: var(--brand-dim); color: var(--brand); }
+    .btn-sm-outline { display: inline-flex; align-items: center; padding: 4px 12px;
+        border: 1.5px solid var(--border-mid); border-radius: var(--radius-sm); font-size: 12px; font-weight: 600;
+        color: var(--text-2); text-decoration: none; font-family: var(--font); background: var(--surface);
+        transition: border-color .12s, background .12s; white-space: nowrap; }
+    .btn-sm-outline:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-dim); }
+    .empty-state { text-align: center; padding: 48px 20px; color: var(--text-3); }
+    .empty-state p { margin: 0 0 12px; font-size: 14px; }
+    .alert-bar { border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; margin-bottom: 14px;
+        border: 1px solid; }
+    .alert-bar.success { background: #d1fae5; border-color: #6ee7b7; color: #065f46; }
+    .alert-bar.error   { background: #fee2e2; border-color: #fca5a5; color: #991b1b; }
+    .alert-bar.warning { background: #fef3c7; border-color: #fcd34d; color: #92400e; }
+    .alert-bar.info    { background: #e0f2fe; border-color: #7dd3fc; color: #0369a1; }
+</style>
 
-  {% if messages %}
-    {% for message in messages %}
-    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-      {{ message }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+<div class="pg-wrap">
+<div class="pg-inner">
+
+    <div class="pg-topbar">
+        <h1 class="pg-title">Campaigns</h1>
+        <a href="{% url 'marketing:campaign_create' %}" class="btn-brand">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 1v10M1 6h10"/></svg>
+            New Campaign
+        </a>
     </div>
-    {% endfor %}
-  {% endif %}
 
-  {% if campaigns %}
-  <div class="table-responsive">
-    <table class="table table-hover table-bordered align-middle">
-      <thead class="table-dark">
-        <tr>
-          <th>Name</th>
-          <th>Channel</th>
-          <th>Session</th>
-          <th>Dates</th>
-          <th>UTM Source</th>
-          <th>Inquiries</th>
-          <th>Status</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for c in campaigns %}
-        <tr>
-          <td>
-            <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:{{ c.color }};margin-right:6px;vertical-align:middle;"></span>
-            <strong>{{ c.name }}</strong>
-          </td>
-          <td>{{ c.get_channel_display }}</td>
-          <td>{{ c.session.name|default:"—" }}</td>
-          <td>
-            {% if c.start_date %}{{ c.start_date|date:"d M Y" }}{% else %}—{% endif %}
-            {% if c.end_date %} → {{ c.end_date|date:"d M Y" }}{% endif %}
-          </td>
-          <td>{{ c.utm_source|default:"—" }}</td>
-          <td class="text-center"><span class="badge bg-secondary">{{ c.inquiry_count }}</span></td>
-          <td>
-            {% if c.is_active %}
-            <span class="badge bg-success">Active</span>
-            {% else %}
-            <span class="badge bg-secondary">Inactive</span>
-            {% endif %}
-          </td>
-          <td>
-            <a href="{% url 'marketing:campaign_detail' c.id %}" class="btn btn-sm btn-outline-primary">Manage</a>
-            <a href="{% url 'marketing:campaign_edit' c.id %}" class="btn btn-sm btn-outline-secondary">Edit</a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% else %}
-  <div class="text-center py-5 text-muted">
-    <p>No campaigns yet. <a href="{% url 'marketing:campaign_create' %}">Create your first campaign</a>.</p>
-  </div>
-  {% endif %}
+    {% if messages %}
+      {% for message in messages %}
+      <div class="alert-bar {% if 'success' in message.tags %}success{% elif 'error' in message.tags %}error{% elif 'warning' in message.tags %}warning{% else %}info{% endif %}">
+          {{ message }}
+      </div>
+      {% endfor %}
+    {% endif %}
+
+    {% if campaigns %}
+    <div class="inq-card">
+        <table class="inq-table">
+            <thead>
+                <tr>
+                    <th>Campaign</th>
+                    <th>Channel</th>
+                    <th>Session</th>
+                    <th>Dates</th>
+                    <th>UTM Source</th>
+                    <th>Inquiries</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in campaigns %}
+                <tr>
+                    <td>
+                        <span class="cam-dot" style="background:{{ c.color }};"></span>
+                        <strong>{{ c.name }}</strong>
+                    </td>
+                    <td>{{ c.get_channel_display }}</td>
+                    <td>{{ c.session.name|default:"—" }}</td>
+                    <td style="white-space:nowrap;">
+                        {% if c.start_date %}{{ c.start_date|date:"d M Y" }}{% else %}—{% endif %}
+                        {% if c.end_date %} &rarr; {{ c.end_date|date:"d M Y" }}{% endif %}
+                    </td>
+                    <td style="color:var(--text-3);">{{ c.utm_source|default:"—" }}</td>
+                    <td><span class="badge-pill badge-num">{{ c.inquiry_count }}</span></td>
+                    <td>
+                        {% if c.is_active %}<span class="badge-pill badge-active">Active</span>
+                        {% else %}<span class="badge-pill badge-inactive">Inactive</span>{% endif %}
+                    </td>
+                    <td style="white-space:nowrap;">
+                        <a href="{% url 'marketing:campaign_detail' c.id %}" class="btn-sm-outline">Manage</a>
+                        &nbsp;
+                        <a href="{% url 'marketing:campaign_edit' c.id %}" class="btn-sm-outline">Edit</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="inq-card">
+        <div class="empty-state">
+            <p>No campaigns yet.</p>
+            <a href="{% url 'marketing:campaign_create' %}" class="btn-brand">Create your first campaign</a>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
 </div>
 {% endblock dashboard %}

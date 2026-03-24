@@ -2,263 +2,433 @@
 {% load static %}
 
 {% block dashboard %}
-<div class="container-fluid py-3">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+    --brand: #392994; --brand-dim: rgba(57,41,148,0.10);
+    --surface: #ffffff; --surface-2: #eef0f5; --surface-3: #e2e5ed;
+    --border: #d4d8e4; --border-mid: #bcc2d0;
+    --text-1: #0a0f1e; --text-2: #2d3748; --text-3: #64748b;
+    --font: 'DM Sans', system-ui, sans-serif;
+    --radius: 10px; --radius-sm: 6px;
+    --shadow: 0 1px 3px rgba(10,15,30,0.08), 0 3px 10px rgba(10,15,30,0.05);
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { font-family: var(--font); }
+.pg-wrap { background: var(--surface-2); min-height: calc(100vh - 56px); padding: 20px 20px 40px; }
+.pg-inner { max-width: 1100px; margin: 0 auto; }
+.pg-back { font-size: 12px; font-weight: 600; color: var(--text-3); text-decoration: none;
+    display: inline-flex; align-items: center; gap: 4px; margin-bottom: 10px; }
+.pg-back:hover { color: var(--brand); }
 
-  <!-- Campaign header -->
-  <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
-    <div>
-      <a href="{% url 'marketing:campaign_list' %}" class="text-muted text-decoration-none" style="font-size:13px;">← All Campaigns</a>
-      <h2 class="mb-0 mt-1">{{ campaign.name }}</h2>
-      <div class="d-flex gap-3 flex-wrap mt-1" style="font-size:13px;">
-        <span><strong>Channel:</strong> {{ campaign.get_channel_display }}</span>
-        {% if campaign.session %}<span><strong>Session:</strong> {{ campaign.session.name }}</span>{% endif %}
-        {% if campaign.start_date %}<span><strong>Start:</strong> {{ campaign.start_date|date:"d M Y" }}</span>{% endif %}
-        {% if campaign.end_date %}<span><strong>End:</strong> {{ campaign.end_date|date:"d M Y" }}</span>{% endif %}
-        {% if campaign.utm_source %}<span><strong>UTM:</strong> {{ campaign.utm_source }}</span>{% endif %}
-        <span>
-          {% if campaign.is_active %}
-          <span class="badge bg-success">Active</span>
-          {% else %}
-          <span class="badge bg-secondary">Inactive</span>
-          {% endif %}
-        </span>
-      </div>
-    </div>
-    <a href="{% url 'marketing:campaign_list' %}" class="btn btn-outline-secondary btn-sm">All Campaigns</a>
-  </div>
+/* Header card */
+.cam-header { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 16px 20px; margin-bottom: 14px; }
+.cam-name { font-size: 22px; font-weight: 800; color: var(--text-1); letter-spacing: -.02em; margin: 0 0 8px; }
+.cam-meta-row { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.cam-meta-item { font-size: 12px; color: var(--text-3); }
+.cam-meta-item strong { color: var(--text-2); font-weight: 700; }
+.cam-header-actions { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.badge-pill { display: inline-flex; align-items: center; padding: 3px 10px;
+    border-radius: 20px; font-size: 11px; font-weight: 700; }
+.badge-active  { background: #d1fae5; color: #065f46; }
+.badge-inactive{ background: var(--surface-3); color: var(--text-3); }
+.badge-num     { background: var(--brand-dim); color: var(--brand); }
 
-  <!-- Bulk entry table -->
-  <div class="card mb-4 shadow-sm">
-    <div class="card-header d-flex justify-content-between align-items-center">
-      <strong>Add Leads in Bulk</strong>
-      <div class="d-flex gap-2">
-        <button id="add-row-btn" class="btn btn-sm btn-outline-secondary">+ Add Row</button>
-        <button id="submit-rows-btn" class="btn btn-sm btn-primary">Submit All</button>
-      </div>
+/* Generic card */
+.inq-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow); overflow: hidden; margin-bottom: 14px; }
+.inq-card-header { display: flex; align-items: center; justify-content: space-between;
+    padding: 11px 16px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+.inq-card-title { font-size: 12px; font-weight: 800; letter-spacing: .07em;
+    text-transform: uppercase; color: var(--text-3); }
+.inq-card-body { padding: 16px; }
+
+/* Buttons */
+.btn-brand { display: inline-flex; align-items: center; gap: 6px; background: var(--brand); color: #fff;
+    border: none; border-radius: var(--radius-sm); font-size: 13px; font-weight: 700;
+    padding: 7px 15px; cursor: pointer; text-decoration: none; font-family: var(--font); transition: opacity .15s; }
+.btn-brand:hover { opacity: .88; color: #fff; }
+.btn-ghost { display: inline-flex; align-items: center; background: var(--surface-3); color: var(--text-2);
+    border: 1.5px solid var(--border-mid); border-radius: var(--radius-sm); font-size: 12px; font-weight: 600;
+    padding: 6px 13px; cursor: pointer; text-decoration: none; font-family: var(--font); transition: .12s; white-space: nowrap; }
+.btn-ghost:hover { border-color: var(--brand); color: var(--brand); }
+.btn-sm-outline { display: inline-flex; align-items: center; padding: 4px 11px;
+    border: 1.5px solid var(--border-mid); border-radius: var(--radius-sm); font-size: 12px; font-weight: 600;
+    color: var(--text-2); text-decoration: none; font-family: var(--font); background: var(--surface); transition: .12s; }
+.btn-sm-outline:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-dim); }
+
+/* Bulk entry table */
+.bulk-table-wrap { overflow-x: auto; }
+.bulk-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.bulk-table th { font-size: 10px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
+    color: var(--text-3); padding: 8px 10px; border-bottom: 1px solid var(--border);
+    background: var(--surface-2); white-space: nowrap; }
+.bulk-table td { padding: 5px 6px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.bulk-table tr:last-child td { border-bottom: none; }
+.bulk-table input.form-control-sm, .bulk-table select.form-select-sm {
+    border: 1.5px solid var(--border-mid); border-radius: var(--radius-sm);
+    padding: 4px 8px; font-size: 12px; font-family: var(--font); color: var(--text-1);
+    background: var(--surface); width: 100%; transition: border-color .12s; }
+.bulk-table input.form-control-sm:focus, .bulk-table select.form-select-sm:focus {
+    outline: none; border-color: var(--brand); box-shadow: 0 0 0 2px var(--brand-dim); }
+/* Row number */
+.bulk-table td.row-num { font-size: 11px; color: var(--text-3); text-align: center; padding: 5px 4px; width: 28px; }
+/* Subject pill cell */
+.subj-cell { position: relative; cursor: pointer;
+    border: 1.5px solid var(--border-mid); border-radius: var(--radius-sm);
+    padding: 4px 8px; min-height: 30px; display: flex; align-items: center;
+    flex-wrap: wrap; gap: 3px; background: var(--surface); transition: border-color .12s; user-select: none; }
+.subj-cell.open { border-color: var(--brand); box-shadow: 0 0 0 2px var(--brand-dim); }
+.subj-placeholder { font-size: 12px; color: var(--text-3); pointer-events: none; }
+.subj-chip { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px;
+    background: var(--brand-dim); color: var(--brand); border-radius: 20px;
+    font-size: 11px; font-weight: 600; white-space: nowrap; }
+.subj-chip-x { cursor: pointer; font-size: 13px; line-height: 1; opacity: .7; margin-left: 1px; }
+.subj-chip-x:hover { opacity: 1; }
+.subj-popover { position: absolute; top: calc(100% + 4px); left: 0; z-index: 200;
+    background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+    box-shadow: 0 4px 16px rgba(10,15,30,0.12); padding: 4px;
+    min-width: 180px; max-height: 220px; overflow-y: auto; display: none; }
+.subj-popover.open { display: block; }
+.subj-popover label { display: flex; align-items: center; gap: 8px;
+    padding: 5px 10px; font-size: 13px; color: var(--text-2); cursor: pointer;
+    border-radius: var(--radius-sm); transition: background .08s; white-space: nowrap; margin: 0; }
+.subj-popover label:hover { background: var(--surface-2); }
+.subj-popover input[type=checkbox] { accent-color: var(--brand); width: 14px; height: 14px; flex-shrink: 0; }
+.copy-hint { font-size: 12px; color: var(--text-3); }
+
+/* Inquiries list table */
+.inq-table { width: 100%; border-collapse: collapse; }
+.inq-table thead th { font-size: 10px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
+    color: var(--text-3); padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--surface-2); white-space: nowrap; }
+.inq-table tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+.inq-table tbody tr:last-child { border-bottom: none; }
+.inq-table tbody tr:hover { background: var(--surface-2); }
+.inq-table td { padding: 9px 14px; font-size: 13px; color: var(--text-2); vertical-align: middle; }
+.inq-table td strong { color: var(--text-1); font-weight: 700; }
+.qchip-hot  { background: #fee2e2; color: #dc2626; border-radius: 20px; padding: 2px 9px; font-size: 11px; font-weight: 700; }
+.qchip-warm { background: #fef3c7; color: #d97706; border-radius: 20px; padding: 2px 9px; font-size: 11px; font-weight: 700; }
+.qchip-cold { background: #e0f2fe; color: #0284c7; border-radius: 20px; padding: 2px 9px; font-size: 11px; font-weight: 700; }
+.pager-row  { display: flex; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--border); }
+
+/* Toast */
+#bulk-toast { position: fixed; bottom: 0; right: 0; padding: 16px; z-index: 9999; }
+</style>
+
+<div class="pg-wrap">
+<div class="pg-inner">
+
+    <a href="{% url 'marketing:campaign_list' %}" class="pg-back">← All Campaigns</a>
+
+    <!-- Campaign header card -->
+    <div class="cam-header">
+        <div class="cam-header-actions">
+            <div>
+                <h1 class="cam-name">
+                    <span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:{{ campaign.color }};margin-right:8px;vertical-align:middle;"></span>
+                    {{ campaign.name }}
+                    {% if campaign.is_active %}<span class="badge-pill badge-active" style="font-size:11px;vertical-align:middle;margin-left:8px;">Active</span>
+                    {% else %}<span class="badge-pill badge-inactive" style="vertical-align:middle;margin-left:8px;">Inactive</span>{% endif %}
+                </h1>
+                <div class="cam-meta-row">
+                    <span class="cam-meta-item"><strong>Channel:</strong> {{ campaign.get_channel_display }}</span>
+                    {% if campaign.session %}<span class="cam-meta-item"><strong>Session:</strong> {{ campaign.session.name }}</span>{% endif %}
+                    {% if campaign.start_date %}<span class="cam-meta-item"><strong>Start:</strong> {{ campaign.start_date|date:"d M Y" }}</span>{% endif %}
+                    {% if campaign.end_date %}<span class="cam-meta-item"><strong>End:</strong> {{ campaign.end_date|date:"d M Y" }}</span>{% endif %}
+                    {% if campaign.utm_source %}<span class="cam-meta-item"><strong>UTM:</strong> {{ campaign.utm_source }}</span>{% endif %}
+                    <span class="cam-meta-item"><strong>Inquiries:</strong> <span class="badge-pill badge-num">{{ total }}</span></span>
+                </div>
+            </div>
+            <a href="{% url 'marketing:campaign_edit' campaign.id %}" class="btn-ghost">Edit</a>
+        </div>
     </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-sm table-bordered mb-0" id="bulk-table">
-          <thead class="table-light">
-            <tr>
-              <th style="min-width:140px">Student Name*</th>
-              <th style="min-width:120px">Phone*</th>
-              <th style="min-width:120px">School</th>
-              <th style="min-width:120px">Address</th>
-              <th style="min-width:130px">Parent Name</th>
-              <th style="min-width:120px">Parent Phone</th>
-              <th style="min-width:130px">Class</th>
-              <th style="min-width:180px">Subjects</th>
-              <th style="width:36px"></th>
-            </tr>
-          </thead>
-          <tbody id="bulk-tbody">
-            <!-- rows injected by JS -->
-          </tbody>
+
+    <!-- Bulk entry table card -->
+    <div class="inq-card">
+        <div class="inq-card-header">
+            <span class="inq-card-title">Add Leads in Bulk</span>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <button id="copy-down-btn" class="btn-ghost" type="button">↓ Copy class &amp; subjects down</button>
+                <span class="copy-hint">Fill row 1, then copy to all rows</span>
+                <button id="add-row-btn" class="btn-ghost" type="button">+ Add Row</button>
+                <button id="submit-rows-btn" class="btn-brand" type="button">Submit All</button>
+            </div>
+        </div>
+        <div class="bulk-table-wrap">
+            <table class="bulk-table" id="bulk-table">
+                <thead>
+                    <tr>
+                        <th style="width:28px;text-align:center;">#</th>
+                        <th style="min-width:150px">Student Name *</th>
+                        <th style="min-width:120px">Phone *</th>
+                        <th style="min-width:110px">School</th>
+                        <th style="min-width:130px">Class</th>
+                        <th style="min-width:200px">Subjects</th>
+                        <th style="min-width:130px">Parent Name</th>
+                        <th style="width:36px"></th>
+                    </tr>
+                </thead>
+                <tbody id="bulk-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Toast feedback -->
+    <div id="bulk-toast">
+        <div id="bulk-toast-inner" class="toast align-items-center border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body" id="bulk-toast-body"></div>
+                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Existing inquiries card -->
+    <div class="inq-card">
+        <div class="inq-card-header">
+            <span class="inq-card-title">Inquiries in this Campaign</span>
+            <span class="badge-pill badge-num">{{ total }}</span>
+        </div>
+        {% if inquiries %}
+        <table class="inq-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Class</th>
+                    <th>Quality</th>
+                    <th>Latest Status</th>
+                    <th>Created</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inq in inquiries %}
+                <tr>
+                    <td><strong>{{ inq.student_name }}</strong></td>
+                    <td>{{ inq.phone }}</td>
+                    <td>{{ inq.classes.all|join:", " }}</td>
+                    <td>
+                        {% if inq.lead_quality %}
+                            {% if inq.lead_quality == 'hot' %}<span class="qchip-hot">Hot</span>
+                            {% elif inq.lead_quality == 'warm' %}<span class="qchip-warm">Warm</span>
+                            {% else %}<span class="qchip-cold">Cold</span>{% endif %}
+                        {% else %}—{% endif %}
+                    </td>
+                    <td>
+                        {% if inq.latest_fu and inq.latest_fu.status %}
+                            <span class="badge-pill" style="background:{{ inq.latest_fu.status.color|default:'#e2e5ed' }};color:#fff;">{{ inq.latest_fu.status.name }}</span>
+                        {% else %}—{% endif %}
+                    </td>
+                    <td style="color:var(--text-3);">{{ inq.created_at|date:"d M Y" }}</td>
+                    <td><a href="{% url 'inquiry' inq.id %}" class="btn-sm-outline">View</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
         </table>
-      </div>
+        {% if has_prev or has_next %}
+        <div class="pager-row">
+            {% if has_prev %}<a href="?page={{ prev_page }}" class="btn-ghost">← Prev</a>{% endif %}
+            {% if has_next %}<a href="?page={{ next_page }}" class="btn-ghost">Next →</a>{% endif %}
+        </div>
+        {% endif %}
+        {% else %}
+        <div style="text-align:center;padding:36px 20px;color:var(--text-3);font-size:13px;">
+            No inquiries yet. Add some above.
+        </div>
+        {% endif %}
     </div>
-  </div>
 
-  <!-- Toast feedback -->
-  <div id="bulk-toast" class="position-fixed bottom-0 end-0 p-3" style="z-index:9999">
-    <div id="bulk-toast-inner" class="toast align-items-center border-0" role="alert">
-      <div class="d-flex">
-        <div class="toast-body" id="bulk-toast-body"></div>
-        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Existing inquiries -->
-  <div class="card shadow-sm">
-    <div class="card-header d-flex justify-content-between align-items-center">
-      <strong>Inquiries in this Campaign <span class="badge bg-secondary ms-1">{{ total }}</span></strong>
-    </div>
-    <div class="card-body p-0">
-      {% if inquiries %}
-      <div class="table-responsive">
-        <table class="table table-sm table-hover mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Name</th>
-              <th>Phone</th>
-              <th>Class</th>
-              <th>Quality</th>
-              <th>Latest Status</th>
-              <th>Created</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for inq in inquiries %}
-            <tr>
-              <td>{{ inq.student_name }}</td>
-              <td>{{ inq.phone }}</td>
-              <td>{{ inq.classes.all|join:", " }}</td>
-              <td>
-                {% if inq.lead_quality %}
-                  {% if inq.lead_quality == 'hot' %}<span class="badge bg-danger">Hot</span>
-                  {% elif inq.lead_quality == 'warm' %}<span class="badge bg-warning text-dark">Warm</span>
-                  {% else %}<span class="badge bg-info text-dark">Cold</span>
-                  {% endif %}
-                {% else %}—{% endif %}
-              </td>
-              <td>
-                {% if inq.latest_fu and inq.latest_fu.status %}
-                  <span class="badge" style="background-color: {{ inq.latest_fu.status.color|default:'#6c757d' }}">{{ inq.latest_fu.status.name }}</span>
-                {% else %}—{% endif %}
-              </td>
-              <td>{{ inq.created_at|date:"d M Y" }}</td>
-              <td><a href="{% url 'inquiry' inq.id %}" class="btn btn-sm btn-outline-primary">View</a></td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      <!-- Pagination -->
-      {% if has_prev or has_next %}
-      <div class="d-flex gap-2 p-2">
-        {% if has_prev %}<a href="?page={{ prev_page }}" class="btn btn-sm btn-outline-secondary">← Prev</a>{% endif %}
-        {% if has_next %}<a href="?page={{ next_page }}" class="btn btn-sm btn-outline-secondary">Next →</a>{% endif %}
-      </div>
-      {% endif %}
-      {% else %}
-      <p class="text-muted text-center py-4 mb-0">No inquiries yet. Add some above.</p>
-      {% endif %}
-    </div>
-  </div>
+</div>
 </div>
 
 <script>
-  // Data from server
   const classOptions = [{% for cls in classes %}{ id: {{ cls.id }}, name: "{{ cls.name|escapejs }}" },{% endfor %}];
   const subjectOptions = [{% for sub in subjects %}{ id: {{ sub.id }}, name: "{{ sub.name|escapejs }}" },{% endfor %}];
   const bulkUrl = "{% url 'marketing:bulk_create_inquiries' campaign.id %}";
   const csrfToken = "{{ csrf_token }}";
 
+  let rowCounter = 0;
+
   function buildClassSelect() {
     const sel = document.createElement('select');
-    sel.name = 'classes';
-    sel.className = 'form-select form-select-sm';
-    const empty = document.createElement('option');
-    empty.value = ''; empty.textContent = '—';
+    sel.name = 'classes'; sel.className = 'form-control form-control-sm';
+    const empty = document.createElement('option'); empty.value = ''; empty.textContent = '—';
     sel.appendChild(empty);
     classOptions.forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c.id; opt.textContent = c.name;
+      const opt = document.createElement('option'); opt.value = c.id; opt.textContent = c.name;
       sel.appendChild(opt);
     });
     return sel;
   }
 
-  function buildSubjectSelect() {
-    const sel = document.createElement('select');
-    sel.name = 'subjects';
-    sel.className = 'form-select form-select-sm';
-    sel.multiple = true;
-    sel.size = Math.min(subjectOptions.length, 3);
+  function buildSubjCell() {
+    const container = document.createElement('div');
+    container.className = 'subj-cell';
+    const chipsWrap = document.createElement('div');
+    chipsWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:3px;flex:1;min-width:0;';
+    const placeholder = document.createElement('span');
+    placeholder.className = 'subj-placeholder'; placeholder.textContent = 'Select subjects';
+    const popover = document.createElement('div');
+    popover.className = 'subj-popover';
+    const selectedIds = new Set();
+
     subjectOptions.forEach(s => {
-      const opt = document.createElement('option');
-      opt.value = s.id; opt.textContent = s.name;
-      sel.appendChild(opt);
+      const lbl = document.createElement('label');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.value = String(s.id);
+      cb.addEventListener('change', function () {
+        if (this.checked) selectedIds.add(String(s.id));
+        else selectedIds.delete(String(s.id));
+        renderChips();
+      });
+      lbl.appendChild(cb);
+      lbl.appendChild(document.createTextNode('\u00a0' + s.name));
+      popover.appendChild(lbl);
     });
-    return sel;
+
+    function renderChips() {
+      chipsWrap.innerHTML = '';
+      selectedIds.forEach(id => {
+        const sub = subjectOptions.find(s => String(s.id) === id);
+        if (!sub) return;
+        const chip = document.createElement('span'); chip.className = 'subj-chip';
+        const nameSpan = document.createElement('span'); nameSpan.textContent = sub.name;
+        const x = document.createElement('span'); x.className = 'subj-chip-x'; x.textContent = '×';
+        x.addEventListener('click', e => {
+          e.stopPropagation();
+          selectedIds.delete(id);
+          const cb = popover.querySelector(`input[value="${id}"]`);
+          if (cb) cb.checked = false;
+          renderChips();
+        });
+        chip.appendChild(nameSpan); chip.appendChild(x); chipsWrap.appendChild(chip);
+      });
+      placeholder.style.display = selectedIds.size ? 'none' : '';
+    }
+
+    container.appendChild(chipsWrap);
+    container.appendChild(placeholder);
+    container.appendChild(popover);
+
+    container.addEventListener('click', e => {
+      if (e.target.closest('.subj-chip-x')) return;
+      const isOpen = popover.classList.contains('open');
+      document.querySelectorAll('.subj-popover.open').forEach(p => {
+        p.classList.remove('open'); p.closest('.subj-cell').classList.remove('open');
+      });
+      if (!isOpen) { popover.classList.add('open'); container.classList.add('open'); }
+    });
+
+    container.getSelectedIds = () => [...selectedIds];
+    container.setSelectedIds = ids => {
+      selectedIds.clear();
+      ids.forEach(id => selectedIds.add(String(id)));
+      popover.querySelectorAll('input[type=checkbox]').forEach(cb => { cb.checked = selectedIds.has(cb.value); });
+      renderChips();
+    };
+    return container;
   }
+
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.subj-cell')) {
+      document.querySelectorAll('.subj-popover.open').forEach(p => {
+        p.classList.remove('open'); p.closest('.subj-cell').classList.remove('open');
+      });
+    }
+  });
 
   function buildRow() {
+    rowCounter++;
     const tr = document.createElement('tr');
-    const fields = ['name', 'phone', 'school', 'address', 'parent_name', 'parent_phone'];
-    fields.forEach(f => {
+    const tdNum = document.createElement('td'); tdNum.className = 'row-num'; tdNum.textContent = rowCounter;
+    tr.appendChild(tdNum);
+    ['name','phone','school'].forEach(f => {
       const td = document.createElement('td');
       const inp = document.createElement('input');
       inp.type = 'text'; inp.className = 'form-control form-control-sm'; inp.dataset.field = f;
-      if (f === 'phone' || f === 'parent_phone') {
-        inp.maxLength = 10;
-        inp.addEventListener('input', function () { this.value = this.value.replace(/\D/g, '').slice(0, 10); });
-      }
+      if (f === 'phone') {
+        inp.maxLength = 10; inp.placeholder = '10-digit';
+        inp.addEventListener('input', function () { this.value = this.value.replace(/\D/g,'').slice(0,10); });
+      } else if (f === 'name') { inp.placeholder = 'Name'; }
+      else { inp.placeholder = 'School'; }
       td.appendChild(inp); tr.appendChild(td);
     });
-
-    const tdCls = document.createElement('td');
-    tdCls.appendChild(buildClassSelect());
-    tr.appendChild(tdCls);
-
-    const tdSub = document.createElement('td');
-    tdSub.appendChild(buildSubjectSelect());
-    tr.appendChild(tdSub);
-
+    const tdCls = document.createElement('td'); tdCls.appendChild(buildClassSelect()); tr.appendChild(tdCls);
+    const tdSub = document.createElement('td'); tdSub.appendChild(buildSubjCell()); tr.appendChild(tdSub);
+    const tdPn = document.createElement('td');
+    const pnInp = document.createElement('input');
+    pnInp.type = 'text'; pnInp.className = 'form-control form-control-sm';
+    pnInp.dataset.field = 'parent_name'; pnInp.placeholder = 'Parent name';
+    tdPn.appendChild(pnInp); tr.appendChild(tdPn);
     const tdDel = document.createElement('td');
-    const btn = document.createElement('button');
-    btn.type = 'button'; btn.className = 'btn btn-sm btn-outline-danger'; btn.textContent = '×';
-    btn.addEventListener('click', () => tr.remove());
-    tdDel.appendChild(btn); tr.appendChild(tdDel);
-
+    const delBtn = document.createElement('button'); delBtn.type = 'button';
+    delBtn.className = 'btn btn-sm btn-outline-danger'; delBtn.textContent = '×';
+    delBtn.addEventListener('click', () => { tr.remove(); renumberRows(); });
+    tdDel.appendChild(delBtn); tr.appendChild(tdDel);
     return tr;
   }
 
-  function addRow() {
-    document.getElementById('bulk-tbody').appendChild(buildRow());
+  function renumberRows() {
+    document.querySelectorAll('#bulk-tbody tr').forEach((tr, i) => {
+      const td = tr.querySelector('td.row-num'); if (td) td.textContent = i + 1;
+    });
   }
 
-  // Start with 5 blank rows
+  function addRow() { document.getElementById('bulk-tbody').appendChild(buildRow()); }
   for (let i = 0; i < 5; i++) addRow();
-
   document.getElementById('add-row-btn').addEventListener('click', addRow);
+
+  document.getElementById('copy-down-btn').addEventListener('click', function () {
+    const rows = document.querySelectorAll('#bulk-tbody tr');
+    if (rows.length < 2) return;
+    const firstCls = rows[0].querySelector('select[name="classes"]');
+    const firstSubj = rows[0].querySelector('.subj-cell');
+    const classVal = firstCls ? firstCls.value : '';
+    const subjIds = firstSubj ? firstSubj.getSelectedIds() : [];
+    for (let i = 1; i < rows.length; i++) {
+      const cls = rows[i].querySelector('select[name="classes"]');
+      if (cls && classVal) cls.value = classVal;
+      const sub = rows[i].querySelector('.subj-cell');
+      if (sub) sub.setSelectedIds(subjIds);
+    }
+  });
 
   document.getElementById('submit-rows-btn').addEventListener('click', async function () {
     const rows = [];
     document.querySelectorAll('#bulk-tbody tr').forEach(tr => {
-      const cells = tr.querySelectorAll('input[data-field], select');
       const row = {};
       tr.querySelectorAll('input[data-field]').forEach(inp => row[inp.dataset.field] = inp.value.trim());
       const classVal = tr.querySelector('select[name="classes"]');
       row.classes = classVal && classVal.value ? [classVal.value] : [];
-      const subjectSel = tr.querySelector('select[name="subjects"]');
-      row.subjects = subjectSel ? Array.from(subjectSel.selectedOptions).map(o => o.value) : [];
+      const subCel = tr.querySelector('.subj-cell');
+      row.subjects = subCel ? subCel.getSelectedIds() : [];
       rows.push(row);
     });
-
-    const btn = this;
-    btn.disabled = true; btn.textContent = 'Saving…';
-
+    const btn = this; btn.disabled = true; btn.textContent = 'Saving…';
     try {
       const res = await fetch(bulkUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': csrfToken,
-        },
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
         body: JSON.stringify({ rows }),
       });
       const data = await res.json();
-
       let msg = `✓ ${data.created} lead(s) created.`;
       if (data.skipped && data.skipped.length) {
-        const reasons = data.skipped.map(s => `${s.name || s.phone}: ${s.reason}`).join('; ');
-        msg += ` ${data.skipped.length} skipped — ${reasons}`;
+        msg += ` ${data.skipped.length} skipped — ${data.skipped.map(s => `${s.name||s.phone}: ${s.reason}`).join('; ')}`;
       }
-
       const toastEl = document.getElementById('bulk-toast-inner');
       document.getElementById('bulk-toast-body').textContent = msg;
-      toastEl.classList.remove('text-bg-danger', 'text-bg-success');
+      toastEl.classList.remove('text-bg-danger','text-bg-success');
       toastEl.classList.add(data.created > 0 ? 'text-bg-success' : 'text-bg-warning');
-      const toast = new bootstrap.Toast(toastEl, { delay: 6000 });
-      toast.show();
-
-      // Clear successfully-created rows (those without their phone in skipped set)
+      new bootstrap.Toast(toastEl, { delay: 6000 }).show();
       const skippedPhones = new Set((data.skipped || []).map(s => s.phone));
       document.querySelectorAll('#bulk-tbody tr').forEach(tr => {
-        const phoneInp = tr.querySelector('input[data-field="phone"]');
-        if (phoneInp && !skippedPhones.has(phoneInp.value.trim()) && phoneInp.value.trim()) {
-          tr.remove();
-        }
+        const p = tr.querySelector('input[data-field="phone"]');
+        if (p && !skippedPhones.has(p.value.trim()) && p.value.trim()) tr.remove();
       });
-
-      // Refresh inquiry list section
-      if (data.created > 0) {
-        setTimeout(() => window.location.reload(), 2000);
-      }
+      if (data.created > 0) setTimeout(() => window.location.reload(), 2000);
     } catch (e) {
       const toastEl = document.getElementById('bulk-toast-inner');
       document.getElementById('bulk-toast-body').textContent = 'Error submitting. Please try again.';

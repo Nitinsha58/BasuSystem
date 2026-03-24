@@ -82,6 +82,17 @@ class PartnerPayments(models.Model):
     def __str__(self):
         return f"{self.stationary_partner.name} - {self.amount} on {self.created_at}"
 
+class SalesPerson(models.Model):
+    name = models.CharField(max_length=100)
+    phone = models.CharField(max_length=20, blank=True)
+    utm_slug = models.SlugField(unique=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+
 class FollowUpStatus(models.Model):
     name = models.CharField(max_length=255)
     order = models.IntegerField(unique=True)
@@ -116,6 +127,11 @@ class Inquiry(models.Model):
         ('single_subject', 'Single Subject'),
         ('full_package', 'Full Package'),
     ]
+    INQUIRY_ORIGIN_CHOICES = [
+        ('walk_in', 'Walk-In'),
+        ('organic_call', 'Organic Call'),
+        ('campaign', 'Campaign'),
+    ]
 
     student_name = models.CharField(max_length=255)
     parent_name = models.CharField(max_length=255, blank=True)
@@ -138,6 +154,16 @@ class Inquiry(models.Model):
     referral = models.ForeignKey(Referral, on_delete=models.SET_NULL, null=True, blank=True, related_name='inquiry')
 
     stationary_partner = models.ForeignKey(StationaryPartner, on_delete=models.SET_NULL, null=True, blank=True, related_name='inquiries')
+    inquiry_origin = models.CharField(max_length=20, choices=INQUIRY_ORIGIN_CHOICES, default='organic_call')
+    sales_person = models.ForeignKey(
+        SalesPerson, on_delete=models.SET_NULL, null=True, blank=True, related_name='inquiries'
+    )
+    caller = models.ForeignKey(
+        AdmissionCounselor, on_delete=models.SET_NULL, null=True, blank=True, related_name='called_inquiries'
+    )
+    assigned_counsellor = models.ForeignKey(
+        AdmissionCounselor, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_inquiries'
+    )
     lead_type = models.CharField(max_length=20, choices=LEAD_TYPE_CHOICES, default='Unverified')
     lead_quality = models.CharField(max_length=10, choices=LEAD_QUALITY_CHOICES, null=True, blank=True)
     intent = models.CharField(max_length=20, choices=INTENT_CHOICES, null=True, blank=True)

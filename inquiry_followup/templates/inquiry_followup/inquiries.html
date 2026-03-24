@@ -538,6 +538,13 @@
                 <option value="Fake"       {% if active_filters.lead_type == "Fake"       %}selected{% endif %}>Fake</option>
             </select>
 
+            <select name="origin" class="filter-select {% if active_filters.origin %}is-active{% endif %}" onchange="applyFilters()">
+                <option value="">Origin</option>
+                <option value="walk_in"      {% if active_filters.origin == "walk_in"      %}selected{% endif %}>Walk-In</option>
+                <option value="organic_call" {% if active_filters.origin == "organic_call" %}selected{% endif %}>Organic Call</option>
+                <option value="campaign"     {% if active_filters.origin == "campaign"     %}selected{% endif %}>Campaign</option>
+            </select>
+
             <select name="session" class="filter-select {% if active_filters.session %}is-active{% endif %}" onchange="applyFilters()">
                 <option value="">Session</option>
                 {% for sess in filter_sessions %}
@@ -559,7 +566,7 @@
                 {% endfor %}
             </select>
 
-            {% if active_filters.status or active_filters.lead_quality or active_filters.lead_type or active_filters.session or active_filters.class_name or active_filters.counsellor or active_filters.campaign %}
+            {% if active_filters.status or active_filters.lead_quality or active_filters.lead_type or active_filters.session or active_filters.class_name or active_filters.counsellor or active_filters.campaign or active_filters.origin %}
             <a href="?year={{ current_month.year }}&month={{ current_month.month }}" class="iq-clear-btn">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
                 Clear
@@ -569,6 +576,10 @@
 
         <!-- Actions -->
         <div class="iq-topbar-actions">
+            <a href="{% url 'add_leads' %}" class="iq-btn iq-btn-dark">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Add Leads
+            </a>
             <a href="{% url 'bulk_assign_campaign' %}" class="iq-btn iq-btn-dark">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
                 Bulk Assign

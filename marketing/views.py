@@ -151,7 +151,8 @@ def bulk_create_inquiries(request, campaign_id):
             address=address,
             parent_name=parent_name,
             parent_phone=parent_phone,
-            lead_type='Verified',
+            lead_type='Unverified',
+            inquiry_origin='campaign',
             campaign=campaign,
             session=session,
         )

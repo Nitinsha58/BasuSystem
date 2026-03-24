@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils.html import format_html
-from .models import Inquiry, ClassName, Subject, FollowUp, FollowUpStatus, AdmissionCounselor, StationaryPartner, ReferralSource
+from .models import Inquiry, ClassName, Subject, FollowUp, FollowUpStatus, AdmissionCounselor, StationaryPartner, ReferralSource, SalesPerson
 from datetime import datetime, timedelta
 from collections import defaultdict
 from django.db.models import Count, Max, Q
@@ -107,6 +107,7 @@ def inquiries(request):
     session_filter = request.GET.get('session')
     class_id       = request.GET.get('class_name')
     counsellor_id  = request.GET.get('counsellor')
+    origin_filter  = request.GET.get('origin')
 
     inquiry_qs = Inquiry.objects.select_related('campaign', 'session', 'current_status')
 
@@ -126,6 +127,8 @@ def inquiries(request):
         inquiry_qs = inquiry_qs.filter(classes__id=class_id).distinct()
     if counsellor_id:
         inquiry_qs = inquiry_qs.filter(followup__admission_counsellor_id=counsellor_id).distinct()
+    if origin_filter:
+        inquiry_qs = inquiry_qs.filter(inquiry_origin=origin_filter)
 
     # Only fetch followups visible in this month — either scheduled via followup_date
     # or created within this month (if no followup_date set)
@@ -165,6 +168,7 @@ def inquiries(request):
         'session':     session_filter,
         'class_name':  class_id,
         'counsellor':  counsellor_id,
+        'origin':      origin_filter,
     }.items() if v}
 
     return render(request, 'inquiry_followup/inquiries.html', {
@@ -187,6 +191,7 @@ def inquiries(request):
             'session':     session_filter or '',
             'class_name':  class_id or '',
             'counsellor':  counsellor_id or '',
+            'origin':      origin_filter or '',
         },
         'filter_qs': urlencode(active_filter_params) if active_filter_params else '',
     })
@@ -199,6 +204,8 @@ def inquiry(request, inquiry_id):
     lead_types = Inquiry.LEAD_TYPE_CHOICES
     lead_quality_choices = Inquiry.LEAD_QUALITY_CHOICES
     academic_sessions = AcademicSession.objects.all().order_by('-start_date')
+    sales_persons = SalesPerson.objects.filter(is_active=True).order_by('name')
+    counsellors = AdmissionCounselor.objects.select_related('user').order_by('user__first_name')
     inquiry_obj = Inquiry.objects.filter(id=inquiry_id).first()
     if not inquiry_obj:
         messages.error(request, 'Invalid Inquiry')
@@ -233,6 +240,9 @@ def inquiry(request, inquiry_id):
         referrer_phone = request.POST.get("referrer_phone", "").strip()
         campaign_id = request.POST.get("campaign") or None
         session_id = request.POST.get("session_id")
+        sales_person_id = request.POST.get("sales_person") or None
+        caller_id = request.POST.get("caller") or None
+        assigned_counsellor_id = request.POST.get("assigned_counsellor") or None
 
         inquiry_created_date = localtime(inquiry_obj.created_at).date()
 
@@ -252,6 +262,9 @@ def inquiry(request, inquiry_id):
         inquiry_obj.referrer_name = referrer_name
         inquiry_obj.referrer_phone = referrer_phone
         inquiry_obj.campaign_id = campaign_id
+        inquiry_obj.sales_person_id = sales_person_id
+        inquiry_obj.caller_id = caller_id
+        inquiry_obj.assigned_counsellor_id = assigned_counsellor_id
 
         # Enforce: only associate a session if inquiry year matches session start year.
         # Never leave session NULL if any sessions exist (fallbacks handled by helper).
@@ -286,7 +299,34 @@ def inquiry(request, inquiry_id):
         'lead_quality_choices': lead_quality_choices,
         'latest_followup': latest_followup,
         'academic_sessions': academic_sessions,
+        'sales_persons': sales_persons,
+        'counsellors': counsellors,
     })
+
+def quick_update_inquiry(request, inquiry_id):
+    """Single-field quick updates: lead type, quality, campaign, origin, ownership."""
+    if request.method != 'POST':
+        return redirect('inquiry', inquiry_id=inquiry_id)
+
+    inquiry_obj = Inquiry.objects.filter(id=inquiry_id).first()
+    if not inquiry_obj:
+        messages.error(request, 'Invalid Inquiry')
+        return redirect('inquiries')
+
+    inquiry_obj.lead_type           = request.POST.get('lead_type') or inquiry_obj.lead_type
+    inquiry_obj.lead_quality        = request.POST.get('lead_quality') or None
+    inquiry_obj.inquiry_origin      = request.POST.get('inquiry_origin') or inquiry_obj.inquiry_origin
+    inquiry_obj.campaign_id         = request.POST.get('campaign') or None
+    inquiry_obj.sales_person_id     = request.POST.get('sales_person') or None
+    inquiry_obj.caller_id           = request.POST.get('caller') or None
+    inquiry_obj.assigned_counsellor_id = request.POST.get('assigned_counsellor') or None
+
+    inquiry_obj.save(update_fields=[
+        'lead_type', 'lead_quality', 'inquiry_origin',
+        'campaign_id', 'sales_person_id', 'caller_id', 'assigned_counsellor_id',
+    ])
+    return redirect('inquiry', inquiry_id=inquiry_id)
+
 
 def create_followup(request, inquiry_id):
     inquiry_obj = Inquiry.objects.filter(id=inquiry_id).first()
@@ -382,6 +422,13 @@ def create_inquiry(request):
         and request.user.is_superuser
     )
 
+    # UTM attribution — ?ref=<utm_slug> links inquiry to a SalesPerson
+    utm_ref = request.GET.get('ref', '').strip()
+    utm_sales_person = (
+        SalesPerson.objects.filter(utm_slug=utm_ref, is_active=True).first()
+        if utm_ref else None
+    )
+
     if request.method == "POST":
         student_name = request.POST.get("student-name")
         selected_classes = request.POST.getlist("classes")
@@ -395,6 +442,20 @@ def create_inquiry(request):
         parent_name = request.POST.get("parent_name", "").strip()
         parent_phone = request.POST.get("parent_phone", "").strip()
         existing_member = request.POST.get("existing_member") == "Yes"
+
+        # inquiry_origin: counsellors/superusers pick walk_in or organic_call;
+        # public form always maps to organic_call
+        raw_origin = request.POST.get("inquiry_origin", "organic_call")
+        if raw_origin not in ('walk_in', 'organic_call'):
+            raw_origin = 'organic_call'
+        inquiry_origin = raw_origin
+
+        # UTM sales person from hidden POST field (set by template from GET param)
+        utm_ref_post = request.POST.get('utm_ref', '').strip()
+        sales_person = (
+            SalesPerson.objects.filter(utm_slug=utm_ref_post, is_active=True).first()
+            if utm_ref_post else utm_sales_person
+        )
 
         existing_inquiry = Inquiry.objects.filter(phone=phone).first() if phone else None
 
@@ -466,6 +527,8 @@ def create_inquiry(request):
             parent_phone=parent_phone,
             existing_member=existing_member,
             lead_type='Verified',
+            inquiry_origin=inquiry_origin,
+            sales_person=sales_person,
             session=select_session_for_date(localtime(now()).date()),
         )
 
@@ -488,6 +551,7 @@ def create_inquiry(request):
         'referral_sources': referral_sources,
         'is_counsellor': is_counsellor,
         'check_inquiry_phone_url': reverse('check_inquiry_phone'),
+        'utm_ref': utm_ref,
     })
 
 def create_referral_inquiry(request):
@@ -700,3 +764,188 @@ def bulk_assign_campaign(request):
     return render(request, 'inquiry_followup/bulk_assign_campaign.html', {
         'campaigns': campaigns,
     })
+
+
+def _normalise_phone(token):
+    digits = _re.sub(r'\D', '', token)
+    if digits.startswith('91') and len(digits) == 12:
+        digits = digits[2:]
+    return digits
+
+
+def add_leads(request):
+    """
+    /inquiries/add-leads/
+    Two modes for entering campaign leads:
+      - sequential: one-by-one form with sticky sales_person + counsellor
+      - bulk: paste a list of phone numbers with shared assignment
+    inquiry_origin is always set to 'campaign' by the backend.
+    """
+    campaigns = Campaign.objects.filter(is_active=True).order_by('-created_at')
+    sales_persons = SalesPerson.objects.filter(is_active=True).order_by('name')
+    counsellors = AdmissionCounselor.objects.select_related('user').order_by('user__first_name')
+    first_status = FollowUpStatus.objects.order_by('order').first()
+    sessions = AcademicSession.objects.order_by('-name')
+
+    # Sticky defaults stored in session (cleared only when user changes them)
+    sticky_sp = request.session.get('add_leads_sales_person')
+    sticky_ac = request.session.get('add_leads_counsellor')
+
+    context = {
+        'campaigns': campaigns,
+        'sales_persons': sales_persons,
+        'counsellors': counsellors,
+        'sessions': sessions,
+        'classes': ClassName.objects.order_by('name'),
+        'sticky_sp': sticky_sp,
+        'sticky_ac': sticky_ac,
+    }
+
+    if request.method != 'POST':
+        return render(request, 'inquiry_followup/add_leads.html', context)
+
+    mode = request.POST.get('mode', 'sequential')
+
+    # Common fields
+    campaign_id         = request.POST.get('campaign') or None
+    sales_person_id     = request.POST.get('sales_person') or None
+    assigned_counsellor_id = request.POST.get('assigned_counsellor') or None
+    session_id          = request.POST.get('session') or None
+
+    # Persist stickies
+    if sales_person_id:
+        request.session['add_leads_sales_person'] = sales_person_id
+    if assigned_counsellor_id:
+        request.session['add_leads_counsellor'] = assigned_counsellor_id
+    context['sticky_sp'] = sales_person_id or sticky_sp
+    context['sticky_ac'] = assigned_counsellor_id or sticky_ac
+
+    campaign = Campaign.objects.filter(id=campaign_id).first() if campaign_id else None
+    if not campaign:
+        messages.error(request, "Please select a valid campaign.")
+        return render(request, 'inquiry_followup/add_leads.html', context)
+
+    sales_person = SalesPerson.objects.filter(id=sales_person_id).first() if sales_person_id else None
+    counsellor   = AdmissionCounselor.objects.filter(id=assigned_counsellor_id).first() if assigned_counsellor_id else None
+    session_obj  = AcademicSession.objects.filter(id=session_id).first() if session_id else select_session_for_date(timezone.now().date())
+
+    # ── Sequential mode ──────────────────────────────────────────────────────
+    if mode == 'sequential':
+        phone        = _normalise_phone(request.POST.get('phone', ''))
+        student_name = request.POST.get('student_name', '').strip()
+        parent_name  = request.POST.get('parent_name', '').strip()
+        class_id     = request.POST.get('class_id') or None
+
+        if not phone or len(phone) < 8:
+            messages.error(request, "Enter a valid phone number.")
+            context.update({'mode': 'sequential', 'last_campaign': campaign_id})
+            return render(request, 'inquiry_followup/add_leads.html', context)
+
+        if not student_name:
+            messages.error(request, "Student name is required.")
+            context.update({'mode': 'sequential', 'last_campaign': campaign_id})
+            return render(request, 'inquiry_followup/add_leads.html', context)
+
+        if Inquiry.objects.filter(phone=phone).exists():
+            messages.warning(request, f"Skipped {phone} — already exists.")
+            context.update({'mode': 'sequential', 'last_campaign': campaign_id})
+            return render(request, 'inquiry_followup/add_leads.html', context)
+
+        inq = Inquiry.objects.create(
+            student_name=student_name,
+            parent_name=parent_name,
+            phone=phone,
+            school='',
+            address='',
+            inquiry_origin='campaign',
+            campaign=campaign,
+            sales_person=sales_person,
+            assigned_counsellor=counsellor,
+            session=session_obj,
+            lead_type='Unverified',
+        )
+        if class_id:
+            inq.classes.set([class_id])
+
+        # Create first follow-up manually (no subjects = m2m signal won't fire)
+        if first_status:
+            FollowUp.objects.create(
+                inquiry=inq,
+                status=first_status,
+                admission_counsellor=counsellor,
+                description=f"Campaign lead entered via Add Leads page. Campaign: {campaign.name}.",
+                followup_date=timezone.now().date(),
+            )
+
+        messages.success(request, f"Created: {student_name} ({phone})")
+        context.update({'mode': 'sequential', 'last_campaign': campaign_id})
+        return render(request, 'inquiry_followup/add_leads.html', context)
+
+    # ── Bulk mode ────────────────────────────────────────────────────────────
+    raw_phones = request.POST.get('phones', '')
+    tokens = [t.strip() for t in _re.split(r'[\s,;|\n]+', raw_phones) if t.strip()]
+    phone_list = [_normalise_phone(t) for t in tokens]
+    phone_list = list(dict.fromkeys(p for p in phone_list if len(p) >= 8))  # dedupe, keep order
+
+    if not phone_list:
+        messages.error(request, "No valid phone numbers found.")
+        context.update({'mode': 'bulk'})
+        return render(request, 'inquiry_followup/add_leads.html', context)
+
+    existing_phones = set(
+        Inquiry.objects.filter(phone__in=phone_list).values_list('phone', flat=True)
+    )
+
+    created_list      = []
+    duplicate_list    = []
+    invalid_list      = []
+
+    to_create = []
+    for phone in phone_list:
+        if len(phone) not in (10, 11):
+            invalid_list.append(phone)
+            continue
+        if phone in existing_phones:
+            duplicate_list.append(phone)
+            continue
+        to_create.append(Inquiry(
+            student_name=f'Lead {phone}',
+            phone=phone,
+            school='',
+            address='',
+            inquiry_origin='campaign',
+            campaign=campaign,
+            sales_person=sales_person,
+            assigned_counsellor=counsellor,
+            session=session_obj,
+            lead_type='Unverified',
+        ))
+
+    if to_create:
+        Inquiry.objects.bulk_create(to_create)
+        created_phones = [inq.phone for inq in to_create]
+        created_list   = created_phones
+
+        # Create initial follow-ups for bulk-created inquiries
+        if first_status:
+            new_inquiries = Inquiry.objects.filter(phone__in=created_phones)
+            FollowUp.objects.bulk_create([
+                FollowUp(
+                    inquiry=inq,
+                    status=first_status,
+                    admission_counsellor=counsellor,
+                    description=f"Bulk campaign lead. Campaign: {campaign.name}.",
+                    followup_date=timezone.now().date(),
+                )
+                for inq in new_inquiries
+            ])
+
+    context.update({
+        'mode': 'bulk',
+        'last_campaign': campaign_id,
+        'bulk_done': True,
+        'created_list':   created_list,
+        'duplicate_list': duplicate_list,
+        'invalid_list':   invalid_list,
+    })
+    return render(request, 'inquiry_followup/add_leads.html', context)

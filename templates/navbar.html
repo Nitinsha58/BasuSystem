@@ -131,11 +131,17 @@
                         <li><a class="dropdown-item" href="{% url 'sat:result_list' %}">Results</a></li>
                     </ul>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'inquiries' %}">Inquiries</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'create_inquiry' %}">Create Inquiry</a>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        Inquiries
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{% url 'inquiries' %}">Dashboard</a></li>
+                        <li><a class="dropdown-item" href="{% url 'create_inquiry' %}">Create Inquiry</a></li>
+                        <li><a class="dropdown-item" href="{% url 'add_leads' %}">Add Campaign Leads</a></li>
+                        <li><a class="dropdown-item" href="{% url 'bulk_assign_campaign' %}">Bulk Assign Campaign</a></li>
+                    </ul>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'marketing:campaign_list' %}">Marketing</a>

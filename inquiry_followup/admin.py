@@ -1,6 +1,15 @@
 from django.contrib import admin
 from .forms import AdmissionCounselorForm, StationaryPartnerForm
-from .models import AdmissionCounselor, Inquiry, FollowUpStatus, FollowUp, Referral, StationaryPartner, ReferralSource
+from .models import AdmissionCounselor, Inquiry, FollowUpStatus, FollowUp, Referral, StationaryPartner, ReferralSource, SalesPerson
+
+
+@admin.register(SalesPerson)
+class SalesPersonAdmin(admin.ModelAdmin):
+    list_display = ['name', 'phone', 'utm_slug', 'is_active', 'created_at']
+    list_filter = ['is_active']
+    search_fields = ['name', 'phone', 'utm_slug']
+    prepopulated_fields = {'utm_slug': ('name',)}
+    ordering = ['name']
 
 
 @admin.register(ReferralSource)
@@ -16,6 +25,7 @@ class InquiryAdmin(admin.ModelAdmin):
     list_display = [
         'student_name',
         'phone',
+        'inquiry_origin',
         'school',
         'lead_type',
         'lead_quality',
@@ -24,6 +34,8 @@ class InquiryAdmin(admin.ModelAdmin):
         'session',
         'referral_source',
         'campaign',
+        'sales_person',
+        'assigned_counsellor',
         'stationary_partner',
         'get_classes',
         'get_subjects',
@@ -31,6 +43,7 @@ class InquiryAdmin(admin.ModelAdmin):
         'updated_at',
     ]
     list_filter = [
+        'inquiry_origin',
         'lead_type',
         'lead_quality',
         'intent',
@@ -38,6 +51,8 @@ class InquiryAdmin(admin.ModelAdmin):
         ('session', admin.RelatedOnlyFieldListFilter),
         ('referral_source', admin.RelatedOnlyFieldListFilter),
         ('campaign', admin.RelatedOnlyFieldListFilter),
+        ('sales_person', admin.RelatedOnlyFieldListFilter),
+        ('assigned_counsellor', admin.RelatedOnlyFieldListFilter),
         ('stationary_partner', admin.RelatedOnlyFieldListFilter),
         ('classes', admin.RelatedOnlyFieldListFilter),
         ('subjects', admin.RelatedOnlyFieldListFilter),
@@ -77,7 +92,10 @@ class InquiryAdmin(admin.ModelAdmin):
             'fields': ['classes', 'subjects']
         }),
         ('Lead Classification', {
-            'fields': ['lead_type', 'lead_quality', 'intent', 'session', 'campaign']
+            'fields': ['inquiry_origin', 'lead_type', 'lead_quality', 'intent', 'session', 'campaign']
+        }),
+        ('Ownership', {
+            'fields': ['sales_person', 'caller', 'assigned_counsellor']
         }),
         ('Source', {
             'fields': ['referral_source', 'referrer_name', 'referrer_phone', 'stationary_partner']

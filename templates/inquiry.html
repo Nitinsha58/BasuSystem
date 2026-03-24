@@ -195,8 +195,22 @@
         </div>
       </div>
 
+      <!-- How this lead came in — counsellors only -->
+      {% if is_counsellor %}
+      <div class="">
+        <label for="inquiry_origin" class="block mb-2 text-sm font-medium text-gray-900">Lead Type</label>
+        <select id="inquiry_origin" name="inquiry_origin" required
+          class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+          <option value="organic_call">Organic Call</option>
+          <option value="walk_in">Walk-In</option>
+        </select>
+      </div>
+      {% endif %}
+
       <!-- Full-width Submit Button -->
       <div class="md:col-span-2 flex justify-center">
+        <!-- Carry UTM ref through POST so it survives form submission -->
+        <input type="hidden" name="utm_ref" value="{{ utm_ref|default:'' }}">
         <button type="submit"
           class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center">
           Send Query
