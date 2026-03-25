@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block dashboard %}
+<div class="container-sm p-4">
+
+    <!-- Header -->
+    <div class="mb-4 mt-2">
+        <a href="{% url 'profile_list' %}" class="text-muted text-decoration-none small">← Back to Profiles</a>
+        <h2 class="fw-normal text-dark mt-2">
+            {% if mode == 'create' %}Add New Profile{% else %}Edit Profile{% endif %}
+        </h2>
+        {% if mode == 'update' and target_user %}
+        <p class="text-muted mb-0">
+            {{ target_user.first_name }} {{ target_user.last_name }}
+            &nbsp;·&nbsp; {{ target_user.phone }}
+        </p>
+        {% endif %}
+    </div>
+
+    <form method="POST" class="bg-light rounded p-4">
+        {% csrf_token %}
+
+        <!-- ── Section 1: User Info ── -->
+        <h6 class="fw-semibold text-uppercase text-secondary mb-3 border-bottom pb-2 ls-1">User Information</h6>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <label class="form-label">First Name <span class="text-danger">*</span></label>
+                <input type="text" name="first_name" class="form-control"
+                       value="{% if target_user %}{{ target_user.first_name }}{% endif %}" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Last Name</label>
+                <input type="text" name="last_name" class="form-control"
+                       value="{% if target_user %}{{ target_user.last_name }}{% endif %}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Phone <span class="text-danger">*</span></label>
+                <input type="text" name="phone" class="form-control" maxlength="15"
+                       value="{% if target_user %}{{ target_user.phone }}{% endif %}" required>
+            </div>
+            <div class="col-12">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="is_staff" id="is_staff"
+                           {% if target_user and target_user.is_staff %}checked{% endif %}>
+                    <label class="form-check-label" for="is_staff">
+                        Grant staff access <span class="text-muted small">(allows access to admin-only pages)</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Section 2: Role Assignment ── -->
+        <h6 class="fw-semibold text-uppercase text-secondary mb-3 border-bottom pb-2">Role Assignment</h6>
+
+        {% if current_role == 'student' %}
+        <!-- Students: read-only role display, no selector -->
+        <div class="alert alert-info d-flex align-items-center gap-2 py-2">
+            <span class="badge bg-success">Student</span>
+            <span>This profile belongs to a student. Role changes are managed via the
+                <a href="{% url 'staff_student_registration' %}">Student Registration</a> page.</span>
+        </div>
+
+        {% else %}
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Role</label>
+                <select name="role_type" id="role_type" class="form-select">
+                    <option value="staff"      {% if not current_role or current_role == 'staff' %}selected{% endif %}>Staff Only (no extra role)</option>
+                    <option value="teacher"    {% if current_role == 'teacher'    %}selected{% endif %}>Teacher</option>
+                    <option value="mentor"     {% if current_role == 'mentor'     %}selected{% endif %}>Mentor</option>
+                    <option value="counsellor" {% if current_role == 'counsellor' %}selected{% endif %}>Admission Counsellor</option>
+                    <option value="transport"  {% if current_role == 'transport'  %}selected{% endif %}>Transport Person</option>
+                    <option value="partner"    {% if current_role == 'partner'    %}selected{% endif %}>Stationary Partner</option>
+                    <option value="salesperson" {% if current_role == 'salesperson' %}selected{% endif %}>Sales Person</option>
+                </select>
+                <small class="text-muted">Changing the role will remove the previous role assignment.</small>
+            </div>
+
+            <!-- Teacher: batches -->
+            <div id="role-teacher" class="col-12 role-extra {% if current_role != 'teacher' %}d-none{% endif %}">
+                <label class="form-label">
+                    Batches
+                    {% if active_session %}
+                        <span class="text-muted small">(Active session: {{ active_session.name }})</span>
+                    {% endif %}
+                </label>
+                {% if batches %}
+                <select name="batches" class="form-select" multiple size="6" style="max-height:180px">
+                    {% for batch in batches %}
+                    <option value="{{ batch.id }}"
+                        {% if current_batches and batch.id in current_batches %}selected{% endif %}>
+                        {{ batch }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <small class="text-muted">Hold <kbd>Ctrl</kbd> (or <kbd>Cmd</kbd> on Mac) to select multiple batches.</small>
+                {% else %}
+                <p class="text-muted small mb-0">No active-session batches available. Batches can be assigned later.</p>
+                {% endif %}
+            </div>
+
+            <!-- Counsellor: center -->
+            <div id="role-counsellor" class="col-md-4 role-extra {% if current_role != 'counsellor' %}d-none{% endif %}">
+                <label class="form-label">Center <span class="text-danger">*</span></label>
+                <select name="counsellor_center" class="form-select">
+                    <option value="">-- Select Center --</option>
+                    {% for center in centers %}
+                    <option value="{{ center.id }}"
+                        {% if current_role == 'counsellor' and role_obj and role_obj.center_id == center.id %}selected{% endif %}>
+                        {{ center.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Transport: name + capacity -->
+            <div id="role-transport" class="col-12 role-extra {% if current_role != 'transport' %}d-none{% endif %}">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Driver / Transport Name <span class="text-danger">*</span></label>
+                        <input type="text" name="transport_name" class="form-control"
+                               value="{% if current_role == 'transport' and role_obj %}{{ role_obj.name }}{% endif %}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Capacity</label>
+                        <input type="number" name="capacity" class="form-control" min="0"
+                               value="{% if current_role == 'transport' and role_obj %}{{ role_obj.capacity }}{% else %}0{% endif %}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Partner: center + name + address -->
+            <div id="role-partner" class="col-12 role-extra {% if current_role != 'partner' %}d-none{% endif %}">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Center <span class="text-danger">*</span></label>
+                        <select name="partner_center" class="form-select">
+                            <option value="">-- Select Center --</option>
+                            {% for center in centers %}
+                            <option value="{{ center.id }}"
+                                {% if current_role == 'partner' and role_obj and role_obj.center_id == center.id %}selected{% endif %}>
+                                {{ center.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Partner Name <span class="text-danger">*</span></label>
+                        <input type="text" name="partner_name" class="form-control"
+                               value="{% if current_role == 'partner' and role_obj %}{{ role_obj.name }}{% endif %}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Address <span class="text-danger">*</span></label>
+                        <input type="text" name="partner_address" class="form-control"
+                               value="{% if current_role == 'partner' and role_obj %}{{ role_obj.address }}{% endif %}">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sales Person: name + utm_slug -->
+            <div id="role-salesperson" class="col-12 role-extra {% if current_role != 'salesperson' %}d-none{% endif %}">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Sales Person Name <span class="text-danger">*</span></label>
+                        <input type="text" name="salesperson_name" class="form-control"
+                               value="{% if current_role == 'salesperson' and role_obj %}{{ role_obj.name }}{% endif %}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">UTM Slug <span class="text-danger">*</span></label>
+                        <input type="text" name="utm_slug" class="form-control"
+                               value="{% if current_role == 'salesperson' and role_obj %}{{ role_obj.utm_slug }}{% endif %}">
+                        <small class="text-muted">Unique slug used in UTM tracking URLs (e.g. <code>?ref=john-doe</code>)</small>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        {% endif %}
+
+        <!-- Submit -->
+        <div class="mt-4 d-flex gap-3 align-items-center">
+            <button type="submit" class="btn btn-primary px-4">
+                {% if mode == 'create' %}Create Profile{% else %}Save Changes{% endif %}
+            </button>
+            <a href="{% url 'profile_list' %}" class="btn btn-outline-secondary">Cancel</a>
+            {% if mode == 'create' %}
+            <span class="text-muted small ms-2">Default password will be set to <code>basu@123</code></span>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<script>
+    const roleSelect = document.getElementById('role_type');
+    if (roleSelect) {
+        function updateRoleFields() {
+            const val = roleSelect.value;
+            document.querySelectorAll('.role-extra').forEach(el => el.classList.add('d-none'));
+            const map = {
+                'teacher':     'role-teacher',
+                'counsellor':  'role-counsellor',
+                'transport':   'role-transport',
+                'partner':     'role-partner',
+                'salesperson': 'role-salesperson',
+            };
+            if (map[val]) document.getElementById(map[val]).classList.remove('d-none');
+        }
+        roleSelect.addEventListener('change', updateRoleFields);
+    }
+</script>
+{% endblock dashboard %}

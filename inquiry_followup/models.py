@@ -83,6 +83,7 @@ class PartnerPayments(models.Model):
         return f"{self.stationary_partner.name} - {self.amount} on {self.created_at}"
 
 class SalesPerson(models.Model):
+    user = models.ForeignKey(BaseUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='sales_person')
     name = models.CharField(max_length=100)
     phone = models.CharField(max_length=20, blank=True)
     utm_slug = models.SlugField(unique=True)

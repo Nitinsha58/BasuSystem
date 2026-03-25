@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block dashboard %}
+<div class="container-sm p-4">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center my-4 mt-2">
+        <h2 class="fw-normal text-dark mb-0">Manage Profiles</h2>
+        <a href="{% url 'profile_create' %}" class="btn btn-primary">+ Add New Profile</a>
+    </div>
+
+    <!-- Role filter buttons -->
+    <div class="mb-3 d-flex flex-wrap gap-2">
+        <a href="{% url 'profile_list' %}"
+           class="btn btn-sm {% if not role_filter %}btn-dark{% else %}btn-outline-secondary{% endif %}">
+            All
+        </a>
+        {% for key, label in role_labels.items %}
+        <a href="?role={{ key }}"
+           class="btn btn-sm {% if role_filter == key %}btn-dark{% else %}btn-outline-secondary{% endif %}">
+            {{ label }}
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- Table -->
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th style="width:40px">#</th>
+                        <th>Name</th>
+                        <th>Phone</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td class="text-muted small">{{ forloop.counter }}</td>
+
+                        <td>
+                            {{ u.first_name }} {{ u.last_name }}
+                            {% if u.is_superuser %}
+                                <span class="badge bg-danger ms-1">Superuser</span>
+                            {% elif u.is_staff %}
+                                <span class="badge bg-secondary ms-1">Staff</span>
+                            {% endif %}
+                        </td>
+
+                        <td class="text-muted">{{ u.phone }}</td>
+
+                        <td>
+                            {% if u.detected_role == 'teacher' %}
+                                <span class="badge bg-primary">Teacher</span>
+                            {% elif u.detected_role == 'student' %}
+                                <span class="badge bg-success">Student</span>
+                            {% elif u.detected_role == 'mentor' %}
+                                <span class="badge bg-info text-dark">Mentor</span>
+                            {% elif u.detected_role == 'counsellor' %}
+                                <span class="badge bg-warning text-dark">Counsellor</span>
+                            {% elif u.detected_role == 'transport' %}
+                                <span class="badge bg-secondary">Transport</span>
+                            {% elif u.detected_role == 'partner' %}
+                                <span class="badge" style="background:#6f42c1">Partner</span>
+                            {% elif u.detected_role == 'salesperson' %}
+                                <span class="badge" style="background:#fd7e14">Sales Person</span>
+                            {% else %}
+                                <span class="badge bg-light text-dark border">Staff Only</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if u.is_active %}
+                                <span class="badge bg-success-subtle text-success border border-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-danger-subtle text-danger border border-danger">Inactive</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <div class="d-flex gap-2 flex-wrap">
+                                {% if u.detected_role != 'student' %}
+                                <a href="{% url 'profile_update' u.id %}"
+                                   class="btn btn-sm btn-outline-primary">Edit</a>
+                                {% endif %}
+
+                                <form method="POST" action="{% url 'profile_toggle_active' u.id %}">
+                                    {% csrf_token %}
+                                    {% if u.is_active %}
+                                        <button type="submit" class="btn btn-sm btn-outline-warning">Deactivate</button>
+                                    {% else %}
+                                        <button type="submit" class="btn btn-sm btn-outline-success">Activate</button>
+                                    {% endif %}
+                                </form>
+
+                                <form method="POST" action="{% url 'profile_reset_password' u.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                            onclick="return confirm('Reset password to basu@123 for this user?')">
+                                        Reset Password
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-5">
+                            No profiles found{% if role_filter %} for this role{% endif %}.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <p class="text-muted small mt-3">
+        Total: {{ users|length }} profile{{ users|length|pluralize }}.
+        Students are managed via the <a href="{% url 'staff_student_registration' %}">Student Registration</a> page.
+    </p>
+
+    {% if orphaned_drivers %}
+    <div class="card mt-4 border-warning">
+        <div class="card-header bg-warning-subtle d-flex justify-content-between align-items-center">
+            <span class="fw-semibold">Drivers without login ({{ orphaned_drivers|length }})</span>
+            <span class="text-muted small">These transport persons have no login account yet</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Driver / Transport Name</th>
+                        <th>Capacity</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for driver in orphaned_drivers %}
+                    <tr>
+                        <td class="text-muted small">{{ forloop.counter }}</td>
+                        <td>{{ driver.name }}</td>
+                        <td>{{ driver.capacity }}</td>
+                        <td>
+                            <a href="{% url 'profile_driver_create_login' driver.id %}"
+                               class="btn btn-sm btn-warning">Create Login</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock dashboard %}

@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block dashboard %}
+<div class="container-sm p-4">
+
+    <!-- Header -->
+    <div class="mb-4 mt-2">
+        <a href="{% url 'profile_list' %}" class="text-muted text-decoration-none small">← Back to Profiles</a>
+        <h2 class="fw-normal text-dark mt-2">Create Login for Driver</h2>
+        <p class="text-muted mb-0">Driver: <strong>{{ driver.name }}</strong> &nbsp;·&nbsp; Capacity: {{ driver.capacity }}</p>
+    </div>
+
+    <form method="POST" class="bg-light rounded p-4" style="max-width:520px">
+        {% csrf_token %}
+
+        <div class="alert alert-info py-2 small">
+            A new login account will be created and linked to this driver. Default password will be <code>basu@123</code>.
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <label class="form-label">First Name <span class="text-danger">*</span></label>
+                <input type="text" name="first_name" class="form-control" value="{{ driver.name }}" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Last Name</label>
+                <input type="text" name="last_name" class="form-control">
+            </div>
+            <div class="col-12">
+                <label class="form-label">Phone <span class="text-danger">*</span></label>
+                <input type="text" name="phone" class="form-control" maxlength="15"
+                       placeholder="10-digit phone number" required>
+            </div>
+        </div>
+
+        <div class="d-flex gap-3 align-items-center">
+            <button type="submit" class="btn btn-warning px-4">Create Login</button>
+            <a href="{% url 'profile_list' %}" class="btn btn-outline-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock dashboard %}
