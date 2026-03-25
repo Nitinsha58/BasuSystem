@@ -4,7 +4,7 @@ from django.utils.html import format_html
 from .models import Inquiry, ClassName, Subject, FollowUp, FollowUpStatus, AdmissionCounselor, StationaryPartner, ReferralSource, SalesPerson
 from datetime import datetime, timedelta
 from collections import defaultdict
-from django.db.models import Count, Max, Q
+from django.db.models import Count, Max, Q, Subquery, OuterRef
 from django.contrib import messages
 from django.utils.timezone import localtime, now
 from registration.models import AcademicSession
@@ -148,18 +148,32 @@ def inquiries(request):
 
     # Only fetch followups visible in this month — either scheduled via followup_date
     # or created within this month (if no followup_date set)
+    date_filter = (
+        Q(followup_date__range=(first_day, last_day)) |
+        Q(followup_date__isnull=True, created_at__date__range=(first_day, last_day))
+    )
+
+    # Correlated subquery: ID of the most-recently-created in-range followup per inquiry.
+    # Avoids DISTINCT ON ambiguity when inquiry_qs carries M2M JOIN side-effects (e.g. classes filter).
+    latest_fu_subq = (
+        FollowUp.objects
+        .filter(inquiry=OuterRef('pk'))
+        .filter(date_filter)
+        .order_by('-created_at')
+        .values('id')[:1]
+    )
+
+    latest_followup_ids = list(
+        inquiry_qs
+        .annotate(latest_fu_id=Subquery(latest_fu_subq))
+        .filter(latest_fu_id__isnull=False)
+        .values_list('latest_fu_id', flat=True)
+    )
+
     latest_followups = (
         FollowUp.objects
-        .filter(
-            inquiry__in=inquiry_qs,
-        )
-        .filter(
-            Q(followup_date__range=(first_day, last_day)) |
-            Q(followup_date__isnull=True, created_at__date__range=(first_day, last_day))
-        )
+        .filter(id__in=latest_followup_ids)
         .select_related('inquiry', 'inquiry__campaign', 'status', 'admission_counsellor__user')
-        .order_by('inquiry', '-created_at')
-        .distinct('inquiry')
     )
 
     inquiry_followup_dict = defaultdict(list)
