@@ -1,0 +1,1220 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block style %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --brand:        #392994;
+  --brand-mid:    #4f3eb8;
+  --brand-light:  #ede9ff;
+  --brand-dim:    rgba(57,41,148,0.08);
+  --surface:      #ffffff;
+  --surface-2:    #f5f6fa;
+  --surface-3:    #eceef5;
+  --border:       #e2e5ef;
+  --border-dark:  #c9cde0;
+  --text-1:       #0d1117;
+  --text-2:       #374151;
+  --text-3:       #6b7280;
+  --text-4:       #9ca3af;
+  --red:          #e53e3e;
+  --red-light:    #fff5f5;
+  --green:        #16a34a;
+  --green-light:  #f0fdf4;
+  --amber:        #d97706;
+  --amber-light:  #fffbeb;
+  --blue:         #2563eb;
+  --radius-sm:    6px;
+  --radius-md:    10px;
+  --radius-lg:    14px;
+  --font-body:    'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, monospace;
+  --shadow-xs:    0 1px 2px rgba(13,17,23,0.06);
+  --shadow-sm:    0 1px 3px rgba(13,17,23,0.08), 0 4px 16px rgba(13,17,23,0.05);
+  --shadow-md:    0 2px 6px rgba(13,17,23,0.07), 0 8px 24px rgba(13,17,23,0.06);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+.rp-root {
+  font-family: var(--font-body);
+  background: var(--surface-2);
+  min-height: calc(100vh - 56px);
+  color: var(--text-1);
+}
+
+/* ─── Header strip ─────────────────────────────────── */
+.rp-header {
+  background: var(--brand);
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: 52px;
+  flex-wrap: wrap;
+}
+.rp-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.rp-header-dot {
+  width: 8px; height: 8px;
+  background: rgba(255,255,255,0.35);
+  border-radius: 50%;
+}
+.rp-header-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.01em;
+}
+.rp-header-sub {
+  font-size: 12px;
+  color: rgba(255,255,255,0.55);
+  margin-left: 4px;
+}
+.rp-last-updated {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: rgba(255,255,255,0.45);
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius-sm);
+  padding: 3px 10px;
+}
+
+/* ─── Filter toolbar ───────────────────────────────── */
+.rp-toolbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 10px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+}
+.rp-filter-group { display: flex; flex-direction: column; gap: 4px; }
+.rp-filter-group label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--text-4);
+}
+.rp-filter-group select {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  background: var(--surface);
+  color: var(--text-2);
+  min-width: 140px;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 28px;
+  transition: border-color .15s, box-shadow .15s;
+}
+.rp-filter-group select:focus {
+  outline: none;
+  border-color: var(--brand-mid);
+  box-shadow: 0 0 0 3px var(--brand-dim);
+}
+.rp-date-btn {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  background: var(--surface);
+  color: var(--text-4);
+  min-width: 130px;
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color .15s, box-shadow .15s, color .15s;
+}
+.rp-date-btn.has-value { color: var(--text-2); }
+.rp-date-btn:hover { border-color: var(--brand-mid); }
+.rp-date-btn:focus {
+  outline: none;
+  border-color: var(--brand-mid);
+  box-shadow: 0 0 0 3px var(--brand-dim);
+}
+.rp-filter-divider {
+  width: 1px; height: 32px;
+  background: var(--border);
+  align-self: flex-end;
+  margin: 0 2px;
+}
+.rp-btn-apply {
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--brand);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 7px 18px;
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+  white-space: nowrap;
+}
+.rp-btn-apply:hover { background: var(--brand-mid); }
+.rp-btn-apply:active { transform: scale(0.97); }
+.rp-btn-reset {
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  background: none;
+  color: var(--text-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+}
+.rp-btn-reset:hover { color: var(--red); border-color: var(--red); }
+
+/* ─── Content area ─────────────────────────────────── */
+.rp-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+/* ─── KPI strip ────────────────────────────────────── */
+.rp-kpis {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 1000px) { .rp-kpis { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 640px)  { .rp-kpis { grid-template-columns: repeat(2, 1fr); } }
+
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+  padding: 16px 18px 14px;
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow .2s, transform .2s;
+  animation: fadeSlideUp .4s ease both;
+}
+.kpi-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--kpi-accent, var(--brand));
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.kpi-card--red   { --kpi-accent: var(--red);   }
+.kpi-card--amber { --kpi-accent: var(--amber);  }
+.kpi-card--green { --kpi-accent: var(--green);  }
+.kpi-card--blue  { --kpi-accent: var(--blue);   }
+
+.kpi-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--text-4);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.kpi-icon {
+  width: 18px; height: 18px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  flex-shrink: 0;
+}
+.kpi-value {
+  font-size: 30px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--text-1);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+.kpi-sub {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-4);
+  margin-top: 6px;
+}
+.kpi-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-left: 2px;
+}
+
+/* ─── Section grid ─────────────────────────────────── */
+.rp-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 880px) { .rp-grid-2 { grid-template-columns: 1fr; } }
+.rp-grid-3 {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 14px;
+}
+@media (max-width: 1080px) { .rp-grid-3 { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 640px)  { .rp-grid-3 { grid-template-columns: 1fr; } }
+
+/* ─── Cards ────────────────────────────────────────── */
+.rp-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+  overflow: hidden;
+  animation: fadeSlideUp .45s ease both;
+}
+.rp-card-head {
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.rp-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-2);
+  letter-spacing: -0.005em;
+}
+.rp-card-desc {
+  font-size: 11px;
+  color: var(--text-4);
+  margin-top: 1px;
+  font-weight: 400;
+}
+.rp-card-badge {
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  background: var(--brand-light);
+  color: var(--brand);
+  border-radius: 4px;
+  padding: 2px 7px;
+  white-space: nowrap;
+}
+.rp-card-body { padding: 16px 18px; }
+.rp-card-body--flush { padding: 0; }
+
+/* ─── Chart wrapper ────────────────────────────────── */
+.chart-wrap { position: relative; width: 100%; }
+.chart-wrap canvas { display: block; }
+
+/* ─── Tables ───────────────────────────────────────── */
+.rp-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.rp-tbl thead th {
+  padding: 9px 14px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--text-4);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.rp-tbl thead th:first-child { padding-left: 18px; }
+.rp-tbl thead th:last-child  { padding-right: 18px; }
+.rp-tbl tbody td {
+  padding: 10px 14px;
+  color: var(--text-2);
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.rp-tbl tbody td:first-child { padding-left: 18px; }
+.rp-tbl tbody td:last-child  { padding-right: 18px; }
+.rp-tbl tbody tr:last-child td { border-bottom: none; }
+.rp-tbl tbody tr { transition: background .1s; }
+.rp-tbl tbody tr:hover td { background: var(--surface-2); }
+
+/* rank col */
+.tbl-rank {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-4);
+  width: 28px;
+}
+/* avatar */
+.tbl-avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--brand-light);
+  color: var(--brand);
+  font-size: 10px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: .02em;
+}
+.tbl-person { display: flex; align-items: center; gap: 9px; }
+.tbl-name { font-weight: 600; color: var(--text-1); font-size: 13px; }
+
+/* stat pill */
+.stat-mono {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-1);
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 5px;
+  padding: 2px 8px;
+  font-family: var(--font-mono);
+}
+.badge-hot   { background: var(--red-light);   color: var(--red);   }
+.badge-conv  { background: var(--green-light);  color: var(--green); }
+.badge-warm  { background: var(--amber-light);  color: var(--amber); }
+.badge-neutral { background: var(--surface-3); color: var(--text-3); }
+
+/* mini conv bar */
+.conv-bar { display: flex; align-items: center; gap: 7px; }
+.conv-track { flex-shrink: 0; width: 56px; height: 5px; background: var(--surface-3); border-radius: 3px; overflow: hidden; }
+.conv-fill  { height: 5px; background: var(--brand); border-radius: 3px; transition: width .6s cubic-bezier(0.4,0,0.2,1); }
+
+/* origin cards */
+.origin-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 14px 18px; }
+.origin-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  position: relative;
+  overflow: hidden;
+}
+.origin-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 4px; height: 100%;
+  background: var(--o-color, var(--brand));
+  border-radius: 0;
+}
+.origin-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text-4);
+  margin-bottom: 8px;
+  padding-left: 8px;
+}
+.origin-num {
+  font-size: 26px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  letter-spacing: -0.02em;
+  color: var(--text-1);
+  padding-left: 8px;
+}
+.origin-sub {
+  font-size: 11px;
+  color: var(--text-4);
+  margin-top: 3px;
+  padding-left: 8px;
+  font-weight: 500;
+}
+
+/* ─── Skeleton loader ──────────────────────────────── */
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-3) 25%, var(--border) 50%, var(--surface-3) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 4px;
+}
+@keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+.skeleton-text { height: 12px; border-radius: 3px; margin-bottom: 6px; }
+.skeleton-num  { height: 30px; width: 70px; border-radius: 3px; }
+
+/* ─── Empty state ─────────────────────────────────── */
+.empty-state {
+  padding: 32px;
+  text-align: center;
+  color: var(--text-4);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* ─── Animations ──────────────────────────────────── */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.rp-kpis .kpi-card:nth-child(1) { animation-delay: .04s; }
+.rp-kpis .kpi-card:nth-child(2) { animation-delay: .08s; }
+.rp-kpis .kpi-card:nth-child(3) { animation-delay: .12s; }
+.rp-kpis .kpi-card:nth-child(4) { animation-delay: .16s; }
+.rp-kpis .kpi-card:nth-child(5) { animation-delay: .20s; }
+
+/* ─── Loading bar at top ──────────────────────────── */
+#rp-progress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 2px;
+  background: var(--brand);
+  z-index: 9999;
+  width: 0;
+  transition: width .3s ease, opacity .3s ease;
+}
+#rp-progress.running { width: 70%; }
+#rp-progress.done    { width: 100%; opacity: 0; transition: width .2s ease, opacity .5s .2s; }
+
+/* ─── Referral source sub-category breakdown list ─ */
+.src-breakdown { padding: 12px 0 0; display: flex; flex-direction: column; gap: 8px; }
+.src-cat-head  { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 600; color: var(--text-2); margin-bottom: 3px; }
+.src-dot       { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+.src-cat-total { margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--text-3); }
+.src-child     { display: flex; justify-content: space-between; padding: 2px 0 2px 17px; font-size: 11px; color: var(--text-3); border-bottom: 1px solid var(--border); }
+.src-child:last-child { border-bottom: none; }
+.src-child-val { font-family: var(--font-mono); font-weight: 600; color: var(--text-2); }
+</style>
+{% endblock style %}
+
+
+{% block dashboard %}
+<script id="rp-config" type="application/json"
+  data-api-url="{% url 'inquiry_report_data' %}"
+  data-sessions='{{ sessions|safe }}'
+  data-campaigns='{{ campaigns|safe }}'
+  data-counsellors='{{ counsellors|safe }}'
+></script>
+
+<div id="rp-progress"></div>
+
+<div class="rp-root">
+
+  <!-- ── Header ── -->
+  <div class="rp-header">
+    <div class="rp-header-left">
+      <div class="rp-header-dot"></div>
+      <span class="rp-header-title">Inquiry Report</span>
+      <span class="rp-header-sub">Manager Dashboard · BASU Nextgen</span>
+    </div>
+    <div id="rp-last-updated" class="rp-last-updated">—</div>
+  </div>
+
+  <!-- ── Filter toolbar ── -->
+  <div class="rp-toolbar">
+
+    <!-- Row 1: Date range + Session + Campaign -->
+    <div class="rp-filter-group">
+      <label>From</label>
+      <div style="position:relative;">
+        <button type="button" id="f-date-from-display" class="rp-date-btn">Any date</button>
+        <input type="date" id="f-date-from" tabindex="-1"
+               style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;pointer-events:none;">
+      </div>
+    </div>
+    <div class="rp-filter-group">
+      <label>To</label>
+      <div style="position:relative;">
+        <button type="button" id="f-date-to-display" class="rp-date-btn">Any date</button>
+        <input type="date" id="f-date-to" tabindex="-1"
+               style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;pointer-events:none;">
+      </div>
+    </div>
+    <div class="rp-filter-divider"></div>
+    <div class="rp-filter-group">
+      <label for="f-session">Session</label>
+      <select id="f-session">
+        <option value="">All Sessions</option>
+        {% for s in sessions %}
+          <option value="{{ s.id }}">{{ s.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="rp-filter-group">
+      <label for="f-campaign">Campaign</label>
+      <select id="f-campaign">
+        <option value="">All Campaigns</option>
+        {% for c in campaigns %}
+          <option value="{{ c.id }}">{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="rp-filter-divider"></div>
+    <div class="rp-filter-group">
+      <label for="f-counsellor">Counsellor</label>
+      <select id="f-counsellor">
+        <option value="">All Counsellors</option>
+        {% for c in counsellors %}
+          <option value="{{ c.id }}">{{ c.user__first_name }} {{ c.user__last_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="rp-filter-group">
+      <label for="f-sales-person">Sales Person</label>
+      <select id="f-sales-person">
+        <option value="">All Sales Persons</option>
+        {% for sp in sales_persons %}
+          <option value="{{ sp.id }}">{{ sp.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="rp-filter-group">
+      <label for="f-caller">Caller</label>
+      <select id="f-caller">
+        <option value="">All Callers</option>
+        {% for c in callers %}
+          <option value="{{ c.id }}">{{ c.user__first_name }} {{ c.user__last_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="rp-filter-divider"></div>
+    <div class="rp-filter-group">
+      <label for="f-origin">Origin</label>
+      <select id="f-origin">
+        <option value="">All Origins</option>
+        <option value="walk_in">Walk-In</option>
+        <option value="organic_call">Organic Call</option>
+        <option value="campaign">Campaign</option>
+      </select>
+    </div>
+    <div class="rp-filter-group">
+      <label for="f-quality">Lead Quality</label>
+      <select id="f-quality">
+        <option value="">All Quality</option>
+        <option value="hot">Hot</option>
+        <option value="warm">Warm</option>
+        <option value="cold">Cold</option>
+      </select>
+    </div>
+    <div class="rp-filter-divider"></div>
+    <div style="display:flex;gap:8px;align-items:flex-end;">
+      <button class="rp-btn-apply" onclick="loadReport()">Apply</button>
+      <button class="rp-btn-reset" onclick="resetFilters()">Reset</button>
+    </div>
+  </div>
+
+  <!-- ── Body ── -->
+  <div class="rp-body">
+
+    <!-- KPI cards -->
+    <div class="rp-kpis">
+      <div class="kpi-card">
+        <div class="kpi-label">
+          <span class="kpi-icon" style="background:#ede9ff;color:#392994;">&#9632;</span>
+          Total Leads
+        </div>
+        <div class="kpi-value" id="kpi-total">—</div>
+        <div class="kpi-sub">across all stages</div>
+      </div>
+      <div class="kpi-card kpi-card--green">
+        <div class="kpi-label">
+          <span class="kpi-icon" style="background:#f0fdf4;color:#16a34a;">&#10003;</span>
+          Closed / Enrolled
+        </div>
+        <div class="kpi-value" id="kpi-closed">—</div>
+        <div class="kpi-sub"><span id="kpi-conv-pct" class="kpi-badge" style="background:#f0fdf4;color:#16a34a;"></span> conversion</div>
+      </div>
+      <div class="kpi-card kpi-card--red">
+        <div class="kpi-label">
+          <span class="kpi-icon" style="background:#fff5f5;color:#e53e3e;">&#9650;</span>
+          Hot Leads
+        </div>
+        <div class="kpi-value" id="kpi-hot" style="color:var(--red);">—</div>
+        <div class="kpi-sub"><span id="kpi-hot-pct" class="kpi-badge" style="background:#fff5f5;color:#e53e3e;"></span> of total</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">
+          <span class="kpi-icon" style="background:#f5f6fa;color:#6b7280;">&#10005;</span>
+          Fake / Junk
+        </div>
+        <div class="kpi-value" id="kpi-fake">—</div>
+        <div class="kpi-sub"><span id="kpi-fake-pct" class="kpi-badge badge-neutral"></span> of total</div>
+      </div>
+      <div class="kpi-card kpi-card--amber">
+        <div class="kpi-label">
+          <span class="kpi-icon" style="background:#fffbeb;color:#d97706;">&#8635;</span>
+          Avg Follow-ups
+        </div>
+        <div class="kpi-value" id="kpi-avg-fu">—</div>
+        <div class="kpi-sub">touchpoints per lead</div>
+      </div>
+    </div>
+
+    <!-- Pipeline + Sources -->
+    <div class="rp-grid-2">
+      <div class="rp-card">
+        <div class="rp-card-head">
+          <div>
+            <div class="rp-card-title">Pipeline Funnel</div>
+            <div class="rp-card-desc">Leads grouped by current status</div>
+          </div>
+          <span class="rp-card-badge" id="badge-pipeline">—</span>
+        </div>
+        <div class="rp-card-body">
+          <div class="chart-wrap" style="height:220px;">
+            <canvas id="chart-pipeline"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="rp-card">
+        <div class="rp-card-head">
+          <div>
+            <div class="rp-card-title">Referral Sources</div>
+            <div class="rp-card-desc">Where leads are coming from</div>
+          </div>
+        </div>
+        <div class="rp-card-body">
+          <div class="chart-wrap" style="height:220px;">
+            <canvas id="chart-sources"></canvas>
+          </div>
+          <div id="sources-breakdown" class="src-breakdown"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quality Trend (full width) -->
+    <div class="rp-card">
+      <div class="rp-card-head">
+        <div>
+          <div class="rp-card-title">Lead Quality Trend</div>
+          <div class="rp-card-desc">Monthly Hot / Warm / Cold distribution</div>
+        </div>
+      </div>
+      <div class="rp-card-body">
+        <div class="chart-wrap" style="height:180px;">
+          <canvas id="chart-quality-trend"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Counsellors + Callers -->
+    <div class="rp-grid-2">
+
+      <!-- Counsellor table -->
+      <div class="rp-card">
+        <div class="rp-card-head">
+          <div>
+            <div class="rp-card-title">Counsellor Performance</div>
+            <div class="rp-card-desc">Leads owned → enrolled</div>
+          </div>
+        </div>
+        <div class="rp-card-body--flush">
+          <table class="rp-tbl">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Counsellor</th>
+                <th>Leads</th>
+                <th>Closed</th>
+                <th>Hot</th>
+                <th>Conv.</th>
+              </tr>
+            </thead>
+            <tbody id="tbl-counsellors">
+              <tr><td colspan="6"><div class="empty-state">Loading…</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Caller table -->
+      <div class="rp-card">
+        <div class="rp-card-head">
+          <div>
+            <div class="rp-card-title">Caller Quality</div>
+            <div class="rp-card-desc">How well each caller qualifies leads</div>
+          </div>
+        </div>
+        <div class="rp-card-body--flush">
+          <table class="rp-tbl">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Caller</th>
+                <th>Calls</th>
+                <th>Hot</th>
+                <th>Hot Rate</th>
+              </tr>
+            </thead>
+            <tbody id="tbl-callers">
+              <tr><td colspan="5"><div class="empty-state">Loading…</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Campaigns + Origin split -->
+    <div class="rp-grid-3">
+
+      <!-- Campaign table (spans 2 cols) -->
+      <div class="rp-card" style="grid-column: span 2;">
+        <div class="rp-card-head">
+          <div>
+            <div class="rp-card-title">Campaign Conversion</div>
+            <div class="rp-card-desc">Leads and close rate per marketing campaign</div>
+          </div>
+        </div>
+        <div class="rp-card-body--flush">
+          <table class="rp-tbl">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Campaign</th>
+                <th>Leads</th>
+                <th>Closed</th>
+                <th>Conv.</th>
+              </tr>
+            </thead>
+            <tbody id="tbl-campaigns">
+              <tr><td colspan="5"><div class="empty-state">Loading…</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Origin breakdown -->
+      <div class="rp-card">
+        <div class="rp-card-head">
+          <div>
+            <div class="rp-card-title">Inquiry Origin</div>
+            <div class="rp-card-desc">How leads entered the system</div>
+          </div>
+        </div>
+        <div id="origins-container" class="origin-cards" style="grid-template-columns:1fr;">
+          <div class="empty-state">Loading…</div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
+<script>
+/* ── Global chart registry ─────────────────────── */
+const _charts = {};
+
+function makeChart(id, config) {
+  if (_charts[id]) _charts[id].destroy();
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  _charts[id] = new Chart(ctx, config);
+}
+
+/* ── CSRF ──────────────────────────────────────── */
+function getCookie(name) {
+  let v = null;
+  document.cookie.split(';').forEach(c => {
+    const [k, val] = c.trim().split('=');
+    if (k === name) v = decodeURIComponent(val);
+  });
+  return v;
+}
+
+/* ── Progress bar ──────────────────────────────── */
+const bar = document.getElementById('rp-progress');
+function pbStart() { bar.className = 'running'; }
+function pbDone()  { bar.className = 'done'; setTimeout(() => bar.className = '', 600); }
+
+/* ── Helpers ───────────────────────────────────── */
+function pct(n, d) { return d ? Math.round(n / d * 100) : 0; }
+
+function initials(name) {
+  return name.split(' ').filter(Boolean).map(p => p[0]).join('').toUpperCase().slice(0, 2);
+}
+
+function convBar(p) {
+  return `<div class="conv-bar">
+    <div class="conv-track"><div class="conv-fill" style="width:${p}%"></div></div>
+    <span class="badge badge-conv">${p}%</span>
+  </div>`;
+}
+
+function emptyRow(cols, msg = 'No data for this period') {
+  return `<tr><td colspan="${cols}"><div class="empty-state">${msg}</div></td></tr>`;
+}
+
+const BRAND_PALETTE = ['#392994','#7c3aed','#2563eb','#0891b2','#059669','#d97706','#dc2626','#db2777'];
+
+/* ── Chart.js defaults ─────────────────────────── */
+Chart.defaults.font.family = "'Plus Jakarta Sans', system-ui, sans-serif";
+Chart.defaults.font.size = 12;
+Chart.defaults.color = '#9ca3af';
+
+/* ── Render KPIs ───────────────────────────────── */
+function renderKPI(kpi) {
+  const total = kpi.total || 0;
+  document.getElementById('kpi-total').textContent   = total;
+  document.getElementById('kpi-closed').textContent  = kpi.closed ?? kpi.enrolled ?? 0;
+  document.getElementById('kpi-hot').textContent     = kpi.hot ?? 0;
+  document.getElementById('kpi-fake').textContent    = kpi.fake ?? 0;
+  document.getElementById('kpi-avg-fu').textContent  = kpi.avg_followups ?? '—';
+
+  const closedN = kpi.closed ?? kpi.enrolled ?? 0;
+  document.getElementById('kpi-conv-pct').textContent  = pct(closedN, total) + '%';
+  document.getElementById('kpi-hot-pct').textContent   = pct(kpi.hot ?? 0, total) + '%';
+  document.getElementById('kpi-fake-pct').textContent  = pct(kpi.fake ?? 0, total) + '%';
+}
+
+/* ── Pipeline bar chart (horizontal) ─────────── */
+function renderPipeline(pipeline) {
+  document.getElementById('badge-pipeline').textContent = pipeline.reduce((s, r) => s + r.count, 0) + ' leads';
+
+  makeChart('chart-pipeline', {
+    type: 'bar',
+    data: {
+      labels: pipeline.map(r => r.name),
+      datasets: [{
+        data: pipeline.map(r => r.count),
+        backgroundColor: pipeline.map(r => r.color || '#392994'),
+        borderRadius: 5,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: ctx => ` ${ctx.raw} leads` }
+        }
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          ticks: { precision: 0, font: { family: "'JetBrains Mono', monospace", size: 11 } },
+          grid: { color: '#f0f1f5' }
+        },
+        y: {
+          ticks: { font: { size: 12 } },
+          grid: { display: false }
+        }
+      }
+    }
+  });
+}
+
+/* ── Sources doughnut (inner ring = category, outer ring = sub-source) ─ */
+function hexMixWhite(hex, t) {
+  const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+  return `rgb(${Math.round(r+(255-r)*t)},${Math.round(g+(255-g)*t)},${Math.round(b+(255-b)*t)})`;
+}
+
+function renderSources(sources) {
+  if (!sources.length) return;
+
+  const catColors  = BRAND_PALETTE.slice(0, sources.length);
+  const innerData  = sources.map(s => s.total);
+  const grandTotal = innerData.reduce((a, b) => a + b, 0);
+
+  // Outer ring: all sub-sources, each shaded from its category colour
+  const outerLabels = [], outerData = [], outerColors = [];
+  sources.forEach((s, i) => {
+    const n = s.children.length;
+    s.children.forEach((c, j) => {
+      outerLabels.push(c.name);
+      outerData.push(c.value);
+      outerColors.push(hexMixWhite(catColors[i], n <= 1 ? 0 : j * 0.5 / (n - 1)));
+    });
+  });
+
+  makeChart('chart-sources', {
+    type: 'doughnut',
+    data: {
+      labels: outerLabels,
+      datasets: [
+        {
+          data: innerData,
+          backgroundColor: catColors,
+          borderWidth: 3, borderColor: '#fff', hoverOffset: 6,
+        },
+        {
+          data: outerData,
+          backgroundColor: outerColors,
+          borderWidth: 2, borderColor: '#fff', hoverOffset: 4,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '48%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: ctx => ctx[0].datasetIndex === 0
+              ? sources[ctx[0].dataIndex].label
+              : outerLabels[ctx[0].dataIndex],
+            label: ctx => ` ${ctx.raw} (${pct(ctx.raw, grandTotal)}%)`,
+          }
+        }
+      }
+    }
+  });
+
+  // HTML sub-source breakdown list below the chart
+  const listEl = document.getElementById('sources-breakdown');
+  if (!listEl) return;
+  listEl.innerHTML = sources.map((s, i) => `
+    <div class="src-cat">
+      <div class="src-cat-head">
+        <span class="src-dot" style="background:${catColors[i]}"></span>
+        <span>${s.label}</span>
+        <span class="src-cat-total">${s.total}</span>
+      </div>
+      ${s.children.map(c => `
+        <div class="src-child">
+          <span class="src-child-name">${c.name}</span>
+          <span class="src-child-val">${c.value}</span>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+/* ── Quality trend stacked bar ─────────────────── */
+function renderQualityTrend(trend) {
+  if (!trend.length) return;
+  makeChart('chart-quality-trend', {
+    type: 'bar',
+    data: {
+      labels: trend.map(r => r.month),
+      datasets: [
+        { label: 'Hot',  data: trend.map(r => r.hot),  backgroundColor: '#ef4444', borderRadius: 2 },
+        { label: 'Warm', data: trend.map(r => r.warm), backgroundColor: '#f59e0b', borderRadius: 2 },
+        { label: 'Cold', data: trend.map(r => r.cold), backgroundColor: '#93c5fd', borderRadius: 2 },
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'rect', padding: 16, font: { size: 12 } } }
+      },
+      scales: {
+        x: { stacked: true, grid: { display: false }, ticks: { font: { size: 11 } } },
+        y: { stacked: true, beginAtZero: true, grid: { color: '#f0f1f5' }, ticks: { precision: 0, font: { family: "'JetBrains Mono', monospace", size: 11 } } }
+      }
+    }
+  });
+}
+
+/* ── Counsellor table ─────────────────────────── */
+function renderCounsellorTable(rows) {
+  const tbody = document.getElementById('tbl-counsellors');
+  if (!rows.length) { tbody.innerHTML = emptyRow(6); return; }
+  tbody.innerHTML = rows.map((r, i) => {
+    const closedN = r.closed ?? r.enrolled ?? 0;
+    const hotN    = r.hot ?? 0;
+    const p       = r.conv_pct ?? pct(closedN, r.total);
+    return `<tr>
+      <td class="tbl-rank">${i + 1}</td>
+      <td>
+        <div class="tbl-person">
+          <div class="tbl-avatar">${initials(r.name)}</div>
+          <span class="tbl-name">${r.name}</span>
+        </div>
+      </td>
+      <td class="stat-mono">${r.total}</td>
+      <td><span class="badge badge-conv">${closedN}</span></td>
+      <td><span class="badge badge-hot">${hotN}</span></td>
+      <td>${convBar(p)}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── Caller table ─────────────────────────────── */
+function renderCallerTable(rows) {
+  const tbody = document.getElementById('tbl-callers');
+  if (!rows.length) { tbody.innerHTML = emptyRow(5); return; }
+  tbody.innerHTML = rows.map((r, i) => {
+    const p = r.hot_pct ?? pct(r.hot, r.calls);
+    return `<tr>
+      <td class="tbl-rank">${i + 1}</td>
+      <td>
+        <div class="tbl-person">
+          <div class="tbl-avatar">${initials(r.name)}</div>
+          <span class="tbl-name">${r.name}</span>
+        </div>
+      </td>
+      <td class="stat-mono">${r.calls}</td>
+      <td><span class="badge badge-hot">${r.hot}</span></td>
+      <td>${convBar(p)}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── Campaign table ───────────────────────────── */
+function renderCampaignTable(rows) {
+  const tbody = document.getElementById('tbl-campaigns');
+  if (!rows.length) { tbody.innerHTML = emptyRow(5); return; }
+  tbody.innerHTML = rows.map((r, i) => {
+    const closedN = r.closed ?? r.enrolled ?? 0;
+    const p       = r.conv_pct ?? pct(closedN, r.total);
+    return `<tr>
+      <td class="tbl-rank">${i + 1}</td>
+      <td style="font-weight:600;color:var(--text-1);">${r.name}</td>
+      <td class="stat-mono">${r.total}</td>
+      <td><span class="badge badge-conv">${closedN}</span></td>
+      <td>${convBar(p)}</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── Origins ──────────────────────────────────── */
+function renderOrigins(origins) {
+  const container = document.getElementById('origins-container');
+  if (!origins.length) { container.innerHTML = '<div class="empty-state">No data</div>'; return; }
+
+  const colorMap = { 'Walk-In': '#392994', 'Organic Call': '#2563eb', 'Campaign': '#059669' };
+  container.style.gridTemplateColumns = '1fr';
+
+  container.innerHTML = origins.map(r => {
+    const closedN = r.closed ?? r.enrolled ?? 0;
+    const color = colorMap[r.origin] || '#392994';
+    const p = pct(closedN, r.total);
+    return `<div class="origin-card" style="--o-color:${color};">
+      <div class="origin-label">${r.origin}</div>
+      <div class="origin-num">${r.total}</div>
+      <div class="origin-sub">${closedN} closed · ${p}%</div>
+    </div>`;
+  }).join('');
+}
+
+/* ── Date picker helpers ─────────────────────── */
+const _MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function _fmtDate(isoStr) {
+  if (!isoStr) return 'Any date';
+  const p = isoStr.split('-');
+  return `${+p[2]} ${_MONTHS[+p[1]-1]} ${p[0]}`;
+}
+(function initDatePickers() {
+  [['f-date-from', 'f-date-from-display'], ['f-date-to', 'f-date-to-display']].forEach(([inputId, btnId]) => {
+    const inp = document.getElementById(inputId);
+    const btn = document.getElementById(btnId);
+    if (!inp || !btn) return;
+    btn.addEventListener('click', () => {
+      inp.style.pointerEvents = 'auto';
+      if (inp.showPicker) inp.showPicker(); else inp.click();
+      setTimeout(() => inp.style.pointerEvents = 'none', 300);
+    });
+    inp.addEventListener('change', () => {
+      btn.textContent = _fmtDate(inp.value);
+      btn.classList.toggle('has-value', !!inp.value);
+      loadReport();
+    });
+  });
+})();
+
+/* ── Main fetch ───────────────────────────────── */
+function loadReport() {
+  const config = document.getElementById('rp-config');
+  const apiUrl = config.dataset.apiUrl;
+
+  const params = new URLSearchParams();
+  const df = document.getElementById('f-date-from').value;
+  const dt = document.getElementById('f-date-to').value;
+  const s  = document.getElementById('f-session').value;
+  const c  = document.getElementById('f-campaign').value;
+  const cn = document.getElementById('f-counsellor').value;
+  const sp = document.getElementById('f-sales-person').value;
+  const cl = document.getElementById('f-caller').value;
+  const o  = document.getElementById('f-origin').value;
+  const q  = document.getElementById('f-quality').value;
+  if (df) params.set('date_from',    df);
+  if (dt) params.set('date_to',      dt);
+  if (s)  params.set('session',      s);
+  if (c)  params.set('campaign',     c);
+  if (cn) params.set('counsellor',   cn);
+  if (sp) params.set('sales_person', sp);
+  if (cl) params.set('caller',       cl);
+  if (o)  params.set('origin',       o);
+  if (q)  params.set('quality',      q);
+
+  pbStart();
+
+  fetch(`${apiUrl}?${params}`, {
+    headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Accept': 'application/json' }
+  })
+  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+  .then(data => {
+    renderKPI(data.kpi);
+    renderPipeline(data.pipeline ?? []);
+    renderSources(data.sources ?? []);
+    renderQualityTrend(data.quality_trend ?? []);
+    renderCounsellorTable(data.counsellors ?? []);
+    renderCallerTable(data.callers ?? []);
+    renderCampaignTable(data.campaigns ?? []);
+    renderOrigins(data.origins ?? []);
+
+    const now = new Date();
+    document.getElementById('rp-last-updated').textContent =
+      'Updated ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  })
+  .catch(err => {
+    console.error(err);
+    alert('Could not load report: ' + err.message);
+  })
+  .finally(pbDone);
+}
+
+function resetFilters() {
+  ['f-session','f-campaign','f-counsellor','f-sales-person','f-caller',
+   'f-origin','f-quality'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  ['f-date-from', 'f-date-to'].forEach(id => {
+    const inp = document.getElementById(id);
+    const btn = document.getElementById(id + '-display');
+    if (inp) inp.value = '';
+    if (btn) { btn.textContent = 'Any date'; btn.classList.remove('has-value'); }
+  });
+  loadReport();
+}
+
+/* ── Boot ─────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+  loadReport();
+  ['f-session','f-campaign','f-counsellor','f-sales-person','f-caller',
+   'f-origin','f-quality'].forEach(id => {
+    document.getElementById(id).addEventListener('change', loadReport);
+  });
+  // date pickers are wired by initDatePickers() above
+});
+</script>
+{% endblock dashboard %}

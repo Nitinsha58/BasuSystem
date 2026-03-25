@@ -16,6 +16,8 @@ from .views import (
     add_leads,
     quick_update_inquiry,
     patch_inquiry_field,
+    report_page,
+    report_data,
 )
 
 urlpatterns = [
@@ -36,4 +38,7 @@ urlpatterns = [
     path('inquiries/add-leads/', add_leads, name='add_leads'),
     path('inquiries/<int:inquiry_id>/quick-update/', quick_update_inquiry, name='quick_update_inquiry'),
     path('inquiries/<int:inquiry_id>/patch-field/', patch_inquiry_field, name='patch_inquiry_field'),
+
+    path('inquiries/report/', report_page, name='inquiry_report'),
+    path('inquiries/report/data/', report_data, name='inquiry_report_data'),
 ]

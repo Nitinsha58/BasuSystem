@@ -16,6 +16,7 @@ from urllib.parse import urlencode
 from django.views.decorators.http import require_GET, require_POST
 import json
 
+from django.contrib.auth.decorators import user_passes_test
 
 from django.utils import timezone
 from calendar import monthrange
@@ -1048,3 +1049,72 @@ def add_leads(request):
         'invalid_list':   invalid_list,
     })
     return render(request, 'inquiry_followup/add_leads.html', context)
+
+
+# ---------------------------------------------------------------------------
+# Manager Report — superuser only
+# ---------------------------------------------------------------------------
+
+_superuser_required = user_passes_test(lambda u: u.is_superuser, login_url='login')
+
+
+@_superuser_required
+def report_page(request):
+    """Render the Bootstrap + Chart.js report shell for the center manager."""
+    counsellors_qs = list(
+        AdmissionCounselor.objects.select_related("user")
+        .order_by("user__first_name")
+        .values("id", "user__first_name", "user__last_name")
+    )
+    context = {
+        "sessions": list(
+            AcademicSession.objects.order_by("-start_date").values("id", "name")
+        ),
+        "campaigns": list(
+            Campaign.objects.filter(is_active=True).order_by("-created_at").values("id", "name")
+        ),
+        "counsellors": counsellors_qs,
+        "callers": counsellors_qs,
+        "sales_persons": list(
+            SalesPerson.objects.filter(is_active=True).order_by("name").values("id", "name")
+        ),
+    }
+    return render(request, "inquiry_followup/report.html", context)
+
+
+@_superuser_required
+def report_data(request):
+    """
+    JSON data endpoint consumed by the report page via fetch().
+
+    Optional query params:
+      session=<id>    campaign=<id>   counsellor=<id>
+      origin=walk_in|organic_call|campaign
+      quality=hot|warm|cold
+    """
+    from .report_utils import (
+        get_filtered_queryset,
+        kpi_summary,
+        pipeline_breakdown,
+        referral_source_breakdown,
+        counsellor_performance,
+        caller_quality,
+        campaign_conversion,
+        origin_breakdown,
+        quality_by_month,
+    )
+
+    qs = get_filtered_queryset(request.GET)
+
+    data = {
+        "kpi":           kpi_summary(qs),
+        "pipeline":      pipeline_breakdown(qs),
+        "sources":       referral_source_breakdown(qs),
+        "counsellors":   counsellor_performance(qs),
+        "callers":       caller_quality(qs),
+        "campaigns":     campaign_conversion(qs),
+        "origins":       origin_breakdown(qs),
+        "quality_trend": quality_by_month(qs),
+    }
+
+    return JsonResponse(data)
