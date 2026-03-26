@@ -10,6 +10,7 @@ from .views import (
     student_registration_lookup,
     student_enrollment_details_update,
     students_enrollment_list,
+    search_enrollment_students,
     student_enrollment_parent_details,
     student_enrollment_update,
     student_enrollment_delete,
@@ -88,6 +89,7 @@ from .views import (
 
 urlpatterns = [
     # path('search-students/', search_students, name='search_students'),
+    path('search-enrollment-students/', search_enrollment_students, name='search_enrollment_students'),
     path('partner/login/init/', xpsolv_login_init, name='xpsolv_login_init'),
     path('registration/lookup/', student_registration_lookup, name='student_registration_lookup'),
     path('enrollments', students_enrollment_list, name='students_enrollment_list'),

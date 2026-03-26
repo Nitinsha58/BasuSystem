@@ -29,7 +29,7 @@ from user.models import BaseUser
 from django.contrib.auth.decorators import login_required
 from django.forms import inlineformset_factory
 from django.core.exceptions import ValidationError
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 
 from django.db.models import Q
 from django.urls import reverse
@@ -1273,6 +1273,73 @@ def student_enrollment_details_update(request, stu_id):
         'enrollments_count': len(enrollments),
         'current_enrollment': current_enrollment,
     })
+
+
+@login_required(login_url='login')
+def search_enrollment_students(request):
+    """HTMX endpoint — return <li> fragments for the enrollment search dropdown."""
+    from django.utils.html import escape
+
+    q = (request.GET.get('search') or '').strip()
+    session_id = (request.GET.get('session') or '').strip()
+
+    if not q or len(q) < 2:
+        return HttpResponse('')
+
+    session_obj = None
+    if session_id and session_id.isdigit():
+        session_obj = AcademicSession.objects.filter(id=int(session_id)).first()
+
+    qs = StudentEnrollment.objects.select_related(
+        'student__user', 'student__parent_details', 'class_name', 'session'
+    )
+    if session_obj:
+        qs = qs.filter(session=session_obj)
+
+    words = q.split()
+    filter_q = Q()
+    for word in words:
+        filter_q &= (
+            Q(student__user__first_name__icontains=word)
+            | Q(student__user__last_name__icontains=word)
+            | Q(student__user__phone__icontains=word)
+            | Q(student__school_name__icontains=word)
+            | Q(student__email__icontains=word)
+            | Q(student__address__icontains=word)
+            | Q(class_name__name__icontains=word)
+        )
+
+    results = qs.filter(filter_q).distinct().order_by(
+        'student__user__first_name', 'student__user__last_name'
+    )[:15]
+
+    if not results:
+        return HttpResponse('<li class="enroll-sr-empty">No students found.</li>')
+
+    html_parts = []
+    for enroll in results:
+        stu = enroll.student
+        name = escape(f"{stu.user.first_name} {stu.user.last_name}".strip())
+        phone = escape(str(stu.user.phone or ''))
+        school = escape(stu.school_name or '')
+        cls = escape(enroll.class_name.name if enroll.class_name else '')
+        inactive_cls = '' if stu.active else ' enroll-sr-inactive'
+        url = f"/enrollment/{stu.stu_id}"
+        meta_parts = [p for p in [cls, school] if p]
+        meta = escape(' · '.join(meta_parts))
+        html_parts.append(
+            f'<li>'
+            f'<a href="{url}" target="_blank">'
+            f'<div class="enroll-sr-row">'
+            f'<span class="enroll-sr-name{inactive_cls}">{name}</span>'
+            f'<span class="enroll-sr-phone">{phone}</span>'
+            f'</div>'
+            f'<div class="enroll-sr-meta">{meta}</div>'
+            f'</a>'
+            f'</li>'
+        )
+
+    return HttpResponse(''.join(html_parts))
 
 
 @login_required(login_url='login')

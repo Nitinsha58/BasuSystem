@@ -3,82 +3,316 @@
 
 {% block dashboard %}
 
-<div id="searchStuModal" class="start-0 d-flex items-center justify-content-center">
-  <div class="position-relative rounded-lg rounded my-2 w-auto bg-white shadow-md d-flex flex-column"
-    style="height: fit-content; width: fit-content; max-width: 100%; z-index: 2355;">
-    <div class="search-form ">
-      <div class="d-flex justify-content-between align-items-center p-2">
-        <form action="" method="get" class="">
-          <select name="session" id="academic-session"
-            class="form-select search-input fs-5 me-2 w-auto flex-grow-0 pe-5" onchange="this.form.submit()">
+<style>
+    :root {
+        --enroll-brand: #392994;
+        --enroll-surface: #ffffff;
+        --enroll-surface-2: #eef0f5;
+        --enroll-border: #d4d8e4;
+        --enroll-border-mid: #bcc2d0;
+        --enroll-text-1: #0a0f1e;
+        --enroll-text-2: #2d3748;
+        --enroll-text-3: #64748b;
+        --enroll-radius-sm: 6px;
+        --enroll-radius-md: 10px;
+        --font: 'DM Sans', system-ui, sans-serif;
+    }
+
+    /* ── Top bar ── */
+    .enroll-topbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        background: var(--enroll-surface);
+        border-bottom: 1px solid var(--enroll-border);
+        flex-wrap: wrap;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        font-family: var(--font);
+    }
+
+    /* ── Search ── */
+    .enroll-search-wrap {
+        position: relative;
+        flex-shrink: 0;
+    }
+    .enroll-search-wrap svg {
+        position: absolute;
+        left: 9px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--enroll-text-3);
+        pointer-events: none;
+    }
+    #search-stu-input {
+        padding: 6px 10px 6px 30px;
+        border: 1px solid var(--enroll-border-mid);
+        border-radius: var(--enroll-radius-sm);
+        font-size: 13px;
+        width: 280px;
+        background: #f1f3f7;
+        color: var(--enroll-text-1);
+        transition: border-color .15s, background .15s;
+        font-family: var(--font);
+    }
+    #search-stu-input:focus {
+        outline: none;
+        border-color: var(--enroll-brand);
+        background: #fff;
+    }
+    #search-stu-input::placeholder { color: var(--enroll-text-3); }
+
+    /* ── Search dropdown ── */
+    #enrollment-search-list {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        width: 340px;
+        background: #fff;
+        border: 1px solid var(--enroll-border);
+        border-radius: var(--enroll-radius-md);
+        box-shadow: 0 8px 24px rgba(15,23,42,0.13);
+        z-index: 9999;
+        padding: 4px;
+        list-style: none;
+        margin: 0;
+        display: none;
+    }
+    #enrollment-search-list li a {
+        display: block;
+        padding: 8px 10px;
+        border-radius: 6px;
+        text-decoration: none;
+        transition: background .12s;
+    }
+    #enrollment-search-list li a:hover { background: #f1f3f7; }
+    .enroll-sr-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 8px;
+    }
+    .enroll-sr-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--enroll-text-1);
+    }
+    .enroll-sr-inactive { color: #9ca3af; }
+    .enroll-sr-phone {
+        font-size: 12px;
+        color: var(--enroll-text-3);
+        flex-shrink: 0;
+    }
+    .enroll-sr-meta {
+        font-size: 11px;
+        color: var(--enroll-text-3);
+        margin-top: 2px;
+    }
+    .enroll-sr-empty {
+        font-size: 13px;
+        color: var(--enroll-text-3);
+        padding: 10px 12px;
+        list-style: none;
+    }
+
+    /* ── Session select ── */
+    .enroll-session-select {
+        padding: 5px 10px;
+        border: 1px solid var(--enroll-border-mid);
+        border-radius: var(--enroll-radius-sm);
+        font-size: 13px;
+        background: #f1f3f7;
+        color: var(--enroll-text-1);
+        cursor: pointer;
+        font-family: var(--font);
+    }
+    .enroll-session-select:focus { outline: none; border-color: var(--enroll-brand); }
+
+    /* ── Count badge ── */
+    .enroll-count-badge {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--enroll-brand);
+        background: rgba(57,41,148,0.08);
+        border-radius: 99px;
+        padding: 3px 10px;
+        white-space: nowrap;
+    }
+
+    /* ── Toggle date button ── */
+    .enroll-toggle-btn {
+        padding: 5px 12px;
+        font-size: 12px;
+        font-weight: 500;
+        border: 1px solid var(--enroll-border-mid);
+        border-radius: var(--enroll-radius-sm);
+        background: #fff;
+        color: var(--enroll-text-2);
+        cursor: pointer;
+        font-family: var(--font);
+        transition: background .12s, border-color .12s;
+    }
+    .enroll-toggle-btn:hover {
+        background: #f1f3f7;
+        border-color: var(--enroll-brand);
+        color: var(--enroll-brand);
+    }
+
+    /* ── Grid ── */
+    .enroll-grid {
+        background: var(--enroll-surface-2);
+        padding: 16px;
+        min-height: calc(100vh - 56px);
+    }
+</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Top bar -->
+<div class="enroll-topbar">
+
+    <!-- Session selector -->
+    <form method="get" style="margin:0;">
+        <select name="session" class="enroll-session-select" onchange="this.form.submit()">
             {% for session in academic_sessions %}
-            <option value="{{session.id}}" {% if session.id == selected_session.id %} selected {% endif %}>{{session.name}}</option>
+            <option value="{{ session.id }}" {% if session.id == selected_session.id %}selected{% endif %}>
+                {{ session.name }}
+            </option>
             {% endfor %}
-          </select>
-        </form>
-        <input type="text" class="form-control search-input p-2 fs-5 w-auto flex-grow-0" id="search-stu-input"
-          maxlength="60" placeholder="Search students..." autocomplete="off" name="search"
-          hx-get="/student/search-students?search={value}" hx-trigger="keyup changed delay:500ms, search"
-          hx-target="#search-students-list">
-        <div class=" p-2 border-dark border rounded m-2">
-          <p class="m-0 ">{{count}}</p>
+        </select>
+    </form>
+
+    <!-- Search -->
+    <div class="enroll-search-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+             stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input type="text" id="search-stu-input" maxlength="60"
+               placeholder="Search by name, phone, school, class…" autocomplete="off"
+               data-search-url="{% url 'search_enrollment_students' %}"
+               data-session-id="{{ selected_session.id }}">
+        <ul id="enrollment-search-list"></ul>
+    </div>
+
+    <!-- Count badge -->
+    <span class="enroll-count-badge">{{ count }} enrolled</span>
+
+    <!-- Toggle date -->
+    <button class="enroll-toggle-btn" id="toggle-date">Toggle date</button>
+
+</div>
+
+<!-- Main grid -->
+<div class="enroll-grid">
+    {% if class_students %}
+    <div class="row" data-masonry='{"percentPosition": true}' id="enroll-masonry">
+        {% for cls in class_students %}
+        {% if cls.students.count %}
+        <div class="col-sm-6 col-md-4 col-lg-3 mb-4">
+            <div class="card border-0 shadow-sm">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item fw-semibold"
+                        style="background:#392994;color:#fff;border-radius:8px 8px 0 0;">
+                        {{ cls.class }}
+                        <span style="font-weight:400;opacity:.75;font-size:13px;">({{ cls.students.count }})</span>
+                    </li>
+                    {% for enroll in cls.students %}
+                    <li style="position:relative;"
+                        class="list-group-item d-flex justify-content-between align-items-center py-1
+                               {% if not enroll.student.active %}bg-secondary text-white
+                               {% elif not enroll.fees.installments.first.paid %}bg-warning{% endif %}">
+                        <a class="text-decoration-none text-dark flex-grow-1"
+                           target="_blank"
+                           href="{% url 'student_enrollment_details_update' enroll.student.stu_id %}">
+                            {{ forloop.counter }}. {{ enroll.student.user.first_name }} {{ enroll.student.user.last_name }}
+                        </a>
+                        <small class="text-muted date ms-2" style="white-space:nowrap;">
+                            {{ enroll.student.created_at|date:'d M' }}
+                        </small>
+                        {% if not enroll.student.current_batches %}
+                        <div style="position:absolute;background:red;border-radius:50%;
+                                    width:8px;height:8px;right:-6px;top:50%;transform:translateY(-50%);"></div>
+                        {% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
         </div>
-        <button class="btn btn-primary" id="toggle-date">Date</button>
-      </div>
-      <ul class="position-absolute search-students p-2 mt-2 top-2 w-100 rounded" id="search-students-list">
-      </ul>
+        {% endif %}
+        {% endfor %}
     </div>
-  </div>
+    {% endif %}
 </div>
-
-<div class="container p-4 bg-warning-subtle">
-  {% if class_students %}
-  <div class="row shuffle bg-warning-subtle" data-masonry='{"percentPosition": true }' id="batches">
-    {% for cls in class_students %}
-    <div class="col-sm-6 col-md-4 col-lg-3 category shuffle-item shuffle-item--visible mb-4">
-      <div class="card">
-        <ul class="list-group">
-          <li class="list-group-item bg-dark text-white list-group border-dark"> {{cls.class}} - (
-            {{cls.students.count}} )</li>
-          {% for enroll in cls.students %}
-          <li style="position: relative;"
-            class="list-group-item d-flex justify-content-between align-items-center {% if not enroll.student.active %} bg-secondary {% elif not enroll.fees.installments.first.paid %} bg-warning {% endif %}">
-            <a class="text-decoration-none text-dark" style="display: flex; justify-content: space-between;"
-              target="_blank" href="{% url 'student_enrollment_details_update' enroll.student.stu_id %}">
-              <span class="">{{forloop.counter}}. {{enroll.student.user.first_name}} {{enroll.student.user.last_name}}</span>
-            </a>
-            <p class="mb-0 date">{{enroll.student.created_at|date:'d M'}}</p>
-            {% if not enroll.student.current_batches %}
-            <div
-              style="position: absolute; background-color: red; border-radius: 50%; width: 8px; height: 8px; right: -6px; top: 50%;"
-              class="indicator"></div>
-            {% endif %}
-          </li>
-          {% endfor %}
-        </ul>
-      </div>
-    </div>
-    {% endfor %}
-  </div>
-  {% endif %}
-</div>
-
 
 <script src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js"
-  integrity="sha384-GNFwBvfVxBkLMJpYMOABq3c+d3KnQxudP/mGPkzpZSTYykLBNsZEnG2D9G/X/+7D" crossorigin="anonymous" async>
-  </script>
+        integrity="sha384-GNFwBvfVxBkLMJpYMOABq3c+d3KnQxudP/mGPkzpZSTYykLBNsZEnG2D9G/X/+7D"
+        crossorigin="anonymous" async></script>
 
 <script>
-  document.getElementById('toggle-date').addEventListener('click', function () {
-    const listItems = document.querySelectorAll('.date');
-    listItems.forEach(item => {
-      if (item.style.display === 'none') {
-        item.style.display = 'block';
-      } else {
-        item.style.display = 'none';
-      }
+document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.getElementById("search-stu-input");
+    const searchList  = document.getElementById("enrollment-search-list");
+    const searchUrl   = searchInput.dataset.searchUrl;
+    const sessionId   = searchInput.dataset.sessionId;
+
+    let debounceTimer = null;
+    let lastQuery = "";
+
+    function showList() { searchList.style.display = "block"; }
+    function hideList() { searchList.style.display = "none"; }
+
+    function doSearch(q) {
+        if (q === lastQuery) return;
+        lastQuery = q;
+
+        if (q.length < 2) {
+            searchList.innerHTML = "";
+            hideList();
+            return;
+        }
+
+        const url = searchUrl + "?session=" + encodeURIComponent(sessionId) + "&search=" + encodeURIComponent(q);
+        fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } })
+            .then(function (res) {
+                if (!res.ok) throw new Error("Search failed: " + res.status);
+                return res.text();
+            })
+            .then(function (html) {
+                searchList.innerHTML = html;
+                if (searchList.children.length > 0) showList();
+                else hideList();
+            })
+            .catch(function () {
+                searchList.innerHTML = "";
+                hideList();
+            });
+    }
+
+    searchInput.addEventListener("input", function () {
+        clearTimeout(debounceTimer);
+        const q = this.value.trim();
+        debounceTimer = setTimeout(function () { doSearch(q); }, 300);
     });
-  });
+
+    searchInput.addEventListener("focus", function () {
+        if (searchList.children.length) showList();
+    });
+
+    searchInput.addEventListener("blur", function () {
+        setTimeout(hideList, 200);
+    });
+
+    // Toggle join date column
+    document.getElementById("toggle-date").addEventListener("click", function () {
+        document.querySelectorAll(".date").forEach(function (el) {
+            el.style.display = (el.style.display === "none") ? "" : "none";
+        });
+    });
+});
 </script>
 
 {% endblock dashboard %}
