@@ -211,14 +211,14 @@
     {% if class_students %}
     <div class="row" data-masonry='{"percentPosition": true}' id="enroll-masonry">
         {% for cls in class_students %}
-        {% if cls.students.count %}
+        {% if cls.students %}
         <div class="col-sm-6 col-md-4 col-lg-3 mb-4">
             <div class="card border-0 shadow-sm">
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item fw-semibold"
                         style="background:#392994;color:#fff;border-radius:8px 8px 0 0;">
                         {{ cls.class }}
-                        <span style="font-weight:400;opacity:.75;font-size:13px;">({{ cls.students.count }})</span>
+                        <span style="font-weight:400;opacity:.75;font-size:13px;">({{ cls.students|length }})</span>
                     </li>
                     {% for enroll in cls.students %}
                     <li style="position:relative;"

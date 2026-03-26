@@ -50,6 +50,8 @@ from .models import CourseOfferingSubject, CourseOfferingSurchargeRule
 
 import urllib.parse
 
+from itertools import groupby
+
 # ---------------------------------------------------------------------------
 # WhatsApp group links keyed by academic session name, then by class key.
 # To add a new session year, add a new top-level key — no other changes needed.
@@ -1349,22 +1351,41 @@ def students_enrollment_list(request):
 
     selected_session_id = request.GET.get('session')
     selected_session = None
-    
+
     if selected_session_id:
         selected_session = AcademicSession.objects.filter(id=selected_session_id).first()
     if not selected_session:
         selected_session = active_session
 
-    classes = ClassName.objects.all().order_by('-created_at')
-    class_students = []
-    for cls in classes:
-        students_qs = StudentEnrollment.objects.filter(
-            session=selected_session,
-            class_name=cls,
-        ).order_by('-created_at', 'student__user__first_name', 'student__user__last_name').distinct()
-        class_students.append({'class': cls.name, 'students': students_qs})
+    # Single query — fetch all enrollments for the session with related data
+    enrollments = (
+        StudentEnrollment.objects
+        .filter(session=selected_session)
+        .select_related(
+            'student__user',
+            'class_name',
+        )
+        .order_by('class_name__created_at', '-created_at',
+                  'student__user__first_name', 'student__user__last_name')
+        .distinct()
+    )
 
-    count = StudentEnrollment.objects.filter(active=True, student__active=True, session=selected_session).distinct().count()
+    # Group in Python — no extra DB hits
+    grouped = defaultdict(list)
+    for enrollment in enrollments:
+        grouped[enrollment.class_name.name].append(enrollment)
+
+    # Preserve class order
+    classes = ClassName.objects.order_by('-created_at').values_list('name', flat=True)
+    class_students = [
+        {'class': name, 'students': grouped.get(name, [])}
+        for name in classes
+    ]
+
+    count = sum(
+        1 for e in enrollments
+        if e.active and e.student.active
+    )
 
     return render(request, "registration/enrollment/students_enrollment_list.html", {
         'class_students': class_students,
