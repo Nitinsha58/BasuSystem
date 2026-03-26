@@ -110,6 +110,22 @@ def _build_wa_links(student, enrollment, session_groups):
             student_group = grp.get("student")
             parent_group  = grp.get("parent")
 
+    # Transport group: always show in the main message.
+    transport_group = None
+    transport = getattr(student, "transport", None)
+    mode_name = None
+    if transport:
+        mode_name = (getattr(getattr(transport, "transport_mode", None), "name", None) or "").lower()
+    if mode_name:
+        for keyword, group_key in [
+            ("rikshaw", "transport_erikshaw"),
+            ("rickshaw", "transport_erikshaw"),
+            ("cab", "transport_cab"),
+        ]:
+            if keyword in mode_name:
+                transport_group = session_groups.get(group_key)
+                break
+
     student_phone = str(student.user.phone) if (student.user and student.user.phone) else "your registered phone number"
     message = (
         f"Dear Parent,\n\n"
@@ -118,6 +134,7 @@ def _build_wa_links(student, enrollment, session_groups):
         f"Join the official WhatsApp groups for updates:\n\n"
         f"{class_name_str} Students Group\n{student_group or 'N/A'}\n\n"
         f"{class_name_str} Parents Group\n{parent_group or 'N/A'}\n\n"
+        f"Transport WhatsApp Group\n{transport_group or 'N/A'}\n\n"
         "Student Portal Login\n"
         "Access your student dashboard at:\n"
         "app.basueducation.com\n\n"
@@ -142,9 +159,7 @@ def _build_wa_links(student, enrollment, session_groups):
         if getattr(pd, "father_contact", None):
             wa["father"] = make_link(f"91{pd.father_contact}", message)
 
-    transport = getattr(student, "transport", None)
     if transport and student.user and student.user.phone:
-        mode_name = (getattr(getattr(transport, "transport_mode", None), "name", None) or "").lower()
         transport_msg = (
             "Dear Parent,\n\nJoin the official transport WhatsApp group for updates:\n{link}\n\n- BASU Classes"
         )
