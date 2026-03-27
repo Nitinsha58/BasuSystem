@@ -84,6 +84,7 @@ from .views import (
     # Course Offerings APIs
     api_course_offering_options,
     api_course_offering_breakdown,
+    api_fee_calculator_init,
     )
 
 
@@ -117,6 +118,7 @@ urlpatterns = [
 
     path('api/course-offerings/', api_course_offering_options, name='api_course_offering_options'),
     path('api/course-offerings/<int:offering_id>/breakdown/', api_course_offering_breakdown, name='api_course_offering_breakdown'),
+    path('api/fee-calculator/init/', api_fee_calculator_init, name='api_fee_calculator_init'),
 
     path('delete_installment/<uuid:stu_id>/<int:ins_id>', delete_installment, name='delete_installment'),
 

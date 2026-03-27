@@ -177,6 +177,38 @@ def _build_wa_links(student, enrollment, session_groups):
 
 
 @login_required(login_url='login')
+def api_fee_calculator_init(request):
+    """Return all academic sessions and class names for the fee calculator modal.
+
+    Each session includes an ``is_current`` flag that is True when today's
+    date falls within [start_date, end_date], so the frontend can auto-select
+    the relevant session without needing to know the active flag.
+    """
+    from datetime import date
+    today = date.today()
+
+    sessions = AcademicSession.objects.order_by('-start_date').values(
+        'id', 'name', 'start_date', 'end_date'
+    )
+    sessions_data = []
+    for s in sessions:
+        is_current = (s['start_date'] is not None and s['end_date'] is not None
+                      and s['start_date'] <= today <= s['end_date'])
+        sessions_data.append({
+            'id': s['id'],
+            'name': s['name'],
+            'is_current': is_current,
+        })
+
+    from center.models import ClassName as ClassNameModel
+    classes = list(
+        ClassNameModel.objects.order_by('name').values('id', 'name')
+    )
+
+    return JsonResponse({'ok': True, 'sessions': sessions_data, 'classes': classes})
+
+
+@login_required(login_url='login')
 def api_course_offering_options(request):
     """Return active course offerings for a given session (+ optional class).
 
@@ -252,7 +284,12 @@ def api_course_offering_breakdown(request, offering_id: int):
     )
 
     allowed_ids = {int(r['subject_id']) for r in subject_rows}
-    selected_ids_set = {int(s) for s in selected_subject_ids if int(s) in allowed_ids}
+    # When no subjects are explicitly passed, default to all subjects selected
+    # so the initial load shows the full fee rather than ₹0.
+    if not raw_subject_ids:
+        selected_ids_set = allowed_ids
+    else:
+        selected_ids_set = {int(s) for s in selected_subject_ids if int(s) in allowed_ids}
 
     try:
         breakdown = offering.calculate_fee_for_subject_ids(list(selected_ids_set))
@@ -1280,8 +1317,6 @@ def student_enrollment_details_update(request, stu_id):
 @login_required(login_url='login')
 def search_enrollment_students(request):
     """HTMX endpoint — return <li> fragments for the enrollment search dropdown."""
-    from django.utils.html import escape
-
     q = (request.GET.get('search') or '').strip()
     session_id = (request.GET.get('session') or '').strip()
 
@@ -1315,33 +1350,9 @@ def search_enrollment_students(request):
         'student__user__first_name', 'student__user__last_name'
     )[:15]
 
-    if not results:
-        return HttpResponse('<li class="enroll-sr-empty">No students found.</li>')
-
-    html_parts = []
-    for enroll in results:
-        stu = enroll.student
-        name = escape(f"{stu.user.first_name} {stu.user.last_name}".strip())
-        phone = escape(str(stu.user.phone or ''))
-        school = escape(stu.school_name or '')
-        cls = escape(enroll.class_name.name if enroll.class_name else '')
-        inactive_cls = '' if stu.active else ' enroll-sr-inactive'
-        url = f"/enrollment/{stu.stu_id}"
-        meta_parts = [p for p in [cls, school] if p]
-        meta = escape(' · '.join(meta_parts))
-        html_parts.append(
-            f'<li>'
-            f'<a href="{url}" target="_blank">'
-            f'<div class="enroll-sr-row">'
-            f'<span class="enroll-sr-name{inactive_cls}">{name}</span>'
-            f'<span class="enroll-sr-phone">{phone}</span>'
-            f'</div>'
-            f'<div class="enroll-sr-meta">{meta}</div>'
-            f'</a>'
-            f'</li>'
-        )
-
-    return HttpResponse(''.join(html_parts))
+    return render(request, 'registration/enrollment/_enrollment_search_results.html', {
+        'results': results,
+    })
 
 
 @login_required(login_url='login')

@@ -21,66 +21,34 @@
         <div class="collapse navbar-collapse navbarContent" id="navbarContent">
             {% if request.user.is_authenticated %}
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <!-- Superuser-specific links -->
                 {% if request.user.is_superuser %}
-
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
-                        aria-expanded="false">
-                        Admin
-                    </a>
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Admin</a>
                     <ul class="dropdown-menu">
-                        <li class="nav-item">
-                            <a class="dropdown-item" href="{% url 'profile_list' %}">Manage Profiles</a>
-                        </li>
+                        <li class="nav-item"><a class="dropdown-item" href="{% url 'profile_list' %}">Manage Profiles</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li class="nav-item">
-                            <a class="dropdown-item" href="{% url 'staff_teacher_registration' %}">Teacher
-                                Registration</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="dropdown-item" href="{% url 'create_test_template' %}">Mock Tests</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="dropdown-item" href="{% url 'create_test_response' %}">Add Test Result</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="dropdown-item" href="{% url 'installments' %}">Installments</a>
-                        </li>
+                        <li class="nav-item"><a class="dropdown-item" href="{% url 'staff_teacher_registration' %}">Teacher Registration</a></li>
+                        <li class="nav-item"><a class="dropdown-item" href="{% url 'create_test_template' %}">Mock Tests</a></li>
+                        <li class="nav-item"><a class="dropdown-item" href="{% url 'create_test_response' %}">Add Test Result</a></li>
+                        <li class="nav-item"><a class="dropdown-item" href="{% url 'installments' %}">Installments</a></li>
                     </ul>
                 </li>
-
-
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
-                        aria-expanded="false">
-                        Mocks Reports
-                    </a>
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Mocks Reports</a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="{% url 'batchwise_report' %}">Batch Report</a></li>
                         <li><a class="dropdown-item" href="{% url 'chapterwise_report' %}">Chapter Report</a></li>
-                        <li class="nav-item">
-                            <a class="dropdown-item" href="{% url 'test_progress' %}">Test Progress</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="dropdown-item" href="{% url 'chapterwise_student_report' %}">Student Report</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="dropdown-item" href="{% url 'compare_progress' %}">Compare Progress</a>
-                        </li>
-                        <li class="nav-item">
-                            <p id="searchBtn dropdown-item"
-                                class="px-2 m-0 mx-2 nav-link btn bg-success-subtle btn-outline-success">Search Student
-                            </p>
-                        </li>
+                        <li class="nav-item"><a class="dropdown-item" href="{% url 'test_progress' %}">Test Progress</a></li>
+                        <li class="nav-item"><a class="dropdown-item" href="{% url 'chapterwise_student_report' %}">Student Report</a></li>
+                        <li class="nav-item"><a class="dropdown-item" href="{% url 'compare_progress' %}">Compare Progress</a></li>
+                        <li class="nav-item"><p id="searchBtn dropdown-item" class="px-2 m-0 mx-2 nav-link btn bg-success-subtle btn-outline-success">Search Student</p></li>
                     </ul>
                 </li>
                 {% endif %}
 
                 {% if request.user.teachers %}
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
-                        aria-expanded="false">H.W / Atten</a>
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">H.W / Atten</a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="{% url 'attendance' %}">Attendance</a></li>
                         <li><a class="dropdown-item" href="{% url 'homework' %}">Homework</a></li>
@@ -88,23 +56,15 @@
                 </li>
                 {% endif %}
 
-
-                <!-- Student-specific links -->
                 {% if request.user.registered_student %}
                 <li class="nav-item m-2">
-                    <a class="nav-link bg-success-subtle rounded d-inline px-3 p-2 m-1"
-                        href="{% url 'student_personal_report' request.user.registered_student.stu_id %}">
-                        Personal Report
-                    </a>
+                    <a class="nav-link bg-success-subtle rounded d-inline px-3 p-2 m-1" href="{% url 'student_personal_report' request.user.registered_student.stu_id %}">Personal Report</a>
                 </li>
                 {% endif %}
 
                 {% if request.user.admissioncounsellor or request.user.is_superuser %}
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
-                        aria-expanded="false">
-                        Management
-                    </a>
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Management</a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="{% url 'add_teacher' %}">Add Teacher</a></li>
                         <li><a class="dropdown-item" href="{% url 'test_templates' %}">Test Template</a></li>
@@ -117,18 +77,12 @@
                         <li><a class="dropdown-item" href="{% url 'admin_report' %}">Admin Report</a></li>
                         <li><a class="dropdown-item" href="{% url 'batch_list' %}">Batches</a></li>
                         <li><a class="dropdown-item" href="{% url 'course_offering_list' %}">Courses</a></li>
-                        <li><a class="dropdown-item" target="_blank" href="{% url 'batch_updated_list' %}">Batch Updated
-                                List</a></li>
-                        <li><a class="dropdown-item" target="_blank"
-                                href="{% url 'student_performance_comparison' %}">Student Performance Comparison</a>
-                        </li>
+                        <li><a class="dropdown-item" target="_blank" href="{% url 'batch_updated_list' %}">Batch Updated List</a></li>
+                        <li><a class="dropdown-item" target="_blank" href="{% url 'student_performance_comparison' %}">Student Performance Comparison</a></li>
                     </ul>
                 </li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
-                        aria-expanded="false">
-                        SAT Tests
-                    </a>
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">SAT Tests</a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="{% url 'sat:paper_list' %}">Test Papers</a></li>
                         <li><a class="dropdown-item" href="{% url 'sat:assignment_list' %}">Assignments</a></li>
@@ -136,10 +90,7 @@
                     </ul>
                 </li>
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
-                        aria-expanded="false">
-                        Inquiries
-                    </a>
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Inquiries</a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="{% url 'inquiries' %}">Dashboard</a></li>
                         <li><a class="dropdown-item" href="{% url 'create_inquiry' %}">Create Inquiry</a></li>
@@ -151,40 +102,29 @@
                         {% endif %}
                     </ul>
                 </li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'marketing:campaign_list' %}">Marketing</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'students_enrollment_list' %}">Enrollments</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'student_registration' %}">New Registration</a></li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'marketing:campaign_list' %}">Marketing</a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'students_enrollment_list' %}">Enrollments</a>
-                </li>
-
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'student_registration' %}">New Registration</a>
+                    <button class="btn btn-sm btn-outline-success mx-1 my-lg-0 my-1" type="button"
+                        data-bs-toggle="modal" data-bs-target="#feeCalculatorModal" id="feeCalcNavBtn">
+                        Fee Calculator
+                    </button>
                 </li>
                 {% endif %}
-
-
-
             </ul>
 
-            <!-- User role display and action buttons -->
             <div class="d-flex align-items-center justify-content-center">
                 <li class="nav-item dropdown btn">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
-                        aria-expanded="false">
-                        Profile
-                    </a>
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Profile</a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a href="{% url 'logout' %}" class="dropdown-item">Logout</a></li>
                         <li><a href="{% url 'change_password' %}" class="dropdown-item">Change Password</a></li>
                         <li>
                             {% if request.user.registered_student %}
-                            <p class="m-0 dropdown-item">Stu - {{ request.user.first_name }} {{ request.user.last_name
-                                }}</p>
+                            <p class="m-0 dropdown-item">Stu - {{ request.user.first_name }} {{ request.user.last_name }}</p>
                             {% elif request.user.teacher %}
-                            <p class="m-0 dropdown-item">Teach - {{ request.user.first_name }} {{ request.user.last_name
-                                }}</p>
+                            <p class="m-0 dropdown-item">Teach - {{ request.user.first_name }} {{ request.user.last_name }}</p>
                             {% elif request.user.is_superuser %}
                             <a href="/admin" class="dropdown-item"> {{ request.user.first_name }} Admin</a>
                             {% else %}
@@ -193,9 +133,1045 @@
                         </li>
                     </ul>
                 </li>
-
             </div>
             {% endif %}
         </div>
     </div>
 </nav>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     Fee Calculator Modal — REDESIGNED
+     ══════════════════════════════════════════════════════════ -->
+{% if request.user.admissioncounsellor or request.user.is_superuser %}
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  /* ── Token System ─────────────────────────────── */
+  :root {
+    --fc-brand:        #392994;
+    --fc-brand-light:  #ede9fb;
+    --fc-brand-mid:    #5b44cc;
+    --fc-accent:       #E96627;
+    --fc-accent-light: #fff4ee;
+    --fc-green:        #1a9e6e;
+    --fc-green-light:  #e6f7f2;
+    --fc-red-light:    #fdecea;
+    --fc-red:          #d93025;
+    --fc-border:       #e8e4f7;
+    --fc-surface:      #f9f8fe;
+    --fc-text:         #1a1535;
+    --fc-muted:        #7b7492;
+    --fc-radius:       12px;
+    --fc-font:         'DM Sans', system-ui, sans-serif;
+    --fc-mono:         'DM Mono', monospace;
+  }
+
+  /* ── Modal shell ──────────────────────────────── */
+  #feeCalculatorModal .modal-content {
+    font-family: var(--fc-font);
+    border: none;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(57,41,148,.16), 0 4px 16px rgba(0,0,0,.06);
+  }
+
+  /* ── Header ───────────────────────────────────── */
+  #feeCalculatorModal .modal-header {
+    background: var(--fc-brand);
+    border-bottom: none;
+    padding: 1.25rem 1.5rem 1.1rem;
+    position: relative;
+  }
+
+  #feeCalculatorModal .modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--fc-accent), transparent 60%);
+  }
+
+  #feeCalcModalLabel {
+    font-size: .95rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    margin: 0;
+  }
+
+  #feeCalcModalLabel::before {
+    content: '₹';
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: rgba(255,255,255,.15);
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 500;
+  }
+
+  #feeCalculatorModal .btn-close {
+    filter: invert(1);
+    opacity: .7;
+  }
+  #feeCalculatorModal .btn-close:hover { opacity: 1; }
+
+  /* ── Body ─────────────────────────────────────── */
+  #feeCalculatorModal .modal-body {
+    background: var(--fc-surface);
+    padding: 1.5rem;
+  }
+
+  /* ── Section labels ───────────────────────────── */
+  #feeCalculatorModal .fc-label {
+    font-size: .7rem;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--fc-muted);
+    margin-bottom: .6rem;
+    display: block;
+  }
+
+  /* ── Section blocks ───────────────────────────── */
+  #feeCalculatorModal .fc-section {
+    background: #fff;
+    border: 1px solid var(--fc-border);
+    border-radius: var(--fc-radius);
+    padding: 1rem 1.1rem;
+    margin-bottom: .9rem;
+  }
+
+  /* ── Session / Class toggle pills ────────────── */
+  #feeCalcSessions,
+  #feeCalcClasses,
+  #feeCalcSubjects {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+  }
+
+  /* Session — brand purple */
+  #feeCalcSessions .btn-check + label {
+    font-size: .78rem;
+    font-weight: 500;
+    padding: .28rem .75rem;
+    border-radius: 20px;
+    border: 1.5px solid var(--fc-brand);
+    color: var(--fc-brand);
+    background: #fff;
+    transition: all .15s ease;
+    cursor: pointer;
+  }
+  #feeCalcSessions .btn-check:checked + label,
+  #feeCalcSessions .btn-check + label:hover {
+    background: var(--fc-brand);
+    color: #fff;
+  }
+
+  /* Class — neutral */
+  #feeCalcClasses .btn-check + label {
+    font-size: .78rem;
+    font-weight: 500;
+    padding: .28rem .75rem;
+    border-radius: 20px;
+    border: 1.5px solid #ccc;
+    color: #555;
+    background: #fff;
+    transition: all .15s ease;
+    cursor: pointer;
+  }
+  #feeCalcClasses .btn-check:checked + label,
+  #feeCalcClasses .btn-check + label:hover {
+    background: var(--fc-brand-mid);
+    border-color: var(--fc-brand-mid);
+    color: #fff;
+  }
+
+  /* Subjects — green / red */
+  #feeCalcSubjects .btn-check + label {
+    font-size: .78rem;
+    font-weight: 500;
+    padding: .28rem .75rem;
+    border-radius: 20px;
+    border: 1.5px solid var(--fc-green);
+    color: var(--fc-green);
+    background: #fff;
+    transition: all .15s ease;
+    cursor: pointer;
+  }
+  #feeCalcSubjects .btn-check:checked + label {
+    background: var(--fc-green);
+    color: #fff;
+  }
+  /* Override JS-applied classes to match redesign */
+  #feeCalcSubjects label.btn-outline-danger {
+    border-color: var(--fc-red) !important;
+    color: var(--fc-red) !important;
+    background: var(--fc-red-light) !important;
+  }
+  #feeCalcSubjects label.btn-success {
+    background: var(--fc-green) !important;
+    border-color: var(--fc-green) !important;
+    color: #fff !important;
+  }
+
+  /* ── Course select ────────────────────────────── */
+  #feeCalcCourseSelect {
+    font-family: var(--fc-font);
+    font-size: .85rem;
+    border: 1.5px solid var(--fc-border);
+    border-radius: 8px;
+    padding: .45rem .75rem;
+    color: var(--fc-text);
+    background-color: #fff;
+    transition: border-color .15s;
+  }
+  #feeCalcCourseSelect:focus {
+    border-color: var(--fc-brand);
+    box-shadow: 0 0 0 3px rgba(57,41,148,.1);
+    outline: none;
+  }
+
+  /* ── Subject helper text ──────────────────────── */
+  #feeCalcSubjectsRow small {
+    font-size: .72rem;
+    color: var(--fc-muted);
+  }
+
+  /* ── Fee breakdown card ───────────────────────── */
+  #feeCalcBreakdownCard {
+    background: #fff;
+    border: 1.5px solid var(--fc-brand-light);
+    border-radius: var(--fc-radius);
+    overflow: hidden;
+    margin-top: .25rem;
+  }
+
+  .fc-breakdown-header {
+    background: var(--fc-brand-light);
+    padding: .6rem 1.1rem;
+    font-size: .7rem;
+    font-weight: 600;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--fc-brand);
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+  }
+
+  .fc-breakdown-header::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--fc-brand);
+  }
+
+  #feeCalcBreakdownContent {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    padding: 0;
+  }
+
+  /* Each stat cell */
+  #feeCalcBreakdownContent .fc-stat {
+    flex: 1 1 90px;
+    padding: 1rem 1.1rem;
+    border-right: 1px solid var(--fc-border);
+    text-align: center;
+  }
+  #feeCalcBreakdownContent .fc-stat:last-child {
+    border-right: none;
+  }
+
+  .fc-stat-label {
+    font-size: .68rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--fc-muted);
+    margin-bottom: .3rem;
+  }
+
+  .fc-stat-value {
+    font-family: var(--fc-mono);
+    font-size: .95rem;
+    font-weight: 500;
+    color: var(--fc-text);
+    line-height: 1.2;
+  }
+
+  .fc-stat-sub {
+    font-size: .67rem;
+    color: var(--fc-muted);
+    margin-top: .15rem;
+  }
+
+  /* Total cell highlight */
+  .fc-stat.fc-stat--total {
+    background: linear-gradient(135deg, rgba(57,41,148,.04), rgba(57,41,148,.08));
+  }
+  .fc-stat.fc-stat--total .fc-stat-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--fc-brand);
+  }
+
+  .fc-stat.fc-stat--tuition .fc-stat-value { color: var(--fc-brand-mid); }
+  .fc-stat.fc-stat--surcharge .fc-stat-value { color: var(--fc-accent); }
+
+  /* Subject badge strip */
+  #feeCalcSubjectBadges {
+    padding: .65rem 1.1rem .75rem;
+    border-top: 1px solid var(--fc-border);
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+  }
+
+  #feeCalcSubjectBadges .badge {
+    font-family: var(--fc-font);
+    font-size: .7rem;
+    font-weight: 500;
+    padding: .25rem .6rem;
+    border-radius: 20px;
+    letter-spacing: .01em;
+  }
+
+  /* Override JS badge classes */
+  #feeCalcSubjectBadges .text-bg-success {
+    background: var(--fc-green-light) !important;
+    color: var(--fc-green) !important;
+    border: 1px solid rgba(26,158,110,.2);
+  }
+  #feeCalcSubjectBadges .text-bg-danger {
+    background: var(--fc-red-light) !important;
+    color: var(--fc-red) !important;
+    border: 1px solid rgba(217,48,37,.15);
+  }
+
+  /* ── Error alert ──────────────────────────────── */
+  #feeCalcError {
+    font-size: .82rem;
+    border-radius: 8px;
+    border: none;
+    background: var(--fc-red-light);
+    color: var(--fc-red);
+    padding: .6rem .9rem;
+  }
+
+  /* ── Spinner ──────────────────────────────────── */
+  #feeCalcSpinner .spinner-border {
+    width: 2rem;
+    height: 2rem;
+    border-width: 2.5px;
+    color: var(--fc-brand) !important;
+  }
+
+  /* ── Footer ───────────────────────────────────── */
+  #feeCalculatorModal .modal-footer {
+    background: #fff;
+    border-top: 1px solid var(--fc-border);
+    padding: .75rem 1.5rem;
+  }
+
+  #feeCalculatorModal .modal-footer .btn-secondary {
+    font-family: var(--fc-font);
+    font-size: .8rem;
+    font-weight: 500;
+    padding: .35rem 1.1rem;
+    border-radius: 8px;
+    background: transparent;
+    border: 1.5px solid #ccc;
+    color: var(--fc-muted);
+    transition: all .15s;
+  }
+  #feeCalculatorModal .modal-footer .btn-secondary:hover {
+    border-color: var(--fc-brand);
+    color: var(--fc-brand);
+    background: var(--fc-brand-light);
+  }
+
+  /* ── Duration toggle pills ─────────────────────── */
+  #feeCalcDuration {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+  }
+  #feeCalcDuration .btn-check + label {
+    font-size: .78rem;
+    font-weight: 500;
+    padding: .28rem .75rem;
+    border-radius: 20px;
+    border: 1.5px solid var(--fc-brand-mid);
+    color: var(--fc-brand-mid);
+    background: #fff;
+    transition: all .15s ease;
+    cursor: pointer;
+  }
+  #feeCalcDuration .btn-check:checked + label,
+  #feeCalcDuration .btn-check + label:hover {
+    background: var(--fc-brand-mid);
+    border-color: var(--fc-brand-mid);
+    color: #fff;
+  }
+  #feeCalcDurationRow small {
+    font-size: .72rem;
+    color: var(--fc-muted);
+  }
+
+  /* ── Discount section ─────────────────────────── */
+  .fc-label-optional {
+    text-transform: none;
+    letter-spacing: 0;
+    font-weight: 400;
+    color: var(--fc-muted);
+  }
+  #feeCalcDiscountTypeGroup {
+    display: inline-flex;
+  }
+  .fc-disc-btn {
+    font-size: .76rem;
+    font-weight: 500;
+    padding: .3rem .75rem;
+    border: 1.5px solid #ccc;
+    color: var(--fc-muted);
+    background: #fff;
+    cursor: pointer;
+    transition: all .15s;
+    line-height: 1.4;
+  }
+  .fc-disc-btn--left  { border-radius: 20px 0 0 20px; border-right-width: .75px; }
+  .fc-disc-btn--right { border-radius: 0 20px 20px 0; border-left-width: .75px; }
+  .btn-check:checked + .fc-disc-btn {
+    background: var(--fc-brand-mid);
+    border-color: var(--fc-brand-mid);
+    color: #fff;
+  }
+  .fc-discount-input {
+    font-family: var(--fc-mono);
+    font-size: .82rem;
+    border: 1.5px solid var(--fc-border);
+    border-radius: 8px;
+    max-width: 110px;
+    transition: border-color .15s;
+  }
+  .fc-discount-input:focus {
+    border-color: var(--fc-brand);
+    box-shadow: 0 0 0 3px rgba(57,41,148,.1);
+    outline: none;
+  }
+  .fc-disc-hint {
+    font-size: .72rem;
+    color: var(--fc-muted);
+  }
+
+  /* ── Final total strip ─────────────────────────── */
+  #feeCalcFinalStrip {
+    padding: .7rem 1.1rem .75rem;
+    border-top: 1px solid var(--fc-border);
+    background: linear-gradient(135deg, rgba(57,41,148,.03), rgba(57,41,148,.06));
+  }
+  .fc-final-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem 1.2rem;
+    margin-bottom: .3rem;
+  }
+  .fc-final-detail {
+    font-size: .75rem;
+    color: var(--fc-muted);
+  }
+  .fc-final-detail strong {
+    font-family: var(--fc-mono);
+    color: var(--fc-text);
+    font-weight: 500;
+  }
+  .fc-final-total-row {
+    display: flex;
+    align-items: baseline;
+    gap: .5rem;
+    margin-top: .25rem;
+  }
+  .fc-final-total-label {
+    font-size: .7rem;
+    font-weight: 600;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--fc-brand);
+  }
+  .fc-final-total-value {
+    font-family: var(--fc-mono);
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--fc-brand);
+    line-height: 1;
+  }
+  .fc-final-note {
+    font-size: .68rem;
+    color: var(--fc-muted);
+  }
+</style>
+
+<div class="modal fade" id="feeCalculatorModal" tabindex="-1"
+    aria-labelledby="feeCalcModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+
+            <!-- Header -->
+            <div class="modal-header">
+                <h5 class="modal-title" id="feeCalcModalLabel">Fee Calculator</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body" id="feeCalcBody">
+
+                <!-- Loading spinner -->
+                <div id="feeCalcSpinner" class="text-center py-4">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading…</span>
+                    </div>
+                </div>
+
+                <!-- Main content -->
+                <div id="feeCalcContent" class="d-none">
+
+                    <!-- 1. Session -->
+                    <div class="fc-section">
+                        <span class="fc-label">Academic Session</span>
+                        <div id="feeCalcSessions"></div>
+                    </div>
+
+                    <!-- 2. Class -->
+                    <div class="fc-section">
+                        <span class="fc-label">Class</span>
+                        <div id="feeCalcClasses"></div>
+                    </div>
+
+                    <!-- 2.5 Program Duration (shown only for 2-year eligible classes: 7, 9, 11) -->
+                    <div class="fc-section d-none" id="feeCalcDurationRow">
+                        <span class="fc-label">Program Duration</span>
+                        <div id="feeCalcDuration">
+                            <div>
+                                <input type="radio" class="btn-check" name="feeCalcDuration" id="feeCalcDur1" value="1" autocomplete="off" checked>
+                                <label for="feeCalcDur1">1 Year</label>
+                            </div>
+                            <div>
+                                <input type="radio" class="btn-check" name="feeCalcDuration" id="feeCalcDur2" value="2" autocomplete="off">
+                                <label for="feeCalcDur2">2 Years</label>
+                            </div>
+                        </div>
+                        <small class="mt-2 d-block">2-year enrollment doubles the annual fee.</small>
+                    </div>
+
+                    <!-- 3. Course offering -->
+                    <div class="fc-section d-none" id="feeCalcCourseRow">
+                        <span class="fc-label" for="feeCalcCourseSelect">Course Offering</span>
+                        <select class="form-select" id="feeCalcCourseSelect">
+                            <option value="">— select a course —</option>
+                        </select>
+                    </div>
+
+                    <!-- 4. Subjects -->
+                    <div class="fc-section d-none" id="feeCalcSubjectsRow">
+                        <span class="fc-label">Subjects</span>
+                        <div id="feeCalcSubjects"></div>
+                        <small class="mt-2 d-block">Toggle subjects to see how the fee changes.</small>
+                    </div>
+
+                    <!-- 4.5 Discount (shown once a course is loaded) -->
+                    <div class="fc-section d-none" id="feeCalcDiscountRow">
+                        <span class="fc-label">Discount <span class="fc-label-optional">(optional)</span></span>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <div id="feeCalcDiscountTypeGroup">
+                                <input type="radio" class="btn-check" name="feeCalcDiscountType" id="feeCalcDiscPct" value="percent" autocomplete="off" checked>
+                                <label for="feeCalcDiscPct" class="fc-disc-btn fc-disc-btn--left">% Percent</label>
+                                <input type="radio" class="btn-check" name="feeCalcDiscountType" id="feeCalcDiscAmt" value="amount" autocomplete="off">
+                                <label for="feeCalcDiscAmt" class="fc-disc-btn fc-disc-btn--right">&#8377; Amount</label>
+                            </div>
+                            <input type="number" id="feeCalcDiscountValue" min="0" step="0.01" placeholder="0" class="form-control form-control-sm fc-discount-input">
+                            <span class="fc-disc-hint" id="feeCalcDiscountHint">% off total</span>
+                        </div>
+                    </div>
+
+                    <!-- 5. Fee breakdown -->
+                    <div class="d-none" id="feeCalcBreakdownCard">
+                        <div class="fc-breakdown-header">Fee Breakdown</div>
+                        <div id="feeCalcBreakdownContent"></div>
+                        <div id="feeCalcSubjectBadges"></div>
+                        <div id="feeCalcFinalStrip" class="d-none"></div>
+                    </div>
+
+                    <!-- Error -->
+                    <div class="alert d-none mt-3" id="feeCalcError" role="alert"></div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    'use strict';
+
+    // ── State ────────────────────────────────────────────
+    let _selectedSessionId  = null;
+    let _selectedClassId    = null;
+    let _selectedClassName  = '';
+    let _selectedCourseId   = null;
+    let _lastBreakdownData  = null;
+    let _allSubjectIds      = [];
+    let _selectedSubjectIds = new Set();
+    let _programDuration    = 1;          // 1 or 2
+    let _discountType       = 'percent';  // 'percent' | 'amount'
+    let _discountValue      = 0;
+
+    // ── DOM helpers ──────────────────────────────────────
+    const $ = id => document.getElementById(id);
+
+    function showError(msg) {
+        const el = $('feeCalcError');
+        el.textContent = msg;
+        el.classList.remove('d-none');
+    }
+    function hideError() {
+        $('feeCalcError').classList.add('d-none');
+    }
+
+    // ── 2-year eligibility (class names containing 7, 9, or 11 e.g. "CLASS 7") ──
+    function isTwoYearEligible(className) {
+        return /\b(7|9|11)\b/.test((className || '').trim());
+    }
+
+    // ── Discount calculation ──────────────────────────────
+    function applyDiscount(subtotal) {
+        const val = parseFloat(_discountValue) || 0;
+        if (val <= 0) return { discount: 0, final: subtotal };
+        let discount = 0;
+        if (_discountType === 'percent') {
+            discount = subtotal * (Math.min(val, 100) / 100);
+        } else {
+            discount = Math.min(val, subtotal);
+        }
+        return { discount, final: Math.max(subtotal - discount, 0) };
+    }
+
+    // ── Reset helpers ─────────────────────────────────────
+    function resetDuration() {
+        _programDuration = 1;
+        const dur1 = $('feeCalcDur1');
+        if (dur1) dur1.checked = true;
+        $('feeCalcDurationRow').classList.add('d-none');
+    }
+
+    function resetDiscountUI() {
+        _discountValue = 0;
+        const el = $('feeCalcDiscountValue');
+        if (el) el.value = '';
+        _discountType = 'percent';
+        const pctRadio = $('feeCalcDiscPct');
+        if (pctRadio) pctRadio.checked = true;
+        const hint = $('feeCalcDiscountHint');
+        if (hint) hint.textContent = '% off total';
+        $('feeCalcDiscountRow').classList.add('d-none');
+    }
+
+    function resetCourse() {
+        _selectedCourseId  = null;
+        _lastBreakdownData = null;
+        _allSubjectIds     = [];
+        _selectedSubjectIds = new Set();
+        $('feeCalcCourseRow').classList.add('d-none');
+        $('feeCalcCourseSelect').innerHTML = '<option value="">— select a course —</option>';
+        resetSubjects();
+    }
+
+    function resetSubjects() {
+        _lastBreakdownData  = null;
+        _allSubjectIds      = [];
+        _selectedSubjectIds = new Set();
+        $('feeCalcSubjectsRow').classList.add('d-none');
+        $('feeCalcSubjects').innerHTML = '';
+        resetDiscountUI();
+        resetBreakdown();
+    }
+
+    function resetBreakdown() {
+        $('feeCalcBreakdownCard').classList.add('d-none');
+        $('feeCalcBreakdownContent').innerHTML = '';
+        $('feeCalcSubjectBadges').innerHTML = '';
+        const strip = $('feeCalcFinalStrip');
+        if (strip) { strip.innerHTML = ''; strip.classList.add('d-none'); }
+    }
+
+    // ── Render fee breakdown ──────────────────────────────
+    function renderBreakdown(summary, course, subjects) {
+        _lastBreakdownData = { summary, course, subjects };
+
+        const card    = $('feeCalcBreakdownCard');
+        const content = $('feeCalcBreakdownContent');
+        const badges  = $('feeCalcSubjectBadges');
+        const strip   = $('feeCalcFinalStrip');
+
+        const fmt = val => '₹' + parseFloat(val).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+        const annualFee     = parseFloat(course.annual_fee) || 0;
+        const baseTuition   = parseFloat(summary.subject_component_fee) || 0;
+        const baseSurcharge = parseFloat(summary.surcharge_fee) || 0;
+        const baseTotal     = parseFloat(summary.total_fee) || 0;
+        const durSubtotal   = baseTotal * _programDuration;
+        const { discount, final } = applyDiscount(durSubtotal);
+        const hasExtras = (_programDuration === 2 || discount > 0);
+
+        content.innerHTML = `
+            <div class="fc-stat">
+                <div class="fc-stat-label">Annual Fee</div>
+                <div class="fc-stat-value">${fmt(annualFee)}</div>
+            </div>
+            <div class="fc-stat fc-stat--tuition">
+                <div class="fc-stat-label">Tuition</div>
+                <div class="fc-stat-value">${fmt(baseTuition)}</div>
+                <div class="fc-stat-sub">${parseFloat(summary.selected_subject_pct).toFixed(2)}% of annual</div>
+            </div>
+            <div class="fc-stat fc-stat--surcharge">
+                <div class="fc-stat-label">Surcharge</div>
+                <div class="fc-stat-value">${fmt(baseSurcharge)}</div>
+                <div class="fc-stat-sub">${parseFloat(summary.surcharge_pct).toFixed(2)}%</div>
+            </div>
+            <div class="fc-stat ${hasExtras ? '' : 'fc-stat--total'}">
+                <div class="fc-stat-label">Per-Year Total</div>
+                <div class="fc-stat-value">${fmt(baseTotal)}</div>
+            </div>
+        `;
+
+        badges.innerHTML = subjects.map(s =>
+            `<span class="badge rounded-pill ${s.selected ? 'text-bg-success' : 'text-bg-danger'}">
+                ${s.name} <span class="opacity-75">(${parseFloat(s.percentage).toFixed(1)}%)</span>
+             </span>`
+        ).join('');
+
+        // Final strip — shown when 2-year or discount is active
+        if (strip) {
+            if (hasExtras) {
+                let html = '<div class="fc-final-row">';
+                if (_programDuration === 2) {
+                    html += `<span class="fc-final-detail">2-Year Subtotal&nbsp;<strong>${fmt(durSubtotal)}</strong></span>`;
+                }
+                if (discount > 0) {
+                    const discLabel = _discountType === 'percent'
+                        ? `${parseFloat(_discountValue).toFixed(1)}% discount`
+                        : 'discount';
+                    html += `<span class="fc-final-detail">&#8722;&nbsp;<strong>${fmt(discount)}</strong>&nbsp;(${discLabel})</span>`;
+                }
+                html += '</div>';
+                html += `<div class="fc-final-total-row">
+                    <span class="fc-final-total-label">Final Total</span>
+                    <span class="fc-final-total-value">${fmt(final)}</span>
+                    ${_programDuration === 2 ? '<span class="fc-final-note">for 2 years</span>' : ''}
+                </div>`;
+                strip.innerHTML = html;
+                strip.classList.remove('d-none');
+            } else {
+                strip.innerHTML = '';
+                strip.classList.add('d-none');
+            }
+        }
+
+        card.classList.remove('d-none');
+    }
+
+    function rerenderBreakdown() {
+        if (_lastBreakdownData) {
+            renderBreakdown(
+                _lastBreakdownData.summary,
+                _lastBreakdownData.course,
+                _lastBreakdownData.subjects
+            );
+        }
+    }
+
+    // ── Fetch breakdown and update UI ─────────────────────
+    function fetchBreakdown() {
+        if (!_selectedCourseId) return;
+        hideError();
+
+        const params = new URLSearchParams();
+        if (_selectedSessionId) params.set('session', _selectedSessionId);
+        if (_selectedClassId)   params.set('class_id', _selectedClassId);
+        _selectedSubjectIds.forEach(id => params.append('subjects[]', id));
+
+        fetch(`/student/api/course-offerings/${_selectedCourseId}/breakdown/?${params}`)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.ok) { showError(data.error || 'Failed to load fee breakdown.'); return; }
+                renderBreakdown(data.summary, data.course, data.subjects);
+            })
+            .catch(() => showError('Network error loading fee breakdown.'));
+    }
+
+    // ── Build subject toggle buttons ──────────────────────
+    function buildSubjectToggles(subjects) {
+        _allSubjectIds = subjects.map(s => s.id);
+        _selectedSubjectIds = new Set(subjects.filter(s => s.selected).map(s => s.id));
+
+        const container = $('feeCalcSubjects');
+        container.innerHTML = '';
+
+        subjects.forEach(s => {
+            const uid = `feeCalcSubj_${s.id}`;
+            const checked = s.selected ? 'checked' : '';
+
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = `
+                <input type="checkbox" class="btn-check" id="${uid}" value="${s.id}" autocomplete="off" ${checked}>
+                <label class="btn btn-sm ${s.selected ? 'btn-success' : 'btn-outline-danger'}" for="${uid}">
+                    ${s.name}
+                </label>
+            `;
+            container.appendChild(wrapper);
+
+            wrapper.querySelector('input').addEventListener('change', function () {
+                if (this.checked) {
+                    _selectedSubjectIds.add(s.id);
+                    wrapper.querySelector('label').className = 'btn btn-sm btn-success';
+                } else {
+                    _selectedSubjectIds.delete(s.id);
+                    wrapper.querySelector('label').className = 'btn btn-sm btn-outline-danger';
+                }
+                fetchBreakdown();
+            });
+        });
+
+        $('feeCalcSubjectsRow').classList.remove('d-none');
+        $('feeCalcDiscountRow').classList.remove('d-none');
+    }
+
+    // ── Load course offering breakdown (full) ─────────────
+    function loadCourseOffering(courseId) {
+        _selectedCourseId = courseId;
+        resetSubjects();
+        if (!courseId) return;
+        hideError();
+
+        const params = new URLSearchParams();
+        if (_selectedSessionId) params.set('session', _selectedSessionId);
+        if (_selectedClassId)   params.set('class_id', _selectedClassId);
+
+        fetch(`/student/api/course-offerings/${courseId}/breakdown/?${params}`)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.ok) { showError(data.error || 'Failed to load course.'); return; }
+                buildSubjectToggles(data.subjects);
+                renderBreakdown(data.summary, data.course, data.subjects);
+            })
+            .catch(() => showError('Network error loading course details.'));
+    }
+
+    // ── Load course offerings for session + class ─────────
+    function loadCourseOfferings() {
+        if (!_selectedSessionId || !_selectedClassId) {
+            resetCourse();
+            return;
+        }
+        hideError();
+
+        fetch(`/student/api/course-offerings/?session=${_selectedSessionId}&class_id=${_selectedClassId}`)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.ok) { showError(data.error || 'Failed to load course offerings.'); return; }
+                const sel = $('feeCalcCourseSelect');
+                sel.innerHTML = '<option value="">— select a course —</option>';
+                data.items.forEach(co => {
+                    const opt = document.createElement('option');
+                    opt.value = co.id;
+                    opt.textContent = co.name;
+                    sel.appendChild(opt);
+                });
+                $('feeCalcCourseRow').classList.remove('d-none');
+                resetSubjects();
+
+                if (data.items.length === 1) {
+                    sel.value = data.items[0].id;
+                    loadCourseOffering(data.items[0].id);
+                }
+            })
+            .catch(() => showError('Network error loading course offerings.'));
+    }
+
+    // ── Build session buttons ──────────────────────────────
+    function buildSessionButtons(sessions) {
+        const container = $('feeCalcSessions');
+        container.innerHTML = '';
+        sessions.forEach(s => {
+            const uid = `feeCalcSess_${s.id}`;
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = `
+                <input type="radio" class="btn-check" name="feeCalcSession" id="${uid}"
+                       value="${s.id}" autocomplete="off">
+                <label class="btn btn-sm btn-outline-primary" for="${uid}">${s.name}</label>
+            `;
+            container.appendChild(wrapper);
+
+            wrapper.querySelector('input').addEventListener('change', function () {
+                _selectedSessionId = parseInt(this.value);
+                resetCourse();
+                loadCourseOfferings();
+            });
+
+            if (s.is_current) {
+                wrapper.querySelector('input').checked = true;
+                _selectedSessionId = s.id;
+            }
+        });
+        // Fallback: if no session matched the current date, select the first one
+        if (_selectedSessionId === null && sessions.length > 0) {
+            const firstInput = container.querySelector('input[type="radio"]');
+            if (firstInput) {
+                firstInput.checked = true;
+                _selectedSessionId = parseInt(firstInput.value);
+            }
+        }
+    }
+
+    // ── Build class buttons ───────────────────────────────
+    function buildClassButtons(classes) {
+        const container = $('feeCalcClasses');
+        container.innerHTML = '';
+        classes.forEach(c => {
+            const uid = `feeCalcClass_${c.id}`;
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = `
+                <input type="radio" class="btn-check" name="feeCalcClass" id="${uid}"
+                       value="${c.id}" data-class-name="${c.name}" autocomplete="off">
+                <label class="btn btn-sm btn-outline-secondary" for="${uid}">${c.name}</label>
+            `;
+            container.appendChild(wrapper);
+
+            wrapper.querySelector('input').addEventListener('change', function () {
+                _selectedClassId   = parseInt(this.value);
+                _selectedClassName = this.dataset.className || '';
+                resetDuration();
+                resetCourse();
+                if (isTwoYearEligible(_selectedClassName)) {
+                    $('feeCalcDurationRow').classList.remove('d-none');
+                }
+                loadCourseOfferings();
+            });
+        });
+    }
+
+    // ── Init ──────────────────────────────────────────────
+    let _initDone = false;
+
+    function initModal() {
+        if (_initDone) {
+            _selectedSessionId = null;
+            _selectedClassId   = null;
+            _selectedClassName = '';
+            resetDuration();
+            resetCourse();
+            document.querySelectorAll('input[name="feeCalcSession"]').forEach(el => {
+                el.checked = false;
+                if (el.dataset.isCurrent === '1') {
+                    el.checked = true;
+                    _selectedSessionId = parseInt(el.value);
+                }
+            });
+            // Fallback: if no session matched current date, select the first one
+            if (_selectedSessionId === null) {
+                const firstSess = document.querySelector('input[name="feeCalcSession"]');
+                if (firstSess) {
+                    firstSess.checked = true;
+                    _selectedSessionId = parseInt(firstSess.value);
+                }
+            }
+            document.querySelectorAll('input[name="feeCalcClass"]').forEach(el => { el.checked = false; });
+            hideError();
+            return;
+        }
+
+        $('feeCalcSpinner').classList.remove('d-none');
+        $('feeCalcContent').classList.add('d-none');
+
+        fetch('/student/api/fee-calculator/init/')
+            .then(r => r.json())
+            .then(data => {
+                if (!data.ok) { showError(data.error || 'Failed to initialise.'); return; }
+                buildSessionButtons(data.sessions);
+                buildClassButtons(data.classes);
+
+                data.sessions.forEach(s => {
+                    const el = document.getElementById(`feeCalcSess_${s.id}`);
+                    if (el) el.dataset.isCurrent = s.is_current ? '1' : '0';
+                });
+
+                $('feeCalcSpinner').classList.add('d-none');
+                $('feeCalcContent').classList.remove('d-none');
+                _initDone = true;
+            })
+            .catch(() => showError('Network error initialising fee calculator.'));
+    }
+
+    // ── Wire up ───────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function () {
+        const courseSelect = $('feeCalcCourseSelect');
+        if (courseSelect) {
+            courseSelect.addEventListener('change', function () {
+                loadCourseOffering(this.value ? parseInt(this.value) : null);
+            });
+        }
+
+        // Duration radios
+        document.querySelectorAll('input[name="feeCalcDuration"]').forEach(el => {
+            el.addEventListener('change', function () {
+                _programDuration = parseInt(this.value);
+                rerenderBreakdown();
+            });
+        });
+
+        // Discount type radios
+        document.querySelectorAll('input[name="feeCalcDiscountType"]').forEach(el => {
+            el.addEventListener('change', function () {
+                _discountType = this.value;
+                const hint = $('feeCalcDiscountHint');
+                if (hint) hint.textContent = _discountType === 'percent' ? '% off total' : 'fixed amount off';
+                rerenderBreakdown();
+            });
+        });
+
+        // Discount value input
+        const discInput = $('feeCalcDiscountValue');
+        if (discInput) {
+            discInput.addEventListener('input', function () {
+                _discountValue = parseFloat(this.value) || 0;
+                rerenderBreakdown();
+            });
+        }
+
+        const modalEl = $('feeCalculatorModal');
+        if (modalEl) {
+            modalEl.addEventListener('show.bs.modal', initModal);
+        }
+    });
+})();
+</script>
+{% endif %}

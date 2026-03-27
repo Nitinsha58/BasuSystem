@@ -1,0 +1,21 @@
+{% if not results %}
+<li class="enroll-sr-empty">No students found.</li>
+{% else %}
+{% for enroll in results %}
+<li>
+    <a href="{% url 'student_enrollment_details_update' enroll.student.stu_id %}" target="_blank">
+        <div class="enroll-sr-row">
+            <span class="enroll-sr-name{% if not enroll.student.active %} enroll-sr-inactive{% endif %}">
+                {{ enroll.student.user.first_name }} {{ enroll.student.user.last_name }}
+            </span>
+            <span class="enroll-sr-phone">{{ enroll.student.user.phone }}</span>
+        </div>
+        <div class="enroll-sr-meta">
+            {% with class_name=enroll.class_name.name|default:"" school=enroll.student.school_name|default:"" %}
+            {% if class_name and school %}{{ class_name }} · {{ school }}{% elif class_name %}{{ class_name }}{% elif school %}{{ school }}{% endif %}
+            {% endwith %}
+        </div>
+    </a>
+</li>
+{% endfor %}
+{% endif %}
