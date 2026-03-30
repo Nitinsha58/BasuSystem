@@ -147,19 +147,11 @@ def inquiries(request):
             Q(caller=my_counsellor) | Q(assigned_counsellor=my_counsellor)
         ).distinct()
 
-    # Only fetch followups visible in this month — either scheduled via followup_date
-    # or created within this month (if no followup_date set)
-    date_filter = (
-        Q(followup_date__range=(first_day, last_day)) |
-        Q(followup_date__isnull=True, created_at__date__range=(first_day, last_day))
-    )
-
-    # Correlated subquery: ID of the most-recently-created in-range followup per inquiry.
-    # Avoids DISTINCT ON ambiguity when inquiry_qs carries M2M JOIN side-effects (e.g. classes filter).
+    # Correlated subquery: ID of the single globally-latest followup per inquiry (no date restriction).
+    # An inquiry can only ever appear once — on the month of its latest followup.
     latest_fu_subq = (
         FollowUp.objects
         .filter(inquiry=OuterRef('pk'))
-        .filter(date_filter)
         .order_by('-created_at')
         .values('id')[:1]
     )
@@ -180,7 +172,9 @@ def inquiries(request):
     inquiry_followup_dict = defaultdict(list)
     for followup in latest_followups:
         key = followup.followup_date or followup.created_at.date()
-        inquiry_followup_dict[key].append(followup)
+        # Only render on this month's calendar if the latest followup falls in this month
+        if first_day <= key <= last_day:
+            inquiry_followup_dict[key].append(followup)
 
     def _campaign_sort_key(fu):
         c = fu.inquiry.campaign
