@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% block dashboard %}
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  --navy:     #0d1b3e;
+  --navy2:    #1e3163;
+  --gold:     #c9921a;
+  --gold-lt:  #fef3dc;
+  --green:    #1a7a4a;
+  --green-lt: #e6f5ed;
+  --red:      #c0392b;
+  --red-lt:   #fdecea;
+  --bg:       #f4f5f7;
+  --surface:  #ffffff;
+  --border:   #e2e4e9;
+  --text:     #1c1f2e;
+  --muted:    #6b7280;
+  --sans:     'IBM Plex Sans', sans-serif;
+}
+
+.pg-wrap {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 28px 20px 60px;
+  font-family: var(--sans);
+  color: var(--text);
+  font-size: 13px;
+}
+
+.pg-breadcrumb {
+  font-size: 12px; color: var(--muted);
+  display: flex; align-items: center; gap: 6px; margin-bottom: 18px;
+}
+.pg-breadcrumb a { color: var(--muted); text-decoration: none; }
+.pg-breadcrumb a:hover { color: var(--navy); }
+
+.pg-title { font-size: 20px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+.pg-sub   { font-size: 12px; color: var(--muted); margin-bottom: 24px; }
+
+.pg-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 28px 28px 32px;
+}
+
+.pg-alert {
+  padding: 10px 14px; border-radius: 5px; font-size: 12px;
+  margin-bottom: 18px; display: flex; align-items: center; gap: 8px;
+}
+.pg-alert.error { background: var(--red-lt); color: var(--red); border: 1px solid #f5bfbf; }
+.pg-alert .al-close { margin-left:auto; cursor:pointer; opacity:.5; font-size:14px; background:none; border:none; color:inherit; }
+
+.form-section-label {
+  font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--muted); padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  margin-bottom: 18px;
+}
+
+.form-label {
+  font-size: 12px; font-weight: 600; color: var(--navy2); margin-bottom: 5px; display: block;
+}
+.form-hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.form-control, .form-select {
+  font-size: 13px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 9px 12px;
+  color: var(--text);
+  background: #fcfcfd;
+  width: 100%;
+  transition: border-color .15s;
+}
+.form-control:focus, .form-select:focus {
+  border-color: var(--navy2);
+  box-shadow: 0 0 0 3px rgba(30,49,99,.09);
+  background: #fff;
+  outline: none;
+}
+
+.btn-submit {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 700; padding: 10px 22px;
+  border-radius: 6px; background: var(--navy); color: #fff;
+  border: none; cursor: pointer; letter-spacing: .03em; transition: background .12s;
+}
+.btn-submit:hover { background: var(--navy2); }
+.btn-cancel {
+  font-size: 12px; font-weight: 600; color: var(--muted);
+  text-decoration: none; padding: 10px 14px;
+}
+.btn-cancel:hover { color: var(--navy); }
+</style>
+
+{% include 'sat/_subnav.html' %}
+
+<div class="pg-wrap">
+
+  <div class="pg-breadcrumb">
+    <a href="{% url 'sat:session_list' %}">School Sessions</a>
+    <span>/</span>
+    <span>New Session</span>
+  </div>
+
+  <div class="pg-title">New School Session</div>
+  <div class="pg-sub">Set up a kiosk URL for a school visit. Students will self-register on the shared tablet.</div>
+
+  {% if messages %}
+  {% for msg in messages %}
+  <div class="pg-alert error">
+    <span>{{ msg }}</span>
+    <button class="al-close" onclick="this.parentElement.remove()">✕</button>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  <div class="pg-card">
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="form-section-label">Session Details</div>
+
+      <div class="mb-3">
+        <label for="school_name" class="form-label">School Name</label>
+        <input
+          type="text"
+          id="school_name"
+          name="school_name"
+          class="form-control"
+          placeholder="e.g. DPS Varanasi"
+          value="{{ request.POST.school_name|default:'' }}"
+          required
+          maxlength="255"
+        >
+      </div>
+
+      <div class="mb-3">
+        <label for="date" class="form-label">Visit Date</label>
+        <input type="date" id="date" name="date" class="form-control"
+               value="{{ request.POST.date|default:'' }}" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="paper_id" class="form-label">Test Paper</label>
+        <select id="paper_id" name="paper_id" class="form-select" required>
+          <option value="" disabled selected>Select a paper</option>
+          {% for paper in papers %}
+            <option value="{{ paper.pk }}"
+              {% if request.POST.paper_id == paper.pk|stringformat:"s" %}selected{% endif %}>
+              {{ paper.title }}{% if paper.class_name %} · {{ paper.class_name.name }}{% endif %}
+              ({{ paper.questions.count }}Q · {{ paper.time_limit }}min)
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="mb-4">
+        <label for="campaign_id" class="form-label">Campaign <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
+        <select id="campaign_id" name="campaign_id" class="form-select">
+          <option value="">— None —</option>
+          {% for c in campaigns %}
+            <option value="{{ c.pk }}"
+              {% if request.POST.campaign_id == c.pk|stringformat:"s" %}selected{% endif %}>
+              {{ c.name }} ({{ c.get_channel_display }})
+            </option>
+          {% endfor %}
+        </select>
+        <div class="form-hint">Linking a campaign lets you filter school participants in the Inquiry list.</div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+        <button type="submit" class="btn-submit">Create Session</button>
+        <a href="{% url 'sat:session_list' %}" class="btn-cancel">Cancel</a>
+      </div>
+
+    </form>
+  </div>
+
+</div>
+{% endblock dashboard %}

@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+{% block dashboard %}
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  --navy:     #0d1b3e;
+  --navy2:    #1e3163;
+  --gold:     #c9921a;
+  --gold-lt:  #fef3dc;
+  --green:    #1a7a4a;
+  --green-lt: #e6f5ed;
+  --red:      #c0392b;
+  --red-lt:   #fdecea;
+  --amber:    #c07a10;
+  --amber-lt: #fef0d8;
+  --bg:       #f4f5f7;
+  --surface:  #ffffff;
+  --border:   #e2e4e9;
+  --text:     #1c1f2e;
+  --muted:    #6b7280;
+  --mono:     'IBM Plex Mono', monospace;
+  --sans:     'IBM Plex Sans', sans-serif;
+}
+
+.pl-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+  font-family: var(--sans);
+  color: var(--text);
+  font-size: 13px;
+}
+
+.pl-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 20px;
+}
+.pl-title    { font-size: 20px; font-weight: 700; color: var(--navy); line-height: 1; }
+.pl-subtitle { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.pl-header-right { display: flex; align-items: center; gap: 10px; }
+.pl-count {
+  font-size: 11px; font-family: var(--mono); color: var(--muted);
+  background: var(--bg); border: 1px solid var(--border);
+  padding: 4px 12px; border-radius: 20px;
+}
+.btn-new {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 700; padding: 8px 16px;
+  border-radius: 5px; background: var(--navy); color: #fff;
+  text-decoration: none; border: none; cursor: pointer;
+  letter-spacing: .03em; transition: background .12s;
+}
+.btn-new:hover { background: var(--navy2); color: #fff; }
+
+.pl-alert {
+  padding: 10px 14px; border-radius: 5px; font-size: 12px;
+  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+}
+.pl-alert.success { background: var(--green-lt); color: var(--green); border: 1px solid #a7d9bc; }
+.pl-alert.error   { background: var(--red-lt);   color: var(--red);   border: 1px solid #f5bfbf; }
+.pl-alert .al-close { margin-left:auto; cursor:pointer; opacity:.5; font-size:14px; background:none; border:none; color:inherit; }
+
+.pl-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.pl-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.pl-table thead tr { background: var(--navy); }
+.pl-table th {
+  padding: 10px 14px;
+  font-size: 9px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: rgba(255,255,255,.5); text-align: left; white-space: nowrap; border: none;
+}
+.pl-table th.c { text-align: center; }
+.pl-table tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+.pl-table tbody tr:last-child { border-bottom: none; }
+.pl-table tbody tr:hover { background: #f8f9fb; }
+.pl-table td { padding: 13px 14px; vertical-align: middle; }
+.pl-table td.c { text-align: center; }
+
+.session-link {
+  font-weight: 600; color: var(--navy); text-decoration: none; font-size: 13px;
+}
+.session-link:hover { color: var(--gold); }
+
+.school-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+.badge-active {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  padding: 3px 10px; border-radius: 20px;
+  background: var(--green-lt); color: var(--green); border: 1px solid #a7d9bc;
+}
+.badge-inactive {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  padding: 3px 10px; border-radius: 20px;
+  background: var(--bg); color: var(--muted); border: 1px solid var(--border);
+}
+.status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.dot-green { background: var(--green); }
+.dot-muted { background: var(--muted); }
+
+.mono { font-family: var(--mono); font-size: 12px; }
+.date-cell { font-size: 11px; color: var(--muted); font-family: var(--mono); white-space: nowrap; }
+
+.action-group { display: flex; gap: 6px; justify-content: flex-end; }
+.btn-edit {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 600; padding: 5px 12px;
+  border: 1px solid var(--border); border-radius: 4px;
+  color: var(--navy); background: var(--surface);
+  text-decoration: none; transition: background .12s, border-color .12s;
+  white-space: nowrap;
+}
+.btn-edit:hover { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+.pl-empty { padding: 64px 20px; text-align: center; }
+.pl-empty-icon  { font-size: 36px; margin-bottom: 12px; }
+.pl-empty-title { font-size: 15px; font-weight: 600; color: var(--navy); margin-bottom: 6px; }
+.pl-empty-sub   { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+</style>
+
+{% include 'sat/_subnav.html' %}
+
+<div class="pl-wrap">
+
+  <div class="pl-header">
+    <div>
+      <div class="pl-title">School Sessions</div>
+      <div class="pl-subtitle">Manage school visit test sessions &amp; kiosk links</div>
+    </div>
+    <div class="pl-header-right">
+      {% if sessions %}
+      <span class="pl-count">{{ sessions|length }} session{{ sessions|length|pluralize }}</span>
+      {% endif %}
+      <a href="{% url 'sat:session_create' %}" class="btn-new">
+        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 1v10M1 6h10"/>
+        </svg>
+        New Session
+      </a>
+    </div>
+  </div>
+
+  {% if messages %}
+  {% for msg in messages %}
+  <div class="pl-alert {% if 'success' in msg.tags %}success{% else %}error{% endif %}">
+    <span>{{ msg }}</span>
+    <button class="al-close" onclick="this.parentElement.remove()">✕</button>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  {% if sessions %}
+  <div class="pl-card">
+    <table class="pl-table">
+      <thead>
+        <tr>
+          <th>School</th>
+          <th>Paper</th>
+          <th>Campaign</th>
+          <th class="c">Date</th>
+          <th class="c">Students</th>
+          <th class="c">Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in sessions %}
+        <tr>
+          <td>
+            <a href="{% url 'sat:session_detail' s.pk %}" class="session-link">{{ s.school_name }}</a>
+            <div class="school-meta mono" style="font-size:10px;margin-top:3px;">{{ s.session_code }}</div>
+          </td>
+          <td>
+            <div style="font-weight:600;font-size:12px;color:var(--navy);">{{ s.paper.title }}</div>
+            <div class="school-meta">{{ s.paper.time_limit }} min · {{ s.paper.questions.count }}Q</div>
+          </td>
+          <td>
+            {% if s.campaign %}
+              <div style="font-size:12px;color:var(--text);">{{ s.campaign.name }}</div>
+              <div class="school-meta">{{ s.campaign.get_channel_display }}</div>
+            {% else %}
+              <span style="color:var(--muted);font-size:12px;">—</span>
+            {% endif %}
+          </td>
+          <td class="c">
+            <div class="date-cell">{{ s.date|date:"d M Y" }}</div>
+          </td>
+          <td class="c">
+            <div class="mono" style="font-weight:700;color:var(--navy);">{{ s.assignments.count }}</div>
+          </td>
+          <td class="c">
+            {% if s.is_active %}
+              <span class="badge-active"><span class="status-dot dot-green"></span>Active</span>
+            {% else %}
+              <span class="badge-inactive"><span class="status-dot dot-muted"></span>Closed</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="action-group">
+              <a href="{% url 'sat:session_detail' s.pk %}" class="btn-edit">View</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% else %}
+  <div class="pl-card">
+    <div class="pl-empty">
+      <div class="pl-empty-icon">🏫</div>
+      <div class="pl-empty-title">No school sessions yet</div>
+      <div class="pl-empty-sub">Create a session before visiting a school. Each session generates a unique kiosk URL.</div>
+      <a href="{% url 'sat:session_create' %}" class="btn-new">
+        <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 1v10M1 6h10"/>
+        </svg>
+        New Session
+      </a>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock dashboard %}

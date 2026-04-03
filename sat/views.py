@@ -9,10 +9,11 @@ from django.utils import timezone
 from center.models import ClassName
 from inquiry_followup.models import Inquiry
 from accounts.utility import generate_whatsapp_link
+from marketing.models import Campaign
 
 from .models import (
     TestPaper, Question, TestAssignment,
-    TestAttempt, QuestionResponse, TestResult
+    TestAttempt, QuestionResponse, TestResult, SchoolTestSession
 )
 
 
@@ -350,6 +351,21 @@ def result_list(request):
 
 
 @login_required(login_url='login')
+def result_delete(request, pk):
+    """Delete the TestResult only — TestAttempt remains so the assignment can be reset/retaken."""
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+    result = get_object_or_404(
+        TestResult.objects.select_related('attempt__assignment__inquiry'),
+        pk=pk
+    )
+    inquiry_name = result.attempt.assignment.inquiry.student_name
+    result.delete()
+    messages.success(request, f'Result for {inquiry_name} deleted. You can now reset the attempt if needed.')
+    return redirect('sat:result_list')
+
+
+@login_required(login_url='login')
 def result_detail(request, pk):
     result = get_object_or_404(
         TestResult.objects.select_related(
@@ -535,4 +551,190 @@ def report_view(request, report_token):
         'type_pcts_json': type_pcts_json,
         'type_groups': type_groups,
         'subj_pcts': subj_pcts,
+    })
+
+
+# ─────────────────────────────────────────────
+# SCHOOL TEST SESSION MANAGEMENT
+# ─────────────────────────────────────────────
+
+@login_required(login_url='login')
+def session_list(request):
+    sessions = (
+        SchoolTestSession.objects
+        .select_related('paper', 'campaign')
+        .prefetch_related('assignments')
+        .order_by('-date', '-created_at')
+    )
+    return render(request, 'sat/session_list.html', {'sessions': sessions})
+
+
+@login_required(login_url='login')
+def session_create(request):
+    papers = TestPaper.objects.order_by('-created_at')
+    campaigns = Campaign.objects.filter(is_active=True).order_by('name')
+
+    if request.method == 'POST':
+        paper_id = request.POST.get('paper_id', '').strip()
+        campaign_id = request.POST.get('campaign_id', '').strip() or None
+        school_name = request.POST.get('school_name', '').strip()
+        date_str = request.POST.get('date', '').strip()
+
+        if not paper_id or not school_name or not date_str:
+            messages.error(request, 'Paper, school name and date are required.')
+            return render(request, 'sat/session_form.html', {
+                'papers': papers, 'campaigns': campaigns,
+            })
+
+        from django.utils.dateparse import parse_date
+        date_obj = parse_date(date_str)
+        if not date_obj:
+            messages.error(request, 'Invalid date format.')
+            return render(request, 'sat/session_form.html', {
+                'papers': papers, 'campaigns': campaigns,
+            })
+
+        session = SchoolTestSession.objects.create(
+            paper_id=paper_id,
+            campaign_id=campaign_id,
+            school_name=school_name,
+            date=date_obj,
+        )
+        messages.success(request, f'School session created for {session.school_name}.')
+        return redirect('sat:session_detail', pk=session.pk)
+
+    return render(request, 'sat/session_form.html', {
+        'papers': papers,
+        'campaigns': campaigns,
+    })
+
+
+@login_required(login_url='login')
+def session_detail(request, pk):
+    session = get_object_or_404(
+        SchoolTestSession.objects.select_related('paper', 'campaign'),
+        pk=pk,
+    )
+    assignments = (
+        session.assignments
+        .select_related('inquiry', 'paper')
+        .prefetch_related('attempt__result')
+        .order_by('-created_at')
+    )
+    kiosk_url = request.build_absolute_uri(f'/sat/school/{session.session_code}/')
+    return render(request, 'sat/session_detail.html', {
+        'session': session,
+        'assignments': assignments,
+        'kiosk_url': kiosk_url,
+    })
+
+
+@login_required(login_url='login')
+def session_toggle(request, pk):
+    """Toggle is_active on a SchoolTestSession."""
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+    session = get_object_or_404(SchoolTestSession, pk=pk)
+    session.is_active = not session.is_active
+    session.save(update_fields=['is_active'])
+    state = 'activated' if session.is_active else 'deactivated'
+    messages.success(request, f'Session {state}.')
+    return redirect('sat:session_detail', pk=pk)
+
+
+@login_required(login_url='login')
+def session_delete(request, pk):
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+    session = get_object_or_404(SchoolTestSession, pk=pk)
+    if session.assignments.exists():
+        messages.error(request, 'Cannot delete — students have already registered for this session.')
+        return redirect('sat:session_detail', pk=pk)
+    session.delete()
+    messages.success(request, 'Session deleted.')
+    return redirect('sat:session_list')
+
+
+# ─────────────────────────────────────────────
+# SCHOOL KIOSK (public self-registration)
+# ─────────────────────────────────────────────
+
+def school_kiosk(request, session_code):
+    """
+    Public kiosk view for school visits.
+    Students enter their admission number, class, name, and phone,
+    then are immediately redirected to the test.
+    """
+    session = get_object_or_404(SchoolTestSession, session_code=session_code)
+    classes = ClassName.objects.all().order_by('name')
+    error = None
+
+    if request.method == 'POST':
+        admission_number = request.POST.get('admission_number', '').strip()
+        class_id = request.POST.get('class_name', '').strip()
+        student_name = request.POST.get('student_name', '').strip()
+        phone = request.POST.get('phone', '').strip()
+
+        # Basic validation
+        if not all([admission_number, class_id, student_name, phone]):
+            error = 'All fields are required.'
+        elif not session.is_active:
+            error = 'This test session has been closed. Please contact your teacher.'
+        else:
+            class_obj = ClassName.objects.filter(pk=class_id).first()
+            if not class_obj:
+                error = 'Invalid class selected.'
+            else:
+                existing_inquiry = Inquiry.objects.filter(phone=phone).first()
+
+                if existing_inquiry:
+                    # Check if they already completed this paper
+                    already_done = TestAssignment.objects.filter(
+                        inquiry=existing_inquiry,
+                        paper=session.paper,
+                        attempt__submitted_at__isnull=False,
+                    ).exists()
+                    if already_done:
+                        error = 'You have already completed this test. Please contact your teacher if this is a mistake.'
+                    else:
+                        # Reuse existing inquiry — update admission_number if not already set
+                        if not existing_inquiry.admission_number:
+                            existing_inquiry.admission_number = admission_number
+                            existing_inquiry.save(update_fields=['admission_number'])
+                        # Check for an unsubmitted assignment (in-progress) — reuse it
+                        assignment = TestAssignment.objects.filter(
+                            inquiry=existing_inquiry,
+                            paper=session.paper,
+                            school_session=session,
+                        ).first()
+                        if not assignment:
+                            assignment = TestAssignment.objects.create(
+                                inquiry=existing_inquiry,
+                                paper=session.paper,
+                                school_session=session,
+                            )
+                        return redirect('test_shell', token=assignment.token)
+                else:
+                    # New student — create Inquiry + TestAssignment
+                    inquiry = Inquiry.objects.create(
+                        student_name=student_name,
+                        phone=phone,
+                        admission_number=admission_number,
+                        school=session.school_name,
+                        address='',
+                        inquiry_origin='walk_in',
+                        campaign=session.campaign,
+                    )
+                    inquiry.classes.add(class_obj)
+                    assignment = TestAssignment.objects.create(
+                        inquiry=inquiry,
+                        paper=session.paper,
+                        school_session=session,
+                    )
+                    return redirect('test_shell', token=assignment.token)
+
+    return render(request, 'sat/school_kiosk.html', {
+        'session': session,
+        'classes': classes,
+        'error': error,
     })

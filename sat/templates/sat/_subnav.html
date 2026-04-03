@@ -29,6 +29,15 @@
                    {% endif %}">
             Results
         </a>
+        <a href="{% url 'sat:session_list' %}"
+            style="text-decoration:none;font-size:12px;font-weight:600;padding:5px 14px;border-radius:4px;white-space:nowrap;
+                   {% if 'session' in url_name %}
+                   background:#0d1b3e;color:#fff;
+                   {% else %}
+                   background:transparent;color:#374151;
+                   {% endif %}">
+            School Sessions
+        </a>
     </div>
 </div>
 {% endwith %}

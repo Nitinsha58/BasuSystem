@@ -479,6 +479,28 @@
 
 </div><!-- end rd-wrap -->
 
+<!-- DANGER ZONE -->
+<div style="max-width:940px;margin:0 auto 48px;padding:0 20px;font-family:var(--sans);">
+  <div style="border:1px solid #f5c6c2;border-radius:6px;background:var(--red-lt);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+    <div>
+      <div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:3px;">Delete this result</div>
+      <div style="font-size:12px;color:var(--red);opacity:.8;">
+        Removes the score and report only. The attempt stays intact — you can reset it from the assignment page to allow a retake.
+      </div>
+    </div>
+    <form method="post" action="{% url 'sat:result_delete' result.pk %}"
+          onsubmit="return confirm('Delete this result for {{ result.attempt.assignment.inquiry.student_name }}? This cannot be undone.');">
+      {% csrf_token %}
+      <button type="submit"
+              style="flex-shrink:0;padding:9px 18px;border-radius:4px;border:1px solid var(--red);background:none;color:var(--red);font-size:12px;font-weight:700;cursor:pointer;transition:background .12s,color .12s;white-space:nowrap;"
+              onmouseover="this.style.background='var(--red)';this.style.color='#fff';"
+              onmouseout="this.style.background='none';this.style.color='var(--red)';">
+        Delete Result
+      </button>
+    </form>
+  </div>
+</div>
+
 <script>
 function copyText(id, btn) {
     const el = document.getElementById(id);

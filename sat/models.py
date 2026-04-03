@@ -3,6 +3,7 @@ import string
 from django.db import models
 from center.models import ClassName
 from inquiry_followup.models import Inquiry
+from marketing.models import Campaign
 
 
 def _make_token(length):
@@ -73,9 +74,32 @@ class Question(models.Model):
         return f"Q{self.order} – {self.paper.title}"
 
 
+class SchoolTestSession(models.Model):
+    paper = models.ForeignKey(TestPaper, on_delete=models.CASCADE, related_name='school_sessions')
+    campaign = models.ForeignKey(
+        Campaign, on_delete=models.SET_NULL, null=True, blank=True, related_name='school_test_sessions'
+    )
+    school_name = models.CharField(max_length=255)
+    date = models.DateField()
+    session_code = models.CharField(max_length=10, unique=True, editable=False)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if not self.session_code:
+            self.session_code = _make_token(10)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.school_name} – {self.paper.title} ({self.date})"
+
+
 class TestAssignment(models.Model):
     inquiry = models.ForeignKey(Inquiry, on_delete=models.CASCADE, related_name='sat_assignments')
     paper = models.ForeignKey(TestPaper, on_delete=models.CASCADE, related_name='assignments')
+    school_session = models.ForeignKey(
+        SchoolTestSession, on_delete=models.SET_NULL, null=True, blank=True, related_name='assignments'
+    )
     token = models.CharField(max_length=16, unique=True, editable=False)
     deadline = models.DateTimeField(null=True, blank=True)
     auto_release = models.BooleanField(

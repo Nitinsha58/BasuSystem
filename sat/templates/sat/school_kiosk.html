@@ -1,0 +1,257 @@
+{% extends 'base.html' %}
+{% block style %}
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --navy:    #0d1b3e;
+  --navy2:   #1e3163;
+  --gold:    #c9921a;
+  --gold-lt: #fef3dc;
+  --red:     #c0392b;
+  --red-lt:  #fdecea;
+  --bg:      #f4f5f7;
+  --surface: #ffffff;
+  --border:  #e2e4e9;
+  --text:    #1c1f2e;
+  --muted:   #6b7280;
+  --sans:    'IBM Plex Sans', sans-serif;
+}
+
+body { background: var(--bg); font-family: var(--sans); }
+
+.kiosk-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+}
+
+.kiosk-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+  width: 100%;
+  max-width: 480px;
+  padding: 36px 40px 40px;
+}
+
+.kiosk-logo {
+  text-align: center;
+  margin-bottom: 28px;
+}
+.kiosk-logo-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--navy);
+  letter-spacing: 0.5px;
+}
+.kiosk-logo-sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.kiosk-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 0 0 24px;
+}
+
+.kiosk-heading {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--navy);
+  margin-bottom: 2px;
+}
+.kiosk-sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+
+.kiosk-badge {
+  display: inline-block;
+  background: var(--gold-lt);
+  color: var(--gold);
+  border: 1px solid #f0d9a0;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 12px;
+  margin-bottom: 20px;
+}
+
+.form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--navy2);
+  margin-bottom: 5px;
+}
+.form-control, .form-select {
+  font-size: 14px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 10px 13px;
+  color: var(--text);
+  background: #fcfcfd;
+  transition: border-color 0.15s;
+}
+.form-control:focus, .form-select:focus {
+  border-color: var(--navy2);
+  box-shadow: 0 0 0 3px rgba(30, 49, 99, 0.1);
+  background: #fff;
+}
+
+.kiosk-btn {
+  width: 100%;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  background: var(--navy);
+  color: #fff;
+  cursor: pointer;
+  margin-top: 8px;
+  letter-spacing: 0.3px;
+  transition: background 0.2s;
+}
+.kiosk-btn:hover { background: var(--navy2); }
+.kiosk-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.kiosk-error {
+  background: var(--red-lt);
+  border: 1px solid #f5c6c2;
+  border-radius: 7px;
+  color: var(--red);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 10px 14px;
+  margin-bottom: 18px;
+}
+
+.kiosk-closed {
+  text-align: center;
+  padding: 24px 0 8px;
+  color: var(--red);
+  font-size: 15px;
+  font-weight: 600;
+}
+.kiosk-closed p {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 400;
+  margin-top: 6px;
+}
+
+@media (max-width: 520px) {
+  .kiosk-card { padding: 28px 20px 32px; }
+}
+</style>
+{% endblock style %}
+
+{% block dashboard %}
+<div class="kiosk-wrap">
+  <div class="kiosk-card">
+
+    <!-- Header -->
+    <div class="kiosk-logo">
+      <div class="kiosk-logo-text">BASU Classes</div>
+      <div class="kiosk-logo-sub">Scholarship Aptitude Test</div>
+    </div>
+    <hr class="kiosk-divider">
+
+    {% if not session.is_active %}
+
+      <div class="kiosk-closed">
+        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" viewBox="0 0 16 16" class="mb-2">
+          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+          <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+        </svg>
+        <div>This test session has been closed.</div>
+        <p>Please contact your teacher for assistance.</p>
+      </div>
+
+    {% else %}
+
+      <div class="kiosk-badge">{{ session.school_name }}</div>
+      <div class="kiosk-heading">{{ session.paper.title }}</div>
+      <div class="kiosk-sub">
+        Enter your details from your school ID card to begin the test.
+      </div>
+
+      {% if error %}
+        <div class="kiosk-error">{{ error }}</div>
+      {% endif %}
+
+      <form method="post" autocomplete="off">
+        {% csrf_token %}
+
+        <div class="mb-3">
+          <label for="admission_number" class="form-label">Admission / Roll Number</label>
+          <input
+            type="text"
+            id="admission_number"
+            name="admission_number"
+            class="form-control"
+            placeholder="As on your school ID card"
+            value="{{ request.POST.admission_number|default:'' }}"
+            required
+            maxlength="50"
+          >
+        </div>
+
+        <div class="mb-3">
+          <label for="class_name" class="form-label">Class</label>
+          <select id="class_name" name="class_name" class="form-select" required>
+            <option value="" disabled {% if not request.POST.class_name %}selected{% endif %}>Select your class</option>
+            {% for cls in classes %}
+              <option value="{{ cls.pk }}" {% if request.POST.class_name == cls.pk|stringformat:"s" %}selected{% endif %}>
+                {{ cls.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label for="student_name" class="form-label">Full Name</label>
+          <input
+            type="text"
+            id="student_name"
+            name="student_name"
+            class="form-control"
+            placeholder="Your full name"
+            value="{{ request.POST.student_name|default:'' }}"
+            required
+            maxlength="255"
+          >
+        </div>
+
+        <div class="mb-4">
+          <label for="phone" class="form-label">Mobile Number</label>
+          <input
+            type="tel"
+            id="phone"
+            name="phone"
+            class="form-control"
+            placeholder="10-digit mobile number"
+            value="{{ request.POST.phone|default:'' }}"
+            required
+            maxlength="15"
+            pattern="[0-9]{10,15}"
+          >
+        </div>
+
+        <button type="submit" class="kiosk-btn">
+          Start Test &rarr;
+        </button>
+      </form>
+
+    {% endif %}
+
+  </div>
+</div>
+{% endblock dashboard %}
