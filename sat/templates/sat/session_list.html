@@ -181,8 +181,13 @@
             <div class="school-meta mono" style="font-size:10px;margin-top:3px;">{{ s.session_code }}</div>
           </td>
           <td>
+            {% if s.paper %}
             <div style="font-weight:600;font-size:12px;color:var(--navy);">{{ s.paper.title }}</div>
             <div class="school-meta">{{ s.paper.time_limit }} min · {{ s.paper.questions.count }}Q</div>
+            {% else %}
+            <div style="font-weight:600;font-size:12px;color:var(--navy);">Auto by class</div>
+            <div class="school-meta" style="color:var(--muted);">Matched to student's class</div>
+            {% endif %}
           </td>
           <td>
             {% if s.campaign %}

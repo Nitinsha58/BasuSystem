@@ -580,8 +580,8 @@ def session_create(request):
         school_name = request.POST.get('school_name', '').strip()
         date_str = request.POST.get('date', '').strip()
 
-        if not paper_id or not school_name or not date_str:
-            messages.error(request, 'Paper, school name and date are required.')
+        if not school_name or not date_str:
+            messages.error(request, 'School name and date are required.')
             return render(request, 'sat/session_form.html', {
                 'papers': papers, 'campaigns': campaigns,
             })
@@ -595,7 +595,7 @@ def session_create(request):
             })
 
         session = SchoolTestSession.objects.create(
-            paper_id=paper_id,
+            paper_id=paper_id or None,
             campaign_id=campaign_id,
             school_name=school_name,
             date=date_obj,
@@ -685,53 +685,60 @@ def school_kiosk(request, session_code):
             if not class_obj:
                 error = 'Invalid class selected.'
             else:
-                existing_inquiry = Inquiry.objects.filter(phone=phone).first()
-
-                if existing_inquiry:
-                    # Check if they already completed this paper
-                    already_done = TestAssignment.objects.filter(
-                        inquiry=existing_inquiry,
-                        paper=session.paper,
-                        attempt__submitted_at__isnull=False,
-                    ).exists()
-                    if already_done:
-                        error = 'You have already completed this test. Please contact your teacher if this is a mistake.'
-                    else:
-                        # Reuse existing inquiry — update admission_number if not already set
-                        if not existing_inquiry.admission_number:
-                            existing_inquiry.admission_number = admission_number
-                            existing_inquiry.save(update_fields=['admission_number'])
-                        # Check for an unsubmitted assignment (in-progress) — reuse it
-                        assignment = TestAssignment.objects.filter(
-                            inquiry=existing_inquiry,
-                            paper=session.paper,
-                            school_session=session,
-                        ).first()
-                        if not assignment:
-                            assignment = TestAssignment.objects.create(
-                                inquiry=existing_inquiry,
-                                paper=session.paper,
-                                school_session=session,
-                            )
-                        return redirect('test_shell', token=assignment.token)
+                # Resolve paper: use the session's fixed paper, or auto-match by student's class
+                paper = session.paper or TestPaper.objects.filter(
+                    class_name=class_obj
+                ).order_by('-created_at').first()
+                if not paper:
+                    error = f'No test paper is configured for {class_obj.name}. Please contact your teacher.'
                 else:
-                    # New student — create Inquiry + TestAssignment
-                    inquiry = Inquiry.objects.create(
-                        student_name=student_name,
-                        phone=phone,
-                        admission_number=admission_number,
-                        school=session.school_name,
-                        address='',
-                        inquiry_origin='walk_in',
-                        campaign=session.campaign,
-                    )
-                    inquiry.classes.add(class_obj)
-                    assignment = TestAssignment.objects.create(
-                        inquiry=inquiry,
-                        paper=session.paper,
-                        school_session=session,
-                    )
-                    return redirect('test_shell', token=assignment.token)
+                    existing_inquiry = Inquiry.objects.filter(phone=phone).first()
+
+                    if existing_inquiry:
+                        # Check if they already completed this paper
+                        already_done = TestAssignment.objects.filter(
+                            inquiry=existing_inquiry,
+                            paper=paper,
+                            attempt__submitted_at__isnull=False,
+                        ).exists()
+                        if already_done:
+                            error = 'You have already completed this test. Please contact your teacher if this is a mistake.'
+                        else:
+                            # Reuse existing inquiry — update admission_number if not already set
+                            if not existing_inquiry.admission_number:
+                                existing_inquiry.admission_number = admission_number
+                                existing_inquiry.save(update_fields=['admission_number'])
+                            # Check for an unsubmitted assignment (in-progress) — reuse it
+                            assignment = TestAssignment.objects.filter(
+                                inquiry=existing_inquiry,
+                                paper=paper,
+                                school_session=session,
+                            ).first()
+                            if not assignment:
+                                assignment = TestAssignment.objects.create(
+                                    inquiry=existing_inquiry,
+                                    paper=paper,
+                                    school_session=session,
+                                )
+                            return redirect('test_shell', token=assignment.token)
+                    else:
+                        # New student — create Inquiry + TestAssignment
+                        inquiry = Inquiry.objects.create(
+                            student_name=student_name,
+                            phone=phone,
+                            admission_number=admission_number,
+                            school=session.school_name,
+                            address='',
+                            inquiry_origin='walk_in',
+                            campaign=session.campaign,
+                        )
+                        inquiry.classes.add(class_obj)
+                        assignment = TestAssignment.objects.create(
+                            inquiry=inquiry,
+                            paper=paper,
+                            school_session=session,
+                        )
+                        return redirect('test_shell', token=assignment.token)
 
     return render(request, 'sat/school_kiosk.html', {
         'session': session,

@@ -144,9 +144,9 @@
       </div>
 
       <div class="mb-3">
-        <label for="paper_id" class="form-label">Test Paper</label>
-        <select id="paper_id" name="paper_id" class="form-select" required>
-          <option value="" disabled selected>Select a paper</option>
+        <label for="paper_id" class="form-label">Test Paper <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
+        <select id="paper_id" name="paper_id" class="form-select">
+          <option value="">— Auto-select by student's class —</option>
           {% for paper in papers %}
             <option value="{{ paper.pk }}"
               {% if request.POST.paper_id == paper.pk|stringformat:"s" %}selected{% endif %}>
@@ -155,6 +155,7 @@
             </option>
           {% endfor %}
         </select>
+        <div class="form-hint">Leave blank to automatically assign each student the paper matching their chosen class. Select a specific paper to force all students onto one paper regardless of class.</div>
       </div>
 
       <div class="mb-4">

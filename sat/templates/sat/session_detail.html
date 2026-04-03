@@ -227,7 +227,7 @@
     <div>
       <div class="pg-hero-name">{{ session.school_name }}</div>
       <div class="pg-hero-meta">
-        <span>📋 {{ session.paper.title }}</span>
+        <span>📋 {% if session.paper %}{{ session.paper.title }}{% else %}Auto by class{% endif %}</span>
         <span>📅 {{ session.date|date:"d M Y" }}</span>
         {% if session.campaign %}<span>📢 {{ session.campaign.name }}</span>{% endif %}
         <span>👥 {{ assignments.count }} registered</span>
@@ -276,14 +276,20 @@
           <tr>
             <td class="dt-label">Paper</td>
             <td class="dt-val">
+              {% if session.paper %}
               <a href="{% url 'sat:paper_detail' session.paper.pk %}" style="color:var(--navy);text-decoration:none;font-weight:600;">
                 {{ session.paper.title }}
               </a>
+              {% else %}
+              <span style="color:var(--muted);font-style:italic;">Auto-selected by student's class</span>
+              {% endif %}
             </td>
           </tr>
           <tr>
             <td class="dt-label">Questions</td>
-            <td class="dt-val dt-mono">{{ session.paper.questions.count }}Q · {{ session.paper.time_limit }}min</td>
+            <td class="dt-val dt-mono">
+              {% if session.paper %}{{ session.paper.questions.count }}Q &middot; {{ session.paper.time_limit }}min{% else %}<span style="color:var(--muted);">Varies by class</span>{% endif %}
+            </td>
           </tr>
           <tr>
             <td class="dt-label">Campaign</td>

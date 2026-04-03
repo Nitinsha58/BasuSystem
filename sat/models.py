@@ -75,7 +75,10 @@ class Question(models.Model):
 
 
 class SchoolTestSession(models.Model):
-    paper = models.ForeignKey(TestPaper, on_delete=models.CASCADE, related_name='school_sessions')
+    paper = models.ForeignKey(
+        TestPaper, on_delete=models.SET_NULL, null=True, blank=True, related_name='school_sessions',
+        help_text="Leave blank to auto-select the paper based on each student's chosen class."
+    )
     campaign = models.ForeignKey(
         Campaign, on_delete=models.SET_NULL, null=True, blank=True, related_name='school_test_sessions'
     )
@@ -91,7 +94,8 @@ class SchoolTestSession(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.school_name} – {self.paper.title} ({self.date})"
+        paper_label = self.paper.title if self.paper_id else 'Auto by class'
+        return f"{self.school_name} – {paper_label} ({self.date})"
 
 
 class TestAssignment(models.Model):
