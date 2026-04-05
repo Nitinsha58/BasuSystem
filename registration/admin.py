@@ -454,7 +454,19 @@ admin.site.register(Recommendation)
 admin.site.register(TransportAttendance, TransportAttendanceAdmin)
 admin.site.register(Student, StudentAdmin)
 admin.site.register(ParentDetails)
-admin.site.register(FeeDetails)
+
+
+class FeeDetailsAdmin(admin.ModelAdmin):
+    list_display = ['student', 'tuition_fees', 'book_fees', 'cab_fees', 'discount', 'gst_opted_in', 'tuition_gst', 'book_gst', 'transport_gst', 'total_fees']
+    list_filter = ['gst_opted_in']
+    fieldsets = [
+        (None, {'fields': ['student', 'enrollment', 'total_fees', 'paid_amount', 'remaining_balance']}),
+        ('Fee Components', {'fields': ['registration_fee', 'registration_discount', 'tuition_fees', 'discount', 'book_fees', 'book_discount', 'cab_fees']}),
+        ('GST', {'fields': ['gst_opted_in', 'tuition_gst', 'book_gst', 'transport_gst']}),
+    ]
+
+
+admin.site.register(FeeDetails, FeeDetailsAdmin)
 admin.site.register(Installment)
 admin.site.register(TransportDetails)
 admin.site.register(Batch, BatchAdmin)

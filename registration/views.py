@@ -334,6 +334,16 @@ def api_course_offering_breakdown(request, offering_id: int):
             "subject_component_fee": str(Decimal(breakdown.get('subject_component_fee') or 0).quantize(Decimal('0.01'))),
             "surcharge_fee": str(Decimal(breakdown.get('surcharge_fee') or 0).quantize(Decimal('0.01'))),
             "total_fee": str(Decimal(breakdown.get('total_fee') or 0).quantize(Decimal('0.01'))),
+            # GST breakdown (18% tuition, 5% books/material; annual fee split 85%/15%)
+            "tuition_component_fee": str((Decimal(breakdown.get('total_fee') or 0) * Decimal('0.85')).quantize(Decimal('0.01'))),
+            "book_component_fee": str((Decimal(breakdown.get('total_fee') or 0) * Decimal('0.15')).quantize(Decimal('0.01'))),
+            "tuition_gst": str((Decimal(breakdown.get('total_fee') or 0) * Decimal('0.85') * Decimal('0.18')).quantize(Decimal('0.01'))),
+            "book_gst": str((Decimal(breakdown.get('total_fee') or 0) * Decimal('0.15') * Decimal('0.05')).quantize(Decimal('0.01'))),
+            "total_with_gst": str((
+                Decimal(breakdown.get('total_fee') or 0)
+                + Decimal(breakdown.get('total_fee') or 0) * Decimal('0.85') * Decimal('0.18')
+                + Decimal(breakdown.get('total_fee') or 0) * Decimal('0.15') * Decimal('0.05')
+            ).quantize(Decimal('0.01'))),
         },
     })
 
@@ -1531,6 +1541,13 @@ def student_enrollment_fees_details(request, stu_id):
                 fees_details.registration_discount = (request.POST.get("registration_discount") == 'on')
                 fees_details.paid_amount = request.POST.get("paid_amount") or 0
                 fees_details.remaining_balance = request.POST.get("remaining_balance") or 0
+
+                fees_details.gst_opted_in = (request.POST.get("gst_opted_in") == 'on')
+                fees_details.tuition_gst = request.POST.get("tuition_gst") or 0
+                fees_details.book_gst = request.POST.get("book_gst") or 0
+                fees_details.transport_gst = request.POST.get("transport_gst") or 0
+                fees_details.tuition_component = request.POST.get("tuition_component") or 0
+                fees_details.book_component = request.POST.get("book_component") or 0
 
                 fees_details.save()
 

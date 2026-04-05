@@ -192,12 +192,65 @@
         <input type="text" hidden value="{{fees_details.total_fees}}" class="form-control"
           name="total_fees" id="total_fees_input">
 
-        <!-- Tuition + Cab -->
+        <!-- Course info card (auto-fill helper) -->
+        <div class="row justify-content-evenly mt-3">
+          <div class="col-md-10">
+            {% if fee_recommendation.course_offering %}
+            <div class="rounded p-3" style="background:#f8f9fa; border:1px solid #dee2e6;">
+              <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                <div>
+                  <span class="fw-semibold">{{ fee_recommendation.course_offering.name }}</span>
+                  <span class="text-muted small ms-2">Base fee: <strong>&#8377;{{ fee_recommendation.course_offering.annual_fee|floatformat:0 }}</strong></span>
+                </div>
+                {% if fee_recommendation.available %}
+                <button type="button" id="apply-recommended-btn"
+                  class="btn btn-sm btn-success"
+                  data-recommend="{{ fee_recommendation.breakdown.total_fee|floatformat:0 }}">
+                  Apply &#8377;{{ fee_recommendation.breakdown.total_fee|floatformat:0 }}
+                </button>
+                {% endif %}
+              </div>
+
+              {% if fee_recommendation.subjects %}
+              <div class="d-flex flex-wrap gap-1 mt-2">
+                {% for s in fee_recommendation.subjects %}
+                <span class="badge rounded-pill {% if s.selected %}text-bg-success{% else %}bg-danger-subtle text-danger{% endif %}">
+                  {{ s.name }}{% if not s.selected %} <span class="opacity-75">(opted out)</span>{% endif %}
+                </span>
+                {% endfor %}
+              </div>
+              {% endif %}
+
+              {% if fee_recommendation.available %}
+              <div class="mt-2 small text-muted d-flex flex-wrap gap-3">
+                <span>Subject fee: <strong class="text-dark">&#8377;{{ fee_recommendation.breakdown.subject_component_fee|floatformat:0 }}</strong> ({{ fee_recommendation.breakdown.selected_subject_pct|floatformat:1 }}%)</span>
+                {% if fee_recommendation.breakdown.surcharge_fee %}
+                <span class="text-warning-emphasis">+ Surcharge: <strong>&#8377;{{ fee_recommendation.breakdown.surcharge_fee|floatformat:0 }}</strong> ({{ fee_recommendation.breakdown.surcharge_pct|floatformat:1 }}% &mdash; {{ fee_recommendation.opted_out_subjects }} subject{{ fee_recommendation.opted_out_subjects|pluralize }} opted out)</span>
+                {% endif %}
+                <span class="text-success fw-semibold">= Recommended: &#8377;{{ fee_recommendation.breakdown.total_fee|floatformat:0 }}</span>
+              </div>
+              {% else %}
+              <div class="mt-2 small text-muted">{{ fee_recommendation.reason }}</div>
+              {% endif %}
+            </div>
+            {% else %}
+            <div class="rounded p-3 text-muted small" style="background:#f8f9fa; border:1px solid #dee2e6;">
+              No course selected for this enrollment. Set a course on the Enrollment tab to get fee recommendations.
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Annual Course Fee + Cab -->
         <div class="row justify-content-evenly mt-3">
           <div class="col-md-4">
-            <label for="tuition_fees" class="form-label">Tuition Fees</label>
+            <label for="tuition_fees" class="form-label">Annual Course Fee <span class="text-muted fw-normal small">(Books &amp; Material 15% included)</span></label>
             <input type="text" minlength="10" maxlength="10" value="{{fees_details.tuition_fees}}"
               class="form-control" name="tuition_fees" id="tuition_fees" required>
+            <div class="mt-1 small text-muted d-flex justify-content-between">
+              <span>Books &amp; Material (15%)</span>
+              <span id="book_fees_display" class="fw-semibold text-dark">&#8377;{{ fees_details.book_fees|default:0|floatformat:0 }}</span>
+            </div>
           </div>
           <div class="col-md-4">
             <label for="cab_fees" class="form-label">Cab Fees</label>
@@ -205,6 +258,10 @@
               class="form-control" name="cab_fees" id="cab_fees">
           </div>
         </div>
+        <!-- Hidden: derived fee components submitted with form -->
+        <input type="hidden" name="book_fees" id="book_fees_input" value="{{fees_details.book_fees|default:'0'}}">
+        <input type="hidden" name="tuition_component" id="tuition_component_input" value="{{fees_details.tuition_component|default:'0'}}">
+        <input type="hidden" name="book_component" id="book_component_input" value="{{fees_details.book_component|default:'0'}}">
 
         <!-- Installment count + Discount -->
         <div class="row justify-content-evenly mt-3">
@@ -227,6 +284,99 @@
               class="form-control" name="discount" id="discount">
           </div>
         </div>
+
+        <!-- GST Toggle -->
+        <div class="row justify-content-evenly mt-3">
+          <div class="col-md-10">
+            <div class="d-flex align-items-center gap-3 p-3 rounded" style="background-color:#e8f5e9; border:1px solid #c8e6c9;">
+              <div class="form-check form-switch mb-0">
+                <input class="form-check-input" type="checkbox" role="switch" id="gst_opted_in"
+                  style="width:2.5em; height:1.3em;" {% if fees_details.gst_opted_in %} checked {% endif %}>
+                <label class="form-check-label fw-semibold" for="gst_opted_in">Apply GST</label>
+              </div>
+              <span class="text-muted small">
+                Course fee splits <strong>85% Tuition @ 18% GST</strong> &bull; <strong>15% Books &amp; Material @ 5% GST</strong> &bull; <strong>Transport @ 5% GST</strong>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- GST Breakdown (shown when GST is opted in) -->
+        <div id="gst-breakdown" class="row justify-content-evenly mt-2 {% if not fees_details.gst_opted_in %}d-none{% endif %}">
+          <div class="col-md-10">
+            <div class="p-3 rounded" style="background-color:#f1f8e9; border:1px dashed #aed581;">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="text-success mb-0">GST Breakdown</h6>
+                <span class="text-muted small">Net course fee after discount: <strong id="gst-net-course">&#8377;0</strong></span>
+              </div>
+
+              <!-- Component rows -->
+              <div class="d-flex flex-column gap-2">
+
+                <!-- Tuition component -->
+                <div class="rounded p-2" style="background:#fff; border:1px solid #c8e6c9;">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="small fw-semibold text-dark">Tuition Component <span class="text-muted fw-normal">(85% of course fee)</span></span>
+                    <span class="small fw-semibold" id="gst-tuition-comp">&#8377;0</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mt-1">
+                    <span class="small text-success">+ Tuition GST (18%)</span>
+                    <div class="input-group input-group-sm" style="width:130px;">
+                      <span class="input-group-text text-success">&#8377;</span>
+                      <input type="text" id="tuition_gst_display" class="form-control bg-white text-success fw-semibold" readonly
+                        value="{{fees_details.tuition_gst|default:'0'}}">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Books & Material component -->
+                <div class="rounded p-2" style="background:#fff; border:1px solid #c8e6c9;">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="small fw-semibold text-dark">Books &amp; Material Component <span class="text-muted fw-normal">(15% of course fee)</span></span>
+                    <span class="small fw-semibold" id="gst-book-comp">&#8377;0</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mt-1">
+                    <span class="small text-success">+ Books GST (5%)</span>
+                    <div class="input-group input-group-sm" style="width:130px;">
+                      <span class="input-group-text text-success">&#8377;</span>
+                      <input type="text" id="book_gst_display" class="form-control bg-white text-success fw-semibold" readonly
+                        value="{{fees_details.book_gst|default:'0'}}">
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Transport component -->
+                <div class="rounded p-2" style="background:#fff; border:1px solid #c8e6c9;">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <span class="small fw-semibold text-dark">Transport / Cab</span>
+                    <span class="small fw-semibold" id="gst-cab-amt">&#8377;0</span>
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mt-1">
+                    <span class="small text-success">+ Transport GST (5%)</span>
+                    <div class="input-group input-group-sm" style="width:130px;">
+                      <span class="input-group-text text-success">&#8377;</span>
+                      <input type="text" id="transport_gst_display" class="form-control bg-white text-success fw-semibold" readonly
+                        value="{{fees_details.transport_gst|default:'0'}}">
+                    </div>
+                  </div>
+                </div>
+
+              </div><!-- /component rows -->
+
+              <!-- Total with GST footer -->
+              <div class="d-flex justify-content-between align-items-center mt-3 pt-2" style="border-top:2px solid #aed581;">
+                <span class="fw-bold text-success">Total with GST</span>
+                <span class="fw-bold text-success fs-5" id="gst-grand-total">&#8377;0</span>
+              </div>
+
+            </div>
+          </div>
+        </div>
+        <!-- Hidden GST inputs submitted with the form -->
+        <input type="hidden" name="gst_opted_in" id="gst_opted_in_hidden" value="">
+        <input type="hidden" name="tuition_gst" id="tuition_gst_input" value="{{fees_details.tuition_gst|default:'0'}}">
+        <input type="hidden" name="book_gst" id="book_gst_input" value="{{fees_details.book_gst|default:'0'}}">
+        <input type="hidden" name="transport_gst" id="transport_gst_input" value="{{fees_details.transport_gst|default:'0'}}">
 
         <!-- ── Installments ── -->
         <div class="installments-wrapper mt-3">
@@ -394,6 +544,38 @@
     const feeInputs = document.querySelectorAll("#cab_fees, #tuition_fees, #discount");
     const today = new Date().toISOString().split('T')[0];
 
+    // ── Apply-recommended-fee button ──
+    const applyBtn = document.getElementById("apply-recommended-btn");
+    if (applyBtn) {
+      applyBtn.addEventListener("click", function () {
+        const recommended = parseInt(this.dataset.recommend || 0, 10);
+        if (recommended > 0) {
+          document.getElementById("tuition_fees").value = recommended;
+          calculateTotalFees();
+        }
+      });
+    }
+
+    const gstOptedIn          = document.getElementById("gst_opted_in");
+    const gstOptedInHidden    = document.getElementById("gst_opted_in_hidden");
+    const gstBreakdown        = document.getElementById("gst-breakdown");
+    const tuitionGstDisplay   = document.getElementById("tuition_gst_display");
+    const bookGstDisplay      = document.getElementById("book_gst_display");
+    const transportGstDisplay = document.getElementById("transport_gst_display");
+    const tuitionGstInput     = document.getElementById("tuition_gst_input");
+    const bookGstInput        = document.getElementById("book_gst_input");
+    const transportGstInput   = document.getElementById("transport_gst_input");
+    // Span refs for computed component amounts
+    const gstNetCourse   = document.getElementById("gst-net-course");
+    const gstTuitionComp = document.getElementById("gst-tuition-comp");
+    const gstBookComp    = document.getElementById("gst-book-comp");
+    const gstCabAmt      = document.getElementById("gst-cab-amt");
+    const gstGrandTotal  = document.getElementById("gst-grand-total");
+    const bookFeesDisplay        = document.getElementById("book_fees_display");
+    const bookFeesInput          = document.getElementById("book_fees_input");
+    const tuitionComponentInput  = document.getElementById("tuition_component_input");
+    const bookComponentInput     = document.getElementById("book_component_input");
+
     {% if not installments %}
     const firstDate = document.getElementById("installment-date-1");
     if (firstDate) firstDate.value = today;
@@ -410,15 +592,92 @@
     });
 
     // ── Fee total calculation ──
+    function fmt(n) { return '\u20b9' + n.toLocaleString('en-IN'); }
+
     function calculateTotalFees() {
-      let total = 0;
-      feeInputs.forEach(input => {
-        total += input.id === "discount"
-          ? -parseInt(input.value || 0, 10)
-          :  parseInt(input.value || 0, 10);
-      });
+      const courseFee = parseInt(document.getElementById("tuition_fees").value || 0, 10);
+      const discount  = parseInt(document.getElementById("discount").value || 0, 10);
+      const cab       = parseInt(document.getElementById("cab_fees").value || 0, 10);
+
+      // Books & Material = 15% of the full course fee (catalog component, before discount)
+      const bookFees = Math.round(courseFee * 0.15);
+      if (bookFeesDisplay) bookFeesDisplay.textContent = fmt(bookFees);
+      if (bookFeesInput)   bookFeesInput.value = bookFees;
+
+      // Net course fee after discount (taxable base for GST split)
+      const netCourse = Math.max(0, courseFee - discount);
+
+      // Post-discount 85%/15% split (taxable components)
+      const tuitionComp = Math.round(netCourse * 0.85);
+      const bookComp    = netCourse - tuitionComp;  // avoids rounding gap
+
+      // Always write component values so they persist even when GST is off
+      if (tuitionComponentInput) tuitionComponentInput.value = tuitionComp;
+      if (bookComponentInput)    bookComponentInput.value    = bookComp;
+
+      let total;
+      if (gstOptedIn && gstOptedIn.checked) {
+        // 85% tuition → 18% GST | 15% books → 5% GST | cab → 5% GST
+        const tGst       = Math.round(tuitionComp * 0.18);
+        const bGst       = Math.round(bookComp * 0.05);
+        const cGst       = Math.round(cab * 0.05);
+        const grandTotal = netCourse + tGst + bGst + cab + cGst;
+
+        // Update breakdown display spans
+        if (gstNetCourse)   gstNetCourse.textContent   = fmt(netCourse);
+        if (gstTuitionComp) gstTuitionComp.textContent = fmt(tuitionComp);
+        if (gstBookComp)    gstBookComp.textContent    = fmt(bookComp);
+        if (gstCabAmt)      gstCabAmt.textContent      = fmt(cab);
+        if (gstGrandTotal)  gstGrandTotal.textContent  = fmt(grandTotal);
+
+        // Update readonly display inputs
+        if (tuitionGstDisplay)   tuitionGstDisplay.value   = tGst;
+        if (bookGstDisplay)      bookGstDisplay.value      = bGst;
+        if (transportGstDisplay) transportGstDisplay.value = cGst;
+
+        // Store in hidden inputs for form submission
+        if (tuitionGstInput)   tuitionGstInput.value   = tGst;
+        if (bookGstInput)      bookGstInput.value      = bGst;
+        if (transportGstInput) transportGstInput.value = cGst;
+
+        total = grandTotal;
+      } else {
+        // GST off — simple net + cab
+        if (gstNetCourse)   gstNetCourse.textContent   = fmt(netCourse);
+        if (gstTuitionComp) gstTuitionComp.textContent = fmt(tuitionComp);
+        if (gstBookComp)    gstBookComp.textContent    = fmt(bookComp);
+        if (gstCabAmt)      gstCabAmt.textContent      = fmt(cab);
+        if (gstGrandTotal)  gstGrandTotal.textContent  = fmt(netCourse + cab);
+        if (tuitionGstDisplay)   tuitionGstDisplay.value   = 0;
+        if (bookGstDisplay)      bookGstDisplay.value      = 0;
+        if (transportGstDisplay) transportGstDisplay.value = 0;
+        if (tuitionGstInput)     tuitionGstInput.value     = 0;
+        if (bookGstInput)        bookGstInput.value        = 0;
+        if (transportGstInput)   transportGstInput.value   = 0;
+        total = netCourse + cab;
+      }
+
       totalFeesElement.textContent = total.toLocaleString();
       totalFeesInput.value = total;
+    }
+
+    // Sync the checkbox value into the hidden input on every change
+    // (checkboxes are not submitted when unchecked; hidden input ensures the value always posts)
+    function syncGstHidden() {
+      if (gstOptedInHidden) gstOptedInHidden.value = (gstOptedIn && gstOptedIn.checked) ? 'on' : '';
+    }
+
+    if (gstOptedIn) {
+      syncGstHidden();
+      gstOptedIn.addEventListener("change", function () {
+        syncGstHidden();
+        if (this.checked) {
+          gstBreakdown.classList.remove("d-none");
+        } else {
+          gstBreakdown.classList.add("d-none");
+        }
+        calculateTotalFees();
+      });
     }
 
     feeInputs.forEach(input => {
@@ -427,6 +686,9 @@
         calculateTotalFees();
       });
     });
+
+    // Initialise all computed values on page load from pre-filled DB values
+    calculateTotalFees();
 
     // ── Installment total ──
     function updateTotalInstallmentAmt() {

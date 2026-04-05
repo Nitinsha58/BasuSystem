@@ -7,6 +7,12 @@ from django.db.models import Max, Sum
 from colorfield.fields import ColorField
 from .manager import AttendanceManager
 
+# GST rates — fixed constants used across fee calculations
+GST_TUITION_RATE = Decimal('0.18')      # 18% GST on tuition component
+GST_BOOKS_RATE = Decimal('0.05')        # 5%  GST on books/material component
+GST_TRANSPORT_RATE = Decimal('0.05')    # 5%  GST on transport/cab fees
+ANNUAL_FEE_BOOK_RATIO = Decimal('0.15') # 15% of annual fee is books/material
+
 
 from center.models import ClassName, Subject, Section
 from user.models import BaseUser
@@ -565,6 +571,15 @@ class FeeDetails(models.Model):
     registration_discount = models.BooleanField(default=False)
     paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     remaining_balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True, blank=True)
+
+    # GST fields
+    gst_opted_in = models.BooleanField(default=False)
+    tuition_gst = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True, blank=True)
+    book_gst = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True, blank=True)
+    transport_gst = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True, blank=True)
+    # Taxable base components (post-discount, used for GST invoice)
+    tuition_component = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True, blank=True)
+    book_component = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, null=True, blank=True)
 
     enrollment = models.OneToOneField("StudentEnrollment", on_delete=models.CASCADE, null=True, blank=True, related_name="fees")
 

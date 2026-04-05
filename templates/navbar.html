@@ -710,6 +710,24 @@
                         </div>
                     </div>
 
+                    <!-- 4.6 Transport fee (shown once a course is loaded) -->
+                    <div class="fc-section d-none" id="feeCalcTransportRow">
+                        <span class="fc-label">Transport / Cab Fees <span class="fc-label-optional">(optional)</span></span>
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="number" id="feeCalcTransportFee" min="0" step="1" placeholder="0" class="form-control form-control-sm" style="max-width:160px;">
+                            <span class="text-muted small">per year</span>
+                        </div>
+                    </div>
+
+                    <!-- 4.7 GST toggle (shown once a course is loaded) -->
+                    <div class="fc-section d-none" id="feeCalcGstRow">
+                        <span class="fc-label">GST</span>
+                        <div class="form-check form-switch d-flex align-items-center gap-2 mb-0">
+                            <input class="form-check-input" type="checkbox" role="switch" id="feeCalcGstToggle" style="width:2.5em; height:1.3em;">
+                            <label class="form-check-label" for="feeCalcGstToggle">Include GST <span class="text-muted small">(Tuition 18% · Books &amp; Material 5% · Transport 5%)</span></label>
+                        </div>
+                    </div>
+
                     <!-- 5. Fee breakdown -->
                     <div class="d-none" id="feeCalcBreakdownCard">
                         <div class="fc-breakdown-header">Fee Breakdown</div>
@@ -746,6 +764,8 @@
     let _programDuration    = 1;          // 1 or 2
     let _discountType       = 'percent';  // 'percent' | 'amount'
     let _discountValue      = 0;
+    let _gstEnabled         = false;      // GST toggle in fee calculator
+    let _transportFee       = 0;          // Transport/cab fee entered in calculator
 
     // ── DOM helpers ──────────────────────────────────────
     const $ = id => document.getElementById(id);
@@ -795,6 +815,16 @@
         const hint = $('feeCalcDiscountHint');
         if (hint) hint.textContent = '% off total';
         $('feeCalcDiscountRow').classList.add('d-none');
+        // Reset transport
+        _transportFee = 0;
+        const transportEl = $('feeCalcTransportFee');
+        if (transportEl) transportEl.value = '';
+        $('feeCalcTransportRow').classList.add('d-none');
+        // Reset GST
+        _gstEnabled = false;
+        const gstToggle = $('feeCalcGstToggle');
+        if (gstToggle) gstToggle.checked = false;
+        $('feeCalcGstRow').classList.add('d-none');
     }
 
     function resetCourse() {
@@ -836,13 +866,65 @@
 
         const fmt = val => '₹' + parseFloat(val).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
-        const annualFee     = parseFloat(course.annual_fee) || 0;
-        const baseTuition   = parseFloat(summary.subject_component_fee) || 0;
-        const baseSurcharge = parseFloat(summary.surcharge_fee) || 0;
-        const baseTotal     = parseFloat(summary.total_fee) || 0;
-        const durSubtotal   = baseTotal * _programDuration;
+        const annualFee      = parseFloat(course.annual_fee) || 0;
+        const baseTuition    = parseFloat(summary.subject_component_fee) || 0;
+        const baseSurcharge  = parseFloat(summary.surcharge_fee) || 0;
+        // baseTotal = subject_component + surcharge — the full per-year course fee
+        const baseTotal      = parseFloat(summary.total_fee) || 0;
+        const durSubtotal    = baseTotal * _programDuration;   // course fee × years
+        const transportTotal = _transportFee * _programDuration;
         const { discount, final } = applyDiscount(durSubtotal);
-        const hasExtras = (_programDuration === 2 || discount > 0);
+        const grandTotal     = final + transportTotal;
+
+        const hasExtras = (_programDuration === 2 || discount > 0 || _transportFee > 0);
+
+        // GST on net fee after discount (surcharge is already part of baseTotal before split)
+        // Split: 85% tuition / 15% books & material of post-discount course fee
+        const tuitionCompNet  = final * 0.85;
+        const bookCompNet     = final * 0.15;
+        const tuitionGstAmt   = tuitionCompNet * 0.18;
+        const bookGstAmt      = bookCompNet * 0.05;
+        const transportGstAmt = transportTotal * 0.05;
+        const totalWithGst    = grandTotal + tuitionGstAmt + bookGstAmt + transportGstAmt;
+
+        // Transport row (visible when transport fee is entered)
+        const transportHtml = _transportFee > 0 ? `
+            <div class="fc-stat">
+                <div class="fc-stat-label">Transport / Cab</div>
+                <div class="fc-stat-value">${fmt(transportTotal)}</div>
+                <div class="fc-stat-sub">&#8377;${_transportFee.toLocaleString('en-IN')}/yr
+                    ${_programDuration === 2 ? '&times; 2 yrs' : ''}</div>
+            </div>` : '';
+
+        // GST breakdown rows (visible when GST toggle is ON)
+        const gstHtml = _gstEnabled ? `
+            <div class="fc-stat" style="border-top:1px dashed #dee2e6; padding-top:0.5rem; margin-top:0.25rem;">
+                <div class="fc-stat-label text-muted small">Tuition (85% of course total)</div>
+                <div class="fc-stat-value small">${fmt(tuitionCompNet)}</div>
+                <div class="fc-stat-sub">incl. surcharge</div>
+            </div>
+            <div class="fc-stat">
+                <div class="fc-stat-label text-success small">+ Tuition GST (18%)</div>
+                <div class="fc-stat-value small text-success">${fmt(tuitionGstAmt)}</div>
+            </div>
+            <div class="fc-stat">
+                <div class="fc-stat-label text-muted small">Books &amp; Material (15% of course total)</div>
+                <div class="fc-stat-value small">${fmt(bookCompNet)}</div>
+                <div class="fc-stat-sub">incl. surcharge</div>
+            </div>
+            <div class="fc-stat">
+                <div class="fc-stat-label text-success small">+ Books GST (5%)</div>
+                <div class="fc-stat-value small text-success">${fmt(bookGstAmt)}</div>
+            </div>
+            ${_transportFee > 0 ? `
+            <div class="fc-stat">
+                <div class="fc-stat-label text-success small">+ Transport GST (5%)</div>
+                <div class="fc-stat-value small text-success">${fmt(transportGstAmt)}</div>
+            </div>` : ''}
+            <div class="fc-stat fc-stat--total" style="margin-top:0.25rem;">
+                <div class="fc-stat-label">Total with GST</div>
+                <div class="fc-stat-value">${fmt(totalWithGst)}</div>
+            </div>` : '';
 
         content.innerHTML = `
             <div class="fc-stat">
@@ -859,10 +941,13 @@
                 <div class="fc-stat-value">${fmt(baseSurcharge)}</div>
                 <div class="fc-stat-sub">${parseFloat(summary.surcharge_pct).toFixed(2)}%</div>
             </div>
-            <div class="fc-stat ${hasExtras ? '' : 'fc-stat--total'}">
-                <div class="fc-stat-label">Per-Year Total</div>
+            <div class="fc-stat ${hasExtras || _gstEnabled ? '' : 'fc-stat--total'}">
+                <div class="fc-stat-label">Per-Year Course Total</div>
                 <div class="fc-stat-value">${fmt(baseTotal)}</div>
+                ${_gstEnabled ? '<div class="fc-stat-sub text-muted">split 85% tuition / 15% books for GST (incl. surcharge)</div>' : ''}
             </div>
+            ${transportHtml}
+            ${gstHtml}
         `;
 
         badges.innerHTML = subjects.map(s =>
@@ -871,12 +956,12 @@
              </span>`
         ).join('');
 
-        // Final strip — shown when 2-year or discount is active
+        // Final strip — pre-GST adjustments summary
         if (strip) {
-            if (hasExtras) {
+            if (hasExtras && !_gstEnabled) {
                 let html = '<div class="fc-final-row">';
                 if (_programDuration === 2) {
-                    html += `<span class="fc-final-detail">2-Year Subtotal&nbsp;<strong>${fmt(durSubtotal)}</strong></span>`;
+                    html += `<span class="fc-final-detail">2-Year Course Subtotal&nbsp;<strong>${fmt(durSubtotal)}</strong></span>`;
                 }
                 if (discount > 0) {
                     const discLabel = _discountType === 'percent'
@@ -884,12 +969,34 @@
                         : 'discount';
                     html += `<span class="fc-final-detail">&#8722;&nbsp;<strong>${fmt(discount)}</strong>&nbsp;(${discLabel})</span>`;
                 }
+                if (_transportFee > 0) {
+                    html += `<span class="fc-final-detail">+ Transport&nbsp;<strong>${fmt(transportTotal)}</strong></span>`;
+                }
                 html += '</div>';
                 html += `<div class="fc-final-total-row">
                     <span class="fc-final-total-label">Final Total</span>
-                    <span class="fc-final-total-value">${fmt(final)}</span>
+                    <span class="fc-final-total-value">${fmt(grandTotal)}</span>
                     ${_programDuration === 2 ? '<span class="fc-final-note">for 2 years</span>' : ''}
                 </div>`;
+                strip.innerHTML = html;
+                strip.classList.remove('d-none');
+            } else if (_gstEnabled && hasExtras) {
+                // Show pre-GST adjustments; GST total shown inline above
+                let html = '<div class="fc-final-row">';
+                if (_programDuration === 2) {
+                    html += `<span class="fc-final-detail">2-Year Course Subtotal&nbsp;<strong>${fmt(durSubtotal)}</strong></span>`;
+                }
+                if (discount > 0) {
+                    const discLabel = _discountType === 'percent'
+                        ? `${parseFloat(_discountValue).toFixed(1)}% discount`
+                        : 'discount';
+                    html += `<span class="fc-final-detail">&#8722;&nbsp;<strong>${fmt(discount)}</strong>&nbsp;(${discLabel})</span>`;
+                }
+                if (_transportFee > 0) {
+                    html += `<span class="fc-final-detail">+ Transport&nbsp;<strong>${fmt(transportTotal)}</strong></span>`;
+                }
+                html += `<span class="fc-final-detail">Pre-GST Total&nbsp;<strong>${fmt(grandTotal)}</strong></span>`;
+                html += '</div>';
                 strip.innerHTML = html;
                 strip.classList.remove('d-none');
             } else {
@@ -965,6 +1072,8 @@
 
         $('feeCalcSubjectsRow').classList.remove('d-none');
         $('feeCalcDiscountRow').classList.remove('d-none');
+        $('feeCalcTransportRow').classList.remove('d-none');
+        $('feeCalcGstRow').classList.remove('d-none');
     }
 
     // ── Load course offering breakdown (full) ─────────────
@@ -1165,6 +1274,24 @@
         if (discInput) {
             discInput.addEventListener('input', function () {
                 _discountValue = parseFloat(this.value) || 0;
+                rerenderBreakdown();
+            });
+        }
+
+        // Transport fee input
+        const transportInput = $('feeCalcTransportFee');
+        if (transportInput) {
+            transportInput.addEventListener('input', function () {
+                _transportFee = parseFloat(this.value) || 0;
+                rerenderBreakdown();
+            });
+        }
+
+        // GST toggle
+        const gstToggle = $('feeCalcGstToggle');
+        if (gstToggle) {
+            gstToggle.addEventListener('change', function () {
+                _gstEnabled = this.checked;
                 rerenderBreakdown();
             });
         }
