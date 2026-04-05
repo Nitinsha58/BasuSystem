@@ -193,4 +193,12 @@ urlpatterns = [
         student_performance_comparison_detail,
         name='student_performance_comparison_detail'
     ),
+
+    # URL aliases – used by transport list templates that link to per-student pages
+    path('student/<uuid:stu_id>/transport/', student_enrollment_transport_details, name='student_transport_details'),
+    path('student/<uuid:stu_id>/', student_enrollment_details_update, name='student_update'),
+    path('student/<uuid:stu_id>/parent/', student_enrollment_parent_details, name='student_parent_details'),
+    path('student/<uuid:stu_id>/fees/', student_enrollment_fees_details, name='student_fees_details'),
+    path('student/<uuid:stu_id>/document/', student_enrollment_reg_doc, name='student_reg_doc'),
+    path('student/<uuid:stu_id>/receipt/', print_enrollment_receipt, name='receipt'),
 ]

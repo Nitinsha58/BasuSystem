@@ -1740,13 +1740,26 @@ def student_enrollment_transport_details(request, stu_id):
 
     enrollment = StudentEnrollment.objects.filter(student=student, session=selected_session).first()
 
-    instance = getattr(student, 'transport', None)
+    # Prefer enrollment-scoped transport record; fall back to student-level legacy record
+    instance = None
+    if enrollment:
+        try:
+            instance = enrollment.transport_details
+        except Exception:
+            instance = None
+    if instance is None:
+        try:
+            instance = student.transport
+        except Exception:
+            instance = None
 
     if request.method == "POST":
         form = TransportDetailsForm(request.POST, instance=instance)
         if form.is_valid():
             transport = form.save(commit=False)
             transport.student = student
+            if enrollment:
+                transport.enrollment = enrollment
             transport.save()
             messages.success(request, "Transport details saved.")
             return redirect(f"{reverse('student_enrollment_transport_details', args=[student.stu_id])}?session={selected_session.id}")
@@ -1756,14 +1769,17 @@ def student_enrollment_transport_details(request, stu_id):
                     messages.error(request, f"{field}: {error}")
     else:
         form = TransportDetailsForm(instance=instance)
+
     if not instance:
         return render(request, "registration/enrollment/student_enrollment_transport_details.html", {
             'form': form,
+            'transport_details': None,
             'student': student,
             'academic_sessions': sessions,
             'active_session': active_session,
             'selected_session': selected_session,
         })
+
     WEEKDAYS = Day.objects.all()
     batch_timings_by_weekday = {}
     slots = []
@@ -1785,7 +1801,7 @@ def student_enrollment_transport_details(request, stu_id):
 
         earliest = min(batches_by_day_with_times, key=lambda b: datetime.strptime(b.start_time, "%I:%M %p").time())
         latest = max(batches_by_day_with_times, key=lambda b: datetime.strptime(b.end_time, "%I:%M %p").time())
-        
+
         if min_slot_time is None:
             min_slot_time = earliest.start_time
         else:
@@ -1794,85 +1810,57 @@ def student_enrollment_transport_details(request, stu_id):
             max_slot_time = latest.end_time
         else:
             max_slot_time = max([max_slot_time, latest.end_time], key=lambda time: datetime.strptime(time, "%I:%M %p").time())
-        
 
         driver_capacity = None
-        assigned_driver = getattr(student.transport, "transport_person", None)
+        assigned_driver = getattr(instance, "transport_person", None)
         if assigned_driver and hasattr(assigned_driver, "capacity"):
             driver_capacity = assigned_driver.capacity
 
-            students_qs = Student.objects.filter(
-                transport__transport_person=assigned_driver,
+            # All enrollments assigned to this driver on this day in this session
+            driver_enrollments = list(StudentEnrollment.objects.filter(
+                transport_details__transport_person=assigned_driver,
                 active=True,
                 fees__cab_fees__gt=0,
-                enrollments__session=selected_session,
-                enrollments__active=True,
-                enrollments__batch_links__batch__days=day,
-            ).distinct()
-            # Calculate pickup (earliest) and drop (latest) counts separately
+                session=selected_session,
+                batch_links__batch__days=day,
+            ).distinct())
+
             pickup_count = 0
             drop_count = 0
-            pickup_status = "0"
-            drop_status = "0"
 
             if earliest and earliest.start_time:
-                pickup_students_qs = []
-                for other_student in students_qs:
-                    other_enrollment = StudentEnrollment.objects.filter(
-                        student=other_student,
-                        session=selected_session,
-                        active=True,
-                    ).first()
-                    if not other_enrollment:
-                        continue
-
+                for other_enrollment in driver_enrollments:
                     batches_on_day = Batch.objects.filter(
                         enrollment_links__enrollment=other_enrollment,
                         days=day,
                     ).exclude(start_time__isnull=True).exclude(start_time="")
-
                     if batches_on_day.exists():
                         first_batch = min(batches_on_day, key=lambda b: datetime.strptime(b.start_time, "%I:%M %p"))
                         if first_batch.start_time == earliest.start_time:
-                            pickup_students_qs.append(other_student)
-
-                pickup_count = len(pickup_students_qs)
+                            pickup_count += 1
 
             if latest and latest.end_time:
-                drop_students_qs = []
-                for other_student in students_qs:
-                    other_enrollment = StudentEnrollment.objects.filter(
-                        student=other_student,
-                        session=selected_session,
-                        active=True,
-                    ).first()
-                    if not other_enrollment:
-                        continue
-
+                for other_enrollment in driver_enrollments:
                     batches_on_day = Batch.objects.filter(
                         enrollment_links__enrollment=other_enrollment,
                         days=day,
                     ).exclude(end_time__isnull=True).exclude(end_time="")
-
                     if batches_on_day.exists():
                         last_batch = max(batches_on_day, key=lambda b: datetime.strptime(b.end_time, "%I:%M %p"))
                         if last_batch.end_time == latest.end_time:
-                            drop_students_qs.append(other_student)
-                drop_count = len(drop_students_qs)
+                            drop_count += 1
 
+            pickup_diff = driver_capacity - pickup_count
+            drop_diff = driver_capacity - drop_count
 
-            if driver_capacity is not None:
-                pickup_diff = driver_capacity - pickup_count
-                drop_diff = driver_capacity - drop_count
-
-                pickup_status = {
-                    'diff': pickup_diff,  # keep raw number
-                    'display': f"{'+' if pickup_diff < 0 else '-'}{abs(pickup_diff)}"
-                }
-                drop_status = {
-                    'diff': drop_diff,
-                    'display': f"{'+' if drop_diff < 0 else '-'}{abs(drop_diff)}"
-                }
+            pickup_status = {
+                'diff': pickup_diff,
+                'display': f"{'+' if pickup_diff < 0 else '-'}{abs(pickup_diff)}"
+            }
+            drop_status = {
+                'diff': drop_diff,
+                'display': f"{'+' if drop_diff < 0 else '-'}{abs(drop_diff)}"
+            }
 
             driver_status = {
                 "pickup": pickup_status,
@@ -1891,7 +1879,6 @@ def student_enrollment_transport_details(request, stu_id):
             'driver_status': driver_status,
         }
 
-    # Generate 15-minute time slots with a 15-minute buffer before and after
     if min_slot_time and max_slot_time:
         start_dt = datetime.combine(datetime.today(), datetime.strptime(min_slot_time, "%I:%M %p").time()) - timedelta(minutes=30)
         end_dt = datetime.combine(datetime.today(), datetime.strptime(max_slot_time, "%I:%M %p").time()) + timedelta(minutes=30)
@@ -1903,6 +1890,7 @@ def student_enrollment_transport_details(request, stu_id):
 
     return render(request, "registration/enrollment/student_enrollment_transport_details.html", {
         'form': form,
+        'transport_details': instance,
         'student': student,
         'time_slots': slots,
         'batch_timings': batch_timings_by_weekday,
@@ -3790,29 +3778,24 @@ def transport_list(request):
 
     grouped_batches = {}
     for batch in batches:
-        enrollments_qs = StudentEnrollment.objects.filter(
+        transport_enrollments = StudentEnrollment.objects.filter(
             active=True,
             session=selected_session,
             batch_links__batch=batch,
-        ).select_related('student').distinct()
-        student_ids = [e.student_id for e in enrollments_qs if e.student_id]
-        transport_students = Student.objects.filter(
-            id__in=student_ids,
             fees__cab_fees__gt=0,
-            transport__isnull=False,
+            transport_details__isnull=False,
+            transport_details__transport_person__isnull=False,
         ).select_related(
-            'user',
-            'transport',
-            'transport__transport_person',
-            'transport__transport_mode',
+            'student__user',
             'fees',
-        ).order_by('stu_id')
+            'transport_details__transport_person',
+            'transport_details__transport_mode',
+        ).distinct().order_by('student__stu_id')
 
-        if transport_students.exists():
+        if transport_enrollments.exists():
             if batch.start_time not in grouped_batches:
                 grouped_batches[batch.start_time] = {}
-            grouped_batches[batch.start_time][batch] = list(transport_students)
-    
+            grouped_batches[batch.start_time][batch] = list(transport_enrollments)
 
     return render(request, "registration/students_timing.html", {
         "current_day": current_day,
@@ -3857,6 +3840,9 @@ def transport_driver_list(request):
     batch_links_qs = EnrollmentBatch.objects.filter(
         enrollment__active=True,
         enrollment__session=selected_session,
+        enrollment__fees__cab_fees__gt=0,
+        enrollment__transport_details__isnull=False,
+        enrollment__transport_details__transport_person__isnull=False,
         batch__days__name=current_day.name,
     ).exclude(
         Q(batch__class_name__name__in=['CLASS 9', 'CLASS 10']) &
@@ -3865,49 +3851,34 @@ def transport_driver_list(request):
     ).select_related(
         'batch',
         'enrollment',
-        'enrollment__student',
         'enrollment__student__user',
-        'enrollment__student__transport',
-        'enrollment__student__transport__transport_person',
-        'enrollment__student__transport__transport_mode',
-        'enrollment__student__fees',
+        'enrollment__fees',
+        'enrollment__transport_details__transport_person',
+        'enrollment__transport_details__transport_mode',
     ).order_by('batch__start_time')
 
     grouped_transports = defaultdict(lambda: defaultdict(list))
-    seen_students = set()  # to avoid duplicate inclusion
+    seen_enrollments = set()
 
     for link in batch_links_qs:
-        student = getattr(getattr(link, 'enrollment', None), 'student', None)
-        if not student:
-            continue
-        if student.id in seen_students:
-            continue
-        if not getattr(student, 'fees', None) or float(student.fees.cab_fees or 0) <= 0:
-            continue
-        try:
-            if not student.transport or not student.transport.transport_person:
-                continue
-        except Student.transport.RelatedObjectDoesNotExist:
+        enrollment = getattr(link, 'enrollment', None)
+        if not enrollment or enrollment.id in seen_enrollments:
             continue
 
         time = link.batch.start_time
-        driver = student.transport.transport_person
-        grouped_transports[time][driver].append(student)
-        seen_students.add(student.id)
+        driver = enrollment.transport_details.transport_person
+        grouped_transports[time][driver].append(enrollment)
+        seen_enrollments.add(enrollment.id)
 
-    # Sort students and timings
+    # Sort enrollments under each driver/time by student id
     for time in grouped_transports:
         for driver in grouped_transports[time]:
-            grouped_transports[time][driver].sort(key=lambda s: s.stu_id)
+            grouped_transports[time][driver].sort(key=lambda e: e.student.stu_id)
 
-    # Ensure timings are in ascending order
-    sorted_grouped = OrderedDict(sorted(grouped_transports.items()))
-
-    # Convert defaultdicts to normal nested dicts for template usage
-    for time in grouped_transports:
-        grouped_transports[time] = dict(grouped_transports[time])
-    grouped_transports = dict(grouped_transports)
-    sorted_grouped = dict(sorted(grouped_transports.items()))
+    # Ensure timings are in ascending order and convert to plain dicts
+    sorted_grouped = {}
+    for time in sorted(grouped_transports.keys()):
+        sorted_grouped[time] = dict(grouped_transports[time])
 
     return render(request, "registration/students_driver_timing.html", {
         "current_day": current_day,
@@ -3946,33 +3917,29 @@ def grouped_transports(request):
         index -= 1
     current_day = weekdays[index]
 
-    enrolled_student_ids = StudentEnrollment.objects.filter(
+    transport_enrollments = StudentEnrollment.objects.filter(
         active=True,
         session=selected_session,
         batch_links__batch__days__name=current_day.name,
-    ).values_list('student_id', flat=True)
-
-    students = Student.objects.filter(
-        id__in=enrolled_student_ids,
         fees__cab_fees__gt=0,
-        transport__transport_person__isnull=False,
+        transport_details__isnull=False,
+        transport_details__transport_person__isnull=False,
     ).select_related(
-        'user',
+        'student__user',
         'fees',
-        'transport',
-        'transport__transport_person',
-        'transport__transport_mode',
-    ).distinct().order_by('stu_id')
+        'transport_details__transport_person',
+        'transport_details__transport_mode',
+    ).distinct().order_by('student__stu_id')
 
     grouped_by_driver = defaultdict(list)
 
-    for student in students:
-        driver = student.transport.transport_person
-        grouped_by_driver[driver].append(student)
+    for enrollment in transport_enrollments:
+        driver = enrollment.transport_details.transport_person
+        grouped_by_driver[driver].append(enrollment)
 
-    # Sort students under each driver by student ID
+    # Sort enrollments under each driver by student ID
     for driver in grouped_by_driver:
-        grouped_by_driver[driver].sort(key=lambda s: s.stu_id)
+        grouped_by_driver[driver].sort(key=lambda e: e.student.stu_id)
 
     return render(request, "registration/grouped_transports.html", {
         "grouped_transports": dict(grouped_by_driver),

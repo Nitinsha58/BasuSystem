@@ -38,6 +38,16 @@
         <a href="{% url 'grouped_transports' %}{% if selected_session %}?session={{ selected_session.id }}{% endif %}"
             class="btn btn-warning ">Transport Students</a>
     </div>
+    <form method="get" class="mx-2 mt-2">
+        <input type="hidden" name="day" value="{{ day }}">
+        <select name="session" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
+            {% for session in academic_sessions %}
+            <option value="{{ session.id }}" {% if session.id == selected_session.id %}selected{% endif %}>
+                {{ session.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </form>
 </div>
 
 <div class="mx-2 px-2">
@@ -52,19 +62,19 @@
                     <ul class="list-group">
                         <li class="list-group-item bg-dark text-white list-group border-dark text-nowrap"> {{driver}}
                         </li>
-                        {% for student in students %}
+                        {% for enrollment in students %}
                         <li style="position: relative;"
                             class="list-group-item d-flex flex-column justify-content-between">
-                            <a href="{% url 'student_transport_details' student.stu_id %}"
+                            <a href="{% url 'student_transport_details' enrollment.student.stu_id %}"
                                 class="text-decoration-none text-dark"
                                 style="display: flex; justify-content: space-between;" target="_blank">
-                                <span class="">{{forloop.counter}}. {{student.user.first_name}}
-                                    {{student.user.last_name}} ( {{student.transport.transport_mode.name}} )</span>
+                                <span class="">{{forloop.counter}}. {{enrollment.student.user.first_name}}
+                                    {{enrollment.student.user.last_name}} ( {{enrollment.transport_details.transport_mode.name}} )</span>
                             </a>
                             <p class="text-muted fw-normal m-0 text-wrap" style="font-size: 14px;">
-                                {{student.transport.transport_person.name}}</p>
+                                {{enrollment.transport_details.transport_person.name}}</p>
                             <p class="text-muted fw-normal m-0 text-wrap" style="font-size: 14px;">
-                                {{student.transport.address}}</p>
+                                {{enrollment.transport_details.address}}</p>
 
                         </li>
                         {% endfor %}
