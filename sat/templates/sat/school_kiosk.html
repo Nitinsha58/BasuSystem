@@ -233,15 +233,17 @@ body { background: var(--bg); font-family: var(--sans); }
         <div class="mb-4">
           <label for="phone" class="form-label">Mobile Number</label>
           <input
-            type="tel"
+            type="text"
             id="phone"
             name="phone"
             class="form-control"
             placeholder="10-digit mobile number"
             value="{{ request.POST.phone|default:'' }}"
             required
-            maxlength="15"
-            pattern="[0-9]{10,15}"
+            maxlength="10"
+            minlength="10"
+            pattern="[0-9]{10}"
+            inputmode="numeric"
           >
         </div>
 
@@ -254,4 +256,42 @@ body { background: var(--bg); font-family: var(--sans); }
 
   </div>
 </div>
+
+<script>
+(function () {
+  function initPhoneInput() {
+    const phoneInput = document.getElementById('phone');
+    if (!phoneInput) return;
+
+    phoneInput.addEventListener('input', function () {
+      const digits = this.value.replace(/\D/g, '').slice(0, 10);
+      this.value = digits;
+    });
+
+    phoneInput.addEventListener('keydown', function (e) {
+      const allowed = [
+        'Backspace', 'Delete', 'Tab', 'Enter',
+        'ArrowLeft', 'ArrowRight', 'Home', 'End',
+      ];
+      if (allowed.includes(e.key)) return;
+      if (e.ctrlKey || e.metaKey) return;
+      if (!/^\d$/.test(e.key)) e.preventDefault();
+    });
+
+    phoneInput.addEventListener('paste', function (e) {
+      e.preventDefault();
+      const pasted = (e.clipboardData || window.clipboardData).getData('text');
+      const digits = pasted.replace(/\D/g, '').slice(0, 10);
+      this.value = digits;
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPhoneInput);
+  } else {
+    initPhoneInput();
+  }
+})();
+</script>
+
 {% endblock dashboard %}

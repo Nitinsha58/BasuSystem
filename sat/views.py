@@ -675,9 +675,14 @@ def school_kiosk(request, session_code):
         student_name = request.POST.get('student_name', '').strip()
         phone = request.POST.get('phone', '').strip()
 
+        # Strip any non-digit characters and enforce exactly 10 digits
+        phone = ''.join(c for c in phone if c.isdigit())
+
         # Basic validation
         if not all([admission_number, class_id, student_name, phone]):
             error = 'All fields are required.'
+        elif len(phone) != 10:
+            error = 'Mobile number must be exactly 10 digits.'
         elif not session.is_active:
             error = 'This test session has been closed. Please contact your teacher.'
         else:
