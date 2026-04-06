@@ -1386,7 +1386,7 @@ def students_enrollment_list(request):
             'student__user',
             'class_name',
         )
-        .order_by('class_name__created_at', '-created_at',
+        .order_by('class_name__created_at', '-student__created_at',
                   'student__user__first_name', 'student__user__last_name')
         .distinct()
     )
