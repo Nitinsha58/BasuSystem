@@ -137,6 +137,22 @@ class TestAttempt(models.Model):
     started_at = models.DateTimeField(auto_now_add=True)
     submitted_at = models.DateTimeField(null=True, blank=True)
 
+    # Anti-cheat fields
+    question_order = models.JSONField(
+        default=list,
+        help_text="Shuffled list of Question IDs assigned at attempt creation."
+    )
+    tab_switch_count = models.PositiveSmallIntegerField(default=0)
+    fullscreen_exit_count = models.PositiveSmallIntegerField(default=0)
+    auto_submitted = models.BooleanField(
+        default=False,
+        help_text="True when the client timer triggered submission (not student action)."
+    )
+    late_by_seconds = models.IntegerField(
+        null=True, blank=True,
+        help_text="Seconds past the time limit at submission. Negative means early."
+    )
+
     def __str__(self):
         return f"Attempt – {self.assignment}"
 

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Scholarship Aptitude Test</title>
-  <link rel="stylesheet" href="{% static 'sat/dist/assets/index.css' %}" />
+  <link rel="stylesheet" href="{% static 'sat/dist/assets/index.css' %}?v=3" />
   <style>
     /* Prevent copy/paste and right-click during test */
     #root { user-select: none; }
@@ -12,6 +12,6 @@
 </head>
 <body>
   <div id="root" data-token="{{ token }}"></div>
-  <script type="module" src="{% static 'sat/dist/assets/index.js' %}"></script>
+  <script type="module" src="{% static 'sat/dist/assets/index.js' %}?v=3"></script>
 </body>
 </html>

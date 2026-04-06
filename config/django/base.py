@@ -133,6 +133,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240
 
+# SAT test integrity settings
+SAT_SUBMIT_GRACE_SECONDS = 30  # Seconds past time_limit before server rejects submission
+
 
 def _read_text_file(path: str) -> str:
     try:

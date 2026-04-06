@@ -40,4 +40,7 @@ urlpatterns = [
     path('api/paper/<str:token>/', api_views.PaperDetailAPI.as_view(), name='api_paper'),
     path('api/start/<str:token>/', api_views.StartAttemptAPI.as_view(), name='api_start'),
     path('api/submit/<str:token>/', api_views.SubmitAttemptAPI.as_view(), name='api_submit'),
+    path('api/question/<str:token>/<int:index>/', api_views.QuestionDetailAPI.as_view(), name='api_question'),
+    path('api/answer/<str:token>/', api_views.SaveAnswerAPI.as_view(), name='api_answer'),
+    path('api/log-event/<str:token>/', api_views.LogEventAPI.as_view(), name='api_log_event'),
 ]

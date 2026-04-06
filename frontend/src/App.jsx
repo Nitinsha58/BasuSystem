@@ -6,8 +6,8 @@ import SubmitScreen from "./SubmitScreen";
 // SCREENS: info → test → submit
 export default function App({ token }) {
 	const [screen, setScreen] = useState("info");
-	const [paperData, setPaperData] = useState(null); // { paper, student_name }
-	const [attemptData, setAttemptData] = useState(null); // { attempt_id, time_remaining }
+	const [paperData, setPaperData] = useState(null); // flat metadata from PaperDetailAPI
+	const [attemptData, setAttemptData] = useState(null); // { attempt_id, time_remaining, total_questions }
 	const [resultData, setResultData] = useState(null); // { report_token, auto_release, ... }
 
 	if (screen === "info") {

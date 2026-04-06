@@ -152,12 +152,10 @@ export default function InfoScreen({ token, onPaperLoaded, onStart }) {
 						setError(data.error);
 					}
 				} else {
-					setPaper(data.paper);
+					// API now returns flat metadata (no paper.questions nested object)
+					setPaper(data);
 					setStudentName(data.student_name);
-					onPaperLoaded({
-						paper: data.paper,
-						student_name: data.student_name,
-					});
+					onPaperLoaded(data);
 				}
 				setLoading(false);
 			})
@@ -230,7 +228,7 @@ export default function InfoScreen({ token, onPaperLoaded, onStart }) {
 		.slice(0, 2)
 		.join("")
 		.toUpperCase();
-	const qCount = paper.questions?.length ?? 0;
+	const qCount = paper.total_questions ?? 0;
 	const totalMins = paper.time_limit;
 
 	return (
@@ -281,11 +279,12 @@ export default function InfoScreen({ token, onPaperLoaded, onStart }) {
 				<div style={s.rules}>
 					<div style={s.rulesTitle}>Instructions</div>
 					{[
-						"Don't close or refresh this tab during the test.",
+						"The test will open in fullscreen — do not exit fullscreen during the test.",
+						"Do not switch tabs or leave this window — the second violation will auto-submit.",
 						"Each question has exactly one correct option.",
-						"You can revisit and change any answer before submitting.",
-						'The timer starts the moment you click "Start Test".',
-						"Submit before time runs out — unanswered questions score 0.",
+						"You can navigate freely and change any answer before submitting.",
+						'The timer starts the moment you click "Start Test" and cannot be paused.',
+						"Your answers are saved automatically as you navigate. Submit before time runs out.",
 					].map((rule, i) => (
 						<div key={i} style={s.rule}>
 							<div style={s.dot} />
