@@ -25,6 +25,7 @@ class AcademicSession(models.Model):
     end_date = models.DateField()
 
     is_active = models.BooleanField( default=False, help_text="Only one session should be active at a time")
+    target = models.IntegerField(null=True, blank=True, help_text="Enrollment target for this session")
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

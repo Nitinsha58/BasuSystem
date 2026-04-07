@@ -37,6 +37,8 @@ from django.urls import reverse
 from decimal import Decimal, ROUND_HALF_UP
 import time as clock_time
 import re
+import json
+import json
 
 from .forms import (
     CourseOfferingForm,
@@ -4803,3 +4805,84 @@ def delete_transport_attendance(request):
             redirect_url += f"&session={selected_session.id}"
         return redirect(redirect_url)
     return redirect('students_pick_drop')
+
+
+# ---------------------------------------------------------------------------
+# Enrollment Tracker
+# ---------------------------------------------------------------------------
+
+def _extract_class_num(name):
+    m = re.search(r'\b(7|8|9|10|11|12)\b', name or '')
+    return int(m.group()) if m else None
+
+
+_CLASS_NUM_TO_IDX = {7: 0, 8: 1, 9: 2, 10: 3, 11: 4, 12: 5}
+
+
+@login_required(login_url='login')
+def enrollment_tracker(request):
+    import datetime as _dt
+    sessions = AcademicSession.objects.order_by('start_date')
+    today = _dt.date.today()
+
+    sessions_data = []
+    for session in sessions:
+        # 15-month window: Jan of session_year → Mar of (session_year + 1)
+        # Index 0–11 : Jan '25 … Dec '25  (session.start_date.year)
+        # Index 12–14: Jan '26 … Mar '26  (session.start_date.year + 1)
+        sy = session.start_date.year
+
+        # Build lookup: (year, month) → index
+        month_to_idx = {}
+        for m in range(1, 13):          # Jan–Dec of session year → 0–11
+            month_to_idx[(sy, m)] = m - 1
+        for m in range(1, 4):           # Jan–Mar of next year → 12–14
+            month_to_idx[(sy + 1, m)] = 11 + m
+
+        # Human-readable labels, year suffix only where ambiguous
+        def _label(year, month):
+            from calendar import month_abbr
+            abbr = month_abbr[month]      # 'Jan', 'Feb', …
+            if month <= 3:                # Jan/Feb/Mar could be either year
+                short_yr = str(year)[-2:]
+                return f"{abbr} '{short_yr}"
+            return abbr
+        month_labels = [_label(sy, m) for m in range(1, 13)] + [_label(sy + 1, m) for m in range(1, 4)]
+
+        now_idx = month_to_idx.get((today.year, today.month), -1)
+
+        data = [[0] * 15 for _ in range(6)]
+
+        enrollments = (
+            StudentEnrollment.objects
+            .filter(session=session, active=True)
+            .select_related('class_name', 'student')
+            .only('class_name__name', 'student__doj', 'student__created_at')
+        )
+        for e in enrollments:
+            class_num = _extract_class_num(e.class_name.name)
+            class_idx = _CLASS_NUM_TO_IDX.get(class_num)
+            if class_idx is None:
+                continue
+            join_date = e.student.doj or e.student.created_at
+            if join_date is None:
+                continue
+            # join_date may be a datetime (created_at); normalise to date
+            jd = join_date.date() if hasattr(join_date, 'date') else join_date
+            month_idx = month_to_idx.get((jd.year, jd.month))
+            if month_idx is None:
+                continue   # outside this session's 15-month window
+            data[class_idx][month_idx] += 1
+
+        sessions_data.append({
+            'label': session.name,
+            'is_current': session.is_active,
+            'target': session.target or 0,
+            'months': month_labels,
+            'now_idx': now_idx,
+            'data': data,
+        })
+
+    return render(request, 'registration/enrollment/enrollment_tracker.html', {
+        'sessions_json': json.dumps(sessions_data),
+    })

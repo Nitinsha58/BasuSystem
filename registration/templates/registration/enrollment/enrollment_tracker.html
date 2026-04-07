@@ -1,0 +1,536 @@
+{% extends 'base.html' %}
+{% block dashboard %}
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  --navy:     #0d1b3e;
+  --navy2:    #1e3163;
+  --navy3:    #2a4a8a;
+  --gold:     #c9921a;
+  --gold-lt:  #fef3dc;
+  --green:    #1a7a4a;
+  --green-lt: #e6f5ed;
+  --red:      #c0392b;
+  --red-lt:   #fdecea;
+  --amber:    #c07a10;
+  --amber-lt: #fef0d8;
+  --bg:       #f4f5f7;
+  --surface:  #ffffff;
+  --border:   #e2e4e9;
+  --text:     #1c1f2e;
+  --muted:    #6b7280;
+  --mono:     'IBM Plex Mono', monospace;
+  --sans:     'IBM Plex Sans', sans-serif;
+}
+
+.enr-wrap {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 24px 20px 56px;
+  font-family: var(--sans);
+  color: var(--text);
+  font-size: 13px;
+}
+
+/* ── HEADER ── */
+.enr-header {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
+}
+.enr-title    { font-size: 20px; font-weight: 700; color: var(--navy); line-height: 1; }
+.enr-subtitle { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.enr-header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+/* ── BACK LINK ── */
+.enr-back {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 600; color: var(--muted);
+  text-decoration: none; padding: 5px 10px;
+  border: 1px solid var(--border); border-radius: 5px;
+  background: var(--surface); transition: color .12s, border-color .12s;
+}
+.enr-back:hover { color: var(--navy); border-color: var(--navy); }
+
+/* ── FILTER TABS ── */
+.view-tabs { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 5px; overflow: hidden; }
+.view-tab {
+  padding: 6px 14px; font-size: 11px; font-weight: 600; cursor: pointer;
+  background: var(--surface); color: var(--muted); border: none;
+  border-right: 1px solid var(--border); transition: all .12s;
+  font-family: var(--sans); letter-spacing: .02em;
+}
+.view-tab:last-child { border-right: none; }
+.view-tab.active { background: var(--navy); color: #fff; }
+.view-tab:hover:not(.active) { background: var(--bg); color: var(--navy); }
+
+/* ── SUMMARY CARDS ── */
+.enr-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.metric-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+}
+.metric-label {
+  font-size: 9px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 6px;
+}
+.metric-val {
+  font-size: 26px; font-weight: 700; color: var(--navy);
+  font-family: var(--mono); line-height: 1;
+}
+.metric-sub { font-size: 10px; color: var(--muted); margin-top: 4px; font-family: var(--mono); }
+.metric-delta {
+  display: inline-block; font-size: 10px; font-weight: 700;
+  padding: 2px 7px; border-radius: 20px; margin-top: 5px;
+}
+.delta-up   { background: var(--green-lt); color: var(--green); }
+.delta-down { background: var(--red-lt);   color: var(--red); }
+
+/* ── TRACKER CARD ── */
+.tracker-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+/* ── SESSION ROW ── */
+.session-row { border-bottom: 1px solid var(--border); }
+.session-row:last-child { border-bottom: none; }
+
+.session-head {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px 10px;
+  background: var(--navy);
+  flex-wrap: wrap;
+}
+.session-name {
+  font-size: 11px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: rgba(255,255,255,.6);
+}
+.session-name strong { color: #fff; font-size: 13px; letter-spacing: 0; }
+.session-badge {
+  font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+  padding: 3px 9px; border-radius: 20px; border: 1px solid rgba(255,255,255,.15);
+  color: rgba(255,255,255,.5);
+}
+.session-badge.current { background: var(--gold); color: #fff; border-color: var(--gold); }
+
+.session-totals { margin-left: auto; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.session-total-val { font-size: 18px; font-weight: 700; color: #fff; font-family: var(--mono); }
+.session-total-label {
+  font-size: 9px; color: rgba(255,255,255,.5); margin-top: 1px;
+  text-transform: uppercase; letter-spacing: .08em;
+}
+.session-growth {
+  font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px;
+}
+.growth-pos { background: var(--green-lt); color: var(--green); }
+.growth-neg { background: var(--red-lt);   color: var(--red); }
+.growth-na  { background: rgba(255,255,255,.08); color: rgba(255,255,255,.4); }
+
+/* ── CHART AREA ── */
+.chart-area { padding: 16px 16px 8px; overflow-x: auto; }
+.chart-inner { min-width: 600px; }
+
+.chart-months {
+  display: grid;
+  grid-template-columns: 70px repeat(12, 1fr);
+  gap: 2px;
+  margin-bottom: 6px;
+}
+.chart-month-gap {}
+.chart-month-label {
+  font-size: 9px; font-weight: 600; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--muted); text-align: center;
+}
+.chart-month-label.now  { color: var(--navy); font-weight: 700; }
+.chart-month-label.peak { color: var(--amber); font-weight: 700; }
+
+.chart-grid {
+  display: grid;
+  grid-template-columns: 70px repeat(12, 1fr);
+  gap: 2px;
+  align-items: end;
+}
+.chart-y-label {
+  font-size: 9px; color: var(--muted); font-family: var(--mono);
+  text-align: right; padding-right: 10px; padding-bottom: 2px;
+  align-self: end;
+}
+.chart-col {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 1px; cursor: pointer; position: relative;
+}
+.chart-col:hover .bar-segment { filter: brightness(1.12); }
+
+.bar-container {
+  width: 100%; display: flex; flex-direction: column;
+  justify-content: flex-end; position: relative;
+  border-radius: 2px 2px 0 0;
+}
+.bar-container.peak-col {
+  background: rgba(192,122,16,.06);
+  outline: 1px solid rgba(192,122,16,.20);
+}
+.bar-segment {
+  width: 100%; min-height: 1px;
+  transition: filter .1s;
+}
+.bar-segment:first-child { border-radius: 2px 2px 0 0; }
+
+.bar-num {
+  font-size: 8px; font-family: var(--mono); color: var(--muted);
+  text-align: center; margin-top: 3px; min-height: 10px;
+}
+
+/* target strip */
+.target-strip { display: flex; align-items: center; gap: 8px; padding: 8px 16px 14px; }
+.target-strip-label {
+  font-size: 9px; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--muted);
+  width: 70px; text-align: right; padding-right: 10px; flex-shrink: 0;
+}
+.target-bar { flex: 1; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; min-width: 60px; }
+.target-fill { height: 100%; border-radius: 3px; transition: width .4s; }
+.target-pct  { font-size: 9px; font-family: var(--mono); color: var(--muted); min-width: 32px; }
+.target-count { font-size: 9px; color: var(--muted); font-family: var(--mono); white-space: nowrap; }
+
+/* ── LEGEND ── */
+.enr-legend {
+  display: flex; flex-wrap: wrap; gap: 6px 18px;
+  padding: 10px 16px; border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--muted); }
+.legend-swatch { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+.legend-peak {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 10px; color: var(--amber);
+  border: 1px solid rgba(192,122,16,.25); border-radius: 3px;
+  padding: 1px 6px; background: var(--amber-lt); margin-left: auto;
+}
+
+/* ── TOOLTIP ── */
+.enr-tooltip {
+  position: fixed; z-index: 9999;
+  background: var(--navy); color: #fff;
+  border-radius: 6px; padding: 10px 14px;
+  font-size: 11px; font-family: var(--sans);
+  pointer-events: none; display: none;
+  min-width: 160px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.2);
+}
+.enr-tooltip.show { display: block; }
+.tip-head {
+  font-size: 10px; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: rgba(255,255,255,.5); margin-bottom: 7px;
+}
+.tip-row { display: flex; justify-content: space-between; gap: 14px; padding: 2px 0; }
+.tip-row span:first-child { color: rgba(255,255,255,.6); }
+.tip-row span:last-child  { font-family: var(--mono); font-weight: 500; }
+.tip-divider { border: none; border-top: 1px solid rgba(255,255,255,.1); margin: 5px 0; }
+.tip-total { display: flex; justify-content: space-between; gap: 14px; font-weight: 700; }
+.tip-total span:last-child { font-family: var(--mono); }
+
+/* empty state */
+.enr-empty {
+  text-align: center; padding: 60px 20px;
+  color: var(--muted); font-size: 13px;
+}
+</style>
+
+<div class="enr-wrap">
+
+  <!-- HEADER -->
+  <div class="enr-header">
+    <div>
+      <div class="enr-title">Enrollment Tracker</div>
+      <div class="enr-subtitle">Session-wise admission trends &middot; Class VII to XII</div>
+    </div>
+    <div class="enr-header-right">
+      <div class="view-tabs">
+        <button class="view-tab active" onclick="setView('all',this)">All</button>
+        <button class="view-tab" onclick="setView('junior',this)">VII–IX</button>
+        <button class="view-tab" onclick="setView('senior',this)">X–XII</button>
+      </div>
+      <a class="enr-back" href="{% url 'students_enrollment_list' %}">
+        ← Enrollment list
+      </a>
+    </div>
+  </div>
+
+  <!-- SUMMARY METRICS -->
+  <div class="enr-metrics" id="enr-metrics"></div>
+
+  <!-- TRACKER CARDS -->
+  <div class="tracker-card" id="tracker-card"></div>
+
+  <!-- LEGEND -->
+  <div class="enr-legend" id="enr-legend"></div>
+
+</div>
+
+<div class="enr-tooltip" id="enr-tooltip"></div>
+
+<script>
+/* ── Django data ── */
+const SESSIONS = {{ sessions_json|safe }};
+
+/* ── Config ── */
+// Month labels are now per-session (15 items: Jan 'YY … Mar 'YY+1)
+const CLASS_LABELS = ['VII','VIII','IX','X','XI','XII'];
+const CLASS_COLORS = ['#4e46c8','#0e8a6a','#1a5eb8','#c07a10','#b84472','#c0392b'];
+const BAR_MAX_PX  = 96;
+
+let currentView = 'all';
+
+function classIndices() {
+  if (currentView === 'junior') return [0,1,2];
+  if (currentView === 'senior') return [3,4,5];
+  return [0,1,2,3,4,5];
+}
+
+function monthTotal(sess, mi) {
+  return classIndices().reduce((s, ci) => s + (sess.data[ci][mi] || 0), 0);
+}
+
+function sessionTotal(sess) {
+  return sess.months.reduce((s, _, mi) => s + monthTotal(sess, mi), 0);
+}
+
+function globalMax() {
+  let mx = 0;
+  SESSIONS.forEach(sess => sess.months.forEach((_, mi) => { mx = Math.max(mx, monthTotal(sess, mi)); }));
+  return mx || 1;
+}
+
+// Compute peak month indices across all sessions
+function peakMonths() {
+  const numMonths = SESSIONS.length ? SESSIONS[SESSIONS.length - 1].months.length : 15;
+  const totals = Array(numMonths).fill(0);
+  SESSIONS.forEach(sess => sess.months.forEach((_, mi) => {
+    if (mi < totals.length) totals[mi] += monthTotal(sess, mi);
+  }));
+  const max = Math.max(...totals);
+  // mark months within 80% of the max as peak
+  return totals.map((v, i) => v >= max * 0.8 ? i : -1).filter(i => i !== -1);
+}
+
+/* ── Render ── */
+function render() {
+  if (!SESSIONS.length) {
+    document.getElementById('enr-metrics').innerHTML = '';
+    document.getElementById('tracker-card').innerHTML = '<div class="enr-empty">No session data available.</div>';
+    document.getElementById('enr-legend').innerHTML = '';
+    return;
+  }
+  renderMetrics();
+  renderTracker();
+  renderLegend();
+}
+
+function renderMetrics() {
+  const latest = SESSIONS[SESSIONS.length - 1];
+  const prev   = SESSIONS.length > 1 ? SESSIONS[SESSIONS.length - 2] : null;
+  const ci     = classIndices();
+
+  const latestTotal = sessionTotal(latest);
+  const prevTotal   = prev ? sessionTotal(prev) : null;
+  const growth      = prevTotal ? Math.round((latestTotal - prevTotal) / prevTotal * 100) : null;
+
+  let peakMi = 0, peakVal = 0;
+  latest.months.forEach((_, mi) => { const v = monthTotal(latest, mi); if (v > peakVal) { peakVal = v; peakMi = mi; } });
+
+  let topCls = 0, topClsVal = 0;
+  ci.forEach(clIdx => {
+    const v = latest.months.reduce((s, _, mi) => s + (latest.data[clIdx][mi] || 0), 0);
+    if (v > topClsVal) { topClsVal = v; topCls = clIdx; }
+  });
+
+  const tPct = latest.target > 0 ? Math.min(100, Math.round(latestTotal / latest.target * 100)) : null;
+
+  document.getElementById('enr-metrics').innerHTML = `
+    <div class="metric-card">
+      <div class="metric-label">Current Session</div>
+      <div class="metric-val">${latestTotal}</div>
+      ${tPct !== null ? `<div class="metric-sub">of ${latest.target} target (${tPct}%)</div>` : ''}
+      ${growth !== null
+        ? `<span class="metric-delta ${growth >= 0 ? 'delta-up' : 'delta-down'}">${growth >= 0 ? '+' : ''}${growth}% vs last</span>`
+        : ''}
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Peak Month</div>
+      <div class="metric-val" style="font-size:22px">${latest.months[peakMi]}</div>
+      <div class="metric-sub">${peakVal} admissions</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Top Class</div>
+      <div class="metric-val" style="font-size:22px">Class ${CLASS_LABELS[topCls]}</div>
+      <div class="metric-sub">${topClsVal} enrolled</div>
+    </div>
+    ${prev ? `
+    <div class="metric-card">
+      <div class="metric-label">Last Session</div>
+      <div class="metric-val">${prevTotal}</div>
+      <div class="metric-sub">${prev.label}</div>
+    </div>` : ''}
+  `;
+}
+
+function renderTracker() {
+  const mx    = globalMax();
+  const ci    = classIndices();
+  const peaks = peakMonths();
+  let   html  = '';
+
+  const sessions = [...SESSIONS].reverse();
+
+  sessions.forEach((sess, ri) => {
+    const si        = SESSIONS.length - 1 - ri;
+    const total     = sessionTotal(sess);
+    const prevSess  = si > 0 ? SESSIONS[si - 1] : null;
+    const prevTotal = prevSess ? sessionTotal(prevSess) : null;
+    const growth    = prevTotal !== null
+                      ? Math.round((total - prevTotal) / prevTotal * 100)
+                      : null;
+    const hasTarget = sess.target > 0;
+    const tPct      = hasTarget ? Math.min(100, Math.round(total / sess.target * 100)) : 0;
+    const tColor    = tPct >= 100 ? '#1a7a4a' : tPct >= 75 ? '#c07a10' : '#6b7280';
+
+    html += `<div class="session-row">
+      <div class="session-head">
+        <div class="session-name">Session &nbsp;<strong>${sess.label}</strong></div>
+        ${sess.is_current
+          ? `<span class="session-badge current">Current</span>`
+          : `<span class="session-badge">Completed</span>`}
+        <div class="session-totals">
+          <div>
+            <div class="session-total-val">${total}</div>
+            <div class="session-total-label">enrolled</div>
+          </div>
+          ${growth !== null
+            ? `<span class="session-growth ${growth >= 0 ? 'growth-pos' : 'growth-neg'}">${growth >= 0 ? '▲' : '▼'} ${Math.abs(growth)}%</span>`
+            : `<span class="session-growth growth-na">baseline</span>`}
+        </div>
+      </div>
+
+      <div class="chart-area">
+        <div class="chart-inner">
+          <div class="chart-months">
+            <div class="chart-month-gap"></div>
+            ${sess.months.map((m, mi) => `
+              <div class="chart-month-label ${mi === sess.now_idx ? 'now' : ''} ${peaks.includes(mi) ? 'peak' : ''}">
+                ${m}
+              </div>`).join('')}
+          </div>
+
+          <div class="chart-grid">
+            <div class="chart-y-label">${mx}</div>
+            ${sess.months.map((m, mi) => {
+              const colTotal = monthTotal(sess, mi);
+              const isPeak   = peaks.includes(mi);
+              let segs = '';
+              // Render from bottom (class XII) to top (class VII) so stacking looks right
+              [...ci].reverse().forEach(clIdx => {
+                const v    = sess.data[clIdx][mi] || 0;
+                const segH = Math.round(v / mx * BAR_MAX_PX);
+                if (segH > 0) {
+                  segs += `<div class="bar-segment" style="height:${segH}px;background:${CLASS_COLORS[clIdx]}"></div>`;
+                }
+              });
+              return `<div class="chart-col"
+                onmouseenter="showTip(event,${si},${mi})"
+                onmouseleave="hideTip()"
+                onmousemove="moveTip(event)">
+                <div class="bar-container ${isPeak ? 'peak-col' : ''}" style="height:${BAR_MAX_PX}px;">
+                  ${segs}
+                </div>
+                <div class="bar-num">${colTotal > 0 ? colTotal : ''}</div>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+      </div>
+
+      ${hasTarget ? `
+      <div class="target-strip">
+        <div class="target-strip-label">Target</div>
+        <div class="target-bar">
+          <div class="target-fill" style="width:${tPct}%;background:${tColor};"></div>
+        </div>
+        <span class="target-pct">${tPct}%</span>
+        <span class="target-count">${total} / ${sess.target}</span>
+      </div>` : ''}
+    </div>`;
+  });
+
+  document.getElementById('tracker-card').innerHTML = html || '<div class="enr-empty">No enrollment data found.</div>';
+}
+
+function renderLegend() {
+  const ci = classIndices();
+  let html = ci.map(clIdx => `
+    <span class="legend-item">
+      <span class="legend-swatch" style="background:${CLASS_COLORS[clIdx]}"></span>
+      Class ${CLASS_LABELS[clIdx]}
+    </span>`).join('');
+  html += `<span class="legend-peak">&#9670; Peak admission month</span>`;
+  document.getElementById('enr-legend').innerHTML = html;
+}
+
+/* ── Tooltip ── */
+const tooltip = document.getElementById('enr-tooltip');
+
+function showTip(e, si, mi) {
+  const sess = SESSIONS[si];
+  const ci   = classIndices();
+  const rows = ci.map(clIdx => {
+    const v = sess.data[clIdx][mi] || 0;
+    if (!v) return '';
+    return `<div class="tip-row">
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${CLASS_COLORS[clIdx]};margin-right:4px;vertical-align:middle;"></span>Class ${CLASS_LABELS[clIdx]}</span>
+      <span>${v}</span>
+    </div>`;
+  }).join('');
+  const total = monthTotal(sess, mi);
+  tooltip.innerHTML = `
+    <div class="tip-head">${sess.months[mi]} &middot; ${sess.label}</div>
+    ${rows || '<div style="color:rgba(255,255,255,.4);font-size:10px;">No admissions</div>'}
+    ${total ? `<hr class="tip-divider"><div class="tip-total"><span>Total</span><span>${total}</span></div>` : ''}
+  `;
+  tooltip.classList.add('show');
+  moveTip(e);
+}
+
+function moveTip(e) {
+  let x = e.clientX + 14, y = e.clientY - 12;
+  if (x + 190 > window.innerWidth) x = e.clientX - 200;
+  if (y + 160 > window.innerHeight) y = e.clientY - 160;
+  tooltip.style.left = x + 'px';
+  tooltip.style.top  = y + 'px';
+}
+
+function hideTip() { tooltip.classList.remove('show'); }
+
+/* ── Filter ── */
+function setView(v, btn) {
+  currentView = v;
+  document.querySelectorAll('.view-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+
+render();
+</script>
+
+{% endblock dashboard %}

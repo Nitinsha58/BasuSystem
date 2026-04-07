@@ -337,9 +337,10 @@ class StudentBatchLinkAdmin(admin.ModelAdmin):
 
 
 class AcademicSessionAdmin(admin.ModelAdmin):
-    list_display = ("name", "start_date", "end_date", "is_active")
+    list_display = ("name", "start_date", "end_date", "is_active", "target")
     list_filter = ("is_active",)
     ordering = ("-start_date",)
+    fields = ("name", "start_date", "end_date", "is_active", "target")
 
     actions = ["make_active"]
 
