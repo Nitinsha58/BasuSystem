@@ -4857,14 +4857,21 @@ def enrollment_tracker(request):
             StudentEnrollment.objects
             .filter(session=session, active=True)
             .select_related('class_name', 'student')
-            .only('class_name__name', 'student__doj', 'student__created_at')
+            .only('class_name__name', 'student__doj', 'created_at')
         )
         for e in enrollments:
             class_num = _extract_class_num(e.class_name.name)
             class_idx = _CLASS_NUM_TO_IDX.get(class_num)
             if class_idx is None:
                 continue
-            join_date = e.student.doj or e.student.created_at
+            # Current session: use student doj (freshly set at admission time).
+            # All other sessions: use the enrollment record's created_at so that
+            # returning students (whose doj pre-dates the session) are placed
+            # in the correct session month instead of being silently dropped.
+            if session.is_active:
+                join_date = e.student.doj
+            else:
+                join_date = e.created_at
             if join_date is None:
                 continue
             # join_date may be a datetime (created_at); normalise to date
