@@ -4868,8 +4868,17 @@ def enrollment_tracker(request):
             # All other sessions: use the enrollment record's created_at so that
             # returning students (whose doj pre-dates the session) are placed
             # in the correct session month instead of being silently dropped.
-            if session.is_active:
-                join_date = e.student.doj
+            # Use doj if it falls within this session's 15-month window so
+            # that the chart is stable regardless of which session is active.
+            # For returning students whose doj pre-dates the session, fall
+            # back to created_at so they are not silently dropped.
+            doj = e.student.doj
+            if doj is not None:
+                jd_check = doj.date() if hasattr(doj, 'date') else doj
+                if month_to_idx.get((jd_check.year, jd_check.month)) is not None:
+                    join_date = doj
+                else:
+                    join_date = e.created_at
             else:
                 join_date = e.created_at
             if join_date is None:
