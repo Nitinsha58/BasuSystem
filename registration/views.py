@@ -4893,3 +4893,158 @@ def enrollment_tracker(request):
     return render(request, 'registration/enrollment/enrollment_tracker.html', {
         'sessions_json': json.dumps(sessions_data),
     })
+
+
+# ── Course Roster ────────────────────────────────────────────────────────────
+
+@login_required(login_url='login')
+def enrollment_course_roster(request):
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+
+    selected_session_id = request.GET.get('session')
+    selected_session = None
+    if selected_session_id:
+        selected_session = AcademicSession.objects.filter(id=selected_session_id).first()
+    if not selected_session:
+        selected_session = active_session
+
+    course_offerings = []
+    selected_offering = None
+    class_students = []
+    count = 0
+
+    if selected_session:
+        course_offerings = (
+            CourseOffering.objects
+            .filter(session=selected_session, active=True)
+            .select_related('class_name')
+            .order_by('class_name__name', 'name')
+        )
+
+        offering_id = request.GET.get('course_offering')
+        if offering_id and str(offering_id).isdigit():
+            selected_offering = CourseOffering.objects.filter(
+                id=int(offering_id), session=selected_session
+            ).first()
+
+        if selected_offering:
+            enrollments = (
+                StudentEnrollment.objects
+                .filter(
+                    session=selected_session,
+                    course_offering=selected_offering,
+                    active=True,
+                )
+                .select_related('student__user', 'class_name')
+                .order_by('class_name__name', 'student__user__first_name', 'student__user__last_name')
+            )
+
+            grouped = defaultdict(list)
+            for e in enrollments:
+                grouped[e.class_name.name].append(e)
+                count += 1
+
+            from center.models import ClassName
+            class_order = ClassName.objects.order_by('-created_at').values_list('name', flat=True)
+            class_students = [
+                {'class': name, 'students': grouped.get(name, [])}
+                for name in class_order
+                if name in grouped
+            ]
+
+    offerings_json = json.dumps([
+        {
+            'id': co.id,
+            'class_id': co.class_name_id,
+            'class_name': co.class_name.name,
+            'name': co.name,
+        }
+        for co in course_offerings
+    ]) if selected_session else '[]'
+
+    return render(request, 'registration/enrollment/enrollment_course_roster.html', {
+        'sessions': sessions,
+        'selected_session': selected_session,
+        'course_offerings': course_offerings,
+        'selected_offering': selected_offering,
+        'class_students': class_students,
+        'count': count,
+        'offerings_json': offerings_json,
+    })
+
+
+# ── Batch Roster ─────────────────────────────────────────────────────────────
+
+@login_required(login_url='login')
+def enrollment_batch_roster(request):
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+
+    selected_session_id = request.GET.get('session')
+    selected_session = None
+    if selected_session_id:
+        selected_session = AcademicSession.objects.filter(id=selected_session_id).first()
+    if not selected_session:
+        selected_session = active_session
+
+    batches = []
+    selected_batch = None
+    enrollment_batches = []
+    count = 0
+
+    if selected_session:
+        batches = (
+            Batch.objects
+            .filter(session=selected_session)
+            .select_related('class_name', 'subject', 'section')
+            .order_by('class_name__name', 'subject__name', 'section__name')
+        )
+
+        batch_id = request.GET.get('batch')
+        if batch_id and str(batch_id).isdigit():
+            selected_batch = Batch.objects.filter(
+                id=int(batch_id), session=selected_session
+            ).select_related('class_name', 'subject', 'section').first()
+
+        if selected_batch:
+            enrollment_batches = (
+                EnrollmentBatch.objects
+                .filter(batch=selected_batch)
+                .select_related(
+                    'enrollment__student__user',
+                    'enrollment__class_name',
+                    'enrollment__session',
+                )
+                .filter(enrollment__session=selected_session)
+                .order_by(
+                    'enrollment__student__user__first_name',
+                    'enrollment__student__user__last_name',
+                )
+            )
+            count = enrollment_batches.count()
+
+    batches_json = json.dumps([
+        {
+            'id': b.id,
+            'class_id': b.class_name_id,
+            'class_name': b.class_name.name,
+            'subject_id': b.subject_id,
+            'subject_name': b.subject.name,
+            'section_id': b.section_id,
+            'section_name': b.section.name,
+            'start_time': b.start_time or '',
+            'end_time': b.end_time or '',
+        }
+        for b in batches
+    ]) if selected_session else '[]'
+
+    return render(request, 'registration/enrollment/enrollment_batch_roster.html', {
+        'sessions': sessions,
+        'selected_session': selected_session,
+        'batches': batches,
+        'selected_batch': selected_batch,
+        'enrollment_batches': enrollment_batches,
+        'count': count,
+        'batches_json': batches_json,
+    })

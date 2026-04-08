@@ -206,6 +206,12 @@
         Analytics
     </a>
 
+    <!-- Course / Batch roster views -->
+    <a href="{% url 'enrollment_course_roster' %}?session={{ selected_session.id }}"
+       class="enroll-toggle-btn" style="text-decoration:none;">By Course</a>
+    <a href="{% url 'enrollment_batch_roster' %}?session={{ selected_session.id }}"
+       class="enroll-toggle-btn" style="text-decoration:none;">By Batch</a>
+
     <!-- Toggle date -->
     <button class="enroll-toggle-btn" id="toggle-date">Toggle date</button>
 

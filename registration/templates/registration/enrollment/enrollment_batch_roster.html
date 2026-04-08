@@ -1,0 +1,396 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block dashboard %}
+
+<style>
+:root {
+    --enroll-brand:      #392994;
+    --enroll-surface:    #ffffff;
+    --enroll-surface-2:  #eef0f5;
+    --enroll-border:     #d4d8e4;
+    --enroll-border-mid: #bcc2d0;
+    --enroll-text-1:     #0a0f1e;
+    --enroll-text-2:     #2d3748;
+    --enroll-text-3:     #64748b;
+    --enroll-radius-sm:  6px;
+    --enroll-radius-md:  10px;
+    --font: 'DM Sans', system-ui, sans-serif;
+}
+
+/* ── Top bar ── */
+.enroll-topbar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    background: var(--enroll-surface);
+    border-bottom: 1px solid var(--enroll-border);
+    flex-wrap: wrap;
+    position: sticky; top: 0; z-index: 100;
+    font-family: var(--font);
+}
+.enroll-select {
+    padding: 5px 10px;
+    border: 1px solid var(--enroll-border-mid);
+    border-radius: var(--enroll-radius-sm);
+    font-size: 13px; background: #f1f3f7;
+    color: var(--enroll-text-1); cursor: pointer;
+    font-family: var(--font);
+}
+.enroll-select:focus { outline: none; border-color: var(--enroll-brand); }
+.enroll-count-badge {
+    font-size: 12px; font-weight: 600;
+    color: var(--enroll-brand);
+    background: rgba(57,41,148,0.08);
+    border-radius: 99px; padding: 3px 10px; white-space: nowrap;
+}
+.enroll-toggle-btn {
+    padding: 5px 12px; font-size: 12px; font-weight: 500;
+    border: 1px solid var(--enroll-border-mid);
+    border-radius: var(--enroll-radius-sm);
+    background: #fff; color: var(--enroll-text-2);
+    font-family: var(--font); text-decoration: none;
+    transition: background .12s, border-color .12s;
+    display: inline-flex; align-items: center; gap: 4px;
+}
+.enroll-toggle-btn:hover {
+    background: #f1f3f7; border-color: var(--enroll-brand); color: var(--enroll-brand);
+}
+.enroll-toggle-btn.active {
+    background: var(--enroll-brand); color: #fff; border-color: var(--enroll-brand);
+}
+.enroll-divider { width: 1px; height: 24px; background: var(--enroll-border); flex-shrink: 0; }
+
+/* ── Filter strip ── */
+.filter-strip {
+    background: var(--enroll-surface);
+    border-bottom: 1px solid var(--enroll-border);
+    padding: 0 14px;
+    font-family: var(--font);
+}
+.filter-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 0; flex-wrap: wrap;
+    border-bottom: 1px solid var(--enroll-border);
+}
+.filter-row:last-child { border-bottom: none; }
+.filter-row-label {
+    font-size: 10px; font-weight: 700; letter-spacing: .07em;
+    text-transform: uppercase; color: var(--enroll-text-3);
+    min-width: 52px; flex-shrink: 0;
+}
+
+/* ── Pill buttons ── */
+.filter-pill {
+    padding: 4px 13px; font-size: 12px; font-weight: 500;
+    border: 1px solid var(--enroll-border-mid);
+    border-radius: 99px;
+    background: #fff; color: var(--enroll-text-2);
+    cursor: pointer; font-family: var(--font);
+    transition: all .12s; white-space: nowrap; user-select: none;
+}
+.filter-pill:hover { border-color: var(--enroll-brand); color: var(--enroll-brand); background: #f4f3ff; }
+.filter-pill.selected {
+    background: var(--enroll-brand); color: #fff;
+    border-color: var(--enroll-brand); font-weight: 600;
+}
+
+/* ── Batch cards (level 3) ── */
+.batch-cards { display: flex; flex-wrap: wrap; gap: 8px; }
+.batch-card {
+    padding: 5px 14px; font-size: 12px; font-weight: 500;
+    border: 1px solid var(--enroll-border-mid);
+    border-radius: var(--enroll-radius-sm);
+    background: #fff; color: var(--enroll-text-1);
+    cursor: pointer; font-family: var(--font);
+    transition: all .12s; text-decoration: none;
+    display: inline-flex; flex-direction: column;
+    align-items: flex-start; gap: 1px;
+    white-space: nowrap;
+}
+.batch-card:hover { border-color: var(--enroll-brand); background: #f4f3ff; color: var(--enroll-brand); }
+.batch-card.selected {
+    background: var(--enroll-brand); color: #fff;
+    border-color: var(--enroll-brand);
+}
+.batch-card .bc-section { font-size: 13px; font-weight: 600; }
+.batch-card .bc-time {
+    font-size: 10px; opacity: .7;
+}
+.batch-card.selected .bc-time { opacity: .85; }
+
+/* ── Batch header info ── */
+.batch-header-bar {
+    background: var(--enroll-surface);
+    border-bottom: 1px solid var(--enroll-border);
+    padding: 10px 16px; font-family: var(--font);
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.batch-header-title { font-size: 14px; font-weight: 700; color: var(--enroll-text-1); }
+.batch-header-meta { font-size: 12px; color: var(--enroll-text-3); display: flex; gap: 10px; flex-wrap: wrap; }
+.batch-meta-chip {
+    background: var(--enroll-surface-2);
+    border: 1px solid var(--enroll-border);
+    border-radius: 99px; padding: 2px 10px;
+    font-size: 11px; color: var(--enroll-text-2); font-weight: 500;
+}
+
+/* ── Student table ── */
+.enroll-table-wrap { padding: 16px; font-family: var(--font); }
+.enroll-table {
+    width: 100%; border-collapse: collapse;
+    background: var(--enroll-surface);
+    border-radius: var(--enroll-radius-md); overflow: hidden;
+    box-shadow: 0 1px 4px rgba(15,23,42,.06); font-size: 13px;
+}
+.enroll-table thead tr { background: #392994; color: #fff; }
+.enroll-table thead th {
+    padding: 10px 14px; font-weight: 600;
+    font-size: 11px; letter-spacing: .04em; text-align: left; white-space: nowrap;
+}
+.enroll-table tbody tr {
+    border-bottom: 1px solid var(--enroll-border); transition: background .1s;
+}
+.enroll-table tbody tr:last-child { border-bottom: none; }
+.enroll-table tbody tr:hover { background: #f6f7fb; }
+.enroll-table tbody td { padding: 9px 14px; color: var(--enroll-text-2); vertical-align: middle; }
+.enroll-table .td-num { width: 42px; color: var(--enroll-text-3); font-size: 12px; text-align: center; }
+.enroll-table .td-name a { font-weight: 600; color: var(--enroll-text-1); text-decoration: none; }
+.enroll-table .td-name a:hover { color: var(--enroll-brand); }
+.enroll-table .td-muted { color: var(--enroll-text-3); font-size: 12px; }
+.inactive-row { opacity: .55; }
+
+/* ── Empty state ── */
+.enroll-empty {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; padding: 80px 20px;
+    color: var(--enroll-text-3); font-family: var(--font); gap: 8px;
+}
+.enroll-empty-icon { font-size: 36px; opacity: .4; }
+.enroll-empty-text { font-size: 14px; }
+</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Top bar -->
+<div class="enroll-topbar">
+    <form method="get" style="margin:0;">
+        <input type="hidden" name="batch" value="{{ request.GET.batch|default:'' }}">
+        <select name="session" class="enroll-select" onchange="this.form.submit()">
+            {% for s in sessions %}
+            <option value="{{ s.id }}" {% if s.id == selected_session.id %}selected{% endif %}>
+                {{ s.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </form>
+
+    {% if selected_batch %}
+    <span class="enroll-count-badge">{{ count }} student{{ count|pluralize }}</span>
+    {% endif %}
+
+    <div class="enroll-divider"></div>
+
+    <a href="{% url 'students_enrollment_list' %}?session={{ selected_session.id }}"
+       class="enroll-toggle-btn">&#8592; All</a>
+    <a href="{% url 'enrollment_course_roster' %}?session={{ selected_session.id }}"
+       class="enroll-toggle-btn">By Course</a>
+    <a href="{% url 'enrollment_batch_roster' %}?session={{ selected_session.id }}"
+       class="enroll-toggle-btn active">By Batch</a>
+</div>
+
+<!-- 3-level filter strip -->
+<div class="filter-strip">
+    <div class="filter-row">
+        <span class="filter-row-label">Class</span>
+        <div id="class-pills"></div>
+    </div>
+    <div class="filter-row" id="subject-row" style="display:none;">
+        <span class="filter-row-label">Subject</span>
+        <div id="subject-pills"></div>
+    </div>
+    <div class="filter-row" id="batch-row" style="display:none;">
+        <span class="filter-row-label">Batch</span>
+        <div class="batch-cards" id="batch-cards"></div>
+    </div>
+</div>
+
+<!-- Batch detail header -->
+{% if selected_batch %}
+<div class="batch-header-bar">
+    <div class="batch-header-title">
+        {{ selected_batch.class_name.name }} &mdash; {{ selected_batch.subject.name }}
+        &mdash; {{ selected_batch.section.name }}
+    </div>
+    <div class="batch-header-meta">
+        {% if selected_batch.start_time and selected_batch.end_time %}
+        <span class="batch-meta-chip">&#128336; {{ selected_batch.start_time }} &ndash; {{ selected_batch.end_time }}</span>
+        {% endif %}
+        {% if selected_batch.start_date %}
+        <span class="batch-meta-chip">&#128197; From {{ selected_batch.start_date|date:"d M Y" }}</span>
+        {% endif %}
+        <span class="batch-meta-chip">{{ selected_session.name }}</span>
+    </div>
+</div>
+{% endif %}
+
+<!-- Student list -->
+{% if not selected_batch %}
+<div class="enroll-empty">
+    <div class="enroll-empty-icon">&#128101;</div>
+    <div class="enroll-empty-text">Select a class, subject and batch above to view enrolled students.</div>
+</div>
+
+{% elif not enrollment_batches %}
+<div class="enroll-empty">
+    <div class="enroll-empty-icon">&#128269;</div>
+    <div class="enroll-empty-text">No students found in this batch for {{ selected_session.name }}.</div>
+</div>
+
+{% else %}
+<div class="enroll-table-wrap">
+    <table class="enroll-table">
+        <thead>
+            <tr>
+                <th class="td-num">#</th>
+                <th>Student</th>
+                <th>Phone</th>
+                <th>Class</th>
+                <th>Course Offering</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for eb in enrollment_batches %}
+            {% with enroll=eb.enrollment stu=eb.enrollment.student %}
+            <tr class="{% if not stu.active %}inactive-row{% endif %}">
+                <td class="td-num">{{ forloop.counter }}</td>
+                <td class="td-name">
+                    <a href="{% url 'student_enrollment_details_update' stu.stu_id %}" target="_blank">
+                        {{ stu.user.first_name }} {{ stu.user.last_name }}
+                    </a>
+                    {% if not stu.active %}
+                    <span style="font-size:10px;color:#9ca3af;margin-left:4px;">(inactive)</span>
+                    {% endif %}
+                </td>
+                <td class="td-muted">{{ stu.user.phone }}</td>
+                <td class="td-muted">{{ enroll.class_name.name }}</td>
+                <td class="td-muted">
+                    {% if enroll.course_offering %}{{ enroll.course_offering.name }}
+                    {% elif enroll.course %}{{ enroll.course }}
+                    {% else %}<span style="opacity:.4;">&mdash;</span>{% endif %}
+                </td>
+            </tr>
+            {% endwith %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<script>
+const BATCHES    = {{ batches_json|safe }};
+const SESSION_ID = '{{ selected_session.id }}';
+const SELECTED_BATCH_ID = '{{ selected_batch.id|default:"" }}';
+
+// Unique ordered lists
+function unique(arr, keyFn) {
+    const seen = new Set();
+    return arr.filter(item => { const k = keyFn(item); return seen.has(k) ? false : (seen.add(k), true); });
+}
+
+const classes  = unique(BATCHES, b => b.class_id).map(b => ({ id: b.class_id,   name: b.class_name }));
+
+let activeClassId   = null;
+let activeSubjectId = null;
+
+// Pre-select from current batch
+if (SELECTED_BATCH_ID) {
+    const cur = BATCHES.find(b => String(b.id) === String(SELECTED_BATCH_ID));
+    if (cur) { activeClassId = cur.class_id; activeSubjectId = cur.subject_id; }
+}
+
+function buildClassPills() {
+    const wrap = document.getElementById('class-pills');
+    wrap.innerHTML = '';
+    classes.forEach(cls => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'filter-pill' + (cls.id === activeClassId ? ' selected' : '');
+        btn.textContent = cls.name;
+        btn.addEventListener('click', () => {
+            activeClassId   = cls.id;
+            activeSubjectId = null;
+            buildClassPills();
+            buildSubjectPills();
+            buildBatchCards();
+        });
+        wrap.appendChild(btn);
+    });
+}
+
+function buildSubjectPills() {
+    const row  = document.getElementById('subject-row');
+    const wrap = document.getElementById('subject-pills');
+    wrap.innerHTML = '';
+    if (!activeClassId) { row.style.display = 'none'; return; }
+
+    const subjects = unique(
+        BATCHES.filter(b => b.class_id === activeClassId),
+        b => b.subject_id
+    ).map(b => ({ id: b.subject_id, name: b.subject_name }));
+
+    if (!subjects.length) { row.style.display = 'none'; return; }
+    row.style.display = '';
+
+    subjects.forEach(sub => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'filter-pill' + (sub.id === activeSubjectId ? ' selected' : '');
+        btn.textContent = sub.name;
+        btn.addEventListener('click', () => {
+            activeSubjectId = sub.id;
+            buildSubjectPills();
+            buildBatchCards();
+        });
+        wrap.appendChild(btn);
+    });
+}
+
+function buildBatchCards() {
+    const row  = document.getElementById('batch-row');
+    const wrap = document.getElementById('batch-cards');
+    wrap.innerHTML = '';
+    if (!activeClassId || !activeSubjectId) { row.style.display = 'none'; return; }
+
+    const filtered = BATCHES.filter(
+        b => b.class_id === activeClassId && b.subject_id === activeSubjectId
+    );
+    if (!filtered.length) { row.style.display = 'none'; return; }
+    row.style.display = '';
+
+    filtered.forEach(b => {
+        const a = document.createElement('a');
+        a.className = 'batch-card' + (String(b.id) === String(SELECTED_BATCH_ID) ? ' selected' : '');
+        a.href = '?session=' + SESSION_ID + '&batch=' + b.id;
+
+        const sectionEl = document.createElement('span');
+        sectionEl.className = 'bc-section';
+        sectionEl.textContent = b.section_name;
+        a.appendChild(sectionEl);
+
+        if (b.start_time || b.end_time) {
+            const timeEl = document.createElement('span');
+            timeEl.className = 'bc-time';
+            timeEl.textContent = [b.start_time, b.end_time].filter(Boolean).join(' – ');
+            a.appendChild(timeEl);
+        }
+        wrap.appendChild(a);
+    });
+}
+
+buildClassPills();
+buildSubjectPills();
+buildBatchCards();
+</script>
+
+{% endblock dashboard %}

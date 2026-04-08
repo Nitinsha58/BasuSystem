@@ -1,0 +1,299 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block dashboard %}
+
+<style>
+    :root {
+        --enroll-brand:      #392994;
+        --enroll-surface:    #ffffff;
+        --enroll-surface-2:  #eef0f5;
+        --enroll-border:     #d4d8e4;
+        --enroll-border-mid: #bcc2d0;
+        --enroll-text-1:     #0a0f1e;
+        --enroll-text-2:     #2d3748;
+        --enroll-text-3:     #64748b;
+        --enroll-radius-sm:  6px;
+        --enroll-radius-md:  10px;
+        --font: 'DM Sans', system-ui, sans-serif;
+    }
+
+    /* ── Top bar ── */
+    .enroll-topbar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        background: var(--enroll-surface);
+        border-bottom: 1px solid var(--enroll-border);
+        flex-wrap: wrap;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        font-family: var(--font);
+    }
+    .enroll-select {
+        padding: 5px 10px;
+        border: 1px solid var(--enroll-border-mid);
+        border-radius: var(--enroll-radius-sm);
+        font-size: 13px;
+        background: #f1f3f7;
+        color: var(--enroll-text-1);
+        cursor: pointer;
+        font-family: var(--font);
+    }
+    .enroll-select:focus { outline: none; border-color: var(--enroll-brand); }
+    .enroll-count-badge {
+        font-size: 12px; font-weight: 600;
+        color: var(--enroll-brand);
+        background: rgba(57,41,148,0.08);
+        border-radius: 99px; padding: 3px 10px; white-space: nowrap;
+    }
+    .enroll-toggle-btn {
+        padding: 5px 12px; font-size: 12px; font-weight: 500;
+        border: 1px solid var(--enroll-border-mid);
+        border-radius: var(--enroll-radius-sm);
+        background: #fff; color: var(--enroll-text-2);
+        font-family: var(--font); text-decoration: none;
+        transition: background .12s, border-color .12s;
+        display: inline-flex; align-items: center; gap: 4px;
+    }
+    .enroll-toggle-btn:hover {
+        background: #f1f3f7; border-color: var(--enroll-brand); color: var(--enroll-brand);
+    }
+    .enroll-toggle-btn.active {
+        background: var(--enroll-brand); color: #fff; border-color: var(--enroll-brand);
+    }
+    .enroll-divider { width: 1px; height: 24px; background: var(--enroll-border); flex-shrink: 0; }
+
+    /* ── Filter strip ── */
+    .filter-strip {
+        background: var(--enroll-surface);
+        border-bottom: 1px solid var(--enroll-border);
+        padding: 0 14px;
+        font-family: var(--font);
+    }
+    .filter-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 0;
+        flex-wrap: wrap;
+        border-bottom: 1px solid var(--enroll-border);
+    }
+    .filter-row:last-child { border-bottom: none; }
+    .filter-row-label {
+        font-size: 10px; font-weight: 700; letter-spacing: .07em;
+        text-transform: uppercase; color: var(--enroll-text-3);
+        min-width: 52px; flex-shrink: 0;
+    }
+
+    /* ── Pill buttons ── */
+    .filter-pill {
+        padding: 4px 13px; font-size: 12px; font-weight: 500;
+        border: 1px solid var(--enroll-border-mid);
+        border-radius: 99px;
+        background: #fff; color: var(--enroll-text-2);
+        cursor: pointer; font-family: var(--font);
+        transition: all .12s; white-space: nowrap;
+        user-select: none;
+    }
+    .filter-pill:hover { border-color: var(--enroll-brand); color: var(--enroll-brand); background: #f4f3ff; }
+    .filter-pill.selected {
+        background: var(--enroll-brand); color: #fff;
+        border-color: var(--enroll-brand); font-weight: 600;
+    }
+
+    /* ── Offering cards ── */
+    .offering-cards { display: flex; flex-wrap: wrap; gap: 8px; }
+    .offering-card {
+        padding: 5px 14px; font-size: 12px; font-weight: 500;
+        border: 1px solid var(--enroll-border-mid);
+        border-radius: var(--enroll-radius-sm);
+        background: #fff; color: var(--enroll-text-1);
+        cursor: pointer; font-family: var(--font);
+        transition: all .12s; text-decoration: none;
+        display: inline-flex; align-items: center; gap: 6px;
+        white-space: nowrap;
+    }
+    .offering-card:hover { border-color: var(--enroll-brand); color: var(--enroll-brand); background: #f4f3ff; }
+    .offering-card.selected {
+        background: var(--enroll-brand); color: #fff;
+        border-color: var(--enroll-brand);
+    }
+    .offering-card .oc-count {
+        font-size: 10px; font-weight: 700;
+        background: rgba(255,255,255,.25);
+        border-radius: 99px; padding: 1px 6px;
+    }
+    .offering-card:not(.selected) .oc-count {
+        background: rgba(57,41,148,.10);
+        color: var(--enroll-brand);
+    }
+
+    /* ── Grid & empty ── */
+    .enroll-grid {
+        background: var(--enroll-surface-2);
+        padding: 16px;
+        min-height: calc(100vh - 56px);
+    }
+    .enroll-empty {
+        display: flex; flex-direction: column; align-items: center;
+        justify-content: center; padding: 80px 20px;
+        color: var(--enroll-text-3); font-family: var(--font); gap: 8px;
+    }
+    .enroll-empty-icon { font-size: 36px; opacity: .4; }
+    .enroll-empty-text { font-size: 14px; }
+</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Top bar -->
+<div class="enroll-topbar">
+    <form method="get" style="margin:0;">
+        <input type="hidden" name="course_offering" value="{{ request.GET.course_offering|default:'' }}">
+        <select name="session" class="enroll-select" onchange="this.form.submit()">
+            {% for s in sessions %}
+            <option value="{{ s.id }}" {% if s.id == selected_session.id %}selected{% endif %}>
+                {{ s.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </form>
+
+    {% if selected_offering %}
+    <span class="enroll-count-badge">{{ count }} student{{ count|pluralize }}</span>
+    {% endif %}
+
+    <div class="enroll-divider"></div>
+
+    <a href="{% url 'students_enrollment_list' %}?session={{ selected_session.id }}"
+       class="enroll-toggle-btn">&#8592; All</a>
+    <a href="{% url 'enrollment_course_roster' %}?session={{ selected_session.id }}"
+       class="enroll-toggle-btn active">By Course</a>
+    <a href="{% url 'enrollment_batch_roster' %}?session={{ selected_session.id }}"
+       class="enroll-toggle-btn">By Batch</a>
+</div>
+
+<!-- Filter strip -->
+<div class="filter-strip">
+    <div class="filter-row">
+        <span class="filter-row-label">Class</span>
+        <div id="class-pills"></div>
+    </div>
+    <div class="filter-row" id="offering-row" style="display:none;">
+        <span class="filter-row-label">Course</span>
+        <div class="offering-cards" id="offering-cards"></div>
+    </div>
+</div>
+
+<!-- Main content -->
+<div class="enroll-grid" id="main-content">
+    {% if not selected_offering %}
+    <div class="enroll-empty" id="prompt-empty">
+        <div class="enroll-empty-icon">&#128218;</div>
+        <div class="enroll-empty-text">Select a class and course above to view enrolled students.</div>
+    </div>
+    {% elif not class_students %}
+    <div class="enroll-empty">
+        <div class="enroll-empty-icon">&#128269;</div>
+        <div class="enroll-empty-text">No active students found for
+            <strong>{{ selected_offering.name }}</strong> in {{ selected_session.name }}.</div>
+    </div>
+    {% else %}
+    <div class="row" data-masonry='{"percentPosition": true}' id="enroll-masonry">
+        {% for cls in class_students %}
+        <div class="col-sm-6 col-md-4 col-lg-3 mb-4">
+            <div class="card border-0 shadow-sm">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item fw-semibold"
+                        style="background:#392994;color:#fff;border-radius:8px 8px 0 0;">
+                        {{ cls.class }}
+                        <span style="font-weight:400;opacity:.75;font-size:13px;">({{ cls.students|length }})</span>
+                    </li>
+                    {% for enroll in cls.students %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center py-1
+                               {% if not enroll.student.active %}bg-secondary text-white{% endif %}">
+                        <a class="text-decoration-none text-dark flex-grow-1"
+                           target="_blank"
+                           href="{% url 'student_enrollment_details_update' enroll.student.stu_id %}">
+                            {{ forloop.counter }}. {{ enroll.student.user.first_name }} {{ enroll.student.user.last_name }}
+                        </a>
+                        <small class="text-muted ms-2" style="font-size:11px;white-space:nowrap;">
+                            {{ enroll.student.user.phone }}
+                        </small>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/masonry-layout@4.2.2/dist/masonry.pkgd.min.js"
+        integrity="sha384-GNFwBvfVxBkLMJpYMOABq3c+d3KnQxudP/mGPkzpZSTYykLBNsZEnG2D9G/X/+7D"
+        crossorigin="anonymous" async></script>
+
+<script>
+const OFFERINGS  = {{ offerings_json|safe }};
+const SESSION_ID = '{{ selected_session.id }}';
+const SELECTED_OFFERING_ID = '{{ selected_offering.id|default:"" }}';
+
+// Build unique class list preserving server order
+const classMap = new Map(); // class_id -> class_name
+OFFERINGS.forEach(o => { if (!classMap.has(o.class_id)) classMap.set(o.class_id, o.class_name); });
+const classes = [...classMap.entries()].map(([id, name]) => ({ id, name }));
+
+let activeClassId = null;
+
+// Pre-select class from current offering
+if (SELECTED_OFFERING_ID) {
+    const cur = OFFERINGS.find(o => String(o.id) === String(SELECTED_OFFERING_ID));
+    if (cur) activeClassId = cur.class_id;
+}
+
+function buildClassPills() {
+    const wrap = document.getElementById('class-pills');
+    wrap.innerHTML = '';
+    classes.forEach(cls => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'filter-pill' + (cls.id === activeClassId ? ' selected' : '');
+        btn.textContent = cls.name;
+        btn.addEventListener('click', () => {
+            activeClassId = cls.id;
+            buildClassPills();
+            buildOfferingCards();
+        });
+        wrap.appendChild(btn);
+    });
+}
+
+function buildOfferingCards() {
+    const row   = document.getElementById('offering-row');
+    const wrap  = document.getElementById('offering-cards');
+    wrap.innerHTML = '';
+
+    if (!activeClassId) { row.style.display = 'none'; return; }
+
+    const filtered = OFFERINGS.filter(o => o.class_id === activeClassId);
+    if (!filtered.length) { row.style.display = 'none'; return; }
+
+    row.style.display = '';
+    filtered.forEach(o => {
+        const a = document.createElement('a');
+        a.className = 'offering-card' + (String(o.id) === String(SELECTED_OFFERING_ID) ? ' selected' : '');
+        a.href = '?session=' + SESSION_ID + '&course_offering=' + o.id;
+        a.textContent = o.name;
+        wrap.appendChild(a);
+    });
+}
+
+buildClassPills();
+buildOfferingCards();
+</script>
+
+{% endblock dashboard %}
