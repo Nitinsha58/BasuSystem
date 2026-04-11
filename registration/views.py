@@ -1410,9 +1410,17 @@ def students_enrollment_list(request):
         if e.active and e.student.active
     )
 
+    unenrolled_students = (
+        Student.objects.filter(active=True, enrollments__isnull=True)
+        .select_related('user')
+        .order_by('-created_at')
+    )
+
     return render(request, "registration/enrollment/students_enrollment_list.html", {
         'class_students': class_students,
         'count': count,
+        'unenrolled_students': unenrolled_students,
+        'unenrolled_count': unenrolled_students.count(),
         'academic_sessions': sessions,
         'selected_session': selected_session,
     })

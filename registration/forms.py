@@ -112,60 +112,40 @@ class StudentUpdateForm(forms.ModelForm):
     class Meta:
         model = Student
         fields = [
-            "dob", 
+            "dob",
             "doj",
             "email",
-            "school_name", 
-            "address", 
-            "aadhar_card_number", 
+            "school_name",
+            "address",
+            "aadhar_card_number",
             "gender",
             "active",
         ]
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-            if self.instance and getattr(self.instance, "user", None):
-                self.fields["first_name"].initial = self.instance.user.first_name
-                self.fields["last_name"].initial = self.instance.user.last_name
-                self.fields["phone"].initial = self.instance.user.phone
 
-        def clean_phone(self):
-            phone = (self.cleaned_data.get("phone") or "").strip()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and getattr(self.instance, "user", None):
+            self.fields["first_name"].initial = self.instance.user.first_name
+            self.fields["last_name"].initial = self.instance.user.last_name
+            self.fields["phone"].initial = self.instance.user.phone
 
-            if phone and not phone.isdigit():
-                self.add_error("phone", "Phone number must contain only digits.")
-            if phone and len(phone) < 10:
-                self.add_error("phone", "Phone number must be at least 10 digits long.")
+    def clean_phone(self):
+        phone = (self.cleaned_data.get("phone") or "").strip()
 
-            if phone:
-                qs = BaseUser.objects.all()
-                if self.instance and getattr(self.instance, "user_id", None):
-                    qs = qs.exclude(pk=self.instance.user_id)
+        if phone and not phone.isdigit():
+            self.add_error("phone", "Phone number must contain only digits.")
+        if phone and len(phone) < 10:
+            self.add_error("phone", "Phone number must be at least 10 digits long.")
 
-                if qs.filter(phone=phone).exists():
-                    self.add_error("phone", "Already taken")
+        if phone:
+            qs = BaseUser.objects.all()
+            if self.instance and getattr(self.instance, "user_id", None):
+                qs = qs.exclude(pk=self.instance.user_id)
 
-            return phone
+            if qs.filter(phone=phone).exists():
+                self.add_error("phone", "Already taken")
 
-
-class BatchForm(forms.ModelForm):
-    days = forms.ModelMultipleChoiceField(
-        queryset=Day.objects.all().order_by('name'),
-        required=False,
-        widget=forms.CheckboxSelectMultiple,
-    )
-
-    class Meta:
-        model = Batch
-        fields = [
-            'class_name',
-            'section',
-            'subject',
-            'days',
-            'start_time',
-            'end_time',
-            'start_date',
-            'end_date',
-        ]
+        return phone
 
     def clean_email(self):
         email = self.cleaned_data.get("email")
@@ -190,7 +170,7 @@ class BatchForm(forms.ModelForm):
             user = getattr(student, "user", None)
             if user:
                 user.first_name = self.cleaned_data["first_name"]
-                user.last_name = self.cleaned_data["last_name"]
+                user.last_name = self.cleaned_data.get("last_name") or ""
                 user.phone = self.cleaned_data["phone"]
 
                 if commit:
@@ -200,6 +180,27 @@ class BatchForm(forms.ModelForm):
                 student.save()
 
         return student
+
+
+class BatchForm(forms.ModelForm):
+    days = forms.ModelMultipleChoiceField(
+        queryset=Day.objects.all().order_by('name'),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+    )
+
+    class Meta:
+        model = Batch
+        fields = [
+            'class_name',
+            'section',
+            'subject',
+            'days',
+            'start_time',
+            'end_time',
+            'start_date',
+            'end_date',
+        ]
 
 class ParentDetailsForm(forms.ModelForm):
     father_name = forms.CharField(max_length=255, required=False)
