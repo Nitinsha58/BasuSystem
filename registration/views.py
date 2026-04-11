@@ -1639,6 +1639,34 @@ def student_enrollment_fees_details(request, stu_id):
             except Exception:
                 fee_recommendation["reason"] = "Could not calculate recommendation for the selected subjects."
 
+        # Per-subject fee breakup for the accounting panel
+        if course_offering:
+            annual_fee = Decimal(str(course_offering.annual_fee or 0))
+            per_subject_rows = (
+                CourseOfferingSubject.objects
+                .filter(course_offering=course_offering, subject__in=selected_subjects_qs)
+                .select_related("subject")
+                .order_by("subject__name")
+            )
+            fee_recommendation["per_subject_breakdown"] = [
+                {
+                    "name": row.subject.name,
+                    "percentage": row.percentage,
+                    "fee_amount": (annual_fee * (Decimal(str(row.percentage)) / Decimal("100"))).quantize(
+                        Decimal("0.01"), rounding=ROUND_HALF_UP
+                    ),
+                }
+                for row in per_subject_rows
+            ]
+
+    # Transport details for accounting panel
+    enrollment_transport = (
+        TransportDetails.objects
+        .filter(enrollment=enrollment)
+        .select_related("transport_mode", "transport_person")
+        .first()
+    )
+
     return render(request, "registration/enrollment/student_enrollment_fees_details.html", {
         'student': student,
         'enrollment': enrollment,
@@ -1651,6 +1679,7 @@ def student_enrollment_fees_details(request, stu_id):
         'selected_session': selected_session,
         'other_enrollment_fee_summaries': other_enrollment_fee_summaries,
         'fee_recommendation': fee_recommendation,
+        'enrollment_transport': enrollment_transport,
     })
 
 

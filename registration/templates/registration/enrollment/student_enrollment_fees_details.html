@@ -527,6 +527,195 @@
           <button class="btn btn-warning" type="submit">Save Fee Details</button>
         </div>
       </form>
+
+      <!-- ── Fee Breakup for Accounting ── -->
+      <details class="mt-3 bg-white border rounded" id="fee-breakup-panel">
+        <summary class="p-3 d-flex justify-content-between align-items-center"
+                 style="cursor:pointer; list-style:none; user-select:none;">
+          <span class="fw-semibold text-dark">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                 class="bi bi-receipt me-2 text-secondary" viewBox="0 0 16 16">
+              <path d="M1.92.506a.5.5 0 0 1 .434.14L3 1.189l.646-.543a.5.5 0 0 1 .643 0L5 1.189l.646-.543a.5.5 0 0 1 .643 0L7 1.189l.646-.543a.5.5 0 0 1 .643 0L9 1.189l.646-.543A.5.5 0 0 1 10 1v13a.5.5 0 0 1-.354.146l-.646-.542-.646.542a.5.5 0 0 1-.643 0L7 13.604l-.646.542a.5.5 0 0 1-.643 0L5 13.604l-.646.542a.5.5 0 0 1-.643 0L3 13.604l-.646.542A.5.5 0 0 1 2 14V1a.5.5 0 0 1-.08-.494M3 3v1h6V3zm0 2v1h6V5zm0 2v1h6V7zm0 2v1h6V9z"/>
+            </svg>
+            Fee Breakup
+          </span>
+          <span class="text-muted small">for accounting reference</span>
+        </summary>
+
+        <div class="p-3 pt-0 border-top">
+
+          {% comment %}─────────── 1. Subject-wise fees ───────────{% endcomment %}
+          {% if fee_recommendation.per_subject_breakdown %}
+          <div class="mb-3">
+            <h6 class="text-muted text-uppercase fw-semibold mb-2"
+                style="font-size:.7rem; letter-spacing:.06em;">Subject-wise Tuition Fees</h6>
+            <table class="table table-sm table-bordered mb-0 small">
+              <thead class="table-light">
+                <tr>
+                  <th>Subject</th>
+                  <th class="text-end" style="width:80px;">%</th>
+                  <th class="text-end" style="width:110px;">Fee (&#8377;)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in fee_recommendation.per_subject_breakdown %}
+                <tr>
+                  <td>{{ row.name }}</td>
+                  <td class="text-end">{{ row.percentage|floatformat:2 }}</td>
+                  <td class="text-end">{{ row.fee_amount|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+                {% if fee_recommendation.breakdown.surcharge_fee and fee_recommendation.breakdown.surcharge_fee != "0.00" %}
+                <tr class="table-warning">
+                  <td class="text-warning-emphasis">Surcharge
+                    <span class="text-muted fw-normal">({{ fee_recommendation.opted_out_subjects }} subject{{ fee_recommendation.opted_out_subjects|pluralize }} opted out)</span>
+                  </td>
+                  <td class="text-end">{{ fee_recommendation.breakdown.surcharge_pct|floatformat:2 }}</td>
+                  <td class="text-end">{{ fee_recommendation.breakdown.surcharge_fee|floatformat:2 }}</td>
+                </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+          {% elif fee_recommendation.course_offering %}
+          <div class="mb-3 small text-muted p-2 rounded" style="background:#f8f9fa; border:1px solid #dee2e6;">
+            No subjects enrolled — subject-wise breakdown not available.
+          </div>
+          {% else %}
+          <div class="mb-3 small text-muted p-2 rounded" style="background:#f8f9fa; border:1px solid #dee2e6;">
+            No course selected for this enrollment — subject-wise breakdown not available.
+          </div>
+          {% endif %}
+
+          {% comment %}─────────── 2. Fee Summary ───────────{% endcomment %}
+          <div class="mb-3">
+            <h6 class="text-muted text-uppercase fw-semibold mb-2"
+                style="font-size:.7rem; letter-spacing:.06em;">Fee Summary</h6>
+            <table class="table table-sm table-bordered mb-0 small">
+              <tbody>
+                <tr>
+                  <td>Annual Course Fee <span class="text-muted">(Tuition)</span></td>
+                  <td class="text-end fw-semibold">&#8377;{{ fees_details.tuition_fees|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                  <td>
+                    Books &amp; Material <span class="text-muted">(15% of course fee)</span>
+                  </td>
+                  <td class="text-end fw-semibold">&#8377;{{ fees_details.book_fees|default:0|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                  <td>
+                    Transport / Cab
+                    {% if enrollment_transport %}
+                      {% if enrollment_transport.transport_mode %}
+                        <span class="text-muted">({{ enrollment_transport.transport_mode }})</span>
+                      {% endif %}
+                      {% if enrollment_transport.transport_person %}
+                        <span class="text-muted small">&mdash; {{ enrollment_transport.transport_person }}</span>
+                      {% endif %}
+                    {% endif %}
+                  </td>
+                  <td class="text-end fw-semibold">&#8377;{{ fees_details.cab_fees|default:0|floatformat:2 }}</td>
+                </tr>
+                {% if fees_details.discount and fees_details.discount != "0.00" %}
+                <tr class="table-danger">
+                  <td class="text-danger">
+                    Discount
+                    {% if fees_details.book_discount %}<span class="badge text-bg-danger ms-1 small">Books</span>{% endif %}
+                    {% if fees_details.registration_discount %}<span class="badge text-bg-danger ms-1 small">Reg</span>{% endif %}
+                  </td>
+                  <td class="text-end fw-semibold text-danger">&minus;&#8377;{{ fees_details.discount|floatformat:2 }}</td>
+                </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+
+          {% comment %}─────────── 3. GST Breakdown ───────────{% endcomment %}
+          {% if fees_details.gst_opted_in %}
+          <div class="mb-3">
+            <h6 class="text-muted text-uppercase fw-semibold mb-2"
+                style="font-size:.7rem; letter-spacing:.06em;">GST Breakdown</h6>
+            <table class="table table-sm table-bordered mb-0 small">
+              <thead class="table-light">
+                <tr>
+                  <th>Component</th>
+                  <th class="text-end" style="width:110px;">Base (&#8377;)</th>
+                  <th class="text-end" style="width:110px;">GST (&#8377;)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Tuition Component <span class="text-muted">(85%) @ 18%</span></td>
+                  <td class="text-end">{{ fees_details.tuition_component|default:0|floatformat:2 }}</td>
+                  <td class="text-end text-success fw-semibold">{{ fees_details.tuition_gst|default:0|floatformat:2 }}</td>
+                </tr>
+                <tr>
+                  <td>Books &amp; Material Component <span class="text-muted">(15%) @ 5%</span></td>
+                  <td class="text-end">{{ fees_details.book_component|default:0|floatformat:2 }}</td>
+                  <td class="text-end text-success fw-semibold">{{ fees_details.book_gst|default:0|floatformat:2 }}</td>
+                </tr>
+                {% if fees_details.cab_fees and fees_details.cab_fees != "0.00" %}
+                <tr>
+                  <td>Transport / Cab @ 5%</td>
+                  <td class="text-end">{{ fees_details.cab_fees|default:0|floatformat:2 }}</td>
+                  <td class="text-end text-success fw-semibold">{{ fees_details.transport_gst|default:0|floatformat:2 }}</td>
+                </tr>
+                {% endif %}
+              </tbody>
+            </table>
+          </div>
+          {% endif %}
+
+          {% comment %}─────────── 4. Installment Summary ───────────{% endcomment %}
+          {% if installments %}
+          <div class="mb-3">
+            <h6 class="text-muted text-uppercase fw-semibold mb-2"
+                style="font-size:.7rem; letter-spacing:.06em;">Installment Schedule</h6>
+            <table class="table table-sm table-bordered mb-0 small">
+              <thead class="table-light">
+                <tr>
+                  <th style="width:32px;">#</th>
+                  <th>Label</th>
+                  <th>Due Date</th>
+                  <th>Payment Mode</th>
+                  <th class="text-end" style="width:110px;">Amount (&#8377;)</th>
+                  <th class="text-center" style="width:80px;">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for inst in installments %}
+                <tr>
+                  <td class="text-muted">{{ forloop.counter }}</td>
+                  <td>{{ inst.label|default:"—" }}</td>
+                  <td>{{ inst.due_date|date:"d M Y" }}</td>
+                  <td>{{ inst.payment_type|default:"—" }}</td>
+                  <td class="text-end fw-semibold">{{ inst.amount|floatformat:2 }}</td>
+                  <td class="text-center">
+                    {% if inst.paid %}
+                    <span class="badge text-bg-success">Paid</span>
+                    {% else %}
+                    <span class="badge text-bg-warning text-dark">Pending</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% endif %}
+
+          {% comment %}─────────── 5. Grand Total ───────────{% endcomment %}
+          <div class="d-flex justify-content-between align-items-center px-2 py-2 rounded fw-bold"
+               style="background:#e8f5e9; border:1px solid #c8e6c9;">
+            <span class="text-success">Grand Total</span>
+            <span class="text-success fs-5">&#8377;{{ fees_details.total_fees|floatformat:2 }}</span>
+          </div>
+
+        </div>
+      </details>
+      <!-- ── /Fee Breakup ── -->
+
     </div>
 
   </div>
