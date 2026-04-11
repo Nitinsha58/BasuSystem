@@ -209,9 +209,9 @@
         gap: 5px;
         align-items: center;
     }
-    /* Chip radios */
+    /* Chip radios/checkboxes */
     .fp-chip { position: relative; cursor: pointer; }
-    .fp-chip input[type="radio"] { display: none; }
+    .fp-chip input[type="radio"], .fp-chip input[type="checkbox"] { display: none; }
     .fp-chip span {
         display: inline-flex;
         align-items: center;
@@ -227,22 +227,31 @@
         white-space: nowrap;
         line-height: 1.4;
     }
-    .fp-chip input[type="radio"]:checked + span {
+    .fp-chip input[type="radio"]:checked + span,
+    .fp-chip input[type="checkbox"]:checked + span {
         border-color: var(--brand);
         background: var(--brand-dim);
         color: var(--brand);
     }
     /* Quality variants */
-    .fp-chip-hot  input[type="radio"]:checked + span { border-color:#dc2626; background:#fee2e2; color:#dc2626; }
-    .fp-chip-warm input[type="radio"]:checked + span { border-color:#d97706; background:#fef3c7; color:#d97706; }
-    .fp-chip-cold input[type="radio"]:checked + span { border-color:#0284c7; background:#e0f2fe; color:#0284c7; }
+    .fp-chip-hot  input[type="radio"]:checked + span,
+    .fp-chip-hot  input[type="checkbox"]:checked + span { border-color:#dc2626; background:#fee2e2; color:#dc2626; }
+    .fp-chip-warm input[type="radio"]:checked + span,
+    .fp-chip-warm input[type="checkbox"]:checked + span { border-color:#d97706; background:#fef3c7; color:#d97706; }
+    .fp-chip-cold input[type="radio"]:checked + span,
+    .fp-chip-cold input[type="checkbox"]:checked + span { border-color:#0284c7; background:#e0f2fe; color:#0284c7; }
     /* Origin variants */
-    .fp-chip-walkin   input[type="radio"]:checked + span { border-color:#7c3aed; background:#ede9fe; color:#7c3aed; }
-    .fp-chip-organic  input[type="radio"]:checked + span { border-color:#059669; background:#d1fae5; color:#059669; }
-    .fp-chip-campaign input[type="radio"]:checked + span { border-color:#0284c7; background:#e0f2fe; color:#0284c7; }
+    .fp-chip-walkin   input[type="radio"]:checked + span,
+    .fp-chip-walkin   input[type="checkbox"]:checked + span { border-color:#7c3aed; background:#ede9fe; color:#7c3aed; }
+    .fp-chip-organic  input[type="radio"]:checked + span,
+    .fp-chip-organic  input[type="checkbox"]:checked + span { border-color:#059669; background:#d1fae5; color:#059669; }
+    .fp-chip-campaign input[type="radio"]:checked + span,
+    .fp-chip-campaign input[type="checkbox"]:checked + span { border-color:#0284c7; background:#e0f2fe; color:#0284c7; }
     /* Type variants */
-    .fp-chip-verified input[type="radio"]:checked + span { border-color:#059669; background:#d1fae5; color:#059669; }
-    .fp-chip-fake     input[type="radio"]:checked + span { border-color:#dc2626; background:#fee2e2; color:#dc2626; }
+    .fp-chip-verified input[type="radio"]:checked + span,
+    .fp-chip-verified input[type="checkbox"]:checked + span { border-color:#059669; background:#d1fae5; color:#059669; }
+    .fp-chip-fake     input[type="radio"]:checked + span,
+    .fp-chip-fake     input[type="checkbox"]:checked + span { border-color:#dc2626; background:#fee2e2; color:#dc2626; }
     /* Panel selects */
     .fp-select {
         padding: 5px 24px 5px 9px;
@@ -680,46 +689,42 @@
     <div class="iq-filter-panel" id="iq-filter-panel">
         <div class="fp-inner">
 
-            <!-- Row 1: chip radios -->
+            <!-- Row 1: chip multi-selects -->
             <div class="fp-row">
 
                 <div class="fp-section">
                     <div class="fp-section-label">Type</div>
                     <div class="fp-chips">
-                        <label class="fp-chip"><input type="radio" name="lead_type" value="" onchange="applyFilters()" {% if not active_filters.lead_type %}checked{% endif %}><span>All</span></label>
-                        <label class="fp-chip"><input type="radio" name="lead_type" value="Unverified" onchange="applyFilters()" {% if active_filters.lead_type == 'Unverified' %}checked{% endif %}><span>Unverified</span></label>
-                        <label class="fp-chip fp-chip-verified"><input type="radio" name="lead_type" value="Verified" onchange="applyFilters()" {% if active_filters.lead_type == 'Verified' %}checked{% endif %}><span>Verified</span></label>
-                        <label class="fp-chip fp-chip-fake"><input type="radio" name="lead_type" value="Fake" onchange="applyFilters()" {% if active_filters.lead_type == 'Fake' %}checked{% endif %}><span>Fake</span></label>
+                        <label class="fp-chip"><input type="checkbox" name="lead_type" value="Unverified" onchange="applyFilters()" {% if 'Unverified' in active_filters.lead_type %}checked{% endif %}><span>Unverified</span></label>
+                        <label class="fp-chip fp-chip-verified"><input type="checkbox" name="lead_type" value="Verified" onchange="applyFilters()" {% if 'Verified' in active_filters.lead_type %}checked{% endif %}><span>Verified</span></label>
+                        <label class="fp-chip fp-chip-fake"><input type="checkbox" name="lead_type" value="Fake" onchange="applyFilters()" {% if 'Fake' in active_filters.lead_type %}checked{% endif %}><span>Fake</span></label>
                     </div>
                 </div>
 
                 <div class="fp-section">
                     <div class="fp-section-label">Quality</div>
                     <div class="fp-chips">
-                        <label class="fp-chip"><input type="radio" name="lead_quality" value="" onchange="applyFilters()" {% if not active_filters.lead_quality %}checked{% endif %}><span>All</span></label>
-                        <label class="fp-chip fp-chip-hot"><input type="radio" name="lead_quality" value="hot" onchange="applyFilters()" {% if active_filters.lead_quality == 'hot' %}checked{% endif %}><span>🔥 Hot</span></label>
-                        <label class="fp-chip fp-chip-warm"><input type="radio" name="lead_quality" value="warm" onchange="applyFilters()" {% if active_filters.lead_quality == 'warm' %}checked{% endif %}><span>🌤 Warm</span></label>
-                        <label class="fp-chip fp-chip-cold"><input type="radio" name="lead_quality" value="cold" onchange="applyFilters()" {% if active_filters.lead_quality == 'cold' %}checked{% endif %}><span>❄️ Cold</span></label>
+                        <label class="fp-chip fp-chip-hot"><input type="checkbox" name="lead_quality" value="hot" onchange="applyFilters()" {% if 'hot' in active_filters.lead_quality %}checked{% endif %}><span>🔥 Hot</span></label>
+                        <label class="fp-chip fp-chip-warm"><input type="checkbox" name="lead_quality" value="warm" onchange="applyFilters()" {% if 'warm' in active_filters.lead_quality %}checked{% endif %}><span>🌤 Warm</span></label>
+                        <label class="fp-chip fp-chip-cold"><input type="checkbox" name="lead_quality" value="cold" onchange="applyFilters()" {% if 'cold' in active_filters.lead_quality %}checked{% endif %}><span>❄️ Cold</span></label>
                     </div>
                 </div>
 
                 <div class="fp-section">
                     <div class="fp-section-label">Origin</div>
                     <div class="fp-chips">
-                        <label class="fp-chip"><input type="radio" name="origin" value="" onchange="applyFilters()" {% if not active_filters.origin %}checked{% endif %}><span>All</span></label>
-                        <label class="fp-chip fp-chip-walkin"><input type="radio" name="origin" value="walk_in" onchange="applyFilters()" {% if active_filters.origin == 'walk_in' %}checked{% endif %}><span>Walk-In</span></label>
-                        <label class="fp-chip fp-chip-organic"><input type="radio" name="origin" value="organic_call" onchange="applyFilters()" {% if active_filters.origin == 'organic_call' %}checked{% endif %}><span>Organic</span></label>
-                        <label class="fp-chip fp-chip-campaign"><input type="radio" name="origin" value="campaign" onchange="applyFilters()" {% if active_filters.origin == 'campaign' %}checked{% endif %}><span>Campaign</span></label>
+                        <label class="fp-chip fp-chip-walkin"><input type="checkbox" name="origin" value="walk_in" onchange="applyFilters()" {% if 'walk_in' in active_filters.origin %}checked{% endif %}><span>Walk-In</span></label>
+                        <label class="fp-chip fp-chip-organic"><input type="checkbox" name="origin" value="organic_call" onchange="applyFilters()" {% if 'organic_call' in active_filters.origin %}checked{% endif %}><span>Organic</span></label>
+                        <label class="fp-chip fp-chip-campaign"><input type="checkbox" name="origin" value="campaign" onchange="applyFilters()" {% if 'campaign' in active_filters.origin %}checked{% endif %}><span>Campaign</span></label>
                     </div>
                 </div>
 
                 <div class="fp-section">
                     <div class="fp-section-label">Status</div>
                     <div class="fp-chips">
-                        <label class="fp-chip"><input type="radio" name="status" value="" onchange="applyFilters()" {% if not active_filters.status %}checked{% endif %}><span>All</span></label>
-                        <label class="fp-chip"><input type="radio" name="status" value="none" onchange="applyFilters()" {% if active_filters.status == 'none' %}checked{% endif %}><span>None</span></label>
+                        <label class="fp-chip"><input type="checkbox" name="status" value="none" onchange="applyFilters()" {% if 'none' in active_filters.status %}checked{% endif %}><span>None</span></label>
                         {% for st in filter_statuses %}
-                        <label class="fp-chip"><input type="radio" name="status" value="{{ st.id }}" onchange="applyFilters()" {% if active_filters.status == st.id|stringformat:'s' %}checked{% endif %}><span>{{ st.name }}</span></label>
+                        <label class="fp-chip"><input type="checkbox" name="status" value="{{ st.id }}" onchange="applyFilters()" {% if st.id|stringformat:'s' in active_filters.status %}checked{% endif %}><span>{{ st.name }}</span></label>
                         {% endfor %}
                     </div>
                 </div>
@@ -727,9 +732,8 @@
                 <div class="fp-section">
                     <div class="fp-section-label">Session</div>
                     <div class="fp-chips">
-                        <label class="fp-chip"><input type="radio" name="session" value="" onchange="applyFilters()" {% if not active_filters.session %}checked{% endif %}><span>All</span></label>
                         {% for sess in filter_sessions %}
-                        <label class="fp-chip"><input type="radio" name="session" value="{{ sess.id }}" onchange="applyFilters()" {% if active_filters.session == sess.id|stringformat:'s' %}checked{% endif %}><span>{{ sess.name }}</span></label>
+                        <label class="fp-chip"><input type="checkbox" name="session" value="{{ sess.id }}" onchange="applyFilters()" {% if sess.id|stringformat:'s' in active_filters.session %}checked{% endif %}><span>{{ sess.name }}</span></label>
                         {% endfor %}
                     </div>
                 </div>
@@ -738,49 +742,44 @@
 
             <hr class="fp-divider">
 
-            <!-- Row 2: dropdown selects -->
+            <!-- Row 2: chip multi-selects -->
             <div class="fp-row">
 
                 {% if campaigns %}
                 <div class="fp-section">
                     <div class="fp-section-label">Campaign</div>
-                    <select name="campaign" class="fp-select {% if active_filters.campaign %}is-active{% endif %}" onchange="applyFilters()">
-                        <option value="">All Campaigns</option>
-                        {% for c in campaigns %}<option value="{{ c.id }}" {% if active_filters.campaign == c.id|stringformat:'s' %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
-                    </select>
+                    <div class="fp-chips">
+                        {% for c in campaigns %}<label class="fp-chip"><input type="checkbox" name="campaign" value="{{ c.id }}" onchange="applyFilters()" {% if c.id|stringformat:'s' in active_filters.campaign %}checked{% endif %}><span>{{ c.name }}</span></label>{% endfor %}
+                    </div>
                 </div>
                 {% endif %}
 
                 <div class="fp-section">
                     <div class="fp-section-label">Class</div>
-                    <select name="class_name" class="fp-select {% if active_filters.class_name %}is-active{% endif %}" onchange="applyFilters()">
-                        <option value="">All Classes</option>
-                        {% for cls in filter_classes %}<option value="{{ cls.id }}" {% if active_filters.class_name == cls.id|stringformat:'s' %}selected{% endif %}>{{ cls.name }}</option>{% endfor %}
-                    </select>
+                    <div class="fp-chips">
+                        {% for cls in filter_classes %}<label class="fp-chip"><input type="checkbox" name="class_name" value="{{ cls.id }}" onchange="applyFilters()" {% if cls.id|stringformat:'s' in active_filters.class_name %}checked{% endif %}><span>{{ cls.name }}</span></label>{% endfor %}
+                    </div>
                 </div>
 
                 <div class="fp-section">
                     <div class="fp-section-label">Counsellor</div>
-                    <select name="counsellor" class="fp-select {% if active_filters.counsellor %}is-active{% endif %}" onchange="applyFilters()">
-                        <option value="">All Counsellors</option>
-                        {% for ac in filter_counsellors %}<option value="{{ ac.id }}" {% if active_filters.counsellor == ac.id|stringformat:'s' %}selected{% endif %}>{{ ac.user.first_name }} {{ ac.user.last_name }}</option>{% endfor %}
-                    </select>
+                    <div class="fp-chips">
+                        {% for ac in filter_counsellors %}<label class="fp-chip"><input type="checkbox" name="counsellor" value="{{ ac.id }}" onchange="applyFilters()" {% if ac.id|stringformat:'s' in active_filters.counsellor %}checked{% endif %}><span>{{ ac.user.first_name }} {{ ac.user.last_name }}</span></label>{% endfor %}
+                    </div>
                 </div>
 
                 <div class="fp-section">
                     <div class="fp-section-label">Sales Person</div>
-                    <select name="sales_person" class="fp-select {% if active_filters.sales_person %}is-active{% endif %}" onchange="applyFilters()">
-                        <option value="">All Sales</option>
-                        {% for sp in filter_sales_persons %}<option value="{{ sp.id }}" {% if active_filters.sales_person == sp.id|stringformat:'s' %}selected{% endif %}>{{ sp.name }}</option>{% endfor %}
-                    </select>
+                    <div class="fp-chips">
+                        {% for sp in filter_sales_persons %}<label class="fp-chip"><input type="checkbox" name="sales_person" value="{{ sp.id }}" onchange="applyFilters()" {% if sp.id|stringformat:'s' in active_filters.sales_person %}checked{% endif %}><span>{{ sp.name }}</span></label>{% endfor %}
+                    </div>
                 </div>
 
                 <div class="fp-section">
                     <div class="fp-section-label">Caller</div>
-                    <select name="caller" class="fp-select {% if active_filters.caller %}is-active{% endif %}" onchange="applyFilters()">
-                        <option value="">All Callers</option>
-                        {% for ac in filter_callers %}<option value="{{ ac.id }}" {% if active_filters.caller == ac.id|stringformat:'s' %}selected{% endif %}>{{ ac.user.first_name }} {{ ac.user.last_name }}</option>{% endfor %}
-                    </select>
+                    <div class="fp-chips">
+                        {% for ac in filter_callers %}<label class="fp-chip"><input type="checkbox" name="caller" value="{{ ac.id }}" onchange="applyFilters()" {% if ac.id|stringformat:'s' in active_filters.caller %}checked{% endif %}><span>{{ ac.user.first_name }} {{ ac.user.last_name }}</span></label>{% endfor %}
+                    </div>
                 </div>
 
             </div>
@@ -928,18 +927,12 @@ function applyFilters() {
     const params = new URLSearchParams(window.location.search);
     const panel  = document.getElementById('iq-filter-panel');
 
-    // Clear all radio param names first, then set checked values
-    const radioNames = new Set();
-    panel.querySelectorAll('input[type=radio][name]').forEach(r => radioNames.add(r.name));
-    radioNames.forEach(name => params.delete(name));
-    panel.querySelectorAll('input[type=radio][name]:checked').forEach(r => {
-        if (r.value) params.set(r.name, r.value);
-    });
-
-    // Selects
-    panel.querySelectorAll('select[name]').forEach(sel => {
-        if (sel.value) params.set(sel.name, sel.value);
-        else           params.delete(sel.name);
+    // Collect all checkbox param names, clear them, then re-append checked values
+    const checkboxNames = new Set();
+    panel.querySelectorAll('input[type=checkbox][name]').forEach(cb => checkboxNames.add(cb.name));
+    checkboxNames.forEach(name => params.delete(name));
+    panel.querySelectorAll('input[type=checkbox][name]:checked').forEach(cb => {
+        params.append(cb.name, cb.value);
     });
 
     window.location.search = params.toString();

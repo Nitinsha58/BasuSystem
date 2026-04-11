@@ -101,17 +101,17 @@ def inquiries(request):
     last_day = datetime(year, month, monthrange(year, month)[1]).date()
     dates = [first_day + timedelta(days=i) for i in range((last_day - first_day).days + 1)]
 
-    # Extract filters
-    campaign_id      = request.GET.get('campaign')
-    status_id        = request.GET.get('status')
-    lead_quality     = request.GET.get('lead_quality')
-    lead_type        = request.GET.get('lead_type')
-    session_filter   = request.GET.get('session')
-    class_id         = request.GET.get('class_name')
-    counsellor_id    = request.GET.get('counsellor')
-    origin_filter    = request.GET.get('origin')
-    sales_person_id  = request.GET.get('sales_person')
-    caller_id        = request.GET.get('caller')
+    # Extract filters (multi-select: each returns a list)
+    campaign_ids     = request.GET.getlist('campaign')
+    status_ids       = request.GET.getlist('status')
+    lead_qualities   = request.GET.getlist('lead_quality')
+    lead_types       = request.GET.getlist('lead_type')
+    session_ids      = request.GET.getlist('session')
+    class_ids        = request.GET.getlist('class_name')
+    counsellor_ids   = request.GET.getlist('counsellor')
+    origin_filters   = request.GET.getlist('origin')
+    sales_person_ids = request.GET.getlist('sales_person')
+    caller_ids       = request.GET.getlist('caller')
     my_board         = request.GET.get('my_board')
 
     # Resolve logged-in counsellor (if any) for My Board
@@ -120,28 +120,35 @@ def inquiries(request):
 
     inquiry_qs = Inquiry.objects.select_related('campaign', 'session', 'current_status')
 
-    if campaign_id:
-        inquiry_qs = inquiry_qs.filter(campaign_id=campaign_id)
-    if status_id == 'none':
-        inquiry_qs = inquiry_qs.filter(current_status__isnull=True)
-    elif status_id:
-        inquiry_qs = inquiry_qs.filter(current_status_id=status_id)
-    if lead_quality:
-        inquiry_qs = inquiry_qs.filter(lead_quality=lead_quality)
-    if lead_type:
-        inquiry_qs = inquiry_qs.filter(lead_type=lead_type)
-    if session_filter:
-        inquiry_qs = inquiry_qs.filter(session_id=session_filter)
-    if class_id:
-        inquiry_qs = inquiry_qs.filter(classes__id=class_id).distinct()
-    if counsellor_id:
-        inquiry_qs = inquiry_qs.filter(assigned_counsellor_id=counsellor_id)
-    if origin_filter:
-        inquiry_qs = inquiry_qs.filter(inquiry_origin=origin_filter)
-    if sales_person_id:
-        inquiry_qs = inquiry_qs.filter(sales_person_id=sales_person_id)
-    if caller_id:
-        inquiry_qs = inquiry_qs.filter(caller_id=caller_id)
+    if campaign_ids:
+        inquiry_qs = inquiry_qs.filter(campaign_id__in=campaign_ids)
+    if status_ids:
+        none_selected = 'none' in status_ids
+        numeric_status_ids = [sid for sid in status_ids if sid != 'none']
+        if none_selected and numeric_status_ids:
+            inquiry_qs = inquiry_qs.filter(
+                Q(current_status__isnull=True) | Q(current_status_id__in=numeric_status_ids)
+            )
+        elif none_selected:
+            inquiry_qs = inquiry_qs.filter(current_status__isnull=True)
+        else:
+            inquiry_qs = inquiry_qs.filter(current_status_id__in=numeric_status_ids)
+    if lead_qualities:
+        inquiry_qs = inquiry_qs.filter(lead_quality__in=lead_qualities)
+    if lead_types:
+        inquiry_qs = inquiry_qs.filter(lead_type__in=lead_types)
+    if session_ids:
+        inquiry_qs = inquiry_qs.filter(session_id__in=session_ids)
+    if class_ids:
+        inquiry_qs = inquiry_qs.filter(classes__id__in=class_ids).distinct()
+    if counsellor_ids:
+        inquiry_qs = inquiry_qs.filter(assigned_counsellor_id__in=counsellor_ids)
+    if origin_filters:
+        inquiry_qs = inquiry_qs.filter(inquiry_origin__in=origin_filters)
+    if sales_person_ids:
+        inquiry_qs = inquiry_qs.filter(sales_person_id__in=sales_person_ids)
+    if caller_ids:
+        inquiry_qs = inquiry_qs.filter(caller_id__in=caller_ids)
     if my_board and my_counsellor:
         inquiry_qs = inquiry_qs.filter(
             Q(caller=my_counsellor) | Q(assigned_counsellor=my_counsellor)
@@ -186,22 +193,22 @@ def inquiries(request):
     }
 
     active_filter_params = {k: v for k, v in {
-        'campaign':     campaign_id,
-        'status':       status_id,
-        'lead_quality': lead_quality,
-        'lead_type':    lead_type,
-        'session':      session_filter,
-        'class_name':   class_id,
-        'counsellor':   counsellor_id,
-        'origin':       origin_filter,
-        'sales_person': sales_person_id,
-        'caller':       caller_id,
-        'my_board':     my_board,
+        'campaign':     campaign_ids,
+        'status':       status_ids,
+        'lead_quality': lead_qualities,
+        'lead_type':    lead_types,
+        'session':      session_ids,
+        'class_name':   class_ids,
+        'counsellor':   counsellor_ids,
+        'origin':       origin_filters,
+        'sales_person': sales_person_ids,
+        'caller':       caller_ids,
+        'my_board':     [my_board] if my_board else [],
     }.items() if v}
 
     active_filter_count = sum(1 for v in [
-        campaign_id, status_id, lead_quality, lead_type, session_filter,
-        class_id, counsellor_id, origin_filter, sales_person_id, caller_id,
+        campaign_ids, status_ids, lead_qualities, lead_types, session_ids,
+        class_ids, counsellor_ids, origin_filters, sales_person_ids, caller_ids,
     ] if v)
 
     counsellors_qs = AdmissionCounselor.objects.select_related('user').order_by('user__first_name')
@@ -213,7 +220,7 @@ def inquiries(request):
         'prev_month':          (first_day - timedelta(days=1)),
         'next_month':          (last_day + timedelta(days=1)),
         'campaigns':           Campaign.objects.filter(is_active=True).order_by('-created_at'),
-        'selected_campaign_id': campaign_id,
+        'selected_campaign_id': campaign_ids[0] if campaign_ids else None,
         'filter_statuses':     FollowUpStatus.objects.order_by('order'),
         'filter_sessions':     AcademicSession.objects.order_by('-name'),
         'filter_classes':      ClassName.objects.order_by('name'),
@@ -223,19 +230,19 @@ def inquiries(request):
         'my_counsellor_id':    my_counsellor_id,
         'active_filter_count': active_filter_count,
         'active_filters': {
-            'campaign':     campaign_id or '',
-            'status':       status_id or '',
-            'lead_quality': lead_quality or '',
-            'lead_type':    lead_type or '',
-            'session':      session_filter or '',
-            'class_name':   class_id or '',
-            'counsellor':   counsellor_id or '',
-            'origin':       origin_filter or '',
-            'sales_person': sales_person_id or '',
-            'caller':       caller_id or '',
+            'campaign':     campaign_ids,
+            'status':       status_ids,
+            'lead_quality': lead_qualities,
+            'lead_type':    lead_types,
+            'session':      session_ids,
+            'class_name':   class_ids,
+            'counsellor':   counsellor_ids,
+            'origin':       origin_filters,
+            'sales_person': sales_person_ids,
+            'caller':       caller_ids,
             'my_board':     my_board or '',
         },
-        'filter_qs': urlencode(active_filter_params) if active_filter_params else '',
+        'filter_qs': urlencode(active_filter_params, doseq=True) if active_filter_params else '',
     })
 
 def inquiry(request, inquiry_id):
