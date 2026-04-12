@@ -878,10 +878,10 @@
 
         const hasExtras = (_programDuration === 2 || discount > 0 || _transportFee > 0);
 
-        // GST on net fee after discount (surcharge is already part of baseTotal before split)
-        // Split: 85% tuition / 15% books & material of post-discount course fee
-        const tuitionCompNet  = final * 0.85;
-        const bookCompNet     = final * 0.15;
+        // GST split: Books & Material fixed at 15% of catalog price (pre-discount).
+        // The entire discount is absorbed by the tuition component only.
+        const bookCompNet     = durSubtotal * 0.15;
+        const tuitionCompNet  = Math.max(0, final - bookCompNet);
         const tuitionGstAmt   = tuitionCompNet * 0.18;
         const bookGstAmt      = bookCompNet * 0.05;
         const transportGstAmt = transportTotal * 0.05;
@@ -899,18 +899,18 @@
         // GST breakdown rows (visible when GST toggle is ON)
         const gstHtml = _gstEnabled ? `
             <div class="fc-stat" style="border-top:1px dashed #dee2e6; padding-top:0.5rem; margin-top:0.25rem;">
-                <div class="fc-stat-label text-muted small">Tuition (85% of course total)</div>
+                <div class="fc-stat-label text-muted small">Tuition (after discount)</div>
                 <div class="fc-stat-value small">${fmt(tuitionCompNet)}</div>
-                <div class="fc-stat-sub">incl. surcharge</div>
+                <div class="fc-stat-sub">incl. surcharge; discount absorbed here</div>
             </div>
             <div class="fc-stat">
                 <div class="fc-stat-label text-success small">+ Tuition GST (18%)</div>
                 <div class="fc-stat-value small text-success">${fmt(tuitionGstAmt)}</div>
             </div>
             <div class="fc-stat">
-                <div class="fc-stat-label text-muted small">Books &amp; Material (15% of course total)</div>
+                <div class="fc-stat-label text-muted small">Books &amp; Material (15% of catalog price)</div>
                 <div class="fc-stat-value small">${fmt(bookCompNet)}</div>
-                <div class="fc-stat-sub">incl. surcharge</div>
+                <div class="fc-stat-sub">pre-discount, fixed</div>
             </div>
             <div class="fc-stat">
                 <div class="fc-stat-label text-success small">+ Books GST (5%)</div>
@@ -944,7 +944,7 @@
             <div class="fc-stat ${hasExtras || _gstEnabled ? '' : 'fc-stat--total'}">
                 <div class="fc-stat-label">Per-Year Course Total</div>
                 <div class="fc-stat-value">${fmt(baseTotal)}</div>
-                ${_gstEnabled ? '<div class="fc-stat-sub text-muted">split 85% tuition / 15% books for GST (incl. surcharge)</div>' : ''}
+                ${_gstEnabled ? '<div class="fc-stat-sub text-muted">books @ 15% catalog price (pre-discount); discount applies to tuition only</div>' : ''}
             </div>
             ${transportHtml}
             ${gstHtml}

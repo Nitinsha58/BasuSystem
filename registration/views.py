@@ -336,7 +336,7 @@ def api_course_offering_breakdown(request, offering_id: int):
             "subject_component_fee": str(Decimal(breakdown.get('subject_component_fee') or 0).quantize(Decimal('0.01'))),
             "surcharge_fee": str(Decimal(breakdown.get('surcharge_fee') or 0).quantize(Decimal('0.01'))),
             "total_fee": str(Decimal(breakdown.get('total_fee') or 0).quantize(Decimal('0.01'))),
-            # GST breakdown (18% tuition, 5% books/material; annual fee split 85%/15%)
+            # GST breakdown (18% tuition, 5% books/material; books fixed at 15% of catalog price, discount applied to tuition only)
             "tuition_component_fee": str((Decimal(breakdown.get('total_fee') or 0) * Decimal('0.85')).quantize(Decimal('0.01'))),
             "book_component_fee": str((Decimal(breakdown.get('total_fee') or 0) * Decimal('0.15')).quantize(Decimal('0.01'))),
             "tuition_gst": str((Decimal(breakdown.get('total_fee') or 0) * Decimal('0.85') * Decimal('0.18')).quantize(Decimal('0.01'))),
