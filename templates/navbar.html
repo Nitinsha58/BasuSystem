@@ -868,8 +868,7 @@
 
         const annualFee      = parseFloat(course.annual_fee) || 0;
         const baseTuition    = parseFloat(summary.subject_component_fee) || 0;
-        const baseSurcharge  = parseFloat(summary.surcharge_fee) || 0;
-        // baseTotal = subject_component + surcharge — the full per-year course fee
+        // baseTotal = subject_component fee — the per-year course fee
         const baseTotal      = parseFloat(summary.total_fee) || 0;
         const durSubtotal    = baseTotal * _programDuration;   // course fee × years
         const transportTotal = _transportFee * _programDuration;
@@ -878,9 +877,9 @@
 
         const hasExtras = (_programDuration === 2 || discount > 0 || _transportFee > 0);
 
-        // GST split: Books & Material fixed at 15% of catalog price (pre-discount).
-        // The entire discount is absorbed by the tuition component only.
-        const bookCompNet     = durSubtotal * 0.15;
+        // GST split: Registration Charge fixed at 15% of FULL annual fee (catalog, all subjects).
+        // The entire discount + subject deduction is absorbed by the tuition component only.
+        const bookCompNet     = annualFee * _programDuration * 0.15;
         const tuitionCompNet  = Math.max(0, final - bookCompNet);
         const tuitionGstAmt   = tuitionCompNet * 0.18;
         const bookGstAmt      = bookCompNet * 0.05;
@@ -901,19 +900,19 @@
             <div class="fc-stat" style="border-top:1px dashed #dee2e6; padding-top:0.5rem; margin-top:0.25rem;">
                 <div class="fc-stat-label text-muted small">Tuition (after discount)</div>
                 <div class="fc-stat-value small">${fmt(tuitionCompNet)}</div>
-                <div class="fc-stat-sub">incl. surcharge; discount absorbed here</div>
+                <div class="fc-stat-sub">discount absorbed here</div>
             </div>
             <div class="fc-stat">
                 <div class="fc-stat-label text-success small">+ Tuition GST (18%)</div>
                 <div class="fc-stat-value small text-success">${fmt(tuitionGstAmt)}</div>
             </div>
             <div class="fc-stat">
-                <div class="fc-stat-label text-muted small">Books &amp; Material (15% of catalog price)</div>
+                <div class="fc-stat-label text-muted small">Registration Charge (15% of catalog price)</div>
                 <div class="fc-stat-value small">${fmt(bookCompNet)}</div>
-                <div class="fc-stat-sub">pre-discount, fixed</div>
+                <div class="fc-stat-sub">fixed pre-discount</div>
             </div>
             <div class="fc-stat">
-                <div class="fc-stat-label text-success small">+ Books GST (5%)</div>
+                <div class="fc-stat-label text-success small">+ Registration Charge GST (5%)</div>
                 <div class="fc-stat-value small text-success">${fmt(bookGstAmt)}</div>
             </div>
             ${_transportFee > 0 ? `
@@ -936,15 +935,20 @@
                 <div class="fc-stat-value">${fmt(baseTuition)}</div>
                 <div class="fc-stat-sub">${parseFloat(summary.selected_subject_pct).toFixed(2)}% of annual</div>
             </div>
-            <div class="fc-stat fc-stat--surcharge">
-                <div class="fc-stat-label">Surcharge</div>
-                <div class="fc-stat-value">${fmt(baseSurcharge)}</div>
-                <div class="fc-stat-sub">${parseFloat(summary.surcharge_pct).toFixed(2)}%</div>
-            </div>
             <div class="fc-stat ${hasExtras || _gstEnabled ? '' : 'fc-stat--total'}">
                 <div class="fc-stat-label">Per-Year Course Total</div>
                 <div class="fc-stat-value">${fmt(baseTotal)}</div>
-                ${_gstEnabled ? '<div class="fc-stat-sub text-muted">books @ 15% catalog price (pre-discount); discount applies to tuition only</div>' : ''}
+                ${_gstEnabled ? '<div class="fc-stat-sub text-muted">splits into registration charge (15%) + tuition (85%)</div>' : ''}
+            </div>
+            <div class="fc-stat">
+                <div class="fc-stat-label">Registration Charge</div>
+                <div class="fc-stat-value">${fmt(bookCompNet)}</div>
+                <div class="fc-stat-sub">15% of full annual fee, fixed</div>
+            </div>
+            <div class="fc-stat">
+                <div class="fc-stat-label">Tuition Fees</div>
+                <div class="fc-stat-value">${fmt(Math.max(0, durSubtotal - bookCompNet))}</div>
+                <div class="fc-stat-sub">subject-adjusted; discount applies here</div>
             </div>
             ${transportHtml}
             ${gstHtml}

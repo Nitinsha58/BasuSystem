@@ -102,10 +102,9 @@
             <div class="d-flex flex-wrap gap-2 mb-2">
               <span class="badge text-bg-secondary">Total: ₹{{ fee_recommendation.breakdown.total_fee|floatformat:2 }}</span>
               <span class="badge text-bg-light text-dark border">Tuition: ₹{{ fee_recommendation.breakdown.subject_component_fee|floatformat:2 }}</span>
-              <span class="badge text-bg-light text-dark border">Surcharge: ₹{{ fee_recommendation.breakdown.surcharge_fee|floatformat:2 }}</span>
             </div>
             <div class="small text-muted">
-              Fees: {{ fee_recommendation.breakdown.selected_subject_pct|floatformat:2 }}% &nbsp; Charge: {{ fee_recommendation.breakdown.surcharge_pct|floatformat:2 }}%
+              Fees: {{ fee_recommendation.breakdown.selected_subject_pct|floatformat:2 }}%
             </div>
             {% if fee_recommendation.subjects %}
             <div class="d-flex flex-wrap gap-1 mt-2">
@@ -224,9 +223,6 @@
               {% if fee_recommendation.available %}
               <div class="mt-2 small text-muted d-flex flex-wrap gap-3">
                 <span>Subject fee: <strong class="text-dark">&#8377;{{ fee_recommendation.breakdown.subject_component_fee|floatformat:0 }}</strong> ({{ fee_recommendation.breakdown.selected_subject_pct|floatformat:1 }}%)</span>
-                {% if fee_recommendation.breakdown.surcharge_fee %}
-                <span class="text-warning-emphasis">+ Surcharge: <strong>&#8377;{{ fee_recommendation.breakdown.surcharge_fee|floatformat:0 }}</strong> ({{ fee_recommendation.breakdown.surcharge_pct|floatformat:1 }}% &mdash; {{ fee_recommendation.opted_out_subjects }} subject{{ fee_recommendation.opted_out_subjects|pluralize }} opted out)</span>
-                {% endif %}
                 <span class="text-success fw-semibold">= Recommended: &#8377;{{ fee_recommendation.breakdown.total_fee|floatformat:0 }}</span>
               </div>
               {% else %}
@@ -241,16 +237,19 @@
           </div>
         </div>
 
-        <!-- Annual Course Fee + Cab -->
+        <!-- Annual Course Fee + Registration Charge + Cab -->
         <div class="row justify-content-evenly mt-3">
           <div class="col-md-4">
-            <label for="tuition_fees" class="form-label">Annual Course Fee <span class="text-muted fw-normal small">(Books &amp; Material 15% included)</span></label>
+            <label for="tuition_fees" class="form-label">Annual Course Fee</label>
             <input type="text" minlength="10" maxlength="10" value="{{fees_details.tuition_fees}}"
               class="form-control" name="tuition_fees" id="tuition_fees" required>
-            <div class="mt-1 small text-muted d-flex justify-content-between">
-              <span>Books &amp; Material (15%)</span>
-              <span id="book_fees_display" class="fw-semibold text-dark">&#8377;{{ fees_details.book_fees|default:0|floatformat:0 }}</span>
-            </div>
+          </div>
+          <div class="col-md-4">
+            <label for="registration_fee_input" class="form-label">Registration Charge <span class="text-muted fw-normal small">(15% of course fee)</span></label>
+            <input type="text" id="registration_fee_input" name="registration_fee" readonly
+              value="{{fees_details.registration_fee|default:fees_details.book_fees|default:0|floatformat:0}}"
+              class="form-control bg-light text-muted">
+            <div class="form-text">Auto-computed, fixed pre-discount</div>
           </div>
           <div class="col-md-4">
             <label for="cab_fees" class="form-label">Cab Fees</label>
@@ -279,9 +278,10 @@
             </div>
           </div>
           <div class="col-md-4">
-            <label for="discount" class="form-label">Discount Amount</label>
+            <label for="discount" class="form-label">Discount on Tuition Fees</label>
             <input type="text" minlength="10" maxlength="10" value="{{fees_details.discount}}"
               class="form-control" name="discount" id="discount">
+            <div class="form-text">Applies to tuition only, not to registration charge</div>
           </div>
         </div>
 
@@ -295,7 +295,7 @@
                 <label class="form-check-label fw-semibold" for="gst_opted_in">Apply GST</label>
               </div>
               <span class="text-muted small">
-                Course fee splits <strong>85% Tuition @ 18% GST</strong> &bull; <strong>15% Books &amp; Material @ 5% GST</strong> &bull; <strong>Transport @ 5% GST</strong>
+                Course fee splits <strong>85% Tuition @ 18% GST</strong> &bull; <strong>15% Registration Charge @ 5% GST</strong> &bull; <strong>Transport @ 5% GST</strong>
               </span>
             </div>
           </div>
@@ -316,7 +316,7 @@
                 <!-- Tuition component -->
                 <div class="rounded p-2" style="background:#fff; border:1px solid #c8e6c9;">
                   <div class="d-flex justify-content-between align-items-center">
-                    <span class="small fw-semibold text-dark">Tuition Component <span class="text-muted fw-normal">(85% of course fee, after discount)</span></span>
+                    <span class="small fw-semibold text-dark">Tuition Component <span class="text-muted fw-normal">(after discount)</span></span>
                     <span class="small fw-semibold" id="gst-tuition-comp">&#8377;0</span>
                   </div>
                   <div class="d-flex justify-content-between align-items-center mt-1">
@@ -329,14 +329,14 @@
                   </div>
                 </div>
 
-                <!-- Books & Material component -->
+                <!-- Registration Charge component -->
                 <div class="rounded p-2" style="background:#fff; border:1px solid #c8e6c9;">
                   <div class="d-flex justify-content-between align-items-center">
-                    <span class="small fw-semibold text-dark">Books &amp; Material Component <span class="text-muted fw-normal">(15% of catalog price, before discount)</span></span>
+                    <span class="small fw-semibold text-dark">Registration Charge <span class="text-muted fw-normal">(15% of catalog price, fixed pre-discount)</span></span>
                     <span class="small fw-semibold" id="gst-book-comp">&#8377;0</span>
                   </div>
                   <div class="d-flex justify-content-between align-items-center mt-1">
-                    <span class="small text-success">+ Books GST (5%)</span>
+                    <span class="small text-success">+ Registration Charge GST (5%)</span>
                     <div class="input-group input-group-sm" style="width:130px;">
                       <span class="input-group-text text-success">&#8377;</span>
                       <input type="text" id="book_gst_display" class="form-control bg-white text-success fw-semibold" readonly
@@ -565,15 +565,6 @@
                   <td class="text-end">{{ row.fee_amount|floatformat:2 }}</td>
                 </tr>
                 {% endfor %}
-                {% if fee_recommendation.breakdown.surcharge_fee and fee_recommendation.breakdown.surcharge_fee != "0.00" %}
-                <tr class="table-warning">
-                  <td class="text-warning-emphasis">Surcharge
-                    <span class="text-muted fw-normal">({{ fee_recommendation.opted_out_subjects }} subject{{ fee_recommendation.opted_out_subjects|pluralize }} opted out)</span>
-                  </td>
-                  <td class="text-end">{{ fee_recommendation.breakdown.surcharge_pct|floatformat:2 }}</td>
-                  <td class="text-end">{{ fee_recommendation.breakdown.surcharge_fee|floatformat:2 }}</td>
-                </tr>
-                {% endif %}
               </tbody>
             </table>
           </div>
@@ -594,13 +585,11 @@
             <table class="table table-sm table-bordered mb-0 small">
               <tbody>
                 <tr>
-                  <td>Annual Course Fee <span class="text-muted">(Tuition)</span></td>
+                  <td>Annual Course Fee</td>
                   <td class="text-end fw-semibold">&#8377;{{ fees_details.tuition_fees|floatformat:2 }}</td>
                 </tr>
                 <tr>
-                  <td>
-                    Books &amp; Material <span class="text-muted">(15% of catalog price, before discount)</span>
-                  </td>
+                  <td>Registration Charge <span class="text-muted">(15% of catalog price, fixed pre-discount)</span></td>
                   <td class="text-end fw-semibold">&#8377;{{ fees_details.book_fees|default:0|floatformat:2 }}</td>
                 </tr>
                 <tr>
@@ -620,8 +609,7 @@
                 {% if fees_details.discount and fees_details.discount != "0.00" %}
                 <tr class="table-danger">
                   <td class="text-danger">
-                    Discount
-                    {% if fees_details.book_discount %}<span class="badge text-bg-danger ms-1 small">Books</span>{% endif %}
+                    Discount on Tuition
                     {% if fees_details.registration_discount %}<span class="badge text-bg-danger ms-1 small">Reg</span>{% endif %}
                   </td>
                   <td class="text-end fw-semibold text-danger">&minus;&#8377;{{ fees_details.discount|floatformat:2 }}</td>
@@ -651,7 +639,7 @@
                   <td class="text-end text-success fw-semibold">{{ fees_details.tuition_gst|default:0|floatformat:2 }}</td>
                 </tr>
                 <tr>
-                  <td>Books &amp; Material Component <span class="text-muted">(15% of catalog price) @ 5%</span></td>
+                  <td>Registration Charge <span class="text-muted">(15% of catalog price) @ 5%</span></td>
                   <td class="text-end">{{ fees_details.book_component|default:0|floatformat:2 }}</td>
                   <td class="text-end text-success fw-semibold">{{ fees_details.book_gst|default:0|floatformat:2 }}</td>
                 </tr>
@@ -760,7 +748,7 @@
     const gstBookComp    = document.getElementById("gst-book-comp");
     const gstCabAmt      = document.getElementById("gst-cab-amt");
     const gstGrandTotal  = document.getElementById("gst-grand-total");
-    const bookFeesDisplay        = document.getElementById("book_fees_display");
+    const registrationFeeInput   = document.getElementById("registration_fee_input");
     const bookFeesInput          = document.getElementById("book_fees_input");
     const tuitionComponentInput  = document.getElementById("tuition_component_input");
     const bookComponentInput     = document.getElementById("book_component_input");
@@ -790,8 +778,8 @@
 
       // Books & Material = 15% of the full course fee (catalog component, before discount)
       const bookFees = Math.round(courseFee * 0.15);
-      if (bookFeesDisplay) bookFeesDisplay.textContent = fmt(bookFees);
-      if (bookFeesInput)   bookFeesInput.value = bookFees;
+      if (registrationFeeInput) registrationFeeInput.value = bookFees;
+      if (bookFeesInput)        bookFeesInput.value = bookFees;
 
       // Net course fee after discount (pre-GST payable total)
       const netCourse = Math.max(0, courseFee - discount);
