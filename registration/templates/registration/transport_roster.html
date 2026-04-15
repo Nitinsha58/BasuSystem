@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block dashboard %}
+<div class="container-fluid px-3 px-md-4 py-3">
+
+    <!-- ── Header ── -->
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+        <div>
+            <h4 class="mb-0 fw-semibold">Transport Roster</h4>
+            <small class="text-muted">{{ selected_session.name }} &mdash; all students with a driver assigned</small>
+        </div>
+        <span class="badge bg-primary fs-6 px-3 py-2">{{ total_students }} student{{ total_students|pluralize }}</span>
+    </div>
+
+    <!-- ── Sub-navigation (matches other transport pages) ── -->
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        <a href="{% url 'transport_list' %}{% if selected_session %}?session={{ selected_session.id }}{% endif %}"
+            class="btn btn-sm btn-outline-secondary">Batch Timing</a>
+        <a href="{% url 'transport_driver_list' %}{% if selected_session %}?session={{ selected_session.id }}{% endif %}"
+            class="btn btn-sm btn-outline-secondary">Driver &amp; Timing</a>
+        <a href="{% url 'grouped_transports' %}{% if selected_session %}?session={{ selected_session.id }}{% endif %}"
+            class="btn btn-sm btn-outline-secondary">Driver Groups</a>
+        <a href="{% url 'transport_roster' %}{% if selected_session %}?session={{ selected_session.id }}{% endif %}"
+            class="btn btn-sm btn-warning">Roster</a>
+    </div>
+
+    <!-- ── Session selector ── -->
+    <form method="get" class="mb-3 d-inline-block">
+        <select name="session" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
+            {% for session in academic_sessions %}
+            <option value="{{ session.id }}" {% if session.id == selected_session.id %}selected{% endif %}>
+                {{ session.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </form>
+
+    <!-- ── Tabs ── -->
+    <ul class="nav nav-pills mb-3" id="rosterTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tab-driver" data-bs-toggle="pill"
+                data-bs-target="#pane-driver" type="button" role="tab">
+                By Driver
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-mode" data-bs-toggle="pill"
+                data-bs-target="#pane-mode" type="button" role="tab">
+                By Mode
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tab-class" data-bs-toggle="pill"
+                data-bs-target="#pane-class" type="button" role="tab">
+                All Students (Class-wise)
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="rosterTabContent">
+
+        <!-- ════════════════════════════════════════════════
+             TAB 1 — BY DRIVER
+        ════════════════════════════════════════════════ -->
+        <div class="tab-pane fade show active" id="pane-driver" role="tabpanel">
+            {% if by_driver %}
+                {% for driver_name, driver_data in by_driver.items %}
+                <div class="card mb-3 shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center bg-dark text-white py-2">
+                        <span class="fw-semibold">{{ driver_name }}</span>
+                        <span class="badge bg-warning text-dark">{{ driver_data.total }} student{{ driver_data.total|pluralize }}</span>
+                    </div>
+                    <div class="card-body p-0">
+                        {% for class_name, rows in driver_data.classes.items %}
+                        <div class="px-3 pt-2 pb-0">
+                            <p class="mb-1 fw-semibold text-primary" style="font-size: 13px;">
+                                {{ class_name }} &nbsp;<span class="badge bg-primary-subtle text-primary-emphasis">{{ rows|length }}</span>
+                            </p>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width:36px">#</th>
+                                        <th>Student Name</th>
+                                        <th>Mode</th>
+                                        <th>Cab Fees</th>
+                                        <th>Address</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for r in rows %}
+                                    <tr>
+                                        <td class="text-muted">{{ forloop.counter }}</td>
+                                        <td class="fw-medium">
+                                            {{ r.student.user.first_name }} {{ r.student.user.last_name }}
+                                        </td>
+                                        <td>
+                                            {% if r.mode %}
+                                            <span class="badge bg-info-subtle text-info-emphasis">{{ r.mode.name }}</span>
+                                            {% else %}—{% endif %}
+                                        </td>
+                                        <td>
+                                            {% if r.cab_fees %}
+                                            ₹{{ r.cab_fees }}
+                                            {% else %}<span class="text-muted">—</span>{% endif %}
+                                        </td>
+                                        <td style="max-width:220px; white-space: normal; font-size:12px;">
+                                            {{ r.address|default:"—" }}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'student_enrollment_transport_details' r.student.stu_id %}?session={{ selected_session.id }}"
+                                                class="btn btn-xs btn-outline-primary py-0 px-1" style="font-size:11px;"
+                                                target="_blank">View</a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="text-center text-muted py-5">No transport students found for this session.</div>
+            {% endif %}
+        </div>
+
+        <!-- ════════════════════════════════════════════════
+             TAB 2 — BY MODE
+        ════════════════════════════════════════════════ -->
+        <div class="tab-pane fade" id="pane-mode" role="tabpanel">
+            {% if by_mode %}
+                {% for mode_name, mode_data in by_mode.items %}
+                <div class="card mb-3 shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center bg-info text-white py-2">
+                        <span class="fw-semibold">{{ mode_name }}</span>
+                        <span class="badge bg-white text-info fw-semibold">{{ mode_data.total }} student{{ mode_data.total|pluralize }}</span>
+                    </div>
+                    <div class="card-body p-0">
+                        {% for class_name, rows in mode_data.classes.items %}
+                        <div class="px-3 pt-2 pb-0">
+                            <p class="mb-1 fw-semibold text-primary" style="font-size: 13px;">
+                                {{ class_name }} &nbsp;<span class="badge bg-primary-subtle text-primary-emphasis">{{ rows|length }}</span>
+                            </p>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width:36px">#</th>
+                                        <th>Student Name</th>
+                                        <th>Driver</th>
+                                        <th>Cab Fees</th>
+                                        <th>Address</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for r in rows %}
+                                    <tr>
+                                        <td class="text-muted">{{ forloop.counter }}</td>
+                                        <td class="fw-medium">
+                                            {{ r.student.user.first_name }} {{ r.student.user.last_name }}
+                                        </td>
+                                        <td>{{ r.driver.name|default:"—" }}</td>
+                                        <td>
+                                            {% if r.cab_fees %}
+                                            ₹{{ r.cab_fees }}
+                                            {% else %}<span class="text-muted">—</span>{% endif %}
+                                        </td>
+                                        <td style="max-width:220px; white-space: normal; font-size:12px;">
+                                            {{ r.address|default:"—" }}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'student_enrollment_transport_details' r.student.stu_id %}?session={{ selected_session.id }}"
+                                                class="btn btn-xs btn-outline-primary py-0 px-1" style="font-size:11px;"
+                                                target="_blank">View</a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="text-center text-muted py-5">No transport students found for this session.</div>
+            {% endif %}
+        </div>
+
+        <!-- ════════════════════════════════════════════════
+             TAB 3 — ALL STUDENTS (CLASS-WISE)
+        ════════════════════════════════════════════════ -->
+        <div class="tab-pane fade" id="pane-class" role="tabpanel">
+            {% if by_class %}
+                {% for class_name, rows in by_class.items %}
+                <div class="card mb-3 shadow-sm">
+                    <div class="card-header d-flex justify-content-between align-items-center bg-success-subtle py-2">
+                        <span class="fw-semibold text-success-emphasis">{{ class_name }}</span>
+                        <span class="badge bg-success">{{ rows|length }} student{{ rows|length|pluralize }}</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width:36px">#</th>
+                                    <th>Student Name</th>
+                                    <th>Driver</th>
+                                    <th>Mode</th>
+                                    <th>Cab Fees</th>
+                                    <th>Address</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for r in rows %}
+                                <tr>
+                                    <td class="text-muted">{{ forloop.counter }}</td>
+                                    <td class="fw-medium">
+                                        {{ r.student.user.first_name }} {{ r.student.user.last_name }}
+                                    </td>
+                                    <td>{{ r.driver.name|default:"—" }}</td>
+                                    <td>
+                                        {% if r.mode %}
+                                        <span class="badge bg-info-subtle text-info-emphasis">{{ r.mode.name }}</span>
+                                        {% else %}—{% endif %}
+                                    </td>
+                                    <td>
+                                        {% if r.cab_fees %}
+                                        ₹{{ r.cab_fees }}
+                                        {% else %}<span class="text-muted">—</span>{% endif %}
+                                    </td>
+                                    <td style="max-width:220px; white-space: normal; font-size:12px;">
+                                        {{ r.address|default:"—" }}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'student_enrollment_transport_details' r.student.stu_id %}?session={{ selected_session.id }}"
+                                            class="btn btn-xs btn-outline-primary py-0 px-1" style="font-size:11px;"
+                                            target="_blank">View</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="text-center text-muted py-5">No transport students found for this session.</div>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock dashboard %}

@@ -59,6 +59,7 @@ from .views import (
     transport_list,
     transport_driver_list,
     grouped_transports,
+    transport_roster,
     add_driver,
     drivers_list,
     transport_attendance,
@@ -154,6 +155,7 @@ urlpatterns = [
     path('transport_list/', transport_list, name='transport_list'),
     path('transport_driver_list/', transport_driver_list, name='transport_driver_list'),
     path('grouped_transports/', grouped_transports, name='grouped_transports'),
+    path('transport-roster/', transport_roster, name='transport_roster'),
     path('add_driver/', add_driver, name='add_driver'),
 
 

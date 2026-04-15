@@ -4079,6 +4079,129 @@ def transport_student_list(request):
         'selected_session': selected_session,
     })
 
+
+@login_required(login_url='login')
+def transport_roster(request):
+    """Session-wide transport roster: all students with a driver assigned.
+
+    Groups by driver, transport mode, or class (3 tabs in the template).
+    Resolves transport record from enrollment.transport_details first, then
+    falls back to student.transport so returning students always appear.
+    Does NOT filter by cab_fees — any student with a driver assigned is shown.
+    """
+    if not request.user.is_superuser:
+        return redirect('staff_dashboard')
+
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+    selected_session_id = (
+        request.GET.get('session')
+        or request.GET.get('academic-session')
+        or request.POST.get('session')
+        or request.POST.get('academic-session')
+    )
+    selected_session = AcademicSession.objects.filter(id=selected_session_id).first() if selected_session_id else None
+    if not selected_session:
+        selected_session = active_session
+
+    # Fetch all active enrollments for the session with everything we need.
+    enrollments = (
+        StudentEnrollment.objects
+        .filter(active=True, session=selected_session)
+        .select_related(
+            'student__user',
+            'student__transport__transport_person',
+            'student__transport__transport_mode',
+            'class_name',
+            'transport_details__transport_person',
+            'transport_details__transport_mode',
+            'fees',
+        )
+        .order_by('class_name__created_at', 'student__user__first_name', 'student__user__last_name')
+    )
+
+    # Build flat list of records — resolve transport with enrollment-scoped first,
+    # fall back to student-level legacy record.
+    records = []
+    for enrollment in enrollments:
+        # Resolve transport details
+        td = None
+        try:
+            td = enrollment.transport_details if enrollment.transport_details_id else None
+        except Exception:
+            pass
+        if td is None:
+            try:
+                td = enrollment.student.transport
+            except Exception:
+                pass
+
+        if not td or not getattr(td, 'transport_person_id', None):
+            continue  # no driver assigned → skip
+
+        records.append({
+            'enrollment': enrollment,
+            'student': enrollment.student,
+            'class_name': getattr(enrollment.class_name, 'name', '—'),
+            'driver': td.transport_person,
+            'mode': td.transport_mode,
+            'address': td.address or '',
+            'cab_fees': getattr(getattr(enrollment, 'fees', None), 'cab_fees', None),
+            'transport_details': td,
+        })
+
+    # ── Group by driver → class → students ──────────────────────────────────
+    by_driver = defaultdict(lambda: defaultdict(list))
+    for r in records:
+        driver_key = r['driver'].name if r['driver'] else 'Unassigned'
+        by_driver[driver_key][r['class_name']].append(r)
+
+    # Sort classes inside each driver
+    by_driver_sorted = {}
+    for driver_name in sorted(by_driver.keys()):
+        by_driver_sorted[driver_name] = dict(sorted(by_driver[driver_name].items()))
+
+    # ── Group by transport mode → class → students ───────────────────────────
+    by_mode = defaultdict(lambda: defaultdict(list))
+    for r in records:
+        mode_key = r['mode'].name if r['mode'] else 'Unknown'
+        by_mode[mode_key][r['class_name']].append(r)
+
+    by_mode_sorted = {}
+    for mode_name in sorted(by_mode.keys()):
+        by_mode_sorted[mode_name] = dict(sorted(by_mode[mode_name].items()))
+
+    # ── Group by class → students (flat all-students list) ──────────────────
+    by_class = defaultdict(list)
+    for r in records:
+        by_class[r['class_name']].append(r)
+    by_class_sorted = dict(sorted(by_class.items()))
+
+    total_students = len(records)
+
+    # Build grouped-by-driver with per-driver total embedded
+    by_driver_final = {}
+    for driver_name, class_dict in by_driver_sorted.items():
+        total = sum(len(rows) for rows in class_dict.values())
+        by_driver_final[driver_name] = {'classes': class_dict, 'total': total}
+
+    # Build grouped-by-mode with per-mode total embedded
+    by_mode_final = {}
+    for mode_name, class_dict in by_mode_sorted.items():
+        total = sum(len(rows) for rows in class_dict.values())
+        by_mode_final[mode_name] = {'classes': class_dict, 'total': total}
+
+    return render(request, 'registration/transport_roster.html', {
+        'by_driver': by_driver_final,
+        'by_mode': by_mode_final,
+        'by_class': by_class_sorted,
+        'total_students': total_students,
+        'academic_sessions': sessions,
+        'active_session': active_session,
+        'selected_session': selected_session,
+    })
+
+
 @login_required(login_url='login')
 def assign_mentor(request):
     if not request.user.is_superuser:
