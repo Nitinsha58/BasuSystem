@@ -294,7 +294,6 @@
     }
 
     .doc-declaration strong {
-        /* display: block; */
         font-size: 13px;
         text-transform: uppercase;
         letter-spacing: 0.8px;
@@ -541,10 +540,6 @@
                     <td class="dt-label">Program Duration</td>
                     <td class="dt-value">{% if enrollment.program_duration %}{{ enrollment.program_duration }}{% else %}1 Year{% endif %}</td>
                 </tr>
-                <!-- <tr>
-                    <td class="dt-label">Pick-up Location</td>
-                    <td class="dt-value">{% if transport_details and transport_details.address %}{{ transport_details.address }}{% else %}N/A{% endif %}</td>
-                </tr> -->
             </table>
 
             <!-- Parent / Guardian Details -->
@@ -714,14 +709,19 @@
                     </li>
                     <li>
                         <strong>Refund &amp; Withdrawal Policy</strong>
-                        <p>Upon admission, a deduction equivalent to two months&rsquo; fee shall be applicable
-                            irrespective of the date of withdrawal. This deduction applies even if the student
-                            discontinues before the completion of two months from the date of joining.</p>
-                        <p>No refund shall be applicable once two months have elapsed from the date of joining, under
-                            any circumstances.</p>
-                        <p>Withdrawal is effective only upon written application acknowledged by the Institute. Verbal
-                            or informal requests will not be entertained. Approved refunds will be processed within 30
-                            working days via bank transfer.</p>
+                        <p>Withdrawal is permitted within two months of joining only. To initiate, the parent or guardian must submit a written application to the Institute; verbal or informal requests will not be accepted. The effective withdrawal date is the date the written application is received and acknowledged. No withdrawal or refund request will be entertained after this two-month period, under any circumstances.</p>
+                        <p>Upon withdrawal within the two-month window, the following deductions will apply:</p>
+                        <ul style="margin: 6px 0 10px; padding-left: 20px; font-size: 13px; line-height: 1.8;">
+                            <li>30% of the total course fee</li>
+                            <li>Full registration and administrative charges (non-refundable)</li>
+                        </ul>
+                        <p>The remaining balance, if any, will be refunded via bank transfer within 30 working days of withdrawal approval. No refund is applicable once two months have elapsed from the date of joining.</p>
+                    </li>
+                    <li>
+                        <strong>Auto-Debit Authorization (eNACH)</strong>
+                        <p>Applicable only to parents/guardians who opted for eNACH at admission. By doing so, you authorize BASU Education to automatically debit installment amounts from your registered bank account on or after the respective due dates as per the schedule agreed at enrollment. The mandate remains active until the end of the academic session or full fee recovery, whichever is earlier.</p>
+                        <p>You are responsible for maintaining sufficient funds in the registered account on all due dates. The Institute is not liable for any bank charges, penalties, or failed transaction fees due to insufficient funds. Auto-debit failures are treated as late payments and standard penalties apply from the due date.</p>
+                        <p>The mandate may be cancelled only upon full payment of outstanding fees or upon formal written request acknowledged by the Institute. Cancellation of the mandate does not waive the fee obligation; all dues remain payable.</p>
                     </li>
                     <li>
                         <strong>Transport Facility</strong>
@@ -820,6 +820,11 @@
                         understood, and voluntarily agreed to all terms and conditions mentioned above.</p>
                     <p>I also acknowledge that these terms are subject to change, and any updates will be communicated
                         in advance.</p>
+                    {% if fees_details and fees_details.payment_mode == 'enach' %}
+                    <p>I further confirm that I have opted for the Auto-Debit (eNACH) mode of payment and authorize
+                        BASU Education to debit installment amounts from my registered bank account as per the agreed
+                        schedule.</p>
+                    {% endif %}
                 </div>
 
                 <div class="doc-signature-block">
