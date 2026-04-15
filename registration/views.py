@@ -1735,6 +1735,7 @@ def student_enrollment_reg_doc(request, stu_id):
 
         installments = Installment.objects.filter(fee_details=fees_details, enrollment=enrollment).order_by('due_date')
 
+    has_auto_debit = installments.filter(payment_type='Auto Debit').exists()
     transport_details = TransportDetails.objects.filter(enrollment=enrollment).first()
 
     return render(request, "registration/enrollment/student_enrollment_reg_doc.html", {
@@ -1742,6 +1743,7 @@ def student_enrollment_reg_doc(request, stu_id):
         'enrollment': enrollment,
         'fees_details': fees_details,
         'installments': installments,
+        'has_auto_debit': has_auto_debit,
         'transport_details': transport_details,
         'total_discount': total_discount,
         'total_fees': total_fees,
@@ -1992,11 +1994,14 @@ def print_enrollment_receipt(request, stu_id):
             enrollment=enrollment,
         ).order_by('due_date')
 
+    has_auto_debit = installments.filter(payment_type='Auto Debit').exists()
+
     return render(request, "registration/enrollment/enrollment_receipt.html", {
         'student': student,
         'enrollment': enrollment,
         'fees_details': fees_details,
         'installments': installments,
+        'has_auto_debit': has_auto_debit,
         'today': datetime.now(),
         'academic_sessions': sessions,
         'active_session': active_session,
