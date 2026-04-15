@@ -142,6 +142,26 @@
     </div>
 </nav>
 
+{% if 'enrollment' in request.path or 'registration' in request.path %}
+<div id="enrollmentMigrationAlert" class="alert alert-warning fade show mb-0 rounded-0 border-0 border-bottom border-warning w-100 px-4 py-2" role="alert" style="background-color:#fff3cd;">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="flex-grow-1">
+            <strong>⚠ Enrollment Portal Migration Notice:</strong>
+            No new enrollments should be done on this portal.
+            All new enrollments must be added on the new portal.
+            <span class="text-muted small">This portal remains open for reviewing existing student data only.</span>
+        </div>
+        <div class="d-flex align-items-center gap-3 flex-shrink-0">
+            <a href="https://admin.basueducation.com" target="_blank" rel="noopener noreferrer"
+               class="btn btn-sm btn-warning fw-semibold text-dark text-nowrap border border-dark-subtle">
+                Go to New Portal &rarr;
+            </a>
+            <button type="button" class="btn-close flex-shrink-0" onclick="document.getElementById('enrollmentMigrationAlert').remove()" aria-label="Dismiss notice"></button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 
 <!-- ══════════════════════════════════════════════════════════
      Fee Calculator Modal — REDESIGNED
