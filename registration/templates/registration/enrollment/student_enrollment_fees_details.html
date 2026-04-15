@@ -186,6 +186,11 @@
             <p class="form-label fs-4 fw-normal text-end">
               Total: <span id="total_fees">{{fees_details.total_fees}}</span>
             </p>
+            {% if fees_details and fees_details.updated_at %}
+            <p class="text-end text-muted small mb-0">
+              Last updated: {{ fees_details.updated_at|date:"d M Y, g:i A" }}
+            </p>
+            {% endif %}
           </div>
         </div>
         <input type="text" hidden value="{{fees_details.total_fees}}" class="form-control"
@@ -239,11 +244,7 @@
 
         <!-- Annual Course Fee + Registration Charge + Cab -->
         <div class="row justify-content-evenly mt-3">
-          <div class="col-md-4">
-            <label for="tuition_fees" class="form-label">Annual Course Fee</label>
-            <input type="text" minlength="10" maxlength="10" value="{{fees_details.tuition_fees}}"
-              class="form-control" name="tuition_fees" id="tuition_fees" required>
-          </div>
+          
           <div class="col-md-4">
             <label for="registration_fee_input" class="form-label">Registration Charge <span class="text-muted fw-normal small">(15% of course fee)</span></label>
             <input type="text" id="registration_fee_input" name="registration_fee" readonly
@@ -251,18 +252,36 @@
               class="form-control bg-light text-muted">
             <div class="form-text">Auto-computed, fixed pre-discount</div>
           </div>
+          
           <div class="col-md-4">
             <label for="cab_fees" class="form-label">Cab Fees</label>
             <input type="text" minlength="10" value="{{fees_details.cab_fees}}" maxlength="10"
-              class="form-control" name="cab_fees" id="cab_fees">
+            class="form-control" name="cab_fees" id="cab_fees">
           </div>
         </div>
+
         <!-- Hidden: derived fee components submitted with form -->
         <input type="hidden" name="book_fees" id="book_fees_input" value="{{fees_details.book_fees|default:'0'}}">
         <input type="hidden" name="tuition_component" id="tuition_component_input" value="{{fees_details.tuition_component|default:'0'}}">
         <input type="hidden" name="book_component" id="book_component_input" value="{{fees_details.book_component|default:'0'}}">
 
         <!-- Installment count + Discount -->
+        <div class="row justify-content-evenly mt-3">
+          <div class="col-md-4">
+            <label for="tuition_fees" class="form-label">Annual Course Fee</label>
+            <input type="text" minlength="10" maxlength="10" value="{{fees_details.tuition_fees}}"
+              class="form-control" name="tuition_fees" id="tuition_fees" required>
+          </div>
+
+
+          <div class="col-md-4">
+            <label for="discount" class="form-label">Discount on Tuition Fees</label>
+            <input type="text" minlength="10" maxlength="10" value="{{fees_details.discount}}"
+              class="form-control" name="discount" id="discount">
+            <div class="form-text">Applies to tuition only, not to registration charge</div>
+          </div>
+        </div>
+        
         <div class="row justify-content-evenly mt-3">
           <div class="col-md-4 ms-4">
             <label class="form-label">No. Of Installments</label>
@@ -278,10 +297,6 @@
             </div>
           </div>
           <div class="col-md-4">
-            <label for="discount" class="form-label">Discount on Tuition Fees</label>
-            <input type="text" minlength="10" maxlength="10" value="{{fees_details.discount}}"
-              class="form-control" name="discount" id="discount">
-            <div class="form-text">Applies to tuition only, not to registration charge</div>
           </div>
         </div>
 
