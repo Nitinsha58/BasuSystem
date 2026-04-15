@@ -88,12 +88,24 @@ WHATSAPP_GROUPS_BY_SESSION = {
 }
 
 
-def _wa_class_key(class_name_str):
-    """Map a class name string to its WHATSAPP_GROUPS key."""
+def _wa_class_key(class_name_str, target_focus=None):
+    """Map a class name string (+ optional course target_focus) to its WHATSAPP_GROUPS key.
+
+    For Classes 11/12, the suffix is determined as follows:
+      - 'COMMERCE' in class name → <num>_COMMERCE
+      - 'JEE' or 'NEET' in target_focus → <num>_JEE  (they share one group)
+      - otherwise → <num>_PCM
+    """
     cls = (class_name_str or "").upper()
+    tf = (target_focus or "").upper()
     for num in ("11", "12"):
         if num in cls:
-            suffix = "COMMERCE" if "COMMERCE" in cls else "PCM"
+            if "COMMERCE" in cls:
+                suffix = "COMMERCE"
+            elif "JEE" in tf or "NEET" in tf:
+                suffix = "JEE"
+            else:
+                suffix = "PCM"
             return f"{num}_{suffix}"
     for num in ("7", "8", "9", "10"):
         if num in cls:
@@ -106,7 +118,12 @@ def _build_wa_links(student, enrollment, session_groups):
     class_name_str = enrollment.class_name.name if (enrollment and enrollment.class_name) else ""
     session_name   = enrollment.session.name   if (enrollment and enrollment.session)   else ""
 
-    class_key = _wa_class_key(class_name_str)
+    target_focus = (
+        getattr(enrollment.course_offering, "target_focus", None)
+        if (enrollment and getattr(enrollment, "course_offering", None))
+        else None
+    )
+    class_key = _wa_class_key(class_name_str, target_focus=target_focus)
     student_group = parent_group = None
     if class_key and class_key in session_groups:
         grp = session_groups[class_key]
