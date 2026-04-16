@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block dashboard %}
+<div class="container-sm p-4">
+
+    <div class="mb-4">
+        <h4 class="fw-semibold mb-1">Export Student Fees</h4>
+        <p class="text-muted small mb-0">
+            Downloads a CSV with one row per installment. Each row includes student details,
+            enrollment, fee summary and installment information.
+        </p>
+    </div>
+
+    <div class="bg-light rounded p-4" style="max-width: 600px;">
+        <form method="get" action="">
+
+            <div class="mb-3">
+                <label for="session_id" class="form-label fw-medium">
+                    Academic Session <span class="text-danger">*</span>
+                </label>
+                <select name="session_id" id="session_id" class="form-select" required>
+                    <option value="">— Select session —</option>
+                    {% for session in sessions %}
+                        <option value="{{ session.id }}"
+                            {% if active_session and session.id == active_session.id %}selected{% endif %}>
+                            {{ session.name }}{% if session.is_active %} (Active){% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="class_id" class="form-label fw-medium">Class <span class="text-muted fw-normal">(optional)</span></label>
+                <select name="class_id" id="class_id" class="form-select">
+                    <option value="">— All classes —</option>
+                    {% for cn in class_names %}
+                        <option value="{{ cn.id }}">{{ cn.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-4">
+                <label for="offering_id" class="form-label fw-medium">Course Offering <span class="text-muted fw-normal">(optional)</span></label>
+                <select name="offering_id" id="offering_id" class="form-select">
+                    <option value="">— All offerings —</option>
+                    {% for co in course_offerings %}
+                        <option value="{{ co.id }}">{{ co.name }} — {{ co.class_name }} ({{ co.session }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary px-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                    class="bi bi-download me-1 mb-1" viewBox="0 0 16 16">
+                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5"/>
+                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708z"/>
+                </svg>
+                Download CSV
+            </button>
+
+        </form>
+    </div>
+
+    <div class="mt-4 text-muted small" style="max-width: 600px;">
+        <strong>CSV columns:</strong>
+        student_id, student_name, phone, email, gender, dob, date_of_joining, school,
+        father_name, mother_name, father_contact, mother_contact,
+        session, class, course_offering, subjects,
+        course_annual_fee, tuition_fees, subjects_fee_detail, book_fees_derived,
+        cab_fees, discount, registration_fee, book_discount, registration_discount,
+        gst_opted_in, tuition_gst, book_gst, transport_gst,
+        total_fees, paid_amount, remaining_balance,
+        installment_label, installment_due_date, installment_amount,
+        installment_payment_type, installment_paid, installment_remark
+    </div>
+
+</div>
+{% endblock %}
