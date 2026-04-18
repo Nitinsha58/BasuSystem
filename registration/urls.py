@@ -92,6 +92,9 @@ from .views import (
 
     # Fees Export
     export_fees_view,
+    export_zoho_view,
+    export_zoho_amount_collection_view,
+    export_zoho_invoice_detail_view,
     )
 
 
@@ -131,6 +134,9 @@ urlpatterns = [
     path('api/fee-calculator/init/', api_fee_calculator_init, name='api_fee_calculator_init'),
 
     path('enrollments/export/fees/', export_fees_view, name='export_fees'),
+    path('enrollments/export/zoho/', export_zoho_view, name='export_zoho'),
+    path('enrollments/export/zoho/amount-collection/', export_zoho_amount_collection_view, name='export_zoho_amount_collection'),
+    path('enrollments/export/zoho/invoice-detail/', export_zoho_invoice_detail_view, name='export_zoho_invoice_detail'),
 
     path('delete_installment/<uuid:stu_id>/<int:ins_id>', delete_installment, name='delete_installment'),
 

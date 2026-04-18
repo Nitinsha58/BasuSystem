@@ -5462,3 +5462,279 @@ def export_fees_view(request):
     response = StreamingHttpResponse(stream(), content_type='text/csv')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+
+def _build_enrollment_qs(session_id, class_id=None, offering_id=None):
+    """
+    Build a queryset of StudentEnrollments with all necessary prefetch relations.
+    Returns: qs, selected_session (or None if invalid)
+    """
+    selected_session = AcademicSession.objects.filter(id=session_id).first()
+    if not selected_session:
+        return None, None
+
+    qs = (
+        StudentEnrollment.objects
+        .filter(session=selected_session)
+        .select_related(
+            'student__user',
+            'student__parent_details',
+            'session',
+            'class_name',
+            'course_offering',
+        )
+        .prefetch_related(
+            'subjects',
+            'course_offering__course_subjects__subject',
+        )
+        .order_by('student__user__first_name', 'student__user__last_name')
+    )
+
+    if class_id:
+        qs = qs.filter(class_name_id=class_id)
+    if offering_id:
+        qs = qs.filter(course_offering_id=offering_id)
+
+    return qs, selected_session
+
+
+def _subjects_fee_list(course_offering, enrolled_subject_ids, annual_fee):
+    """
+    Returns list of (subject_name, fee_amount) tuples for subject-wise fees.
+    Each subject's tuition = annual_fee × 0.85 × (subject_pct / 100).
+    """
+    if not course_offering or not annual_fee:
+        return []
+
+    annual_fee = Decimal(str(annual_fee))
+    tuition_base = annual_fee * Decimal('0.85')
+    subjects_list = []
+
+    for cos in course_offering.course_subjects.all():
+        if cos.subject_id in enrolled_subject_ids:
+            fee = (tuition_base * cos.percentage / Decimal('100')).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+            subjects_list.append((cos.subject.name, fee))
+
+    return subjects_list
+
+
+@login_required
+def export_zoho_view(request):
+    """
+    Render filter page for Zoho exports (Amount Collection + Invoice Detail).
+    GET (no session_id) → render filter form
+    """
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+    class_names = ClassName.objects.all().order_by('name')
+    course_offerings = CourseOffering.objects.filter(active=True).select_related('session', 'class_name').order_by('class_name__name', 'name')
+
+    return render(request, 'registration/export_zoho.html', {
+        'sessions': sessions,
+        'active_session': active_session,
+        'class_names': class_names,
+        'course_offerings': course_offerings,
+    })
+
+
+@login_required
+def export_zoho_amount_collection_view(request):
+    """
+    Export AMOUNT COLLECTION CSV for Zoho (paid installments only).
+    CSV: CUSTOMER NAME, AMOUNT, MODE, PAYMENT DATE, SUFIX
+    """
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+    class_names = ClassName.objects.all().order_by('name')
+    course_offerings = CourseOffering.objects.filter(active=True).select_related('session', 'class_name').order_by('class_name__name', 'name')
+
+    session_id = request.GET.get('session_id')
+    class_id = request.GET.get('class_id')
+    offering_id = request.GET.get('offering_id')
+
+    if not session_id:
+        return render(request, 'registration/export_zoho.html', {
+            'sessions': sessions,
+            'active_session': active_session,
+            'class_names': class_names,
+            'course_offerings': course_offerings,
+        })
+
+    qs, selected_session = _build_enrollment_qs(session_id, class_id, offering_id)
+    if not selected_session:
+        messages.error(request, 'Invalid session selected.')
+        return render(request, 'registration/export_zoho.html', {
+            'sessions': sessions,
+            'active_session': active_session,
+            'class_names': class_names,
+            'course_offerings': course_offerings,
+        })
+
+    # Pre-fetch enrollments and build invoice number mapping
+    enrollment_ids = list(qs.values_list('id', flat=True))
+    invoice_num_by_enrollment = {eid: idx + 1 for idx, eid in enumerate(enrollment_ids)}
+
+    installments_qs = Installment.objects.filter(
+        enrollment_id__in=enrollment_ids,
+        paid=True
+    ).select_related('student__user').order_by('student__user__first_name', 'student__user__last_name', 'due_date')
+
+    CSV_HEADERS = ['CUSTOMER NAME', 'AMOUNT', 'MODE', 'PAYMENT DATE', 'SUFIX']
+
+    def generate_rows():
+        yield CSV_HEADERS
+        for ins in installments_qs:
+            user = ins.student.user
+            customer_name = f"{user.first_name} {user.last_name}".strip()
+            amount = int(ins.amount)
+            mode = ins.payment_type.upper() if ins.payment_type else ''
+            payment_date = ins.due_date.strftime('%d/%m/%Y') if ins.due_date else ''
+            sufix = str(invoice_num_by_enrollment.get(ins.enrollment_id, ''))
+
+            yield [customer_name, amount, mode, payment_date, sufix]
+
+    class CsvEcho:
+        def write(self, value):
+            return value
+
+    pseudo_buffer = CsvEcho()
+    writer = csv.writer(pseudo_buffer)
+
+    def stream():
+        for row in generate_rows():
+            yield writer.writerow(row)
+
+    today = datetime.now().strftime('%Y-%m-%d')
+    session_slug = selected_session.name.replace(' ', '_').replace('/', '-')
+    filename = f"amount_collection_{session_slug}_{today}.csv"
+
+    response = StreamingHttpResponse(stream(), content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+
+@login_required
+def export_zoho_invoice_detail_view(request):
+    """
+    Export CUSTOMER INVOICE DETAIL CSV for Zoho (one row per fee line item).
+    CSV: CUSTOMER NAME, INVOICE DATE, INVOICE NUMBER, DUE DATE, ITEM NAME, ITEM PRICE, QUANTITY, SUBJECT, CLASS, SESSION, COURSE, CENTRE
+    """
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+    class_names = ClassName.objects.all().order_by('name')
+    course_offerings = CourseOffering.objects.filter(active=True).select_related('session', 'class_name').order_by('class_name__name', 'name')
+
+    session_id = request.GET.get('session_id')
+    class_id = request.GET.get('class_id')
+    offering_id = request.GET.get('offering_id')
+
+    if not session_id:
+        return render(request, 'registration/export_zoho.html', {
+            'sessions': sessions,
+            'active_session': active_session,
+            'class_names': class_names,
+            'course_offerings': course_offerings,
+        })
+
+    qs, selected_session = _build_enrollment_qs(session_id, class_id, offering_id)
+    if not selected_session:
+        messages.error(request, 'Invalid session selected.')
+        return render(request, 'registration/export_zoho.html', {
+            'sessions': sessions,
+            'active_session': active_session,
+            'class_names': class_names,
+            'course_offerings': course_offerings,
+        })
+
+    # Pre-fetch FeeDetails and Installments
+    enrollment_ids = list(qs.values_list('id', flat=True))
+    invoice_num_by_enrollment = {eid: idx + 1 for idx, eid in enumerate(enrollment_ids)}
+
+    fee_by_enrollment = {
+        fd.enrollment_id: fd
+        for fd in FeeDetails.objects.filter(enrollment_id__in=enrollment_ids)
+    }
+
+    installments_by_enrollment = defaultdict(list)
+    for ins in Installment.objects.filter(enrollment_id__in=enrollment_ids).order_by('due_date'):
+        installments_by_enrollment[ins.enrollment_id].append(ins)
+
+    CSV_HEADERS = ['CUSTOMER NAME', 'INVOICE DATE', 'INVOICE NUMBER', 'DUE DATE', 'ITEM NAME', 'ITEM PRICE', 'QUANTITY', 'SUBJECT', 'CLASS', 'SESSION', 'COURSE', 'CENTRE']
+
+    def generate_rows():
+        yield CSV_HEADERS
+        for enrollment in qs:
+            student = enrollment.student
+            user = student.user
+            customer_name = f"{user.first_name} {user.last_name}".strip()
+
+            fd = fee_by_enrollment.get(enrollment.id)
+            if not fd:
+                continue
+
+            co = enrollment.course_offering
+            annual_fee = co.annual_fee if co else None
+            enrolled_subject_ids = set(enrollment.subjects.values_list('id', flat=True))
+
+            invoice_num = invoice_num_by_enrollment.get(enrollment.id, '')
+            invoice_date = fd.created_at.strftime('%d/%m/%Y') if fd.created_at else ''
+
+            installments = installments_by_enrollment.get(enrollment.id, [])
+            due_date = installments[-1].due_date.strftime('%d/%m/%Y') if installments else ''
+
+            class_name = str(enrollment.class_name)
+            session_name = str(enrollment.session)
+            course_name = str(co) if co else ''
+            centre = 'BASU CLASSES'
+
+            # 1. REGISTRATION FEES
+            if fd.registration_fee and Decimal(str(fd.registration_fee)) > 0:
+                yield [
+                    customer_name, invoice_date, str(invoice_num), due_date,
+                    'REGISTRTION FEES', int(fd.registration_fee), 'STUDENT',
+                    '', class_name, session_name, course_name, centre
+                ]
+
+            # 2. ACADEMIC FEES (one row per subject)
+            subjects_list = _subjects_fee_list(co, enrolled_subject_ids, annual_fee)
+            for subject_name, fee in subjects_list:
+                yield [
+                    customer_name, invoice_date, str(invoice_num), due_date,
+                    'ACADEMIC FEES', int(fee), 'STUDENT',
+                    subject_name, class_name, session_name, course_name, centre
+                ]
+
+            # 3. TRANSPORT FEES
+            if fd.cab_fees and Decimal(str(fd.cab_fees)) > 0:
+                yield [
+                    customer_name, invoice_date, str(invoice_num), due_date,
+                    'TRANSPORT FEES', int(fd.cab_fees), 'STUDENT',
+                    '', class_name, session_name, course_name, centre
+                ]
+
+            # 4. DISCOUNT (negative)
+            if fd.discount and Decimal(str(fd.discount)) > 0:
+                yield [
+                    customer_name, invoice_date, str(invoice_num), due_date,
+                    'DISCOUNT', -int(fd.discount), 'STUDENT',
+                    '', class_name, session_name, course_name, centre
+                ]
+
+    class CsvEcho:
+        def write(self, value):
+            return value
+
+    pseudo_buffer = CsvEcho()
+    writer = csv.writer(pseudo_buffer)
+
+    def stream():
+        for row in generate_rows():
+            yield writer.writerow(row)
+
+    today = datetime.now().strftime('%Y-%m-%d')
+    session_slug = selected_session.name.replace(' ', '_').replace('/', '-')
+    filename = f"customer_invoice_detail_{session_slug}_{today}.csv"
+
+    response = StreamingHttpResponse(stream(), content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
