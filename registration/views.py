@@ -5281,22 +5281,33 @@ def _build_enrollment_qs(session_id, class_id=None, offering_id=None):
     return qs, selected_session
 
 
-def _subjects_fee_list(course_offering, enrolled_subject_ids, annual_fee):
+def _subjects_fee_list(course_offering, enrolled_subject_ids, academic_base):
     """
-    Returns list of (subject_name, fee_amount) tuples for subject-wise fees.
-    Each subject's tuition = annual_fee × 0.85 × (subject_pct / 100).
+    Returns [(subject_name, fee)] for enrolled subjects.
+    academic_base = fd.tuition_fees - fd.registration_fee.
+    Fees are normalized so they sum exactly to academic_base.
     """
-    if not course_offering or not annual_fee:
+    if not course_offering or not academic_base:
         return []
 
-    annual_fee = Decimal(str(annual_fee))
-    tuition_base = annual_fee * Decimal('0.85')
-    subjects_list = []
+    academic_base = Decimal(str(academic_base))
 
-    for cos in course_offering.course_subjects.all():
-        if cos.subject_id in enrolled_subject_ids:
-            fee = (tuition_base * cos.percentage / Decimal('100')).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
-            subjects_list.append((cos.subject.name, fee))
+    enrolled_subjects = [
+        (cos.subject.name, cos.percentage)
+        for cos in course_offering.course_subjects.all()
+        if cos.subject_id in enrolled_subject_ids
+    ]
+    if not enrolled_subjects:
+        return []
+
+    sum_pct = sum(pct for _, pct in enrolled_subjects)
+    if sum_pct == 0:
+        return []
+
+    subjects_list = []
+    for subject_name, pct in enrolled_subjects:
+        fee = (academic_base * pct / sum_pct).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+        subjects_list.append((subject_name, fee))
 
     return subjects_list
 
@@ -5456,7 +5467,6 @@ def export_zoho_invoice_detail_view(request):
                 continue
 
             co = enrollment.course_offering
-            annual_fee = co.annual_fee if co else None
             enrolled_subject_ids = set(enrollment.subjects.values_list('id', flat=True))
 
             invoice_num = invoice_num_by_enrollment.get(enrollment.id, '')
@@ -5470,16 +5480,24 @@ def export_zoho_invoice_detail_view(request):
             course_name = str(co) if co else ''
             centre = 'BASU CLASSES'
 
+            # Derive registration_fee from catalog price — fd.registration_fee may be stale
+            if co and co.annual_fee:
+                reg_fee = (Decimal(str(co.annual_fee)) * Decimal('0.15')).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+            else:
+                reg_fee = Decimal('0')
+
+            academic_base = Decimal(str(fd.tuition_fees or 0)) - reg_fee
+
             # 1. REGISTRATION FEES
-            if fd.registration_fee and Decimal(str(fd.registration_fee)) > 0:
+            if reg_fee > 0:
                 yield [
                     customer_name, invoice_date, str(invoice_num), due_date,
-                    'REGISTRTION FEES', int(fd.registration_fee), 'STUDENT',
+                    'REGISTRTION FEES', int(reg_fee), 'STUDENT',
                     '', class_name, session_name, course_name, centre
                 ]
 
             # 2. ACADEMIC FEES (one row per subject)
-            subjects_list = _subjects_fee_list(co, enrolled_subject_ids, annual_fee)
+            subjects_list = _subjects_fee_list(co, enrolled_subject_ids, academic_base)
             for subject_name, fee in subjects_list:
                 yield [
                     customer_name, invoice_date, str(invoice_num), due_date,
