@@ -5539,3 +5539,76 @@ def export_zoho_invoice_detail_view(request):
     response = StreamingHttpResponse(stream(), content_type='text/csv')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+
+@login_required
+def export_zoho_installments_view(request):
+    """
+    Export INSTALLMENTS CSV for Zoho (all installments).
+    CSV: CUSTOMER NAME, INSTALLMENT LABEL, AMOUNT, DUE DATE, PAYMENT MODE, PAID STATUS
+    """
+    sessions = AcademicSession.objects.all().order_by('-start_date')
+    active_session = AcademicSession.get_active()
+    class_names = ClassName.objects.all().order_by('name')
+    course_offerings = CourseOffering.objects.filter(active=True).select_related('session', 'class_name').order_by('class_name__name', 'name')
+
+    session_id = request.GET.get('session_id')
+    class_id = request.GET.get('class_id')
+    offering_id = request.GET.get('offering_id')
+
+    if not session_id:
+        return render(request, 'registration/export_zoho.html', {
+            'sessions': sessions,
+            'active_session': active_session,
+            'class_names': class_names,
+            'course_offerings': course_offerings,
+        })
+
+    qs, selected_session = _build_enrollment_qs(session_id, class_id, offering_id)
+    if not selected_session:
+        messages.error(request, 'Invalid session selected.')
+        return render(request, 'registration/export_zoho.html', {
+            'sessions': sessions,
+            'active_session': active_session,
+            'class_names': class_names,
+            'course_offerings': course_offerings,
+        })
+
+    enrollment_ids = list(qs.values_list('id', flat=True))
+    installments_qs = Installment.objects.filter(
+        enrollment_id__in=enrollment_ids
+    ).select_related('student__user').order_by('student__user__first_name', 'student__user__last_name', 'due_date')
+
+    CSV_HEADERS = ['CUSTOMER NAME', 'INSTALLMENT LABEL', 'AMOUNT', 'DUE DATE', 'PAYMENT MODE', 'PAID STATUS']
+
+    def generate_rows():
+        yield CSV_HEADERS
+        for ins in installments_qs:
+            user = ins.student.user
+            customer_name = f"{user.first_name} {user.last_name}".strip()
+            label = ins.label or ''
+            amount = int(ins.amount)
+            due_date = ins.due_date.strftime('%d/%m/%Y') if ins.due_date else ''
+            payment_mode = ins.payment_type.upper() if ins.payment_type else ''
+            paid_status = 'PAID' if ins.paid else 'PENDING'
+
+            yield [customer_name, label, amount, due_date, payment_mode, paid_status]
+
+    class CsvEcho:
+        def write(self, value):
+            return value
+
+    pseudo_buffer = CsvEcho()
+    writer = csv.writer(pseudo_buffer)
+
+    def stream():
+        for row in generate_rows():
+            yield writer.writerow(row)
+
+    today = datetime.now().strftime('%Y-%m-%d')
+    session_slug = selected_session.name.replace(' ', '_').replace('/', '-')
+    filename = f"installments_{session_slug}_{today}.csv"
+
+    response = StreamingHttpResponse(stream(), content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
