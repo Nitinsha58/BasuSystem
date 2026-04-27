@@ -215,6 +215,10 @@
     <!-- Toggle date -->
     <button class="enroll-toggle-btn" id="toggle-date">Toggle date</button>
 
+    <!-- Export CSV -->
+    <a href="{% url 'export_enrollment_csv' %}{% if selected_session %}?session={{ selected_session.id }}{% endif %}"
+       class="enroll-toggle-btn" style="text-decoration:none;">Export CSV</a>
+
 </div>
 
 <!-- Registered but not enrolled -->

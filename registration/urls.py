@@ -94,6 +94,7 @@ from .views import (
     export_zoho_view,
     export_zoho_amount_collection_view,
     export_zoho_invoice_detail_view,
+    export_enrollment_csv,
     )
 
 
@@ -135,6 +136,7 @@ urlpatterns = [
     path('enrollments/export/zoho/', export_zoho_view, name='export_zoho'),
     path('enrollments/export/zoho/amount-collection/', export_zoho_amount_collection_view, name='export_zoho_amount_collection'),
     path('enrollments/export/zoho/invoice-detail/', export_zoho_invoice_detail_view, name='export_zoho_invoice_detail'),
+    path('enrollments/export/csv/', export_enrollment_csv, name='export_enrollment_csv'),
 
     path('delete_installment/<uuid:stu_id>/<int:ins_id>', delete_installment, name='delete_installment'),
 

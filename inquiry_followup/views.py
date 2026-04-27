@@ -11,10 +11,12 @@ from registration.models import AcademicSession
 from marketing.models import Campaign
 from .session_selection import select_session_for_date
 
-from django.http import JsonResponse
+from django.http import JsonResponse, StreamingHttpResponse
 from urllib.parse import urlencode
 from django.views.decorators.http import require_GET, require_POST
 import json
+import csv
+from datetime import datetime
 
 from django.contrib.auth.decorators import user_passes_test
 
@@ -1119,3 +1121,65 @@ def report_data(request):
     }
 
     return JsonResponse(data)
+
+
+def export_inquiry_csv(request):
+    """Export inquiries as CSV: Name, Phone, Parent Name, Class, Source/Campaign, Assigned To, Status, Date"""
+    class CsvEcho:
+        def write(self, value):
+            return value
+
+    def rows():
+        writer = csv.writer(CsvEcho())
+        yield writer.writerow(['Name', 'Phone', 'Parent Name', 'Class', 'Source/Campaign', 'Assigned To', 'Status', 'Date'])
+
+        qs = Inquiry.objects.select_related(
+            'campaign', 'session', 'assigned_counsellor__user'
+        ).prefetch_related('classes', 'followup__status')
+
+        session_id = request.GET.get('session')
+        campaign_id = request.GET.get('campaign')
+        status_id = request.GET.get('status')
+        counsellor_id = request.GET.get('counsellor')
+        class_id = request.GET.get('class')
+
+        if session_id:
+            qs = qs.filter(session_id=session_id)
+        if campaign_id:
+            qs = qs.filter(campaign_id=campaign_id)
+        if status_id:
+            qs = qs.filter(followup__status_id=status_id)
+        if counsellor_id:
+            qs = qs.filter(assigned_counsellor_id=counsellor_id)
+        if class_id:
+            qs = qs.filter(classes__id=class_id)
+
+        qs = qs.order_by('-created_at')
+
+        for inquiry in qs:
+            classes = ', '.join(c.name for c in inquiry.classes.all())
+            campaign = inquiry.campaign.name if inquiry.campaign else ''
+            counsellor = ''
+            if inquiry.assigned_counsellor and inquiry.assigned_counsellor.user:
+                u = inquiry.assigned_counsellor.user
+                counsellor = f"{u.first_name} {u.last_name}".strip()
+
+            latest_followup = inquiry.followup.order_by('-created_at').first()
+            status = latest_followup.status.name if latest_followup and latest_followup.status else ''
+            date = latest_followup.created_at.strftime('%d-%m-%Y') if latest_followup else ''
+
+            yield writer.writerow([
+                inquiry.student_name,
+                inquiry.phone,
+                inquiry.parent_name,
+                classes,
+                campaign,
+                counsellor,
+                status,
+                date,
+            ])
+
+    filename = f"inquiries_{datetime.now().strftime('%Y-%m-%d')}.csv"
+    response = StreamingHttpResponse(rows(), content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response

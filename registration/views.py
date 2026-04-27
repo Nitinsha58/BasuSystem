@@ -5407,6 +5407,48 @@ def export_zoho_amount_collection_view(request):
     return response
 
 
+def export_enrollment_csv(request):
+    """Export enrollments as CSV: Name, Phone, Class, Enrollment Date, Total Fee, Fee Paid"""
+    session_id = request.GET.get('session')
+
+    class CsvEcho:
+        def write(self, value):
+            return value
+
+    def rows():
+        writer = csv.writer(CsvEcho())
+        yield writer.writerow(['Name', 'Phone', 'Class', 'Enrollment Date', 'Total Fee', 'Fee Paid'])
+
+        qs = StudentEnrollment.objects.filter(active=True)
+        if session_id:
+            qs = qs.filter(session_id=session_id)
+
+        qs = qs.select_related(
+            'student__user', 'class_name', 'fees'
+        ).order_by('class_name__created_at', 'student__user__first_name')
+
+        for enrollment in qs:
+            student = enrollment.student
+            user = student.user
+            name = f"{user.first_name} {user.last_name}".strip()
+            phone = user.phone if hasattr(user, 'phone') else ''
+            class_name = enrollment.class_name.name if enrollment.class_name else ''
+            enrollment_date = student.doj.strftime('%d-%m-%Y') if student.doj else ''
+            try:
+                fd = enrollment.fees
+                total_fee = fd.total_fees or 0
+                fee_paid = fd.paid_amount or 0
+            except Exception:
+                total_fee, fee_paid = 0, 0
+            yield writer.writerow([name, phone, class_name, enrollment_date, total_fee, fee_paid])
+
+    session_label = session_id or 'all'
+    today = datetime.now().strftime('%Y-%m-%d')
+    filename = f"enrollments_{session_label}_{today}.csv"
+    response = StreamingHttpResponse(rows(), content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
 @login_required
 def export_zoho_invoice_detail_view(request):
     """

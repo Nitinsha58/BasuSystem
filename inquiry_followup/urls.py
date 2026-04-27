@@ -18,6 +18,7 @@ from .views import (
     patch_inquiry_field,
     report_page,
     report_data,
+    export_inquiry_csv,
 )
 
 urlpatterns = [
@@ -41,4 +42,5 @@ urlpatterns = [
 
     path('inquiries/report/', report_page, name='inquiry_report'),
     path('inquiries/report/data/', report_data, name='inquiry_report_data'),
+    path('inquiries/export/csv/', export_inquiry_csv, name='export_inquiry_csv'),
 ]
