@@ -11,11 +11,13 @@ from registration.models import AcademicSession
 from marketing.models import Campaign
 from .session_selection import select_session_for_date
 
-from django.http import JsonResponse, StreamingHttpResponse
+from django.http import JsonResponse, StreamingHttpResponse, HttpResponse
 from urllib.parse import urlencode
 from django.views.decorators.http import require_GET, require_POST
 import json
 import csv
+import zipfile
+import io
 from datetime import datetime
 
 from django.contrib.auth.decorators import user_passes_test
@@ -1124,62 +1126,131 @@ def report_data(request):
 
 
 def export_inquiry_csv(request):
-    """Export inquiries as CSV: Name, Phone, Parent Name, Class, Source/Campaign, Assigned To, Status, Date"""
-    class CsvEcho:
-        def write(self, value):
-            return value
+    """
+    Export all inquiries and followups as two linked CSV files in a ZIP archive.
+    
+    Files created:
+      - inquiries_YYYY-MM-DD.csv: Inquiry summaries + Inquiry ID (for linking)
+      - followups_YYYY-MM-DD.csv: All followups detailed with status, date/time, description, counsellor
+    
+    Followups are ordered newest-first (reverse chronological) within each inquiry.
+    No filters applied — exports complete dataset.
+    """
+    
+    # Generate inquiries CSV content
+    inquiries_buffer = io.StringIO()
+    inquiries_writer = csv.writer(inquiries_buffer)
+    inquiries_writer.writerow([
+        'Name', 'Phone', 'Parent Name', 'Class', 'Source/Campaign', 
+        'Assigned To', 'Status', 'Date', 'Inquiry ID'
+    ])
 
-    def rows():
-        writer = csv.writer(CsvEcho())
-        yield writer.writerow(['Name', 'Phone', 'Parent Name', 'Class', 'Source/Campaign', 'Assigned To', 'Status', 'Date'])
+    # Fetch all inquiries (no filters applied)
+    inquiries_qs = Inquiry.objects.select_related(
+        'campaign', 'assigned_counsellor__user'
+    ).prefetch_related('classes').order_by('-created_at')
 
-        qs = Inquiry.objects.select_related(
-            'campaign', 'session', 'assigned_counsellor__user'
-        ).prefetch_related('classes', 'followup__status')
+    for inquiry in inquiries_qs:
+        classes = ', '.join(c.name for c in inquiry.classes.all())
+        campaign = inquiry.campaign.name if inquiry.campaign else ''
+        counsellor = ''
+        if inquiry.assigned_counsellor and inquiry.assigned_counsellor.user:
+            u = inquiry.assigned_counsellor.user
+            counsellor = f"{u.first_name} {u.last_name}".strip()
 
-        session_id = request.GET.get('session')
-        campaign_id = request.GET.get('campaign')
-        status_id = request.GET.get('status')
-        counsellor_id = request.GET.get('counsellor')
-        class_id = request.GET.get('class')
+        latest_followup = inquiry.followup.order_by('-created_at').first()
+        status = latest_followup.status.name if latest_followup and latest_followup.status else ''
+        date = latest_followup.created_at.strftime('%d-%m-%Y') if latest_followup else ''
 
-        if session_id:
-            qs = qs.filter(session_id=session_id)
-        if campaign_id:
-            qs = qs.filter(campaign_id=campaign_id)
-        if status_id:
-            qs = qs.filter(followup__status_id=status_id)
-        if counsellor_id:
-            qs = qs.filter(assigned_counsellor_id=counsellor_id)
-        if class_id:
-            qs = qs.filter(classes__id=class_id)
+        inquiries_writer.writerow([
+            inquiry.student_name,
+            inquiry.phone,
+            inquiry.parent_name,
+            classes,
+            campaign,
+            counsellor,
+            status,
+            date,
+            inquiry.id,  # Add inquiry ID for linking
+        ])
 
-        qs = qs.order_by('-created_at')
+    inquiries_csv_content = inquiries_buffer.getvalue()
 
-        for inquiry in qs:
-            classes = ', '.join(c.name for c in inquiry.classes.all())
-            campaign = inquiry.campaign.name if inquiry.campaign else ''
-            counsellor = ''
-            if inquiry.assigned_counsellor and inquiry.assigned_counsellor.user:
-                u = inquiry.assigned_counsellor.user
-                counsellor = f"{u.first_name} {u.last_name}".strip()
+    # Generate followups CSV content
+    followups_buffer = io.StringIO()
+    followups_writer = csv.writer(followups_buffer)
+    followups_writer.writerow([
+        'Inquiry ID', 'Followup #', 'Status', 'Date', 'Time', 
+        'Description', 'Counsellor', 'Created At'
+    ])
 
-            latest_followup = inquiry.followup.order_by('-created_at').first()
-            status = latest_followup.status.name if latest_followup and latest_followup.status else ''
-            date = latest_followup.created_at.strftime('%d-%m-%Y') if latest_followup else ''
+    # Fetch all followups ordered by inquiry and newest-first within each inquiry
+    followups_qs = FollowUp.objects.select_related(
+        'inquiry', 'status', 'admission_counsellor__user'
+    ).order_by('inquiry_id', '-created_at')
 
-            yield writer.writerow([
-                inquiry.student_name,
-                inquiry.phone,
-                inquiry.parent_name,
-                classes,
-                campaign,
-                counsellor,
-                status,
-                date,
-            ])
+    current_inquiry_id = None
+    followup_num = 0
 
-    filename = f"inquiries_{datetime.now().strftime('%Y-%m-%d')}.csv"
-    response = StreamingHttpResponse(rows(), content_type='text/csv')
+    for followup in followups_qs:
+        inquiry_id = followup.inquiry_id
+
+        # Reset followup counter when moving to new inquiry
+        if inquiry_id != current_inquiry_id:
+            current_inquiry_id = inquiry_id
+            followup_num = 0
+
+        followup_num += 1
+
+        status_name = followup.status.name if followup.status else ''
+        date_str = followup.created_at.strftime('%d-%m-%Y')
+        time_str = followup.created_at.strftime('%H:%M:%S')
+        description = followup.description or ''
+
+        counsellor_name = ''
+        if followup.admission_counsellor and followup.admission_counsellor.user:
+            u = followup.admission_counsellor.user
+            counsellor_name = f"{u.first_name} {u.last_name}".strip()
+
+        created_at_str = followup.created_at.strftime('%d-%m-%Y %H:%M:%S')
+
+        followups_writer.writerow([
+            inquiry_id,
+            followup_num,
+            status_name,
+            date_str,
+            time_str,
+            description,
+            counsellor_name,
+            created_at_str,
+        ])
+
+    followups_csv_content = followups_buffer.getvalue()
+
+    # Create ZIP archive in memory with both CSV files
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        date_str = datetime.now().strftime('%Y-%m-%d')
+
+        # Add inquiries CSV to ZIP
+        zip_file.writestr(
+            f'inquiries_{date_str}.csv',
+            inquiries_csv_content.encode('utf-8')
+        )
+
+        # Add followups CSV to ZIP
+        zip_file.writestr(
+            f'followups_{date_str}.csv',
+            followups_csv_content.encode('utf-8')
+        )
+
+    zip_buffer.seek(0)
+
+    # Return ZIP archive as response
+    filename = f"inquiries_followups_{datetime.now().strftime('%Y-%m-%d')}.zip"
+    response = HttpResponse(
+        zip_buffer.getvalue(),
+        content_type='application/zip'
+    )
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
