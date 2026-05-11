@@ -1128,129 +1128,131 @@ def report_data(request):
 def export_inquiry_csv(request):
     """
     Export all inquiries and followups as two linked CSV files in a ZIP archive.
-    
+
     Files created:
-      - inquiries_YYYY-MM-DD.csv: Inquiry summaries + Inquiry ID (for linking)
-      - followups_YYYY-MM-DD.csv: All followups detailed with status, date/time, description, counsellor
-    
-    Followups are ordered newest-first (reverse chronological) within each inquiry.
+      - inquiries_YYYY-MM-DD.csv : All Inquiry model fields
+      - followups_YYYY-MM-DD.csv : All FollowUp model fields
+
+    Followups are ordered newest-first within each inquiry.
     No filters applied — exports complete dataset.
     """
-    
-    # Generate inquiries CSV content
+
+    def _counsellor_name(ac):
+        if ac and ac.user:
+            return f"{ac.user.first_name} {ac.user.last_name}".strip()
+        return ''
+
+    # ── Inquiries CSV ────────────────────────────────────────────────────────
     inquiries_buffer = io.StringIO()
     inquiries_writer = csv.writer(inquiries_buffer)
     inquiries_writer.writerow([
-        'Name', 'Phone', 'Parent Name', 'Class', 'Source/Campaign', 
-        'Assigned To', 'Status', 'Date', 'Inquiry ID'
+        'Inquiry ID', 'Student Name', 'Phone', 'Admission Number',
+        'Parent Name', 'Parent Phone',
+        'Classes', 'Subjects',
+        'School', 'Address',
+        'Lead Type', 'Lead Quality', 'Intent', 'Existing Member',
+        'Inquiry Origin',
+        'Referral Source', 'Referral Category',
+        'Referrer Name', 'Referrer Phone',
+        'Campaign', 'Session', 'Sales Person',
+        'Caller', 'Assigned Counsellor',
+        'Current Status', 'Stationary Partner',
+        'Created At', 'Updated At',
     ])
 
-    # Fetch all inquiries (no filters applied)
     inquiries_qs = Inquiry.objects.select_related(
-        'campaign', 'assigned_counsellor__user'
-    ).prefetch_related('classes').order_by('-created_at')
+        'campaign', 'session',
+        'referral_source',
+        'sales_person',
+        'caller__user',
+        'assigned_counsellor__user',
+        'current_status',
+        'stationary_partner',
+    ).prefetch_related('classes', 'subjects').order_by('-created_at')
 
-    for inquiry in inquiries_qs:
-        classes = ', '.join(c.name for c in inquiry.classes.all())
-        campaign = inquiry.campaign.name if inquiry.campaign else ''
-        counsellor = ''
-        if inquiry.assigned_counsellor and inquiry.assigned_counsellor.user:
-            u = inquiry.assigned_counsellor.user
-            counsellor = f"{u.first_name} {u.last_name}".strip()
-
-        latest_followup = inquiry.followup.order_by('-created_at').first()
-        status = latest_followup.status.name if latest_followup and latest_followup.status else ''
-        date = latest_followup.created_at.strftime('%d-%m-%Y') if latest_followup else ''
+    for inq in inquiries_qs:
+        classes  = ', '.join(c.name for c in inq.classes.all())
+        subjects = ', '.join(s.name for s in inq.subjects.all())
+        referral_source_name = inq.referral_source.name if inq.referral_source else ''
+        referral_category    = inq.referral_source.get_category_display() if inq.referral_source else ''
 
         inquiries_writer.writerow([
-            inquiry.student_name,
-            inquiry.phone,
-            inquiry.parent_name,
+            inq.id,
+            inq.student_name,
+            inq.phone,
+            inq.admission_number,
+            inq.parent_name,
+            inq.parent_phone,
             classes,
-            campaign,
-            counsellor,
-            status,
-            date,
-            inquiry.id,  # Add inquiry ID for linking
+            subjects,
+            inq.school,
+            inq.address,
+            inq.lead_type,
+            inq.lead_quality or '',
+            inq.intent or '',
+            'Yes' if inq.existing_member else 'No',
+            inq.get_inquiry_origin_display(),
+            referral_source_name,
+            referral_category,
+            inq.referrer_name,
+            inq.referrer_phone,
+            inq.campaign.name if inq.campaign else '',
+            inq.session.name if inq.session else '',
+            inq.sales_person.name if inq.sales_person else '',
+            _counsellor_name(inq.caller),
+            _counsellor_name(inq.assigned_counsellor),
+            inq.current_status.name if inq.current_status else '',
+            inq.stationary_partner.name if inq.stationary_partner else '',
+            localtime(inq.created_at).strftime('%d-%m-%Y %H:%M:%S'),
+            localtime(inq.updated_at).strftime('%d-%m-%Y %H:%M:%S'),
         ])
 
     inquiries_csv_content = inquiries_buffer.getvalue()
 
-    # Generate followups CSV content
+    # ── Followups CSV ────────────────────────────────────────────────────────
     followups_buffer = io.StringIO()
     followups_writer = csv.writer(followups_buffer)
     followups_writer.writerow([
-        'Inquiry ID', 'Followup #', 'Status', 'Date', 'Time', 
-        'Description', 'Counsellor', 'Created At'
+        'Inquiry ID', 'Followup #',
+        'Status', 'Description', 'Counsellor',
+        'Next Follow-up Date',
+        'Created At', 'Updated At',
     ])
 
-    # Fetch all followups ordered by inquiry and newest-first within each inquiry
     followups_qs = FollowUp.objects.select_related(
-        'inquiry', 'status', 'admission_counsellor__user'
+        'status', 'admission_counsellor__user',
     ).order_by('inquiry_id', '-created_at')
 
     current_inquiry_id = None
     followup_num = 0
 
-    for followup in followups_qs:
-        inquiry_id = followup.inquiry_id
-
-        # Reset followup counter when moving to new inquiry
-        if inquiry_id != current_inquiry_id:
-            current_inquiry_id = inquiry_id
+    for fu in followups_qs:
+        if fu.inquiry_id != current_inquiry_id:
+            current_inquiry_id = fu.inquiry_id
             followup_num = 0
-
         followup_num += 1
 
-        status_name = followup.status.name if followup.status else ''
-        date_str = followup.created_at.strftime('%d-%m-%Y')
-        time_str = followup.created_at.strftime('%H:%M:%S')
-        description = followup.description or ''
-
-        counsellor_name = ''
-        if followup.admission_counsellor and followup.admission_counsellor.user:
-            u = followup.admission_counsellor.user
-            counsellor_name = f"{u.first_name} {u.last_name}".strip()
-
-        created_at_str = followup.created_at.strftime('%d-%m-%Y %H:%M:%S')
-
         followups_writer.writerow([
-            inquiry_id,
+            fu.inquiry_id,
             followup_num,
-            status_name,
-            date_str,
-            time_str,
-            description,
-            counsellor_name,
-            created_at_str,
+            fu.status.name if fu.status else '',
+            fu.description or '',
+            _counsellor_name(fu.admission_counsellor),
+            fu.followup_date.strftime('%d-%m-%Y') if fu.followup_date else '',
+            localtime(fu.created_at).strftime('%d-%m-%Y %H:%M:%S'),
+            localtime(fu.updated_at).strftime('%d-%m-%Y %H:%M:%S'),
         ])
 
     followups_csv_content = followups_buffer.getvalue()
 
-    # Create ZIP archive in memory with both CSV files
+    # ── ZIP ──────────────────────────────────────────────────────────────────
     zip_buffer = io.BytesIO()
+    export_date = datetime.now().strftime('%Y-%m-%d')
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-        date_str = datetime.now().strftime('%Y-%m-%d')
-
-        # Add inquiries CSV to ZIP
-        zip_file.writestr(
-            f'inquiries_{date_str}.csv',
-            inquiries_csv_content.encode('utf-8')
-        )
-
-        # Add followups CSV to ZIP
-        zip_file.writestr(
-            f'followups_{date_str}.csv',
-            followups_csv_content.encode('utf-8')
-        )
+        zip_file.writestr(f'inquiries_{export_date}.csv', inquiries_csv_content.encode('utf-8'))
+        zip_file.writestr(f'followups_{export_date}.csv', followups_csv_content.encode('utf-8'))
 
     zip_buffer.seek(0)
-
-    # Return ZIP archive as response
-    filename = f"inquiries_followups_{datetime.now().strftime('%Y-%m-%d')}.zip"
-    response = HttpResponse(
-        zip_buffer.getvalue(),
-        content_type='application/zip'
-    )
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    response = HttpResponse(zip_buffer.getvalue(), content_type='application/zip')
+    response['Content-Disposition'] = f'attachment; filename="inquiries_followups_{export_date}.zip"'
     return response
