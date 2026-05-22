@@ -38,3 +38,6 @@ secret_for_jwt*
 .secrets/
 # Added by code-review-graph
 .code-review-graph/
+.agents
+.claude
+skills-lock.json
